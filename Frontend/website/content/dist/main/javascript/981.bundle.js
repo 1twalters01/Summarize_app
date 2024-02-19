@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkSummarize=self.webpackChunkSummarize||[]).push([[981],{981:(e,a,t)=>{t.r(a),t.d(a,{default:()=>s});var u=(0,t(743).vs)("<h1>Two Factor Authentication");const s=()=>u()}}]);

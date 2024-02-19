@@ -1,0 +1,27 @@
+{
+  "name": "Summarize",
+  "version": "1.0.0",
+  "description": "Front end for Summarize",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "format": "prettier --config .prettierrc.json src/**/*.js --write",
+    "test": "jest"
+  },
+  "keywords": [],
+  "author": "1twalters01",
+  "license": "ISC",
+  "dependencies": {
+    "@solidjs/router": "^0.12.3",
+    "babel-loader": "^9.1.3",
+    "babel-preset-solid": "^1.8.15",
+    "solid-js": "^1.8.15"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "jsdoc": "^4.0.2",
+    "prettier": "^3.2.5",
+    "webpack": "^5.90.2",
+    "webpack-cli": "^5.1.4"
+  }
+}

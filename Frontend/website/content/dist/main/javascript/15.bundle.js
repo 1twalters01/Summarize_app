@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkSummarize=self.webpackChunkSummarize||[]).push([[15],{15:(e,a,s)=>{s.r(a),s.d(a,{default:()=>h});var u=(0,s(743).vs)("<h1>Change Theme");const h=()=>u()}}]);

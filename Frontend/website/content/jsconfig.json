@@ -1,0 +1,23 @@
+{
+  "plugins": [],
+  "recurseDepth": 10,
+  "compilerOptions": {
+    "strict": true,
+    "checkJs": true,
+    "jsx": "preserve",
+    "jsxImportSource": "solid-js",
+  }
+  "source": {
+    "includePattern": ".+\\.js(doc|x)?$",
+    "excludePattern": "(^|\\/|\\\\)_",
+  },
+  "sourceType": "module",
+  "tags": {
+    "allowUnkownTags": true,
+    "dictionaries": ["jsdoc", "closure"],
+  },
+  "templates": {
+    "cleverLinks": false,
+    "monospaceLinks": false,
+  }
+}
