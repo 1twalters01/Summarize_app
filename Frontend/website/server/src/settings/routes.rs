@@ -56,7 +56,6 @@ async fn change_username() -> Result<impl Responder> {
 
 #[get("/788.bundle.js")]
 async fn change_email() -> Result<impl Responder> {
-    println!("change email");
     let path: PathBuf = "../content/dist/main/javascript/788.bundle.js".into();
     let data = Bytes::from(fs::read(&path).unwrap());
 

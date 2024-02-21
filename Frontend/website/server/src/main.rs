@@ -37,8 +37,11 @@ async fn main() -> std::io::Result<()> {
 
             .service(home::routes::terms_html)
             .service(home::routes::terms_js)
+            .service(home::routes::terms_pdf)
             .service(home::routes::privacy_html)
             .service(home::routes::privacy_js)
+            .service(home::routes::privacy_pdf)
+            
 
             .service(home::routes::blog_html)
             .service(home::routes::blog_js)

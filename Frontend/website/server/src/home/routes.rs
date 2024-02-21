@@ -314,6 +314,16 @@ async fn terms_js() -> Result<impl Responder> {
         .body(data))
 }
 
+#[get("/terms/pdf")]
+async fn terms_pdf() -> Result<impl Responder> {
+    let path: PathBuf = "../content/dist/home/Terms Statement.pdf".into();
+    let data = Bytes::from(fs::read(&path).unwrap());
+
+    Ok(HttpResponse::Ok()
+      .content_type("application/pdf")
+      .body(data))
+}
+
 #[get("/privacy/")]
 async fn privacy_html() -> Result<impl Responder> {
     let path: PathBuf = "../content/dist/home/privacy.html".into();
@@ -332,6 +342,16 @@ async fn privacy_js() -> Result<impl Responder> {
     Ok(HttpResponse::Ok()
         .content_type("text/javascript; charset=UTF-8")
         .body(data))
+}
+
+#[get("/privacy/pdf")]
+async fn privacy_pdf() -> Result<impl Responder> {
+    let path: PathBuf = "../content/dist/home/Privacy Statement.pdf".into();
+    let data = Bytes::from(fs::read(&path).unwrap());
+
+    Ok(HttpResponse::Ok()
+      .content_type("application/pdf")
+      .body(data))
 }
 
 #[get("/blog/")]
