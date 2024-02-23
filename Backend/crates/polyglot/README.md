@@ -1,5 +1,6 @@
 # Polyglot
-Translate to and from different file formats
+
+## Translate to and from different file formats
 
 ## Formats
 * md
