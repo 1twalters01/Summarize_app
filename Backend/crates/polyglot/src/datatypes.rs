@@ -270,12 +270,50 @@ fn traverse_md_metadata(metadata: Option<&Vec<Element>>, mut content: String, mu
                 count += 1;
 
                 content = traverse_md_metadata(node.children.as_ref(), content, count).unwrap();
+
+                content = content + "*";
+                count += 1;
             }
             &Element::Strikethrough(node) => {
+                let (first, second) = content.split_at(node.start + count);
+                content = first.to_owned() + "~~" + second;
+                count += 2;
+
+                content = traverse_md_metadata(node.children.as_ref(), content, count).unwrap();
+
+                content = content + "~~";
+                count += 2;
+            },
+            &Element::Highlight(node) => {
+                let (first, second) = content.split_at(node.start + count);
+                content = first.to_owned() + "==" + second;
+                count += 2;
+
+                content = traverse_md_metadata(node.children.as_ref(), content, count).unwrap();
+
+                content = content + "==";
+                count += 2;
 
             },
-            &Element::Blockquote(node) => {
+            &Element::Subscript(node) => {
+                let (first, second) = content.split_at(node.start + count);
+                content = first.to_owned() + "~" + second;
+                count += 1;
 
+                content = traverse_md_metadata(node.children.as_ref(), content, count).unwrap();
+
+                content = content + "~";
+                count += 1;
+            },
+            &Element::Superscript(node) => {
+                let (first, second) = content.split_at(node.start + count);
+                content = first.to_owned() + "^" + second;
+                count += 1;
+
+                content = traverse_md_metadata(node.children.as_ref(), content, count).unwrap();
+
+                content = content + "^";
+                count += 1;
             },
             &Element::OrderedList(node) => {
 
@@ -283,14 +321,38 @@ fn traverse_md_metadata(metadata: Option<&Vec<Element>>, mut content: String, mu
             &Element::UnorderedList(node) => {
 
             },
-            // DefinitionList(node) => {
-
-            //},
-            &Element::Code(node) => {
+            &Element::DefinitionList(node) => {
 
             },
-            &Element::HorizontalRule(node) => {
+            &Element::TaskList(node) => {
 
+            },
+            &Element::Blockquote(node) => { // not finished
+                let (first, second) = content.split_at(node.start + count);
+                content = first.to_owned() + ">" + second;
+                count += 1;
+
+                content = traverse_md_metadata(node.children.as_ref(), content, count).unwrap();
+
+                content = content + "\n";
+                count += 1;
+            },
+            &Element::Code(node) => { // not finished
+                let (first, second) = content.split_at(node.start + count);
+                content = first.to_owned() + "`" + second;
+                count += 1;
+
+                content = traverse_md_metadata(node.children.as_ref(), content, count).unwrap();
+
+                content = content + "`";
+                count += 1;
+            },
+            &Element::HorizontalRule(node) => {
+                let (first, second) = content.split_at(node.start + count);
+                content = first.to_owned() + "..." + second;
+                count += 3;
+
+                content = traverse_md_metadata(node.children.as_ref(), content, count).unwrap();
             },
             &Element::Link(node) => {
 
@@ -307,22 +369,7 @@ fn traverse_md_metadata(metadata: Option<&Vec<Element>>, mut content: String, mu
             &Element::Footnote(node) => {
 
             },
-            &Element::DefintionList(node) => {
-
-            },
-            &Element::TaskList(node) => {
-
-            },
             &Element::Emoji(node) => {
-
-            },
-            &Element::Highlight(node) => {
-
-            },
-            &Element::Subscript(node) => {
-
-            },
-            &Element::Superscript(node) => {
 
             },
 
@@ -1151,11 +1198,14 @@ pub enum Element {
 
     Bold(Node),
     Italic(Node),
-    // Underline(Node),
-    Blockquote(Node),
+    Underline(Node),
+    Strikethrough(Node),
+
     OrderedList(Node),
     UnorderedList(Node),
-    // DefinitionList(Node),
+    DefinitionList(Node),
+
+    Blockquote(Node),
     Code(Node),
     HorizontalRule(Node),
     Link(Node),
@@ -1164,7 +1214,6 @@ pub enum Element {
     FencedCode(Node),
     Footnote(Node),
     DefintionList(Node),
-    Strikethrough(Node),
     TaskList(Node),
     Emoji(Node),
     Highlight(Node),
