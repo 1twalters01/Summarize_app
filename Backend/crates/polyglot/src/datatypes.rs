@@ -250,6 +250,7 @@ fn traverse_md_metadata(metadata: Option<&Vec<Element>>, mut content: String, mu
                     Some(id) => {
                         content = content + " {#" + id.as_str() + "}";
                         count += id.len() + 4;
+
                     },
                     None => {}
                 }
