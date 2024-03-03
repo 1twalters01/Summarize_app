@@ -1,5 +1,5 @@
 use std::{
-    time::{Instant, SystemTime},
+    time::SystemTime,
     io::{Error, ErrorKind},
 };
 
@@ -14,10 +14,10 @@ pub struct User {
     first_name: String,
     last_name: String,
     email: String,
-    password: Password, // TODO
+    password: Password,
     totp: Option<String>,
     created_at: SystemTime,
-    last_login: SystemTime, // TODO
+    last_login: SystemTime,
     groups: Vec<String>, // TODO
     user_permissions: Vec<String>, // TODO
     is_active: bool,
@@ -65,10 +65,6 @@ impl User {
         return self.username.to_owned();
     }
 
-    pub fn get_email(&self) -> String {
-        return self.email.to_owned();
-    }
-
     pub fn get_full_name(&self) -> String {
         return format!("{} {}", self.first_name.to_owned(), self.last_name.to_owned());
     }
@@ -81,8 +77,27 @@ impl User {
         return self.last_name.to_owned();
     }
 
+    pub fn get_email(&self) -> String {
+        return self.email.to_owned();
+    }
+
     fn set_password(&mut self, password: String) -> Result<(), Error> {
         return Password::set_password(&mut self.password, password);
+    }
+
+    pub fn check_password(&self, password: String) -> Result<(), Error> {
+        match Password::check_password(&self.password, password) {
+            Ok(_) => return Ok(()),
+            Err(err) => return Err(Error::new(
+                    ErrorKind::InvalidData,
+                    format!("Invalid password: {}", err)))
+
+
+        }
+    }
+
+    pub fn is_totp_activated(&self) -> bool {
+        return self.totp.is_some();
     }
 
     fn set_totp(&mut self, totp: String) -> bool {
@@ -110,25 +125,22 @@ impl User {
         todo!();
     }
 
-    pub fn check_password(&self, password: String) -> Result<(), Error> {
-        match Password::check_password(&self.password, password) {
-            Ok(_) => return Ok(()),
-            Err(err) => return Err(Error::new(
-                    ErrorKind::InvalidData,
-                    format!("Invalid password: {}", err)))
-   
+    fn get_created_time(&self) -> SystemTime {
+        return self.created_at;
+    }
 
-        }
+    fn get_last_login_time(&self) -> SystemTime {
+        return self.last_login;
+    }
+
+    fn get_groups(&self) {
+
     }
     
     fn get_user_permissions(&self) {
 
     }
-    
-    fn get_groups(&self) {
-
-    }
-    
+     
     fn has_permission(&self, permission: String) -> bool {
         if self.user_permissions.contains(&permission) {
             return true;
@@ -138,5 +150,41 @@ impl User {
     
     fn has_permissions(&self, permissions: Vec<String>) -> Vec<bool> {
         return permissions.into_iter().map(|permission| self.user_permissions.contains(&permission)).collect();
+    }
+
+    fn get_is_user_active(&self) -> bool {
+        return self.is_active;
+    }
+
+    fn set_is_user_active(&mut self, is_active: bool) -> bool {
+        self.is_active = is_active;
+        if self.is_active == is_active {
+            return true;
+        }
+        return false;
+    }
+
+    fn get_is_user_staff(&self) -> bool {
+        return self.is_staff;
+    }
+
+    fn get_is_user_superuser(&self) -> bool {
+        return self.is_superuser;
+    }
+
+    fn get_is_user_authenticated(&self) -> bool {
+        return self.is_authenticated;
+    }
+
+    fn set_is_user_authenticated(&mut self, is_authenticated: bool) -> bool {
+        self.is_authenticated = is_authenticated;
+        if self.is_authenticated == is_authenticated {
+            return true;
+        }
+        return false;
+    }
+
+    fn get_is_user_anonymous(&self) -> bool {
+        return self.is_anonymous;
     }
 }

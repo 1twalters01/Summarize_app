@@ -58,7 +58,6 @@ fn validate_password(password: &str) -> Result<(), Error> {
 fn hash_password(password: String) -> Password {
     // let salt = [0; 64].map(|_| rand::thread_rng().gen::<i64>());
     let salt = SaltString::generate(&mut OsRng);
-    let salt_string = salt.to_string();
 
     // Argon2 with default params (Argon2id v19)
     let argon2 = Argon2::default();
