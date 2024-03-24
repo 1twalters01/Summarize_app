@@ -3,6 +3,7 @@ use actix_cors::Cors;
 extern crate users;
 pub mod accounts;
 pub mod settings;
+pub mod validations;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
