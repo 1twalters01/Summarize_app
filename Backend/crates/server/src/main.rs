@@ -15,7 +15,9 @@ async fn main() -> std::io::Result<()> {
 
         App::new()
             .wrap(cors)
-            .service(accounts::routes::login)
+            .service(accounts::routes::login_email)
+            .service(accounts::routes::login_password)
+            .service(accounts::routes::login_totp)
     })
     .bind("127.0.0.1:8000")?
     .run()

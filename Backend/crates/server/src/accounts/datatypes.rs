@@ -2,7 +2,20 @@ use serde::{Serialize, Deserialize};
 
 #[derive(Debug)]
 #[derive(Clone, Serialize, Deserialize)]
-pub struct Login {
+pub struct LoginEmail {
+    pub email: String,
+}
+
+#[derive(Debug)]
+#[derive(Clone, Serialize, Deserialize)]
+pub struct LoginPassword {
+    pub email: String,
+    pub password: String,
+}
+
+#[derive(Debug)]
+#[derive(Clone, Serialize, Deserialize)]
+pub struct LoginTotp {
     pub email: String,
     pub password: String,
     pub totp: Option<String>,
