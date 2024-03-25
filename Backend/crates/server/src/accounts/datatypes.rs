@@ -2,20 +2,20 @@ use serde::{Serialize, Deserialize};
 
 // Login Structs
 #[derive(Debug)]
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct LoginEmail {
     pub email: String,
 }
 
 #[derive(Debug)]
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct LoginPassword {
     pub email: String,
     pub password: String,
 }
 
 #[derive(Debug)]
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct LoginTotp {
     pub email: String,
     pub password: String,
@@ -58,25 +58,26 @@ pub struct Activate {
 #[derive(Debug)]
 #[derive(Serialize, Deserialize)]
 pub struct UsernameReset {
-
+    pub email: String,
 }
 
 #[derive(Debug)]
 #[derive(Serialize, Deserialize)]
 pub struct UsernameResetConfirm {
-
+    pub username: String,
 }
 
 #[derive(Debug)]
 #[derive(Serialize, Deserialize)]
 pub struct PasswordReset {
-
+    pub email: String,
 }
 
 #[derive(Debug)]
 #[derive(Serialize, Deserialize)]
 pub struct PasswordResetConfirm {
-
+    pub password: String,
+    pub password_confirmation: String,
 }
 
 #[derive(Debug)]

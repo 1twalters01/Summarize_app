@@ -1,0 +1,185 @@
+use actix_web::{post, HttpResponse, Responder, Result, web::Json};
+use crate::accounts::datatypes::{
+    LoginEmail, LoginPassword, LoginTotp, 
+    RegisterEmail, RegisterVerify, RegisterDetails, 
+    Activate, 
+    UsernameReset, 
+    UsernameResetConfirm, 
+    PasswordReset, 
+    PasswordResetConfirm};
+use crate::validations::{validate_email, validate_password, validate_totp};
+// use std::{fs, path::PathBuf};
+
+#[post("login/email")]
+async fn login_email(req_body: Json<LoginEmail>) -> Result<impl Responder> {
+    let email: String = req_body.into_inner().email;
+
+    let validated_email = validate_email(email.clone());
+    if validated_email.is_err() {
+        return Ok(HttpResponse::UnprocessableEntity()
+            .content_type("application/json; charset=utf-8")
+            .json(validated_email.err().unwrap()))
+    }
+    println!("email: {:#?}", email);
+
+    let email_database = vec![
+        String::from("test@something.com"),
+        String::from("test2@something.com"),
+        String::from("test3@something.com")];
+
+    if email_database.contains(&email) {
+        return Ok(HttpResponse::Ok()
+            .content_type("application/json; charset=utf-8")
+            .json(true))
+    } else {
+        return Ok(HttpResponse::NotFound()
+            .content_type("application/json; charset=utf-8")
+            .json(email))
+    }
+}
+
+#[post("login/password")]
+async fn login_password(req_body: Json<LoginPassword>) -> Result<impl Responder> {
+    let LoginPassword { email, password } = LoginPassword {
+        email: req_body.clone().email,
+        password: req_body.into_inner().password,
+    };
+
+    let validated_email = validate_email(email.clone());
+    if validated_email.is_err() {
+        return Ok(HttpResponse::UnprocessableEntity()
+            .content_type("application/json; charset=utf-8")
+            .json(validated_email.err().unwrap()))
+    }
+    println!("email: {:#?}", email);
+
+    let validated_password = validate_password(password.clone());
+    if validated_password.is_err() {
+        return Ok(HttpResponse::UnprocessableEntity()
+            .content_type("application/json; charset=utf-8")
+            .json(validated_password.err().unwrap()))
+    }
+    println!("password: {:#?}", password);
+
+    // perform database query for if the email has an associated account
+    // if false return false
+    // see if account has a totp
+    // if true return totp
+    // do test for if username password is the same as the inputted password
+    // return true or false
+
+    Ok(HttpResponse::Ok()
+        .content_type("application/json; charset=utf-8")
+        .json([email, password]))
+}
+
+#[post("login/totp")]
+async fn login_totp(req_body: Json<LoginTotp>) -> Result<impl Responder> {
+    let LoginTotp { email, password, totp } = LoginTotp {
+        email: req_body.clone().email,
+        password: req_body.clone().password,
+        totp: req_body.into_inner().totp,
+    };
+
+    let validated_email = validate_email(email.clone());
+    if validated_email.is_err() {
+        return Ok(HttpResponse::UnprocessableEntity()
+            .content_type("application/json; charset=utf-8")
+            .json(validated_email.err().unwrap()))
+    }
+    println!("email: {:#?}", email);
+
+    let validated_password = validate_password(password.clone());
+    if validated_password.is_err() {
+        return Ok(HttpResponse::UnprocessableEntity()
+            .content_type("application/json; charset=utf-8")
+            .json(validated_password.err().unwrap()))
+    }
+    println!("password: {:#?}", password);
+
+    let validated_totp = validate_totp(totp.clone());
+    if validated_totp.is_err() {
+        return Ok(HttpResponse::UnprocessableEntity()
+            .content_type("application/json; charset=utf-8")
+            .json(validated_totp.err().unwrap()))
+    }
+    println!("password: {:#?}", totp);
+ 
+    // validate email
+    // validate password
+    // validate totp
+    // if any invalid then error
+    // perform database query for if the email has an associated account
+    // if false return false
+    // see if account has a totp
+    // if false return error
+    // do test for if username password is the same as the inputted password
+    // if false return error
+    // check totp
+    // if false return error
+    // return true or false
+
+    Ok(HttpResponse::Ok()
+        .content_type("application/json; charset=utf-8")
+        .json(email))
+}
+
+#[post("register/email")]
+async fn registerEmail(req_body: Json<RegisterEmail>) -> Result<impl Responder> {
+    let email: String = req_body.into_inner().email;
+
+    let validated_email = validate_email(email.clone());
+    if validated_email.is_err() {
+        return Ok(HttpResponse::UnprocessableEntity()
+            .content_type("application/json; charset=utf-8")
+            .json(validated_email.err().unwrap()))
+    }
+    println!("email: {:#?}", email);
+
+    let email_database = vec![
+        String::from("test@something.com"),
+        String::from("test2@something.com"),
+        String::from("test3@something.com")];
+
+    if email_database.contains(&email) {
+        return Ok(HttpResponse::Conflict()
+            .content_type("application/json; charset=utf-8")
+            .json(true))
+    } else {
+        // Add to database
+        return Ok(HttpResponse::Ok()
+            .content_type("application/json; charset=utf-8")
+            .json(email))
+    }
+}
+
+#[post("register/verify")]
+async fn registerVerify(req_body: Json<RegisterVerify>) -> Result<impl Responder> {
+    let RegisterVerify { email, token } = req_body.into_inner();
+}
+
+#[post("register/password")]
+async fn registerPassword(req_body: Json<RegisterDetails>) -> Result<impl Responder> {
+}
+
+#[post("activate/{uidb64}/{token}")]
+async fn activate(req_body: Json<Activate>) -> Result<impl Responder> {
+}
+
+#[post("username-reset")]
+async fn username_reset(req_body: Json<UsernameReset>) -> Result<impl Responder> {
+}
+
+#[post("username-reset/{uidb64}/{token}")]
+async fn username_reset_confirm(req_body: Json<UsernameResetConfirm>) -> Result<impl Responder> {
+}
+
+#[post("password-reset")]
+async fn password_reset(req_body: Json<PasswordReset>) -> Result<impl Responder> {
+}
+
+#[post("password-reset/{uidb64}/{token}")]
+async fn password_reset_confirm(req_body: Json<PasswordResetConfirm>) -> Result<impl Responder> {
+}
+
+
