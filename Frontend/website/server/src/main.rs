@@ -1,4 +1,4 @@
-mod home;
+mod index;
 mod accounts;
 mod app;
 mod settings;
@@ -10,51 +10,50 @@ use actix_web::{web, App, HttpServer};
 async fn main() -> std::io::Result<()> {
     HttpServer::new(|| {
         App::new()
-            .service(home::routes::get_routes)
-            .service(home::routes::favicon)
-            .service(home::routes::index_html)
-            .service(home::routes::index_css)
-            .service(home::routes::index_js)
+            .service(index::routes::get_routes)
 
-            .service(home::routes::pricing_html)
-            .service(home::routes::pricing_js)
+            .service(index::routes::favicon)
+            .service(index::routes::index_html)
+            .service(index::routes::index_css)
+            .service(index::routes::index_js)
 
-            .service(home::routes::download_html)
-            .service(home::routes::download_js)
-            .service(home::routes::download_web_clipper_html)
-            .service(home::routes::download_web_clipper_js)
-            .service(home::routes::download_mobile_html)
-            .service(home::routes::download_mobile_js)
-            .service(home::routes::download_desktop_html)
-            .service(home::routes::download_desktop_js)
+            .service(index::routes::pricing_html)
+            .service(index::routes::pricing_js)
 
-            .service(home::routes::library_html)
-            .service(home::routes::library_js)
-            .service(home::routes::community_html)
-            .service(home::routes::community_js)
-            .service(home::routes::sync_html)
-            .service(home::routes::sync_js)
+            .service(index::routes::download_html)
+            .service(index::routes::download_js)
+            .service(index::routes::download_web_clipper_html)
+            .service(index::routes::download_web_clipper_js)
+            .service(index::routes::download_mobile_html)
+            .service(index::routes::download_mobile_js)
+            .service(index::routes::download_desktop_html)
+            .service(index::routes::download_desktop_js)
 
-            .service(home::routes::terms_html)
-            .service(home::routes::terms_js)
-            .service(home::routes::terms_pdf)
-            .service(home::routes::privacy_html)
-            .service(home::routes::privacy_js)
-            .service(home::routes::privacy_pdf)
+            .service(index::routes::library_html)
+            .service(index::routes::library_js)
+            .service(index::routes::community_html)
+            .service(index::routes::community_js)
+            .service(index::routes::sync_html)
+            .service(index::routes::sync_js)
+
+            .service(index::routes::terms_html)
+            .service(index::routes::terms_js)
+            .service(index::routes::terms_pdf)
+            .service(index::routes::privacy_html)
+            .service(index::routes::privacy_js)
+            .service(index::routes::privacy_pdf)
             
+            .service(index::routes::blog_html)
+            .service(index::routes::blog_js)
+            .service(index::routes::ai_html)
+            .service(index::routes::ai_js)
 
-            .service(home::routes::blog_html)
-            .service(home::routes::blog_js)
-            .service(home::routes::ai_html)
-            .service(home::routes::ai_js)
+            .service(index::routes::releases_html)
+            .service(index::routes::releases_js)
+            .service(index::routes::email_us_html)
+            .service(index::routes::email_us_js)
 
-            .service(home::routes::releases_html)
-            .service(home::routes::releases_js)
-            .service(home::routes::email_us_html)
-            .service(home::routes::email_us_js)
-
-            .service(home::routes::main_js)
-            // .service(home::routes::main_html)
+            .service(index::routes::main_js)
 
             .service(accounts::routes::login)
             .service(accounts::routes::login_totp)
@@ -81,7 +80,7 @@ async fn main() -> std::io::Result<()> {
             .service(
                 web::scope("/settings")
                 .service(settings::routes::get_routes)
-                .service(settings::routes::main_html)
+                // .service(settings::routes::main_html)
             )
     })
     .bind("127.0.0.1:8080")?

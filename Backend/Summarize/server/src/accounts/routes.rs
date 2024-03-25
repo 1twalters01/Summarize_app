@@ -2,13 +2,11 @@ use actix_web::{post, HttpResponse, Responder, Result, web::Json};
 use crate::accounts::datatypes::{
     LoginEmail, LoginPassword, LoginTotp, 
     RegisterEmail, RegisterVerify, RegisterDetails, 
-    Activate, 
     UsernameReset, 
     UsernameResetConfirm, 
     PasswordReset, 
     PasswordResetConfirm};
 use crate::validations::{validate_email, validate_password, validate_totp, validate_username, validate_first_name, validate_last_name};
-// use std::{fs, path::PathBuf};
 
 #[post("login/email")]
 async fn login_email(req_body: Json<LoginEmail>) -> Result<impl Responder> {
@@ -154,7 +152,7 @@ async fn registerEmail(req_body: Json<RegisterEmail>) -> Result<impl Responder> 
 #[post("register/verify/{uidb64}/{token}")]
 async fn registerVerify(req_body: Json<RegisterVerify>) -> Result<impl Responder> {
     let RegisterVerify { email, token } = req_body.into_inner();
-    let uid = base64::decode(uidb64).unwrap();
+    // let uid = base64::decode(uidb64).unwrap();
 
     // check token associated with uid
     let stored_token = "stored token from database";

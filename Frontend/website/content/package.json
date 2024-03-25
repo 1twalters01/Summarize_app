@@ -5,6 +5,7 @@
   "type": "module",
   "private": true,
   "scripts": {
+    "build": "npx webpack build",
     "format": "prettier --config .prettierrc.json src/**/*.js --write",
     "test": "jest"
   },
