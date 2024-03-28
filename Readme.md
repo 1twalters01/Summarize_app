@@ -1,12 +1,13 @@
 # Summarise
 ## Lanugages
-Server: Rust
-Website: HTML, SCSS, TS, AngularJS
-Android: Kotlin, Android SDK
-iOS: 
-Windows: 
-Linux: 
-Mac: 
+* Server: Rust - Actix
+* Website: HTML
+    * CSS - SCSS
+    * JS - SolidJS
+* Linux: C - GTK
+* Android: Kotlin - Android SDK
+* iOS: Swift - XCode
+* Windows: C# - Windows Forms Apps
 
 ## Requirements
 * Book files
