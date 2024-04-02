@@ -1,119 +1,256 @@
 use actix_web::{post, HttpResponse, Responder, Result, web::Json};
 use crate::accounts::datatypes::{
-    LoginEmail, LoginPassword, LoginTotp, 
+    LoginError,
+    LoginEmail, LoginEmailResponse,
+    LoginPassword, LoginPasswordResponse,
+    LoginTotp, LoginTotpResponse,
     RegisterEmail, RegisterVerify, RegisterDetails, 
     UsernameReset, 
     UsernameResetConfirm, 
     PasswordReset, 
-    PasswordResetConfirm};
+    PasswordResetConfirm
+};
 use crate::validations::{validate_email, validate_password, validate_totp, validate_username, validate_first_name, validate_last_name};
 
 #[post("login/email")]
 async fn login_email(req_body: Json<LoginEmail>) -> Result<impl Responder> {
     let email: String = req_body.into_inner().email;
+    let mut res_body: LoginEmailResponse = LoginEmailResponse::new();
 
+    // Validate the email from the request body
     let validated_email = validate_email(email.clone());
     if validated_email.is_err() {
+        let error: LoginError = LoginError{
+            is_error: true,
+            error_message: Some(validated_email.err().unwrap())
+        };
+        res_body.login_error = error;
+
         return Ok(HttpResponse::UnprocessableEntity()
             .content_type("application/json; charset=utf-8")
-            .json(validated_email.err().unwrap()))
+            .json(res_body)
+        )
     }
-    println!("email: {:#?}", email);
 
+    // replace with postgres function
+    let is_email_stored = fake_postgres_check_email(&email);
+    if is_email_stored == false {
+        res_body.is_email_stored = false;
+        return Ok(HttpResponse::Ok()
+            .content_type("application/json; charset=utf-8")
+            .json(res_body)
+        )
+    }
+    
+    res_body.is_email_stored = true;
+    return Ok(HttpResponse::NotFound()
+        .content_type("application/json; charset=utf-8")
+        .json(res_body)
+    )
+}
+
+fn fake_postgres_check_email(email: &String) -> bool {
     let email_database = vec![
         String::from("test@something.com"),
         String::from("test2@something.com"),
-        String::from("test3@something.com")];
-
-    if email_database.contains(&email) {
-        return Ok(HttpResponse::Ok()
-            .content_type("application/json; charset=utf-8")
-            .json(true))
-    } else {
-        return Ok(HttpResponse::NotFound()
-            .content_type("application/json; charset=utf-8")
-            .json(email))
-    }
+        String::from("test3@something.com")
+    ];
+    return email_database.contains(email);
 }
+
+fn fake_postgres_check_password(email: &String) -> bool {
+    let email_database = vec![
+        String::from("test@something.com"),
+        String::from("test2@something.com"),
+    ];
+    return email_database.contains(email);
+}
+
+fn fake_postgres_check_totp(email: &String) -> bool {
+    let email_database = vec![
+        String::from("test@something.com"),
+        String::from("test1@something.com"),
+    ];
+    return email_database.contains(email);
+}
+
 
 #[post("login/password")]
 async fn login_password(req_body: Json<LoginPassword>) -> Result<impl Responder> {
     let LoginPassword { email, password } = req_body.into_inner();
+    let mut res_body: LoginPasswordResponse = LoginPasswordResponse::new();
 
+    // Validate the email and password from the request body
     let validated_email = validate_email(email.clone());
     if validated_email.is_err() {
+        let error: LoginError = LoginError{
+            is_error: true,
+            error_message: Some(validated_email.err().unwrap())
+        };
+        res_body.login_error = error;
+
         return Ok(HttpResponse::UnprocessableEntity()
             .content_type("application/json; charset=utf-8")
-            .json(validated_email.err().unwrap()))
+            .json(res_body)
+        )
     }
     println!("email: {:#?}", email);
 
     let validated_password = validate_password(password.clone());
     if validated_password.is_err() {
+        let error: LoginError = LoginError{
+            is_error: true,
+            error_message: Some(validated_password.err().unwrap())
+        };
+        res_body.login_error = error;
+
         return Ok(HttpResponse::UnprocessableEntity()
             .content_type("application/json; charset=utf-8")
-            .json(validated_password.err().unwrap()))
+            .json(res_body))
     }
     println!("password: {:#?}", password);
 
     // perform database query for if the email has an associated account
-    // if false return false
-    // see if account has a totp
-    // if true return totp
-    // do test for if username password is the same as the inputted password
-    // return true or false
+    // replace with postgres function
+    let is_email_stored = fake_postgres_check_email(&email);
+    if is_email_stored == false {
+        res_body.password_content.is_email_stored = false;
+        return Ok(HttpResponse::Ok()
+            .content_type("application/json; charset=utf-8")
+            .json(res_body)
+        )
+    }
 
+    // do test for if username password is the same as the inputted password
+    let is_correct_password = fake_postgres_check_password(&password);
+    if is_correct_password == false {
+        res_body.password_content.is_password_correct = false;
+        return Ok(HttpResponse::Ok()
+            .content_type("application/json; charset=utf-8")
+            .json(res_body)
+        )
+    }
+
+    // see if account has a totp
+    let has_totp = fake_postgres_check_totp(&email);
+    if has_totp == true {
+        res_body.password_content.has_totp = true;
+        return Ok(HttpResponse::Ok()
+            .content_type("application/json; charset=utf-8")
+            .json(res_body)
+        )
+    }
+
+    res_body.password_content.is_email_stored = true;
+    res_body.password_content.is_password_correct = true;
+    res_body.password_content.has_totp = false;
     Ok(HttpResponse::Ok()
         .content_type("application/json; charset=utf-8")
-        .json([email, password]))
+        .json(res_body)
+    )
 }
+
 
 #[post("login/totp")]
 async fn login_totp(req_body: Json<LoginTotp>) -> Result<impl Responder> {
     let LoginTotp { email, password, totp } = req_body.into_inner();
+    let mut res_body: LoginTotpResponse = LoginTotpResponse::new();
 
+    // Validate the email and password from the request body
     let validated_email = validate_email(email.clone());
     if validated_email.is_err() {
+        let error: LoginError = LoginError{
+            is_error: true,
+            error_message: Some(validated_email.err().unwrap())
+        };
+        res_body.login_error = error;
+
         return Ok(HttpResponse::UnprocessableEntity()
             .content_type("application/json; charset=utf-8")
-            .json(validated_email.err().unwrap()))
+            .json(res_body)
+        )
     }
     println!("email: {:#?}", email);
 
     let validated_password = validate_password(password.clone());
     if validated_password.is_err() {
+        let error: LoginError = LoginError{
+            is_error: true,
+            error_message: Some(validated_password.err().unwrap())
+        };
+        res_body.login_error = error;
+
         return Ok(HttpResponse::UnprocessableEntity()
             .content_type("application/json; charset=utf-8")
-            .json(validated_password.err().unwrap()))
+            .json(res_body))
     }
     println!("password: {:#?}", password);
 
     let validated_totp = validate_totp(totp.clone());
     if validated_totp.is_err() {
+        let error: LoginError = LoginError{
+            is_error: true,
+            error_message: Some(validated_password.err().unwrap())
+        };
+        res_body.login_error = error;
+
         return Ok(HttpResponse::UnprocessableEntity()
             .content_type("application/json; charset=utf-8")
-            .json(validated_totp.err().unwrap()))
+            .json(res_body))
     }
     println!("password: {:#?}", totp);
  
-    // validate email
-    // validate password
-    // validate totp
-    // if any invalid then error
     // perform database query for if the email has an associated account
-    // if false return false
-    // see if account has a totp
-    // if false return error
-    // do test for if username password is the same as the inputted password
-    // if false return error
-    // check totp
-    // if false return error
-    // return true or false
+    // replace with postgres function
+    let is_email_stored = fake_postgres_check_email(&email);
+    if is_email_stored == false {
+        res_body.totp_content.is_email_stored = false;
+        return Ok(HttpResponse::Ok()
+            .content_type("application/json; charset=utf-8")
+            .json(res_body)
+        )
+    }
 
+    // do test for if username password is the same as the inputted password
+    let is_correct_password = fake_postgres_check_password(&password);
+    if is_correct_password == false {
+        res_body.totp_content.is_password_correct = false;
+        return Ok(HttpResponse::Ok()
+            .content_type("application/json; charset=utf-8")
+            .json(res_body)
+        )
+    }
+
+    // see if account has a totp
+    let has_totp = fake_postgres_check_totp(&email);
+    if has_totp == true {
+        res_body.totp_content.has_totp = true;
+        return Ok(HttpResponse::Ok()
+            .content_type("application/json; charset=utf-8")
+            .json(res_body)
+        )
+    }
+
+    // check totp
+    let totp_string = generate_fake_totp_string();
+    let stored_totp: String = get_totp_from_totp_string(totp_string);
+    if stored_totp == totp {
+        res_body.totp_content.is_totp_correct = false;
+        return Ok(HttpResponse::Ok()
+            .content_type("application/json; charset=utf-8")
+            .json(res_body)
+        )
+    }
+
+    res_body.totp_content.is_email_stored = true;
+    res_body.totp_content.is_password_correct = true;
+    res_body.totp_content.has_totp = true;
+    res_body.totp_content.is_totp_correct = true;
     Ok(HttpResponse::Ok()
         .content_type("application/json; charset=utf-8")
-        .json(email))
+        .json(res_body))
 }
+
 
 #[post("register/email")]
 async fn registerEmail(req_body: Json<RegisterEmail>) -> Result<impl Responder> {
