@@ -1,9 +1,9 @@
 use actix_web::{App, HttpServer};
 use actix_cors::Cors;
-extern crate users;
+
 pub mod accounts;
 pub mod settings;
-pub mod validations;
+pub mod databases;
 pub mod utils;
 
 #[actix_web::main]

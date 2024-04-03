@@ -1,5 +1,5 @@
 use actix_web::{post, HttpResponse, Responder, Result, web::Json};
-use crate::accounts::datatypes::{
+use crate::accounts::schema::{
     LoginError,
     LoginEmail, LoginEmailResponse,
     LoginPassword, LoginPasswordResponse,
@@ -10,7 +10,12 @@ use crate::accounts::datatypes::{
     PasswordReset, 
     PasswordResetConfirm
 };
-use crate::validations::{validate_email, validate_password, validate_totp, validate_username, validate_first_name, validate_last_name};
+use crate::accounts::validations::{validate_email, validate_password, validate_totp, validate_username, validate_first_name, validate_last_name};
+use crate::databases::connections::{create_pg_pool_connection, create_redis_client_connection};
+use crate::accounts::db_queries::{
+    fake_postgres_check_email, 
+    get_user_from_email_in_pg_users_table
+};
 
 #[post("login/email")]
 async fn login_email(req_body: Json<LoginEmail>) -> Result<impl Responder> {
@@ -47,31 +52,6 @@ async fn login_email(req_body: Json<LoginEmail>) -> Result<impl Responder> {
         .content_type("application/json; charset=utf-8")
         .json(res_body)
     )
-}
-
-fn fake_postgres_check_email(email: &String) -> bool {
-    let email_database = vec![
-        String::from("test@something.com"),
-        String::from("test2@something.com"),
-        String::from("test3@something.com")
-    ];
-    return email_database.contains(email);
-}
-
-fn fake_postgres_check_password(email: &String) -> bool {
-    let email_database = vec![
-        String::from("test@something.com"),
-        String::from("test2@something.com"),
-    ];
-    return email_database.contains(email);
-}
-
-fn fake_postgres_check_totp(email: &String) -> bool {
-    let email_database = vec![
-        String::from("test@something.com"),
-        String::from("test1@something.com"),
-    ];
-    return email_database.contains(email);
 }
 
 
@@ -141,9 +121,13 @@ async fn login_password(req_body: Json<LoginPassword>) -> Result<impl Responder>
         )
     }
 
+    let token: String = generate_token();
     res_body.password_content.is_email_stored = true;
     res_body.password_content.is_password_correct = true;
     res_body.password_content.has_totp = false;
+    res_body.password_content.token = Some(token);
+    save_authentication_token(uid, token);
+
     Ok(HttpResponse::Ok()
         .content_type("application/json; charset=utf-8")
         .json(res_body)

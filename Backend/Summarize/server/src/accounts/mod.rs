@@ -1,3 +1,5 @@
 pub mod datatypes;
 pub mod routes;
-pub mod totp;
+pub mod validations;
+pub mod db_queries;
+pub mod schema;
