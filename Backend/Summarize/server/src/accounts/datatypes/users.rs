@@ -57,7 +57,6 @@ impl User {
                 };
 
                 return Ok(password);
-
             },
             Err(err) => return Err(err),
         }
@@ -115,8 +114,6 @@ impl User {
             Err(err) => return Err(Error::new(
                     ErrorKind::InvalidData,
                     format!("Invalid password: {}", err)))
-
-
         }
     }
 
@@ -158,11 +155,11 @@ impl User {
     }
 
     fn get_groups(&self) {
-
+        return self.groups;
     }
     
     fn get_user_permissions(&self) {
-
+        return self.user_permissions;
     }
      
     fn has_permission(&self, permission: String) -> bool {
