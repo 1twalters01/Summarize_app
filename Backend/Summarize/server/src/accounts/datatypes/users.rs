@@ -4,7 +4,7 @@ use std::{
 };
 
 use uuid::Uuid;
-use crate::accounts::datatypes::passwords::Password;
+use crate::accounts::datatypes::{passwords::Password, totp:Totp};
 
 
 #[derive(Debug)]
@@ -12,14 +12,13 @@ pub struct User {
     id: Uuid,
     email: String,
     password: Password,
-    totp: Option<String>,
+    totp: Totp,
+    // totp: Option<String>,
 
     username: String,
     first_name: Option<String>,
     last_name: Option<String>,
 
-
-    
     created_at: SystemTime,
     last_login: SystemTime,
     
@@ -30,7 +29,6 @@ pub struct User {
     is_anonymous: bool,
 
     groups: Vec<String>, // TODO
-
     user_permissions: Vec<String>, // TODO
     
 }
@@ -46,7 +44,7 @@ impl User {
                     last_name: None,
                     email,
                     password,
-                    totp: None, 
+                    totp: Totp::new(), 
                     created_at: SystemTime::now(),
                     last_login: SystemTime::now(),
                     groups: Vec::new(), //todo!(),
