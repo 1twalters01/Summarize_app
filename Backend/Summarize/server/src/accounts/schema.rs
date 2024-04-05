@@ -20,6 +20,14 @@ impl LoginError {
 }
 
 
+
+
+
+
+
+
+
+
 // Login Email Structs
 #[derive(Debug)]
 #[derive(Serialize, Deserialize)]
@@ -32,6 +40,7 @@ pub struct LoginEmail {
 pub struct LoginEmailResponse {
     pub login_error: LoginError,
     pub is_email_stored: bool,
+    // token?
 }
 
 impl LoginEmailResponse {
@@ -47,8 +56,9 @@ impl LoginEmailResponse {
 #[derive(Debug)]
 #[derive(Serialize, Deserialize)]
 pub struct LoginPassword {
-    pub email: String,
+    pub email: String, // Change to a token stored on redis?
     pub password: String,
+    pub remember_me: bool,
 }
 
 #[derive(Debug)]
@@ -92,7 +102,7 @@ impl PasswordContent {
 #[derive(Serialize, Deserialize)]
 pub struct LoginTotp {
     pub email: String,
-    pub password: String,
+    pub password: String, // Change email and password to a token?
     pub totp: String,
 }
 
@@ -134,6 +144,21 @@ impl TotpContent {
     }
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // Register Structs
 #[derive(Debug)]
 #[derive(Serialize, Deserialize)]
@@ -143,15 +168,31 @@ pub struct RegisterEmail {
 
 #[derive(Debug)]
 #[derive(Serialize, Deserialize)]
+pub struct RegisterEmailResponse {
+    pub login_error: LoginError,
+    pub is_email_stored: bool,
+    pub token: Option<String>
+}
+
+#[derive(Debug)]
+#[derive(Serialize, Deserialize)]
 pub struct RegisterVerify {
-    pub email: String,
-    pub token: String,
+    pub email: String, // Remove?
+    pub token: String, // either enter the token or click the link sent to them via email
+}
+
+#[derive(Debug)]
+#[derive(Serialize, Deserialize)]
+pub struct RegisterVerifyResponse {
+    pub login_error: LoginError,
+    pub is_email_stored: bool,
+    pub is_token_correct: bool,
 }
 
 #[derive(Debug)]
 #[derive(Serialize, Deserialize)]
 pub struct RegisterDetails {
-    pub email: String,
+    pub email: String, // Remove?
     pub token: String,
     pub username: String,
     pub password: String,
@@ -162,22 +203,24 @@ pub struct RegisterDetails {
 
 #[derive(Debug)]
 #[derive(Serialize, Deserialize)]
-pub struct Activate {
-
+pub struct RegisterDetailsResponse {
+    pub login_error: LoginError,
+    pub success: bool,
 }
 
-#[derive(Debug)]
-#[derive(Serialize, Deserialize)]
-pub struct UsernameReset {
-    pub email: String,
-}
 
-#[derive(Debug)]
-#[derive(Serialize, Deserialize)]
-pub struct UsernameResetConfirm {
-    pub username: String,
-}
 
+
+
+
+
+
+
+
+
+
+
+// Password Reset structs
 #[derive(Debug)]
 #[derive(Serialize, Deserialize)]
 pub struct PasswordReset {
@@ -186,15 +229,63 @@ pub struct PasswordReset {
 
 #[derive(Debug)]
 #[derive(Serialize, Deserialize)]
+pub struct PasswordResetResponse {
+    pub login_error: LoginError,
+    pub success: bool,
+}
+
+#[derive(Debug)]
+#[derive(Serialize, Deserialize)]
 pub struct PasswordResetConfirm {
+    pub email: String, // Remove?
+    pub token: String, // token is saved to redis {k: email, v: token}
     pub password: String,
     pub password_confirmation: String,
 }
 
 #[derive(Debug)]
 #[derive(Serialize, Deserialize)]
-pub struct Logout {
-
+pub struct PasswordResetConfirmResponse {
+    pub error: LoginError,
+    pub success: bool,
 }
 
 
+
+
+
+
+
+
+
+    
+    
+// Forgot username structs
+#[derive(Debug)]
+#[derive(Serialize, Deserialize)]
+pub struct ForgotUsername {
+    pub email: String,
+}
+#[derive(Debug)]
+#[derive(Serialize, Deserialize)]
+pub struct ForgotUsernameResponse {
+    pub login_error: LoginError,
+    pub success: bool,
+}
+
+
+
+
+
+
+#[derive(Debug)]
+#[derive(Serialize, Deserialize)]
+pub struct Logout {
+    pub token: String,
+}
+
+#[derive(Debug)]
+#[derive(Serialize, Deserialize)]
+pub struct LogoutResponse {
+    pub success: bool,
+}
