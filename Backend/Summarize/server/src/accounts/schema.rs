@@ -5,14 +5,14 @@ use serde::{Serialize, Deserialize};
 // Login Error Struct
 #[derive(Debug)]
 #[derive(Serialize, Deserialize)]
-pub struct LoginError {
+pub struct AccountError {
     pub is_error: bool,
     pub error_message: Option<String>,
 }
 
-impl LoginError {
-    pub fn new() -> LoginError {
-        LoginError {
+impl AccountError {
+    pub fn new() -> AccountError {
+        AccountError {
             is_error: false,
             error_message: None,
         }
@@ -31,23 +31,24 @@ impl LoginError {
 // Login Email Structs
 #[derive(Debug)]
 #[derive(Serialize, Deserialize)]
-pub struct LoginEmail {
+pub struct LoginEmailRequestSchema {
     pub email: String,
 }
 
 #[derive(Debug)]
 #[derive(Serialize, Deserialize)]
-pub struct LoginEmailResponse {
-    pub login_error: LoginError,
+pub struct LoginEmailResponseSchema {
+    pub account_error: AccountError,
     pub is_email_stored: bool,
-    // token?
+    pub login_email_response_token: String,
 }
 
-impl LoginEmailResponse {
-    pub fn new() -> LoginEmailResponse {
-        LoginEmailResponse {
-            login_error: LoginError::new(),
+impl LoginEmailResponseSchema {
+    pub fn new() -> LoginEmailResponseSchema {
+        LoginEmailResponseSchema {
+            account_error: AccountError::new(),
             is_email_stored: false,
+            login_email_response_token: String::new(),
         }
     }
 }
@@ -55,102 +56,60 @@ impl LoginEmailResponse {
 // Login Password Structs
 #[derive(Debug)]
 #[derive(Serialize, Deserialize)]
-pub struct LoginPassword {
-    pub email: String, // Change to a token stored on redis?
+pub struct LoginPasswordRequestSchema {
+    pub login_email_response_token: String, // Change to a token stored on redis?
     pub password: String,
     pub remember_me: bool,
 }
 
 #[derive(Debug)]
 #[derive(Serialize, Deserialize)]
-pub struct LoginPasswordResponse {
-    pub login_error: LoginError,
-    pub password_content: PasswordContent,
-}
-
-impl LoginPasswordResponse {
-    pub fn new() -> LoginPasswordResponse {
-        LoginPasswordResponse {
-            login_error: LoginError::new(),
-            password_content: PasswordContent::new(),
-        }
-    }
-}
-
-#[derive(Debug)]
-#[derive(Serialize, Deserialize)]
-pub struct PasswordContent {
-    pub is_email_stored: bool,
+pub struct LoginPasswordResponseSchema {
+    pub account_error: AccountError,
     pub is_password_correct: bool,
     pub has_totp: bool,
-    pub token: Option<String>,
+    pub auth_token: Option<String>,
+    pub login_password_response_token: Option<String>,
 }
 
-impl PasswordContent {
-    pub fn new() -> PasswordContent {
-        PasswordContent {
-            is_email_stored: false,
+impl LoginPasswordResponseSchema {
+    pub fn new() -> LoginPasswordResponseSchema {
+        LoginPasswordResponseSchema {
+            account_error: AccountError::new(),
             is_password_correct: false,
             has_totp: false,
-            token: None,
+            auth_token: None,
+            login_password_response_token: None,
         }
     }
 }
+
 
 // Login Totp Structs
 #[derive(Debug)]
 #[derive(Serialize, Deserialize)]
-pub struct LoginTotp {
-    pub email: String,
-    pub password: String, // Change email and password to a token?
+pub struct LoginTotpRequestSchema {
+    pub login_password_response_token: String,
     pub totp: String,
 }
 
 #[derive(Debug)]
 #[derive(Serialize, Deserialize)]
-pub struct LoginTotpResponse {
-    pub login_error: LoginError,
-    pub totp_content: TotpContent,
-}
-
-impl LoginTotpResponse {
-    pub fn new() -> LoginTotpResponse {
-        LoginTotpResponse {
-            login_error: LoginError::new(),
-            totp_content: TotpContent::new(),
-        }
-    }
-}
-
-#[derive(Debug)]
-#[derive(Serialize, Deserialize)]
-pub struct TotpContent {
-    pub is_email_stored: bool,
-    pub is_password_correct: bool,
-    pub has_totp: bool,
+pub struct LoginTotpResponseSchema {
+    pub account_error: AccountError,
     pub is_totp_correct: bool,
-    pub token: Option<String>,
+    pub auth_token: Option<String>,
 }
 
-impl TotpContent {
-    pub fn new() -> TotpContent {
-        TotpContent {
-            is_email_stored: false,
-            is_password_correct: false,
-            has_totp: false,
+impl LoginTotpResponseSchema {
+    pub fn new() -> LoginTotpResponseSchema {
+        LoginTotpResponseSchema {
+            account_error: AccountError::new(),
             is_totp_correct: false,
-            token: None,
+            auth_token: None,
         }
     }
 }
-
-
-
-
-
-
-
-
 
 
 
@@ -162,38 +121,37 @@ impl TotpContent {
 // Register Structs
 #[derive(Debug)]
 #[derive(Serialize, Deserialize)]
-pub struct RegisterEmail {
+pub struct RegisterEmailRequestSchema {
     pub email: String,
 }
 
 #[derive(Debug)]
 #[derive(Serialize, Deserialize)]
-pub struct RegisterEmailResponse {
-    pub login_error: LoginError,
+pub struct RegisterEmailResponseSchema {
+    pub account_error: AccountError,
     pub is_email_stored: bool,
-    pub token: Option<String>
+    pub register_response_token: Option<String>,
 }
 
 #[derive(Debug)]
 #[derive(Serialize, Deserialize)]
-pub struct RegisterVerify {
-    pub email: String, // Remove?
-    pub token: String, // either enter the token or click the link sent to them via email
+pub struct RegisterVerifyRequestSchema {
+    pub register_response_token: String, // opaque token in place of the email
+    pub verification_token: String, // thing they enter on the site
 }
 
 #[derive(Debug)]
 #[derive(Serialize, Deserialize)]
-pub struct RegisterVerifyResponse {
-    pub login_error: LoginError,
-    pub is_email_stored: bool,
-    pub is_token_correct: bool,
+pub struct RegisterVerifyResponseSchema {
+    pub account_error: AccountError,
+    pub is_verification_token_correct: bool,
+    pub verify_response_token: Option<String>,
 }
 
 #[derive(Debug)]
 #[derive(Serialize, Deserialize)]
-pub struct RegisterDetails {
-    pub email: String, // Remove?
-    pub token: String,
+pub struct RegisterDetailsRequestSchema {
+    pub verify_response_token: String,
     pub username: String,
     pub password: String,
     pub password_confirmation: String,
@@ -203,8 +161,8 @@ pub struct RegisterDetails {
 
 #[derive(Debug)]
 #[derive(Serialize, Deserialize)]
-pub struct RegisterDetailsResponse {
-    pub login_error: LoginError,
+pub struct RegisterDetailsResponseSchema {
+    pub account_error: AccountError,
     pub success: bool,
 }
 
@@ -230,8 +188,9 @@ pub struct PasswordReset {
 #[derive(Debug)]
 #[derive(Serialize, Deserialize)]
 pub struct PasswordResetResponse {
-    pub login_error: LoginError,
+    pub account_error: AccountError,
     pub success: bool,
+    // email a token to them
 }
 
 #[derive(Debug)]
@@ -246,7 +205,7 @@ pub struct PasswordResetConfirm {
 #[derive(Debug)]
 #[derive(Serialize, Deserialize)]
 pub struct PasswordResetConfirmResponse {
-    pub error: LoginError,
+    pub error: AccountError,
     pub success: bool,
 }
 
@@ -259,29 +218,10 @@ pub struct PasswordResetConfirmResponse {
 
 
     
-    
-// Forgot username structs
-#[derive(Debug)]
-#[derive(Serialize, Deserialize)]
-pub struct ForgotUsername {
-    pub email: String,
-}
-#[derive(Debug)]
-#[derive(Serialize, Deserialize)]
-pub struct ForgotUsernameResponse {
-    pub login_error: LoginError,
-    pub success: bool,
-}
-
-
-
-
-
-
 #[derive(Debug)]
 #[derive(Serialize, Deserialize)]
 pub struct Logout {
-    pub token: String,
+    pub auth_token: String,
 }
 
 #[derive(Debug)]
