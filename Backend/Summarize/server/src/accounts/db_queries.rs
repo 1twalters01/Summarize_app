@@ -26,11 +26,14 @@ pub async fn get_user_from_email_in_pg_users_table(pool: &Pool<Postgres>, email:
     return Ok(user)
 }
 
-pub fn set_email_user_in_redis(email: &str, user: User) {}
+pub fn set_email_user_in_redis(email: &str, user: User) {
+}
 
-pub fn get_user_from_email_in_redis(email: &str) {}
+pub fn get_user_from_email_in_redis(email: &str) {
+}
 
-pub fn delete_email_user_in_redis(email: &str) {}
+pub fn delete_email_user_in_redis(email: &str) {
+}
 
 fn fake_postgres_check_password(email: &String) -> bool {
     let email_database = vec![
