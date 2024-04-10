@@ -1,6 +1,5 @@
 use sqlx::{Pool, Postgres};
 use crate::accounts::datatypes::users::User;
-use sqlx::Error;
 
 pub fn fake_postgres_check_email(email: &String) -> bool {
     let email_database = vec![
@@ -11,7 +10,7 @@ pub fn fake_postgres_check_email(email: &String) -> bool {
     return email_database.contains(email);
 }
 
-pub async fn get_user_from_email_in_pg_users_table(pool: &Pool<Postgres>, email: &str) -> Result<User, Error> {
+pub async fn get_user_from_email_in_pg_users_table(pool: &Pool<Postgres>, email: &str) -> Result<User, sqlx::Error> {
     let user_select_query = sqlx::query("Select * from users WHERE email=($1)")
         .bind(email)
         .fetch_all(pool)
@@ -26,10 +25,10 @@ pub async fn get_user_from_email_in_pg_users_table(pool: &Pool<Postgres>, email:
     return Ok(user)
 }
 
-pub fn set_email_user_in_redis(email: &str, user: User) {
+pub fn set_token_user_in_redis(email: &str, user: User) {
 }
 
-pub fn get_user_from_email_in_redis(email: &str) {
+pub fn get_user_from_token_in_redis(email: &str) -> Result<User, Error> {
 }
 
 pub fn delete_email_user_in_redis(email: &str) {
