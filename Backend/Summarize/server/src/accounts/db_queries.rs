@@ -25,7 +25,7 @@ pub async fn get_user_from_email_in_pg_users_table(pool: &Pool<Postgres>, email:
     return Ok(user)
 }
 
-pub fn set_token_user_in_redis(email: &str, user: User) {
+pub fn set_token_user_in_redis(email: &str, user: User, expiry_in_seconds: Option<i64>) {
 }
 
 pub fn get_user_from_token_in_redis(email: &str) -> Result<User, Error> {
