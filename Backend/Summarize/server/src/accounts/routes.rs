@@ -1,6 +1,6 @@
 use actix_web::{post, HttpResponse, Responder, Result, web::Json};
 use crate::accounts::schema::{
-    LoginError,
+    AccountError,
     LoginEmail, LoginEmailResponse,
     LoginPassword, LoginPasswordResponse,
     LoginTotp, LoginTotpResponse,
@@ -25,11 +25,11 @@ async fn login_email(req_body: Json<LoginEmail>) -> Result<impl Responder> {
     // Validate the email from the request body
     let validated_email = validate_email(email.clone());
     if validated_email.is_err() {
-        let error: LoginError = LoginError{
+        let error: AccountError = AccountError{
             is_error: true,
             error_message: Some(validated_email.err().unwrap())
         };
-        res_body.login_error = error;
+        res_body.account_error = error;
 
         return Ok(HttpResponse::UnprocessableEntity()
             .content_type("application/json; charset=utf-8")
@@ -38,7 +38,9 @@ async fn login_email(req_body: Json<LoginEmail>) -> Result<impl Responder> {
     }
 
     // replace with postgres function
-    let is_email_stored = fake_postgres_check_email(&email);
+    // let is_email_stored = fake_postgres_check_email(&email);
+    let user_result: Option<User> = get_user_from_email_in_pg_users_table(pool, email.as_str());
+    let is_email_stored = user_result.ok().is_some();
     if is_email_stored == false {
         res_body.is_email_stored = false;
         return Ok(HttpResponse::Ok()
@@ -47,7 +49,15 @@ async fn login_email(req_body: Json<LoginEmail>) -> Result<impl Responder> {
         )
     }
     
+    let token: String = generate_opaque_token_of_length(25);
+    let user: User = user_result.ok().unwrap()
+    let expiry_in_seconds: Option<i64> = some(300);
+    let set_redis_result = set_token_user_in_redis(&token, &user, &expiry_in_seconds);
+    
+    if set_redis_result.is_err() { panic!("redis error, panic debug") }
+    
     res_body.is_email_stored = true;
+    res_body.login_email_responsd_token = token;
     return Ok(HttpResponse::NotFound()
         .content_type("application/json; charset=utf-8")
         .json(res_body)
