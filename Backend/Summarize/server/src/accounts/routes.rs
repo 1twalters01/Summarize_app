@@ -124,6 +124,8 @@ async fn login_password(data: Json<LoginPassword>, req: HttpRequest) -> Result<i
 
     // see if account has a totp
     if user.totp.is_some() == true {
+        // need to think of how to retain state of remember_me
+        // add a 0 or 1 to the end of the token to keep state?
         let token: String = generate_opaque_token_of_length(25);
         res_body.has_totp = true;
         res_body.login_password_response_token = token;
@@ -133,7 +135,7 @@ async fn login_password(data: Json<LoginPassword>, req: HttpRequest) -> Result<i
         )
     }
 
-    let token: String = generate_auth_token();
+    let token: String = generate_auth_token(user, remember_me);
     res_body.has_totp = false;
     res_body.auth_token = Some(token);
     save_authentication_token(user.uid, token);
@@ -145,9 +147,10 @@ async fn login_password(data: Json<LoginPassword>, req: HttpRequest) -> Result<i
 }
 
 
+        
 #[post("login/totp")]
-async fn login_totp(req_body: Json<LoginTotp>) -> Result<impl Responder> {
-    let LoginTotp { email, password, totp } = req_body.into_inner();
+async fn login_totp(data: Json<LoginTotp>, req: HttpRequest) -> Result<impl Responder> {
+    let LoginTotp { email, password, totp } = data.into_inner();
     let mut res_body: LoginTotpResponse = LoginTotpResponse::new();
 
     // Validate the email and password from the request body
