@@ -1,4 +1,6 @@
 # Summarise
+[Polyglot datatypes goes brr](https://github.com/1twalters01/Summarize_app/blob/main/Backend/Summarize/polyglot/src/datatypes.rs)
+
 ## Lanugages
 * Server:
     * Rust - Actix
