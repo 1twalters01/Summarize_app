@@ -121,17 +121,8 @@ impl User {
         return self.totp.fields.is_some();
     }
 
-    fn set_totp(&mut self, url: String) -> Result<(), String> {
-        let last_updated = SystemTime::now();
-        let totp_fields: TotpFields = TotpFields{url: url.clone(), last_updated: last_updated.clone()};
-        self.totp.fields = Some(totp_fields);
-
-        if self.totp.verified == false {
-            self.totp.verified = true;
-            self.totp.verified_at = Some(last_updated);
-        }
-
-        return Ok(());
+    fn set_totp(&mut self, url: String) {
+        self.totp.set_url(url);
     }
 
     pub fn check_totp(&mut self, totp: i64) -> bool {

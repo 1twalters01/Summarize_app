@@ -33,23 +33,20 @@ impl Totp {
 
     pub fn get_url(&self) ->  Option<String> {
         match self.fields {
-            Some(fields) => return fields.url,
+            Some(fields) => return Some(fields.url),
             None => return None,
         }
     }
 
-    pub fn get_last_updated(&self) {
+    pub fn get_last_updated(&self) -> Option<SystemTime> {
         match self.fields {
-            Some(fields) => return fields.last_updated,
+            Some(fields) => return Some(fields.last_updated),
             None => return None,
         }
     }
 
-    pub fn get_verified_at(&self) {
-        match self.fields {
-            Some(fields) => return fields.verified_at,
-            None => return None,
-        }
+    pub fn get_verified_at(&self) -> Option<SystemTime> {
+        return self.verified_at;
     }
 
     pub fn set_url(&self, url: String) {
@@ -57,11 +54,9 @@ impl Totp {
         
         if self.verified == false {
             self.verified = true;
-            let fields = TotpFields{url, verified_at = now , last_updated = now};
-            self.fields = fields;
-        } else {
-            self.fields.url = url;
-            self.fields.last_update = now;
+            self.verified_at = Some(now);
         }
+        let fields = TotpFields{url, last_updated: now};
+        self.fields = Some(fields);
     }
 }
