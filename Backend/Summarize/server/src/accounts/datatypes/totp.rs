@@ -1,31 +1,34 @@
 use std::time::SystemTime;
 
+#[derive(Debug)]
 pub struct Totp {
     pub verified: bool,
     pub verified_at: Option<SystemTime>,
     pub fields: Option<TotpFields>,
 }
 
+#[derive(Debug)]
 pub struct TotpFields {
     pub url: String,
     pub last_updated: SystemTime,
 }
 
 impl Totp {
-    pub fn new() {
+    pub fn new() -> Totp {
         Totp {
             verified: false,
             verified_at: None,
             fields: None,
         }
     }
+
     pub fn verify(&self) {
         self.verified = true;
-        self.verified_at = SystemTime::now();
+        self.verified_at = Some(SystemTime::now());
     }
 
     pub fn is_verified(&self) -> bool {
-        self.verified;
+        return self.verified;
     }
 
     pub fn get_url(&self) ->  Option<String> {

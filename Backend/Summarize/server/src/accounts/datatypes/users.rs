@@ -4,7 +4,9 @@ use std::{
 };
 
 use uuid::Uuid;
-use crate::accounts::datatypes::{passwords::Password, totp:Totp};
+use crate::accounts::datatypes::{passwords::Password, totp::Totp};
+
+use super::totp::TotpFields;
 
 
 #[derive(Debug)]
@@ -13,7 +15,6 @@ pub struct User {
     email: String,
     password: Password,
     totp: Totp,
-    // totp: Option<String>,
 
     username: String,
     first_name: Option<String>,
@@ -30,7 +31,6 @@ pub struct User {
 
     groups: Vec<String>, // TODO
     user_permissions: Vec<String>, // TODO
-    
 }
 
 impl User {
@@ -118,15 +118,20 @@ impl User {
     }
 
     pub fn is_totp_activated(&self) -> bool {
-        return self.totp.is_some();
+        return self.totp.fields.is_some();
     }
 
-    fn set_totp(&mut self, totp: String) -> bool {
-        self.totp = Some(totp.clone());
-        if self.totp == Some(totp) {
-            return true;
+    fn set_totp(&mut self, url: String) -> Result<(), String> {
+        let last_updated = SystemTime::now();
+        let totp_fields: TotpFields = TotpFields{url: url.clone(), last_updated: last_updated.clone()};
+        self.totp.fields = Some(totp_fields);
+
+        if self.totp.verified == false {
+            self.totp.verified = true;
+            self.totp.verified_at = Some(last_updated);
         }
-        return false;
+
+        return Ok(());
     }
 
     pub fn check_totp(&mut self, totp: i64) -> bool {
@@ -137,9 +142,10 @@ impl User {
     }
 
     pub fn totp_required(&mut self) -> bool {
-        if self.totp == None {
+        if self.totp.fields.is_none() {
             return true
-        } else { return false; };
+        }
+        return false;
     }
 
     fn generate_totp_i64(&mut self) -> i64 {
@@ -154,11 +160,11 @@ impl User {
         return self.last_login;
     }
 
-    fn get_groups(&self) {
+    fn get_groups(&self) -> Vec<String> {
         return self.groups;
     }
     
-    fn get_user_permissions(&self) {
+    fn get_user_permissions(&self) -> Vec<String>{
         return self.user_permissions;
     }
      
