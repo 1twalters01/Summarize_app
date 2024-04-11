@@ -11,7 +11,7 @@ use crate::accounts::datatypes::{passwords::Password, totp::Totp};
 #[derive(Debug)]
 #[derive(Serialize, Deserialize)]
 pub struct User {
-    id: Uuid,
+    uuid: Uuid,
     email: String,
     password: Password,
     totp: Totp,
@@ -62,8 +62,8 @@ impl User {
         }
     }
 
-    pub fn get_id(&self) -> Uuid {
-        self.id.to_owned()
+    pub fn get_uuid(&self) -> Uuid {
+        self.uuid.to_owned()
     }
 
     pub fn get_username(&self) -> String {
@@ -108,7 +108,7 @@ impl User {
         return Password::set_password(&mut self.password, password);
     }
 
-    pub fn check_password(&self, password: String) -> Result<(), Error> {
+    pub fn check_password(&self, password: &str) -> Result<(), Error> {
         match Password::check_password(&self.password, password) {
             Ok(_) => return Ok(()),
             Err(err) => return Err(Error::new(

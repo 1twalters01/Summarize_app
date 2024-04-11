@@ -55,7 +55,7 @@ impl LoginEmailResponseSchema {
 
 // Login Password Structs
 #[derive(Debug)]
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct LoginPasswordRequestSchema {
     pub login_email_response_token: String, // Change to a token stored on redis?
     pub password: String,

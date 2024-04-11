@@ -40,7 +40,7 @@ impl Password {
     }
 
 
-    pub fn check_password(&self, password: String) -> Result<(), argon2::password_hash::Error> {
+    pub fn check_password(&self, password: &str) -> Result<(), argon2::password_hash::Error> {
          let parsed_hash = PasswordHash::new(&self.password_hash).unwrap();
          Argon2::default().verify_password(password.as_bytes(), &parsed_hash)
     }

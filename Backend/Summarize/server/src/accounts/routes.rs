@@ -15,9 +15,14 @@ use crate::accounts::validations::{validate_email, validate_password, validate_t
 use crate::databases::connections::{create_pg_pool_connection, create_redis_client_connection};
 use crate::accounts::db_queries::{
     get_user_from_email_in_pg_users_table,
-    set_token_user_in_redis
+    set_token_user_in_redis,
+    get_user_from_token_in_redis,
 };
-use crate::tokens::generate_opaque_token_of_length;
+use crate::tokens::{
+    generate_opaque_token_of_length,
+    generate_auth_token,
+    save_authentication_token,
+};
 
 #[post("login/email")]
 async fn login_email(data: Json<LoginEmailRequestSchema>) -> Result<impl Responder> {
@@ -40,7 +45,6 @@ async fn login_email(data: Json<LoginEmailRequestSchema>) -> Result<impl Respond
     }
 
     let pool = create_pg_pool_connection().await;
-    let con = create_redis_client_connection();
 
     let user_result: Result<User, sqlx::Error> = get_user_from_email_in_pg_users_table(&pool, email.as_str()).await;
     let is_email_stored = (&user_result).as_ref().ok().is_some();
@@ -52,6 +56,7 @@ async fn login_email(data: Json<LoginEmailRequestSchema>) -> Result<impl Respond
         )
     }
     
+    let con = create_redis_client_connection();
     let token: String = generate_opaque_token_of_length(25);
     let user: User = user_result.ok().unwrap();
     let expiry_in_seconds: Option<i64> = Some(300);
@@ -72,7 +77,7 @@ async fn login_email(data: Json<LoginEmailRequestSchema>) -> Result<impl Respond
 
 #[post("login/password")]
 async fn login_password(data: Json<LoginPasswordRequestSchema>, req: HttpRequest) -> Result<impl Responder> {
-    let login_email_response_token: String = req.headers().get().String().unwrap();
+    let login_email_response_token: String = req.headers().get("login_email_response_token").unwrap().to_str().unwrap().to_string();
     let LoginPasswordRequestSchema { login_email_response_token, password, remember_me } = LoginPasswordRequestSchema {
         login_email_response_token,
         password: data.clone().password,
@@ -81,28 +86,29 @@ async fn login_password(data: Json<LoginPasswordRequestSchema>, req: HttpRequest
     let mut res_body: LoginPasswordResponseSchema = LoginPasswordResponseSchema::new();
 
     // get user from token in redis
-    let user: User = match get_user_from_token_in_redis(login_email_response_token) {
+    let con = create_redis_client_connection();
+    let user: User = match get_user_from_token_in_redis(con, &login_email_response_token) {
         Err(err) => {
             let error: AccountError = AccountError {
                 is_error: true,
-                error_message: err,
+                error_message: Some(err),
             };
             res_body.account_error = error;
             return Ok(HttpResponse::UnprocessableEntity()
             .content_type("application/json; charset=utf-8")
             .json(res_body))
         },
-        Some(user) => user,
-    }
+        Ok(user) => user,
+    };
 
     // check if the entered password is a valid password
     let validated_password = validate_password(password.clone());
     if validated_password.is_err() {
-        let error: LoginError = LoginError{
+        let error: AccountError = AccountError{
             is_error: true,
             error_message: Some(validated_password.err().unwrap())
         };
-        res_body.login_error = error;
+        res_body.account_error = error;
 
         return Ok(HttpResponse::UnprocessableEntity()
             .content_type("application/json; charset=utf-8")
@@ -113,13 +119,17 @@ async fn login_password(data: Json<LoginPasswordRequestSchema>, req: HttpRequest
     
 
     // check if password is correct for the given user
-    let is_correct_password = fake_postgres_check_password(&password);
-    if is_correct_password == false {
-        let error: LoginError = LoginError{
+    let check_password = user.check_password(&password);
+    // let is_correct_password = fake_postgres_check_password(&password);
+    if check_password.is_err() {
+        let error: AccountError = AccountError{
             is_error: true,
-            error_message: String::from("Incorrect password")
+            error_message: Some(String::from("Incorrect password")),
         };
-        res_body.password_content.is_password_correct = false;
+
+        res_body.account_error = error;
+        res_body.is_password_correct = false;
+        
         return Ok(HttpResponse::Ok()
             .content_type("application/json; charset=utf-8")
             .json(res_body)
@@ -128,22 +138,23 @@ async fn login_password(data: Json<LoginPasswordRequestSchema>, req: HttpRequest
     res_body.is_password_correct = true;
 
     // see if account has a totp
-    if user.totp.is_some() == true {
+    if user.is_totp_activated() == true {
         // need to think of how to retain state of remember_me
         // add a 0 or 1 to the end of the token to keep state?
+        // create a TokenObject{ totp: true, token: String } as an &str using serde_json?
         let token: String = generate_opaque_token_of_length(25);
         res_body.has_totp = true;
-        res_body.login_password_response_token = token;
+        res_body.login_password_response_token = Some(token);
         return Ok(HttpResponse::Ok()
             .content_type("application/json; charset=utf-8")
             .json(res_body)
         )
     }
 
-    let token: String = generate_auth_token(user, remember_me);
+    let token: String = generate_auth_token(&user, remember_me);
+    save_authentication_token(user.get_uuid(), &token);
     res_body.has_totp = false;
     res_body.auth_token = Some(token);
-    save_authentication_token(user.uid, token);
 
     Ok(HttpResponse::Ok()
         .content_type("application/json; charset=utf-8")
@@ -161,11 +172,11 @@ async fn login_totp(data: Json<LoginTotp>, req: HttpRequest) -> Result<impl Resp
     // Validate the email and password from the request body
     let validated_email = validate_email(email.clone());
     if validated_email.is_err() {
-        let error: LoginError = LoginError{
+        let error: AccountError = AccountError{
             is_error: true,
             error_message: Some(validated_email.err().unwrap())
         };
-        res_body.login_error = error;
+        res_body.account_error = error;
 
         return Ok(HttpResponse::UnprocessableEntity()
             .content_type("application/json; charset=utf-8")
@@ -176,11 +187,11 @@ async fn login_totp(data: Json<LoginTotp>, req: HttpRequest) -> Result<impl Resp
 
     let validated_password = validate_password(password.clone());
     if validated_password.is_err() {
-        let error: LoginError = LoginError{
+        let error: AccountError = AccountError{
             is_error: true,
             error_message: Some(validated_password.err().unwrap())
         };
-        res_body.login_error = error;
+        res_body.account_error = error;
 
         return Ok(HttpResponse::UnprocessableEntity()
             .content_type("application/json; charset=utf-8")
@@ -190,11 +201,11 @@ async fn login_totp(data: Json<LoginTotp>, req: HttpRequest) -> Result<impl Resp
 
     let validated_totp = validate_totp(totp.clone());
     if validated_totp.is_err() {
-        let error: LoginError = LoginError{
+        let error: AccountError = AccountError{
             is_error: true,
             error_message: Some(validated_password.err().unwrap())
         };
-        res_body.login_error = error;
+        res_body.account_error = error;
 
         return Ok(HttpResponse::UnprocessableEntity()
             .content_type("application/json; charset=utf-8")
@@ -289,8 +300,8 @@ async fn registerEmail(req_body: Json<RegisterEmail>) -> Result<impl Responder> 
 }
 
 #[post("register/verify/{uidb64}/{token}")]
-async fn registerVerify(req_body: Json<RegisterVerify>) -> Result<impl Responder> {
-    let RegisterVerify { email, token } = req_body.into_inner();
+async fn registerVerify(req_body: Json<RegisterVerifyRequestSchema>) -> Result<impl Responder> {
+    let RegisterVerifyRequestSchema { email, token } = req_body.into_inner();
     // let uid = base64::decode(uidb64).unwrap();
 
     // check token associated with uid
@@ -310,8 +321,8 @@ async fn registerVerify(req_body: Json<RegisterVerify>) -> Result<impl Responder
 }
 
 #[post("register/details/{uidb64}/{token}")]
-async fn registerDetails(req_body: Json<RegisterDetails>) -> Result<impl Responder> {
-    let RegisterDetails { email, password, password_confirmation, username, first_name, last_name, token } = req_body.into_inner();
+async fn registerDetails(req_body: Json<RegisterDetailsRequestSchema>) -> Result<impl Responder> {
+    let RegisterDetailsRequestSchema { email, password, password_confirmation, username, first_name, last_name, token } = req_body.into_inner();
 
     // use token to get associated uid
 
@@ -370,59 +381,6 @@ async fn registerDetails(req_body: Json<RegisterDetails>) -> Result<impl Respond
         .json(false))
 }
 
-#[post("username-reset")]
-async fn username_reset(req_body: Json<UsernameReset>) -> Result<impl Responder> {
-    let UsernameReset { email } = req_body.into_inner();
-
-    let validated_email = validate_email(email.clone());
-    if validated_email.is_err() {
-        return Ok(HttpResponse::UnprocessableEntity()
-            .content_type("application/json; charset=utf-8")
-            .json(validated_email.err().unwrap()))
-    }
-    println!("email: {:#?}", email);
-
-    let email_database = vec![
-        String::from("test@something.com"),
-        String::from("test2@something.com"),
-        String::from("test3@something.com")];
-
-    if email_database.contains(&email) {
-        // generate uidb64
-        // generate token
-        // create link
-        // send email that contains link
-        // set allow change username to true
-        return Ok(HttpResponse::Conflict()
-            .content_type("application/json; charset=utf-8")
-            .json(true))
-    } else {
-        return Ok(HttpResponse::NotFound()
-            .content_type("application/json; charset=utf-8")
-            .json(false))
-    }
-}
-
-#[post("username-reset/{uidb64}/{token}")]
-async fn username_reset_confirm(req_body: Json<UsernameResetConfirm>) -> Result<impl Responder> {
-    let UsernameResetConfirm { username } = req_body.into_inner();
-
-    let validated_username = validate_username(username.clone());
-    if validated_username.is_err() {
-        return Ok(HttpResponse::UnprocessableEntity()
-            .content_type("application/json; charset=utf-8")
-            .json(validated_username.err().unwrap()))
-    }
-
-    // check if the username is already found in the database. If it is then return error
-    // get uid from uidb64
-    // if change is not allowed then error
-    // set username to the username
-
-    return Ok(HttpResponse::NotFound()
-        .content_type("application/json; charset=utf-8")
-        .json(true))
-}
 
 #[post("password-reset")]
 async fn password_reset(req_body: Json<PasswordReset>) -> Result<impl Responder> {
