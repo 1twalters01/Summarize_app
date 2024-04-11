@@ -10,8 +10,10 @@ use std::{
     result::Result,
     io::{Error, ErrorKind}
 };
+use serde::{Serialize, Deserialize};
 
 #[derive(Debug)]
+#[derive(Serialize, Deserialize)]
 pub struct Password {
     password_hash: String,
     salt: SaltString,

@@ -2,14 +2,14 @@ use std::{
     time::SystemTime,
     io::{Error, ErrorKind},
 };
+use serde::{Serialize, Deserialize};
 
 use uuid::Uuid;
 use crate::accounts::datatypes::{passwords::Password, totp::Totp};
 
-use super::totp::TotpFields;
-
 
 #[derive(Debug)]
+#[derive(Serialize, Deserialize)]
 pub struct User {
     id: Uuid,
     email: String,

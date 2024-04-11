@@ -1,14 +1,7 @@
+use redis::{Commands, Connection, ExistenceCheck, RedisResult, SetExpiry, SetOptions};
 use sqlx::{Pool, Postgres};
 use crate::accounts::datatypes::users::User;
 
-pub fn fake_postgres_check_email(email: &String) -> bool {
-    let email_database = vec![
-        String::from("test@something.com"),
-        String::from("test2@something.com"),
-        String::from("test3@something.com")
-    ];
-    return email_database.contains(email);
-}
 
 pub async fn get_user_from_email_in_pg_users_table(pool: &Pool<Postgres>, email: &str) -> Result<User, sqlx::Error> {
     let user_select_query = sqlx::query("Select * from users WHERE email=($1)")
@@ -25,28 +18,19 @@ pub async fn get_user_from_email_in_pg_users_table(pool: &Pool<Postgres>, email:
     return Ok(user)
 }
 
-pub fn set_token_user_in_redis(token: &str, user: &User, expiry_in_seconds: &Option<i64>) {
+pub async fn set_token_user_in_redis(mut con: Connection, token: &str, user_json: &str, expiry_in_seconds: &Option<i64>) -> RedisResult<Vec<usize>> {
+    let expiry: usize = match expiry_in_seconds {
+        Some(expiry_in_seconds) => *expiry_in_seconds as usize,
+        None => 0
+    };
+
+    let opts: SetOptions = SetOptions::default()
+        .conditional_set(ExistenceCheck::NX)
+        .get(true)
+        .with_expiration(SetExpiry::EX(expiry));
+    con.set_options(token, user_json, opts)
 }
 
-pub fn get_user_from_token_in_redis(token: &str) -> Result<User, Error> {
-}
-
-pub fn delete_email_user_in_redis(email: &str) {
-}
-
-fn fake_postgres_check_password(email: &String) -> bool {
-    let email_database = vec![
-        String::from("test@something.com"),
-        String::from("test2@something.com"),
-    ];
-    return email_database.contains(email);
-}
-
-fn fake_postgres_check_totp(email: &String) -> bool {
-    let email_database = vec![
-        String::from("test@something.com"),
-        String::from("test1@something.com"),
-    ];
-    return email_database.contains(email);
-}
+// pub fn get_user_from_token_in_redis(token: &str) -> Result<User, Error> {
+// }
 

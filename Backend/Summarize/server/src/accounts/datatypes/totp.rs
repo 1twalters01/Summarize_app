@@ -1,6 +1,8 @@
 use std::time::SystemTime;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug)]
+#[derive(Serialize, Deserialize)]
 pub struct Totp {
     pub verified: bool,
     pub verified_at: Option<SystemTime>,
@@ -8,6 +10,7 @@ pub struct Totp {
 }
 
 #[derive(Debug)]
+#[derive(Serialize, Deserialize)]
 pub struct TotpFields {
     pub url: String,
     pub last_updated: SystemTime,

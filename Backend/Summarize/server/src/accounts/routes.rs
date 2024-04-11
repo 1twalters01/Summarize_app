@@ -1,26 +1,28 @@
 use actix_web::{post, HttpRequest, HttpResponse, Responder, Result, web::Json};
+use crate::accounts::datatypes::users::User;
 use crate::accounts::schema::{
     AccountError,
-    LoginEmail, LoginEmailResponse,
-    LoginPassword, LoginPasswordResponse,
-    LoginTotp, LoginTotpResponse,
-    RegisterEmail, RegisterVerify, RegisterDetails, 
-    UsernameReset, 
-    UsernameResetConfirm, 
+    LoginEmailRequestSchema, LoginEmailResponseSchema,
+    LoginPasswordRequestSchema, LoginPasswordResponseSchema,
+    LoginTotpRequestSchema, LoginTotpResponseSchema,
+    RegisterEmailRequestSchema, RegisterEmailResponseSchema,
+    RegisterVerifyRequestSchema, RegisterVerifyResponseSchema,
+    RegisterDetailsRequestSchema, RegisterDetailsResponseSchema, 
     PasswordReset, 
     PasswordResetConfirm
 };
 use crate::accounts::validations::{validate_email, validate_password, validate_totp, validate_username, validate_first_name, validate_last_name};
 use crate::databases::connections::{create_pg_pool_connection, create_redis_client_connection};
 use crate::accounts::db_queries::{
-    fake_postgres_check_email, 
-    get_user_from_email_in_pg_users_table
+    get_user_from_email_in_pg_users_table,
+    set_token_user_in_redis
 };
+use crate::tokens::generate_opaque_token_of_length;
 
 #[post("login/email")]
-async fn login_email(data: Json<LoginEmail>) -> Result<impl Responder> {
+async fn login_email(data: Json<LoginEmailRequestSchema>) -> Result<impl Responder> {
     let email: String = data.into_inner().email;
-    let mut res_body: LoginEmailResponse = LoginEmailResponse::new();
+    let mut res_body: LoginEmailResponseSchema = LoginEmailResponseSchema::new();
 
     // Validate the email from the request body
     let validated_email = validate_email(email.clone());
@@ -37,10 +39,11 @@ async fn login_email(data: Json<LoginEmail>) -> Result<impl Responder> {
         )
     }
 
-    // replace with postgres function
-    // let is_email_stored = fake_postgres_check_email(&email);
-    let user_result: Option<User> = get_user_from_email_in_pg_users_table(pool, email.as_str());
-    let is_email_stored = user_result.ok().is_some();
+    let pool = create_pg_pool_connection().await;
+    let con = create_redis_client_connection();
+
+    let user_result: Result<User, sqlx::Error> = get_user_from_email_in_pg_users_table(&pool, email.as_str()).await;
+    let is_email_stored = (&user_result).as_ref().ok().is_some();
     if is_email_stored == false {
         res_body.is_email_stored = false;
         return Ok(HttpResponse::Ok()
@@ -50,14 +53,16 @@ async fn login_email(data: Json<LoginEmail>) -> Result<impl Responder> {
     }
     
     let token: String = generate_opaque_token_of_length(25);
-    let user: User = user_result.ok().unwrap()
-    let expiry_in_seconds: Option<i64> = some(300);
-    let set_redis_result = set_token_user_in_redis(&token, &user, &expiry_in_seconds);
+    let user: User = user_result.ok().unwrap();
+    let expiry_in_seconds: Option<i64> = Some(300);
+
+    let user_json = serde_json::to_string(&user).unwrap();
+    let set_redis_result = set_token_user_in_redis(con, &token, &user_json, &expiry_in_seconds);
     
-    if set_redis_result.is_err() { panic!("redis error, panic debug") }
+    if set_redis_result.await.is_err() { panic!("redis error, panic debug") }
     
     res_body.is_email_stored = true;
-    res_body.login_email_responsd_token = token;
+    res_body.login_email_response_token = token;
     return Ok(HttpResponse::NotFound()
         .content_type("application/json; charset=utf-8")
         .json(res_body)
@@ -66,14 +71,14 @@ async fn login_email(data: Json<LoginEmail>) -> Result<impl Responder> {
 
 
 #[post("login/password")]
-async fn login_password(data: Json<LoginPassword>, req: HttpRequest) -> Result<impl Responder> {
+async fn login_password(data: Json<LoginPasswordRequestSchema>, req: HttpRequest) -> Result<impl Responder> {
     let login_email_response_token: String = req.headers().get().String().unwrap();
-    let LoginPassword { login_email_response_token, password, remember_me } = LoginPassword {
+    let LoginPasswordRequestSchema { login_email_response_token, password, remember_me } = LoginPasswordRequestSchema {
         login_email_response_token,
-        data.clone().password,
-        data.into_inner().remember_me,
+        password: data.clone().password,
+        remember_me: data.into_inner().remember_me,
     };
-    let mut res_body: LoginPasswordResponse = LoginPasswordResponse::new();
+    let mut res_body: LoginPasswordResponseSchema = LoginPasswordResponseSchema::new();
 
     // get user from token in redis
     let user: User = match get_user_from_token_in_redis(login_email_response_token) {
