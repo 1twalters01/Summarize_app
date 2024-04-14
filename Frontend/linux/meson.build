@@ -9,14 +9,17 @@ deps = [
 # source file variables
 project_sources = []
 project_header_files = []
-configure_file(input : 'src/widget_test_2/widget_2.lua', output : 'widget_2.lua', copy : true)
 
-# include directories for h files
-inc = include_directories('include')
+# include directories for h files and lua files
+inc = [
+  include_directories('include'),
+  include_directories('lua')
+]
 
 # subdirs of the project
 subdir('src')
-subdir ('include')
+subdir('include')
+subdir('lua')
 
 executable('summarize',
   project_sources,
