@@ -1,8 +1,6 @@
 #include <gtk/gtk.h>
-
-#include "widget_test_2/widget_2.h"
 #include "activate_window/window_data.h"
-
+#include "widgets/widget_test_2/widget_2.h"
 
 void widget_3(GtkWidget *window, gpointer data) {
     WindowData *window_data;

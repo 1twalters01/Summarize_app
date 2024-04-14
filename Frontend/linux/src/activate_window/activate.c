@@ -1,7 +1,7 @@
 #include <gtk/gtk.h>
 #include "activate_window/activate.h"
 #include "activate_window/window_data.h"
-#include "widget_test_1_and_3/widget_1.h"
+#include "widgets/widget_test_1_and_3/widget_1.h"
 
 void activate(GtkApplication *app, gpointer data) {
     GtkWidget *window;

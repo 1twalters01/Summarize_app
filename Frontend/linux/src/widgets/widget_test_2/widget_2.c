@@ -2,11 +2,10 @@
 #include <lua.h>
 #include <lualib.h>
 #include <lauxlib.h>
-
-#include "widget_test_2/widget_2.h"
-#include "widget_test_1_and_3/widget_1.h"
-#include "widget_test_1_and_3/widget_3.h"
 #include "activate_window/window_data.h"
+#include "widgets/widget_test_2/widget_2.h"
+#include "widgets/widget_test_1_and_3/widget_1.h"
+#include "widgets/widget_test_1_and_3/widget_3.h"
 
 static const char *widget_2_lua_content(void) {
     lua_State *L = luaL_newstate();
