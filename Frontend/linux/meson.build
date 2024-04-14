@@ -9,6 +9,7 @@ deps = [
 # source file variables
 project_sources = []
 project_header_files = []
+configure_file(input : 'src/widget_test_2/widget_2.lua', output : 'widget_2.lua', copy : true)
 
 # include directories for h files
 inc = include_directories('include')
@@ -17,7 +18,7 @@ inc = include_directories('include')
 subdir('src')
 subdir ('include')
 
-executable('../target/summarize',
+executable('summarize',
   project_sources,
   include_directories : inc,
   dependencies : deps
