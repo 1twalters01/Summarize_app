@@ -3,8 +3,6 @@
 Currently making a comprehensive GTK4 baseline
 
 ## TODO
-- [ ] Get LuaRocks working
-- [ ] Get cjson and make it work on widget 2
 - [ ] Work out how to post/get requests with lua
 - [ ] Work out how to style
 - [ ] Style widget 3
