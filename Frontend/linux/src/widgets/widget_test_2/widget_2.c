@@ -2,7 +2,6 @@
 #include <lua.h>
 #include <lualib.h>
 #include <lauxlib.h>
-#include "activate_window/window_data.h"
 #include "widgets/widget_test_2/widget_2.h"
 #include "widgets/widget_test_1_and_3/widget_1.h"
 #include "widgets/widget_test_1_and_3/widget_3.h"
@@ -24,12 +23,12 @@ static const char *widget_2_lua_content(void) {
 }
 
 void widget_2(GtkWidget *window, gpointer data) {
-    WindowData *window_data;
+    GtkWidget *window_data;
     GtkWidget *grid;
     GtkWidget *button1;
     GtkWidget *button2;
 
-    window_data = (WindowData *)data;
+    window_data = (GtkWidget *)data;
 
     const char *content = widget_2_lua_content();
     button1 = gtk_button_new_with_label(content);
@@ -42,6 +41,6 @@ void widget_2(GtkWidget *window, gpointer data) {
     gtk_grid_attach(GTK_GRID(grid), button1, 0, 0, 1, 1);
     gtk_grid_attach(GTK_GRID(grid), button2, 1, 0, 1, 1);
 
-    gtk_window_set_child(GTK_WINDOW(window_data->window), grid);
+    gtk_window_set_child(GTK_WINDOW(window_data), grid);
 }
 

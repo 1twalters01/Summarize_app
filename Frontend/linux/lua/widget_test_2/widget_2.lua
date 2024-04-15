@@ -13,6 +13,5 @@ function GenerateContent(input)
         local content = "Read error with Lua.";
         return content;
     end
-
 end
 
