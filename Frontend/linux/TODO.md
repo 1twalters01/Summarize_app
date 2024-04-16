@@ -3,5 +3,5 @@
 Currently making a comprehensive GTK4 baseline
 
 ## TODO
-- [ ] Work out how to style
 - [ ] Style widget 2
+- [ ] Add SQLite to store an example token in widget 2 to store entry state

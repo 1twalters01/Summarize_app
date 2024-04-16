@@ -2,6 +2,7 @@
 #include <lua.h>
 #include <lualib.h>
 #include <lauxlib.h>
+#include <sqlite3.h>
 #include "widgets/widget_test_2/widget_2.h"
 #include "widgets/widget_test_1_and_3/widget_1.h"
 #include "widgets/widget_test_1_and_3/widget_3.h"
@@ -11,8 +12,8 @@ static const char *widget_2_button_1_lua_content(void) {
     luaL_openlibs(L);
     (void)luaL_dofile(L, "lua/widget_test_2/widget_2.lua");
 
-    // lua_getglobal(L, "ReadJsonFromFile");
-    lua_getglobal(L, "GetJsonFromUrl");
+    lua_getglobal(L, "ReadJsonFromFile");
+    // lua_getglobal(L, "GetJsonFromUrl");
     // lua_getglobal(L, "PostJsonFromUrl");
     lua_pushstring(L, "This is widget 2. Go to widget1.");
     lua_pcall(L, 1, 1, 0);
