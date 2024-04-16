@@ -48,6 +48,7 @@ void widget_2(GtkWidget *widget, gpointer data) {
     entry = gtk_entry_new();
     const char *entry_text = "Enter text here:";
     gtk_entry_set_placeholder_text(GTK_ENTRY(entry), entry_text);
+    g_signal_connect(entry, "activate", G_CALLBACK(entry_submitted), entry);
 
     submit = gtk_button_new_with_label("Submit");
     g_signal_connect(submit, "clicked", G_CALLBACK(entry_submitted), entry);
