@@ -24,7 +24,9 @@ function GetJsonFromUrl(input)
 
     print(response)
     print(status_code)
-    print(headers)
+    for key, value in pairs(headers) do
+        print(tostring(key)..": "..tostring(value))
+    end
     print(status_line)
 
     -- should actually be if status_code is in the 200s

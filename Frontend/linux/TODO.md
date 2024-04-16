@@ -4,4 +4,4 @@ Currently making a comprehensive GTK4 baseline
 
 ## TODO
 - [ ] Work out how to style
-- [ ] Style widget 3
+- [ ] Style widget 2
