@@ -11,7 +11,9 @@ static const char *widget_2_button_1_lua_content(void) {
     luaL_openlibs(L);
     (void)luaL_dofile(L, "lua/widget_test_2/widget_2.lua");
 
-    lua_getglobal(L, "GenerateContent");
+    // lua_getglobal(L, "ReadJsonFromFile");
+    lua_getglobal(L, "GetJsonFromUrl");
+    // lua_getglobal(L, "PostJsonFromUrl");
     lua_pushstring(L, "This is widget 2. Go to widget1.");
     lua_pcall(L, 1, 1, 0);
 
@@ -26,7 +28,7 @@ static void entry_submitted(GtkEditable *button, gpointer data) {
     g_print("Entry contents: %s\n", text);
 }
 
-void widget_2(GtkWidget *window, gpointer data) {
+void widget_2(GtkWidget *widget, gpointer data) {
     GtkWidget *window_data;
     GtkWidget *grid;
     GtkWidget *button1;

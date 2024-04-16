@@ -2,7 +2,7 @@
 #include "widgets/widget_test_2/widget_2.h"
 #include "widgets/widget_test_1_and_3/widget_3.h"
 
-void widget_3(GtkWidget *window, gpointer data) {
+void widget_3(GtkWidget *widget, gpointer data) {
     GtkWidget *window_data;
     GtkWidget *button;
 
