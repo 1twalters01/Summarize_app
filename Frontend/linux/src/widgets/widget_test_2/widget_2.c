@@ -7,16 +7,17 @@
 #include "widgets/widget_test_1_and_3/widget_1.h"
 #include "widgets/widget_test_1_and_3/widget_3.h"
 
+
 static char *get_entry_data_from_db(void) {
     sqlite3 *db;
     int rc;
     sqlite3_stmt *stmt1;
     sqlite3_stmt *stmt2;
+
     char *text = "";
     char *result = "";
     
     
-    // text = NULL;
     rc = sqlite3_open("data/example.db", &db);
     if (rc != SQLITE_OK) {
         fprintf(stderr, "Cannot open database: %s\n", sqlite3_errmsg(db));
@@ -43,52 +44,37 @@ static char *get_entry_data_from_db(void) {
         result = (char *) malloc(strlen(text) + 1);
         if (result == NULL) {
             fprintf(stderr, "Memory allocation failed\n");
+            sqlite3_close(db);
             return "";
         }
+
         strcpy(result, text);
-        printf("working test: %s\n", text);
-        printf("working result: %s\n", result);
-        strcpy(text, result);
-        printf("working test: %s\n", text);
-        printf("working result: %s\n", result);
+
     } else if (rc == SQLITE_DONE) {
-        printf("No rows found with the given ID.\n");
-
-
-
+        printf("No rows found with the given name.\n");
 
         const char *text = "test";
         const char *insert_sql_insert = "INSERT INTO EntryData (name, text) VALUES (?, ?)";
-
         rc = sqlite3_prepare_v2(db, insert_sql_insert, -1, &stmt2, 0);
-            
         if (rc != SQLITE_OK) {
             fprintf(stderr, "SQL error: %s\n", sqlite3_errmsg(db));
         } 
 
         sqlite3_bind_text(stmt2, 1, name, -1, SQLITE_STATIC);
         sqlite3_bind_text(stmt2, 2, text, -1, SQLITE_STATIC);
-
         rc = sqlite3_step(stmt2);
         if (rc != SQLITE_DONE) {
             fprintf(stderr, "SQL err: %s\n", sqlite3_errmsg(db));
         }
 
         sqlite3_finalize(stmt2);
+
     } else {
         fprintf(stderr, "Error retrieving data: %s\n", sqlite3_errmsg(db));
     }
 
-    printf("text test: %s\n", text);
-    printf("text result: %s\n", result);
-
     sqlite3_finalize(stmt1);
-    printf("text test: %s\n", text);
-    printf("text result: %s\n", result);
     sqlite3_close(db);
-    
-    printf("text test: %s\n", text);
-    printf("text result: %s\n", result);
 
     return (char *) result;
 }
@@ -193,11 +179,9 @@ void widget_2(GtkWidget *widget, gpointer data) {
     buffer = gtk_entry_buffer_new(NULL, 0);
 
     char *buffer_text = get_entry_data_from_db();
-    printf("result is this: %s\n", buffer_text);
     gtk_entry_set_buffer(GTK_ENTRY(entry), buffer);
     gtk_entry_buffer_set_text(buffer, buffer_text, -1);
-    const char *entry_text = "Enter text here:";
-    gtk_entry_set_placeholder_text(GTK_ENTRY(entry), entry_text);
+    gtk_entry_set_placeholder_text(GTK_ENTRY(entry), "Enter text here:");
     g_signal_connect(entry, "activate", G_CALLBACK(entry_submitted), entry);
     g_signal_connect(entry, "changed", G_CALLBACK(save_entry_data_to_db), entry);
 

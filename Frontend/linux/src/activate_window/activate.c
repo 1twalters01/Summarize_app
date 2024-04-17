@@ -7,8 +7,6 @@
 static void instantiate_db() {
     sqlite3 *db;
     int rc;
-    sqlite3_stmt *stmt;
-
 
     rc = sqlite3_open("data/example.db", &db);
     if (rc != SQLITE_OK) {
@@ -25,27 +23,6 @@ static void instantiate_db() {
         fprintf(stdout, "Table created successfully\n");
     }
 
-
-
-
-
-
-
-
-
-    // const char *check = "SELECT name FROM sqlite_master WHERE type='table'";
-    const char *check = "SELECT * FROM EntryData";
-    rc = sqlite3_prepare_v2(db, check, -1, &stmt, NULL);
-    if (rc != SQLITE_OK) {
-        fprintf(stderr, "SQL error: %s\n", sqlite3_errmsg(db));
-        sqlite3_close(db);
-    }
-
-    printf("Tables in the database:\n");
-    while (sqlite3_step(stmt) == SQLITE_ROW) {
-        const unsigned char *tableName = sqlite3_column_text(stmt, 0);
-        printf("%s\n", tableName);
-    }
     sqlite3_close(db);
 }
 
