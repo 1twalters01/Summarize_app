@@ -17,15 +17,9 @@ static char *get_entry_data_from_db(void) {
     char *text = "";
     char *result = "";
     
-    
     rc = sqlite3_open("data/example.db", &db);
-    if (rc != SQLITE_OK) {
-        fprintf(stderr, "Cannot open database: %s\n", sqlite3_errmsg(db));
-        return text;
-    }
 
     const char *query = "SELECT * FROM EntryData WHERE name = ?";
-
     rc = sqlite3_prepare_v2(db, query, -1, &stmt1, NULL);
     if (rc != SQLITE_OK) {
         fprintf(stderr, "Failed to prepare statement: %s\n", sqlite3_errmsg(db));
@@ -35,11 +29,9 @@ static char *get_entry_data_from_db(void) {
 
     char *name = "example";
     sqlite3_bind_text(stmt1, 1, name, -1, SQLITE_STATIC);
-
     rc = sqlite3_step(stmt1);
 
     if (rc == SQLITE_ROW) {
-        // Need to change unsigned char * to char * some how
         text = (char *) sqlite3_column_text(stmt1, 2);
         result = (char *) malloc(strlen(text) + 1);
         if (result == NULL) {
@@ -51,8 +43,6 @@ static char *get_entry_data_from_db(void) {
         strcpy(result, text);
 
     } else if (rc == SQLITE_DONE) {
-        printf("No rows found with the given name.\n");
-
         const char *text = "test";
         const char *insert_sql_insert = "INSERT INTO EntryData (name, text) VALUES (?, ?)";
         rc = sqlite3_prepare_v2(db, insert_sql_insert, -1, &stmt2, 0);
@@ -84,14 +74,12 @@ static void save_entry_data_to_db(GtkEditable *entry, gpointer data) {
     sqlite3 *db;
     int rc;
     sqlite3_stmt *stmt;
+
     const gchar *text = gtk_editable_get_text(GTK_EDITABLE(data));
-
-
-    printf("key has been pressed\n");
-
 
     rc = sqlite3_open("data/example.db", &db);
 
+    // try updating entry data, otherwise insert it
     const char *update_sql_insert = "UPDATE EntryData set text = (?) WHERE id = 1";
     rc = sqlite3_prepare_v2(db, update_sql_insert, -1, &stmt, 0);
             
@@ -110,7 +98,6 @@ static void save_entry_data_to_db(GtkEditable *entry, gpointer data) {
     } else { 
         fprintf(stderr, "SQL error: %s\n", sqlite3_errmsg(db)); 
     }
-
 
 
 
