@@ -7,6 +7,33 @@
 #include "widgets/widget_test_1_and_3/widget_1.h"
 #include "widgets/widget_test_1_and_3/widget_3.h"
 
+static const char *get_entry_data_from_db(void) {
+    sqlite3 *db;
+    int rc;
+    sqlite3_stmt *stmt;
+    
+    const char *query = "SELECT text FROM EntryData WHERE id=1";
+    
+    rc = sqlite3_prepare_v2(db, check, -1, &stmt, NULL);
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "SQL error: %s\n", sqlite3_errmsg(db));
+        sqlite3_close(db);
+    }
+
+    if (sqlite3_step(stmt) == SQLITE_ROW) {
+        // Need to change unsigned char * to char * some how
+        const unsigned char *text = sqlite3_column_text(stmt, 0);
+        printf("%s\n", text);
+    }
+    sqlite3_close(db);
+
+    return text;
+}
+
+static void save_entry_data_to_db(GtkEditable *entry, gpointer data) {
+    // perform sql query
+}
+
 static const char *widget_2_button_1_lua_content(void) {
     lua_State *L = luaL_newstate();
     luaL_openlibs(L);
@@ -49,6 +76,7 @@ void widget_2(GtkWidget *widget, gpointer data) {
     entry = gtk_entry_new();
     const char *entry_text = "Enter text here:";
     gtk_entry_set_placeholder_text(GTK_ENTRY(entry), entry_text);
+    gtk_entry_set_editable(GTK_ENTRY(entry), get_entry_data_from_db());
     g_signal_connect(entry, "activate", G_CALLBACK(entry_submitted), entry);
 
     submit = gtk_button_new_with_label("Submit");
