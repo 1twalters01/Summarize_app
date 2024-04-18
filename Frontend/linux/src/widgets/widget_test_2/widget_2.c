@@ -146,7 +146,6 @@ static void entry_submitted(GtkEditable *button, gpointer data) {
 
 void widget_2(GtkWidget *widget, gpointer data) {
     GtkWidget *window_data;
-    GtkWidget *grid;
     GtkWidget *button1;
     GtkWidget *button2;
     GtkWidget *entry;
@@ -175,12 +174,39 @@ void widget_2(GtkWidget *widget, gpointer data) {
     submit = gtk_button_new_with_label("Submit");
     g_signal_connect(submit, "clicked", G_CALLBACK(entry_submitted), entry);
 
-    grid = gtk_grid_new();
-    gtk_grid_attach(GTK_GRID(grid), button1, 0, 0, 1, 1);
-    gtk_grid_attach(GTK_GRID(grid), button2, 1, 0, 1, 1);
-    gtk_grid_attach(GTK_GRID(grid), entry, 0, 2, 1, 1);
-    gtk_grid_attach(GTK_GRID(grid), submit, 1, 2, 1, 1);
+    // GtkWidget *grid;
+    // grid = gtk_grid_new();
+    // gtk_grid_attach(GTK_GRID(grid), button1, 0, 0, 1, 1);
+    // gtk_grid_attach(GTK_GRID(grid), button2, 1, 0, 1, 1);
+    // gtk_grid_attach(GTK_GRID(grid), entry, 0, 2, 1, 1);
+    // gtk_grid_attach(GTK_GRID(grid), submit, 1, 2, 1, 1);
 
-    gtk_window_set_child(GTK_WINDOW(window_data), grid);
+    // gtk_window_set_child(GTK_WINDOW(window_data), grid);
+
+    
+
+    GtkWidget *box;
+    box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6);
+    
+    gtk_box_append(GTK_BOX(box), button1);
+    gtk_box_append(GTK_BOX(box), button2);
+    gtk_box_append(GTK_BOX(box), entry);
+    gtk_box_append(GTK_BOX(box), submit);
+
+
+    GtkCssProvider *provider = gtk_css_provider_new();
+    gtk_css_provider_load_from_data(provider,
+            ".custom-button {"
+            "    background-color: red;"
+            "    border-radius: 70px;"
+            "    border: 3px solid #ff33ff;"
+            "}",
+            -1);
+    GtkStyleContext *context = gtk_widget_get_style_context(button1);
+    gtk_widget_add_css_class(button1, "custom-button");
+    gtk_style_context_add_provider(context, GTK_STYLE_PROVIDER(provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+    g_object_unref(provider);
+    
+    gtk_window_set_child(GTK_WINDOW(window_data), box);
 }
 
