@@ -130,7 +130,7 @@ static const char *widget_2_button_1_lua_content(void) {
     lua_getglobal(L, "ReadJsonFromFile");
     // lua_getglobal(L, "GetJsonFromUrl");
     // lua_getglobal(L, "PostJsonFromUrl");
-    lua_pushstring(L, "This is widget 2. Go to widget1.");
+    lua_pushstring(L, "\nThis is widget 2. Go to widget1.");
     lua_pcall(L, 1, 1, 0);
 
     const char* content = lua_tostring(L, -1);
@@ -153,13 +153,34 @@ void widget_2(GtkWidget *widget, gpointer data) {
     GtkWidget *submit;
 
     window_data = (GtkWidget *)data;
+    GtkCssProvider *provider1 = gtk_css_provider_new();
+
 
     const char *content = widget_2_button_1_lua_content();
     button1 = gtk_button_new_with_label(content);
     g_signal_connect(button1, "clicked", G_CALLBACK(widget_1), window_data);
 
+    gtk_css_provider_load_from_data(provider1,
+            ".custom-button1 {             \
+            background-color: red;     \
+            border-radius: 70px;       \
+            border: 3px solid #ff33ff; \
+            }",
+            -1);
+    GtkStyleContext *context_button1 = gtk_widget_get_style_context(button1);
+    gtk_widget_add_css_class(button1, "custom-button1");
+    gtk_style_context_add_provider(context_button1, GTK_STYLE_PROVIDER(provider1), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+
+
     button2 = gtk_button_new_with_label("This is widget 2. Go to widget3");
     g_signal_connect(button2, "clicked", G_CALLBACK(widget_3), window_data);
+    
+    GtkCssProvider *provider2 = gtk_css_provider_new();
+    gtk_css_provider_load_from_path(provider2, "css/widget_test_2/widget_2.css");
+    GtkStyleContext *context_button2 = gtk_widget_get_style_context(button2);
+    gtk_widget_add_css_class(button2, "custom-button2");
+    gtk_style_context_add_provider(context_button2, GTK_STYLE_PROVIDER(provider2), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+
 
     entry = gtk_entry_new();
     buffer = gtk_entry_buffer_new(NULL, 0);
@@ -173,6 +194,9 @@ void widget_2(GtkWidget *widget, gpointer data) {
 
     submit = gtk_button_new_with_label("Submit");
     g_signal_connect(submit, "clicked", G_CALLBACK(entry_submitted), entry);
+    GtkStyleContext *context_submit = gtk_widget_get_style_context(submit);
+    gtk_widget_add_css_class(submit, "submit");
+    gtk_style_context_add_provider(context_submit, GTK_STYLE_PROVIDER(provider2), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
 
     // GtkWidget *grid;
     // grid = gtk_grid_new();
@@ -185,44 +209,38 @@ void widget_2(GtkWidget *widget, gpointer data) {
 
     
 
+    GtkWidget *mainBox;
+    GtkWidget *centerBox;
     GtkWidget *box;
+    mainBox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
+    centerBox = gtk_center_box_new();
+    gtk_orientable_set_orientation(GTK_ORIENTABLE(centerBox), GTK_ORIENTATION_VERTICAL);
     box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6);
     
-    gtk_box_append(GTK_BOX(box), button1);
-    gtk_box_append(GTK_BOX(box), button2);
+    gtk_widget_set_margin_start(mainBox, 50);
+    gtk_widget_set_margin_end(mainBox, 50);
+    gtk_widget_set_margin_top(button1, 20);
+    gtk_widget_set_margin_bottom(mainBox, 80);
+    gtk_box_set_homogeneous(GTK_BOX(mainBox), true);
+    // gtk_box_set_homogeneous(GTK_BOX(box), true);
     gtk_box_append(GTK_BOX(box), entry);
     gtk_box_append(GTK_BOX(box), submit);
-
-
-    GtkCssProvider *provider1 = gtk_css_provider_new();
-    gtk_css_provider_load_from_data(provider1,
-            ".custom-button1 {             \
-                background-color: red;     \
-                border-radius: 70px;       \
-                border: 3px solid #ff33ff; \
-            }",
-            -1);
-    GtkStyleContext *context_button1 = gtk_widget_get_style_context(button1);
-    gtk_widget_add_css_class(button1, "custom-button1");
-    gtk_style_context_add_provider(context_button1, GTK_STYLE_PROVIDER(provider1), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+    gtk_center_box_set_center_widget(GTK_CENTER_BOX(centerBox), box);
+    gtk_widget_set_size_request(submit, -1, 70);
+    gtk_box_append(GTK_BOX(mainBox), button1);
+    gtk_box_append(GTK_BOX(mainBox), centerBox);
+    gtk_box_append(GTK_BOX(mainBox), button2);
 
 
 
-    GtkCssProvider *provider2 = gtk_css_provider_new();
-    gtk_css_provider_load_from_path(provider2, "css/widget_test_2/widget_2.css");
-    GtkStyleContext *context_button2 = gtk_widget_get_style_context(button2);
-    gtk_widget_add_css_class(button2, "custom-button2");
-    gtk_style_context_add_provider(context_button2, GTK_STYLE_PROVIDER(provider2), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
 
-    GtkStyleContext *context_submit = gtk_widget_get_style_context(submit);
-    gtk_widget_add_css_class(submit, "submit");
-    gtk_style_context_add_provider(context_submit, GTK_STYLE_PROVIDER(provider2), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+
 
 
 
     g_object_unref(provider1);
     g_object_unref(provider2);
     
-    gtk_window_set_child(GTK_WINDOW(window_data), box);
+    gtk_window_set_child(GTK_WINDOW(window_data), mainBox);
 }
 

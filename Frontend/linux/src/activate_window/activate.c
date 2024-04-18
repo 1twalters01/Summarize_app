@@ -33,6 +33,7 @@ void activate(GtkApplication *app, gpointer data) {
     window = gtk_application_window_new(app);
     gtk_window_set_title(GTK_WINDOW(window), "Summarize");
     gtk_window_maximize(GTK_WINDOW(window));
+    gtk_widget_set_size_request(window, 900, 600);
 
     window_data = g_malloc(sizeof(GtkWidget));
     window_data = window;
