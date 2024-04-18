@@ -194,18 +194,34 @@ void widget_2(GtkWidget *widget, gpointer data) {
     gtk_box_append(GTK_BOX(box), submit);
 
 
-    GtkCssProvider *provider = gtk_css_provider_new();
-    gtk_css_provider_load_from_data(provider,
-            ".custom-button {"
-            "    background-color: red;"
-            "    border-radius: 70px;"
-            "    border: 3px solid #ff33ff;"
-            "}",
+    GtkCssProvider *provider1 = gtk_css_provider_new();
+    gtk_css_provider_load_from_data(provider1,
+            ".custom-button1 {             \
+                background-color: red;     \
+                border-radius: 70px;       \
+                border: 3px solid #ff33ff; \
+            }",
             -1);
-    GtkStyleContext *context = gtk_widget_get_style_context(button1);
-    gtk_widget_add_css_class(button1, "custom-button");
-    gtk_style_context_add_provider(context, GTK_STYLE_PROVIDER(provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
-    g_object_unref(provider);
+    GtkStyleContext *context_button1 = gtk_widget_get_style_context(button1);
+    gtk_widget_add_css_class(button1, "custom-button1");
+    gtk_style_context_add_provider(context_button1, GTK_STYLE_PROVIDER(provider1), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+
+
+
+    GtkCssProvider *provider2 = gtk_css_provider_new();
+    gtk_css_provider_load_from_path(provider2, "css/widget_test_2/widget_2.css");
+    GtkStyleContext *context_button2 = gtk_widget_get_style_context(button2);
+    gtk_widget_add_css_class(button2, "custom-button2");
+    gtk_style_context_add_provider(context_button2, GTK_STYLE_PROVIDER(provider2), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+
+    GtkStyleContext *context_submit = gtk_widget_get_style_context(submit);
+    gtk_widget_add_css_class(submit, "submit");
+    gtk_style_context_add_provider(context_submit, GTK_STYLE_PROVIDER(provider2), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+
+
+
+    g_object_unref(provider1);
+    g_object_unref(provider2);
     
     gtk_window_set_child(GTK_WINDOW(window_data), box);
 }

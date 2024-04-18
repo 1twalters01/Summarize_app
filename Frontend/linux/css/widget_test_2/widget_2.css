@@ -1,0 +1,10 @@
+button.custom-button2 {
+    background-color: green;
+    border-radius: 30px;
+    border: 3px solid #0033ff;
+}
+
+button.submit {
+    background-color: purple;
+    border-radius: 70px;
+}

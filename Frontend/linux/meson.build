@@ -15,12 +15,14 @@ project_header_files = []
 inc = [
   include_directories('include'),
   include_directories('lua'),
+  include_directories('css'),
 ]
 
 # subdirs of the project
 subdir('src')
 subdir('include')
 subdir('lua')
+subdir('css')
 subdir('data')
 
 executable('summarize',
