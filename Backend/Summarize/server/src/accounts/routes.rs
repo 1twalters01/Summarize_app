@@ -368,27 +368,14 @@ async fn password_reset(req_body: Json<PasswordReset>) -> Result<impl Responder>
             .content_type("application/json; charset=utf-8")
             .json(validated_email.err().unwrap()))
     }
-    println!("email: {:#?}", email);
 
-    let email_database = vec![
-        String::from("test@something.com"),
-        String::from("test2@something.com"),
-        String::from("test3@something.com")];
-
-    if email_database.contains(&email) {
-        // generate uidb64
-        // generate token
-        // create link
-        // send email that contains link
-        // set allow change password to true
-        return Ok(HttpResponse::Conflict()
-            .content_type("application/json; charset=utf-8")
-            .json(true))
-    } else {
-        return Ok(HttpResponse::NotFound()
-            .content_type("application/json; charset=utf-8")
-            .json(false))
-    }
+    // Check if email is in postgres database
+    // if not in database then return some not found error
+    // create a token
+    // try to email the account a message containing the token
+    // if unable to email then return an error
+    // add {key: token, value: email} to redis
+    // return ok
 }
 
 #[post("password-reset/{uidb64}/{token}")]
