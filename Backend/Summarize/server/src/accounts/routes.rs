@@ -165,7 +165,7 @@ async fn login_password(data: Json<LoginPasswordRequestSchema>, req: HttpRequest
 
         
 #[post("login/totp")]
-async fn login_totp(data: Json<LoginTotp>, req: HttpRequest) -> Result<impl Responder> {
+async fn login_totp(data: Json<LoginTotpRequestSchema>, req: HttpRequest) -> Result<impl Responder> {
     let LoginTotp { email, password, totp } = data.into_inner();
     let mut res_body: LoginTotpResponse = LoginTotpResponse::new();
 
@@ -266,7 +266,7 @@ async fn login_totp(data: Json<LoginTotp>, req: HttpRequest) -> Result<impl Resp
 
 
 #[post("register/email")]
-async fn registerEmail(req_body: Json<RegisterEmail>) -> Result<impl Responder> {
+async fn registerEmail(req_body: Json<RegisterEmailRequestSchema>) -> Result<impl Responder> {
     let email: String = req_body.into_inner().email;
 
     let validated_email = validate_email(email.clone());
@@ -277,67 +277,52 @@ async fn registerEmail(req_body: Json<RegisterEmail>) -> Result<impl Responder> 
     }
     println!("email: {:#?}", email);
 
-    let email_database = vec![
-        String::from("test@something.com"),
-        String::from("test2@something.com"),
-        String::from("test3@something.com")];
+    
 
-    if email_database.contains(&email) {
-        return Ok(HttpResponse::Conflict()
-            .content_type("application/json; charset=utf-8")
-            .json(true))
-    } else {
-        // Create user and add to database
-        // Create token instance, associate it with uid and add to token database
-        // encode the uid to get a uidb64
-        // combine the uid and the token
-        // email the user with the token
-        // if error return failed
-        return Ok(HttpResponse::Ok()
-            .content_type("application/json; charset=utf-8")
-            .json(true))
-    }
+    // Check if email is in postgres database
+    // if in database then return some conflict error
+    // create a token
+    // try to email the account a message containing the token
+    // if unable to email then return an error
+    // add {key: token, value: email} to redis
+    // return ok
 }
 
 #[post("register/verify/{uidb64}/{token}")]
 async fn registerVerify(req_body: Json<RegisterVerifyRequestSchema>) -> Result<impl Responder> {
-    let RegisterVerifyRequestSchema { email, token } = req_body.into_inner();
-    // let uid = base64::decode(uidb64).unwrap();
-
-    // check token associated with uid
-    let stored_token = "stored token from database";
-
-    if stored_token == token {
-        // set user.active to true
-        // return true
-        return Ok(HttpResponse::Ok()
-            .content_type("application/json; charset=utf-8")
-            .json(true))
-    }
-
-    return Ok(HttpResponse::NotFound()
-        .content_type("application/json; charset=utf-8")
-        .json(false))
+    let token: String = req_body.into_inner();
+    
+    // Get email from token using redis
+    // If no result or wrong format then return error
+    // Check if email is in postgres database
+    // if in database then return some conflict error
+    // create temporary user in postgres with blank details for 5 mins?
+    // create a token
+    // add {key: token, value: user postgres UUID} to redis
+    // return ok
 }
 
 #[post("register/details/{uidb64}/{token}")]
 async fn registerDetails(req_body: Json<RegisterDetailsRequestSchema>) -> Result<impl Responder> {
-    let RegisterDetailsRequestSchema { email, password, password_confirmation, username, first_name, last_name, token } = req_body.into_inner();
+    // use token (in header?)to get associated uuid
+    // if no result or wrong format then return error
+    
+    let RegisterDetailsRequestSchema { username, password, password_confirmation, first_name, last_name } = req_body.into_inner();
 
-    // use token to get associated uid
+    // check if the username is already found in the database. If it is then return error
 
-    let validated_email = validate_email(email.clone());
-    if validated_email.is_err() {
+    let validated_username = validate_username(username.clone());
+    if validated_username.is_err() {
         return Ok(HttpResponse::UnprocessableEntity()
             .content_type("application/json; charset=utf-8")
-            .json(validated_email.err().unwrap()))
+            .json(validated_username.err().unwrap()))
     }
-    println!("email: {:#?}", email);
 
     if password != password_confirmation {
+        
         return Ok(HttpResponse::UnprocessableEntity()
             .content_type("application/json; charset=utf-8")
-            .json(false))
+            .json())
     }
 
     let validated_password = validate_password(password.clone());
@@ -348,14 +333,7 @@ async fn registerDetails(req_body: Json<RegisterDetailsRequestSchema>) -> Result
     }
     println!("password: {:#?}", password);
 
-    let validated_username = validate_username(username.clone());
-    if validated_username.is_err() {
-        return Ok(HttpResponse::UnprocessableEntity()
-            .content_type("application/json; charset=utf-8")
-            .json(validated_username.err().unwrap()))
-    }
-    // check if the username is already found in the database. If it is then return error
-
+    
     if first_name.is_some() {
         let validated_first_name = validate_first_name(first_name.clone().unwrap());
         if validated_first_name.is_err() {
@@ -374,11 +352,9 @@ async fn registerDetails(req_body: Json<RegisterDetailsRequestSchema>) -> Result
         }
     }
 
-    // save details to the user
+    // save details to the user to postgres
 
-    return Ok(HttpResponse::NotFound()
-        .content_type("application/json; charset=utf-8")
-        .json(false))
+    
 }
 
 
