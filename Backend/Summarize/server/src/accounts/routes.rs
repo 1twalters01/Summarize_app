@@ -374,7 +374,7 @@ async fn password_reset(req_body: Json<PasswordReset>) -> Result<impl Responder>
     // create a token
     // try to email the account a message containing the token
     // if unable to email then return an error
-    // add {key: token, value: email} to redis
+    // add {key: token, value: UUID} to redis
     // return ok
 }
 
