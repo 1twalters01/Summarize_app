@@ -205,7 +205,7 @@ async fn login_totp(data: Json<LoginTotpRequestSchema>, req: HttpRequest) -> Res
 
 #[post("register/email")]
 async fn registerEmail(req_body: Json<RegisterEmailRequestSchema>) -> Result<impl Responder> {
-    let email: String = req_body.into_inner().email;
+    let RegisterEmailRequestSchema { email } = req_body.into_inner();
     let mut res_body: RegisterEmailResponseSchema = RegisterEmailResponseSchema::new();
 
     let validated_email = validate_email(email.clone());
@@ -258,23 +258,44 @@ async fn registerEmail(req_body: Json<RegisterEmailRequestSchema>) -> Result<imp
     if set_redis_result.await.is_err() { panic!("redis error, panic debug") }
     
     // return ok
+    res_body.is_email_stored = true;
+    res_body.register_response_token = Some(token);
     Ok(HttpResponse::Ok()
         .content_type("application/json; charset=utf-8")
-        .json(true))
+        .json(res_body))
 }
 
 #[post("register/verify/{uidb64}/{token}")]
 async fn registerVerify(req_body: Json<RegisterVerifyRequestSchema>) -> Result<impl Responder> {
-    let token: String = req_body.into_inner();
+    let RegisterVerifyRequestSchema { register_response_token, verification_token } = req_body.into_inner();
+    let mut res_body: RegisterVerifyResponseSchema = RegisterVerifyResponseSchema::new();
     
     // Get email from token using redis
+    
     // If no result or wrong format then return error
+    
     // Check if email is in postgres database
+    
     // if in database then return some conflict error
+    
     // create temporary user in postgres with blank details for 5 mins?
+
+
     // create a token
+    let token = generate_opaque_token_of_length(25);
+
     // add {key: token, value: user postgres UUID} to redis
+    let con = create_redis_client_connection();
+    let expiry_in_seconds: Option<i64> = Some(300);
+    let set_redis_result = set_token_email_in_redis(con, &token, &email, &expiry_in_seconds);
+    if set_redis_result.await.is_err() { panic!("redis error, panic debug") }
+
     // return ok
+    res_body.is_verification_token_correct = true;
+    res_body.verify_response_token = Some(token);
+    Ok(HttpResponse::Ok()
+        .content_type("application/json; charset=utf-8")
+        .json(res_body))
 }
 
 #[post("register/details/{uidb64}/{token}")]
@@ -285,7 +306,6 @@ async fn registerDetails(req_body: Json<RegisterDetailsRequestSchema>) -> Result
     let RegisterDetailsRequestSchema { username, password, password_confirmation, first_name, last_name } = req_body.into_inner();
 
     // check if the username is already found in the database. If it is then return error
-
     let validated_username = validate_username(username.clone());
     if validated_username.is_err() {
         return Ok(HttpResponse::UnprocessableEntity()
@@ -334,8 +354,9 @@ async fn registerDetails(req_body: Json<RegisterDetailsRequestSchema>) -> Result
 
 
 #[post("password-reset")]
-async fn password_reset(req_body: Json<PasswordReset>) -> Result<impl Responder> {
-    let PasswordReset { email } = req_body.into_inner();
+async fn password_reset(req_body: Json<PasswordResetRequestSchema>) -> Result<impl Responder> {
+    let PasswordResetRequestSchema { email } = req_body.into_inner();
+    let mut res_body: PasswordResetResponseSchema = PasswordResetResponseSchema::new();
 
     let validated_email = validate_email(email.clone());
     if validated_email.is_err() {
@@ -345,17 +366,53 @@ async fn password_reset(req_body: Json<PasswordReset>) -> Result<impl Responder>
     }
 
     // Check if email is in postgres database
+    let pool = create_pg_pool_connection().await;
+    let user_result: Result<User, sqlx::Error> = get_user_from_email_in_pg_users_table(&pool, email.as_str()).await;
+
     // if not in database then return some not found error
+    if user_result.is_ok() == false {
+        let error: AccountError = AccountError { is_error: true, error_message: Some(String::from("email not found"))};
+        res_body.account_error = error;
+        return Ok(HttpResponse::Ok()
+            .content_type("application/json; charset=utf-8")
+            .json(res_body)
+        )
+    }
     // create a token
+    let token = generate_opaque_token_of_length(25);
+
     // try to email the account a message containing the token
+    let message_result: bool = compose_passwordResetEmail_email(&token);
+
     // if unable to email then return an error
+    if message_result = false {
+        let error: AccountError = AccountError { is_error: true, error_message: Some(String::from("email not found"))};
+        res_body.account_error = error;
+        return Ok(HttpResponse::Ok()
+            .content_type("application/json; charset=utf-8")
+            .json(res_body)
+        )
+    }
+
     // add {key: token, value: UUID} to redis
+    let con = create_redis_client_connection();
+    let user: User = user_result.ok().unwrap();
+    let expiry_in_seconds: Option<i64> = Some(300);
+
+    let set_redis_result = set_token_userUUID_in_redis(con, &token, &user.get_uuid(), &expiry_in_seconds);
+    
+    if set_redis_result.await.is_err() { panic!("redis error, panic debug") }
     // return ok
+    res_body.is_email_stored = true;
+    res_body.register_response_token = Some(token);
+    Ok(HttpResponse::Ok()
+        .content_type("application/json; charset=utf-8")
+        .json(res_body))
 }
 
 #[post("password-reset/{uidb64}/{token}")]
-async fn password_reset_confirm(req_body: Json<PasswordResetConfirm>) -> Result<impl Responder> {
-    let PasswordResetConfirm { password, password_confirmation } = req_body.into_inner();
+async fn password_reset_confirm(req_body: Json<PasswordResetConfirmRequestSchema>) -> Result<impl Responder> {
+    let PasswordResetConfirmResponseSchema { password, password_confirmation } = req_body.into_inner();
 
     if password != password_confirmation {
         return Ok(HttpResponse::UnprocessableEntity()
@@ -370,7 +427,8 @@ async fn password_reset_confirm(req_body: Json<PasswordResetConfirm>) -> Result<
             .json(validated_password.err().unwrap()))
     }
 
-    // get uid from uidb64
+    // get uuid from uidb64
+    let uuid = 
     // if change is not allowed then error
     // set username to the username
 

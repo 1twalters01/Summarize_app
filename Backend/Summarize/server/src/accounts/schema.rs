@@ -134,7 +134,7 @@ pub struct RegisterEmailResponseSchema {
 }
 
 impl RegisterEmailResponseSchema {
-    fn new() -> RegisterEmailResponseSchema {
+    pub fn new() -> RegisterEmailResponseSchema {
         RegisterEmailResponseSchema {
             account_error: AccountError::new(),
             is_email_stored: false,
@@ -157,6 +157,16 @@ pub struct RegisterVerifyResponseSchema {
     pub account_error: AccountError,
     pub is_verification_token_correct: bool,
     pub verify_response_token: Option<String>,
+}
+
+impl RegisterVerifyResponseSchema {
+    pub fn new() -> RegisterVerifyResponseSchema {
+        RegisterVerifyResponseSchema {
+            account_error: AccountError::new(),
+            is_verification_token_correct: false,
+            verify_response_token: None,
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -192,13 +202,13 @@ pub struct RegisterDetailsResponseSchema {
 // Password Reset structs
 #[derive(Debug)]
 #[derive(Serialize, Deserialize)]
-pub struct PasswordReset {
+pub struct PasswordResetRequestSchema {
     pub email: String,
 }
 
 #[derive(Debug)]
 #[derive(Serialize, Deserialize)]
-pub struct PasswordResetResponse {
+pub struct PasswordResetResponseSchema {
     pub account_error: AccountError,
     pub success: bool,
     // email a token to them
@@ -206,7 +216,7 @@ pub struct PasswordResetResponse {
 
 #[derive(Debug)]
 #[derive(Serialize, Deserialize)]
-pub struct PasswordResetConfirm {
+pub struct PasswordResetConfirmRequestSchema {
     pub email: String, // Remove?
     pub token: String, // token is saved to redis {k: email, v: token}
     pub password: String,
@@ -215,7 +225,7 @@ pub struct PasswordResetConfirm {
 
 #[derive(Debug)]
 #[derive(Serialize, Deserialize)]
-pub struct PasswordResetConfirmResponse {
+pub struct PasswordResetConfirmResponseSchema {
     pub error: AccountError,
     pub success: bool,
 }
