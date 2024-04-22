@@ -166,78 +166,17 @@ async fn login_password(data: Json<LoginPasswordRequestSchema>, req: HttpRequest
         
 #[post("login/totp")]
 async fn login_totp(data: Json<LoginTotpRequestSchema>, req: HttpRequest) -> Result<impl Responder> {
-    let LoginTotp { email, password, totp } = data.into_inner();
-    let mut res_body: LoginTotpResponse = LoginTotpResponse::new();
+    let LoginTotpRequestSchema { totp, login_password_response_token } = data.into_inner();
+    let mut res_body: LoginTotpResponseSchema = LoginTotpResponseSchema::new();
 
-    // Validate the email and password from the request body
-    let validated_email = validate_email(email.clone());
-    if validated_email.is_err() {
-        let error: AccountError = AccountError{
-            is_error: true,
-            error_message: Some(validated_email.err().unwrap())
-        };
-        res_body.account_error = error;
-
-        return Ok(HttpResponse::UnprocessableEntity()
-            .content_type("application/json; charset=utf-8")
-            .json(res_body)
-        )
-    }
-    println!("email: {:#?}", email);
-
-    let validated_password = validate_password(password.clone());
-    if validated_password.is_err() {
-        let error: AccountError = AccountError{
-            is_error: true,
-            error_message: Some(validated_password.err().unwrap())
-        };
-        res_body.account_error = error;
-
-        return Ok(HttpResponse::UnprocessableEntity()
-            .content_type("application/json; charset=utf-8")
-            .json(res_body))
-    }
-    println!("password: {:#?}", password);
-
-    let validated_totp = validate_totp(totp.clone());
-    if validated_totp.is_err() {
-        let error: AccountError = AccountError{
-            is_error: true,
-            error_message: Some(validated_password.err().unwrap())
-        };
-        res_body.account_error = error;
-
-        return Ok(HttpResponse::UnprocessableEntity()
-            .content_type("application/json; charset=utf-8")
-            .json(res_body))
-    }
-    println!("password: {:#?}", totp);
- 
-    // perform database query for if the email has an associated account
-    // replace with postgres function
-    let is_email_stored = fake_postgres_check_email(&email);
-    if is_email_stored == false {
-        res_body.totp_content.is_email_stored = false;
-        return Ok(HttpResponse::Ok()
-            .content_type("application/json; charset=utf-8")
-            .json(res_body)
-        )
-    }
-
-    // do test for if username password is the same as the inputted password
-    let is_correct_password = fake_postgres_check_password(&password);
-    if is_correct_password == false {
-        res_body.totp_content.is_password_correct = false;
-        return Ok(HttpResponse::Ok()
-            .content_type("application/json; charset=utf-8")
-            .json(res_body)
-        )
-    }
+    let con = create_redis_client_connection();
+    let user: User = get_user_from_token_in_redis(con, &login_password_response_token).unwrap();
 
     // see if account has a totp
-    let has_totp = fake_postgres_check_totp(&email);
-    if has_totp == true {
-        res_body.totp_content.has_totp = true;
+    let has_totp = user.is_totp_activated();
+    if has_totp == false {
+        let error: AccountError = AccountError { is_error: true, error_message: Some(String::from("User does not have totp activated")) };
+        res_body.account_error = error;
         return Ok(HttpResponse::Ok()
             .content_type("application/json; charset=utf-8")
             .json(res_body)
@@ -245,20 +184,19 @@ async fn login_totp(data: Json<LoginTotpRequestSchema>, req: HttpRequest) -> Res
     }
 
     // check totp
-    let totp_string = generate_fake_totp_string();
-    let stored_totp: String = get_totp_from_totp_string(totp_string);
-    if stored_totp == totp {
-        res_body.totp_content.is_totp_correct = false;
+    let is_totp_correct = user.check_totp(totp);
+    if is_totp_correct == false {
+        let error: AccountError = AccountError { is_error: true, error_message: Some(String::from("User does not have totp activated")) };
         return Ok(HttpResponse::Ok()
             .content_type("application/json; charset=utf-8")
             .json(res_body)
         )
     }
 
-    res_body.totp_content.is_email_stored = true;
-    res_body.totp_content.is_password_correct = true;
-    res_body.totp_content.has_totp = true;
-    res_body.totp_content.is_totp_correct = true;
+    let remember_me = user.remember_me;
+    let token: String = generate_auth_token(&user, remember_me);
+    res_body.is_totp_correct = true;
+    res_body.auth_token = Some(token);
     Ok(HttpResponse::Ok()
         .content_type("application/json; charset=utf-8")
         .json(res_body))
@@ -268,6 +206,7 @@ async fn login_totp(data: Json<LoginTotpRequestSchema>, req: HttpRequest) -> Res
 #[post("register/email")]
 async fn registerEmail(req_body: Json<RegisterEmailRequestSchema>) -> Result<impl Responder> {
     let email: String = req_body.into_inner().email;
+    let mut res_body: RegisterEmailResponseSchema = RegisterEmailResponseSchema::new();
 
     let validated_email = validate_email(email.clone());
     if validated_email.is_err() {
@@ -280,12 +219,48 @@ async fn registerEmail(req_body: Json<RegisterEmailRequestSchema>) -> Result<imp
     
 
     // Check if email is in postgres database
+    let pool = create_pg_pool_connection().await;
+    let user_result: Result<User, sqlx::Error> = get_user_from_email_in_pg_users_table(&pool, email.as_str()).await;
+
     // if in database then return some conflict error
+    if user_result.is_ok() == true {
+        let error: AccountError = AccountError { is_error: true, error_message: Some(String::from("email not found"))};
+        res_body.account_error = error;
+        return Ok(HttpResponse::Ok()
+            .content_type("application/json; charset=utf-8")
+            .json(res_body)
+        )
+    }
+
     // create a token
+    let token = generate_opaque_token_of_length(25);
+
     // try to email the account a message containing the token
+    let message_result: bool = compose_registerEmail_email(&token);
+
     // if unable to email then return an error
+    if message_result = false {
+        let error: AccountError = AccountError { is_error: true, error_message: Some(String::from("email not found"))};
+        res_body.account_error = error;
+        return Ok(HttpResponse::Ok()
+            .content_type("application/json; charset=utf-8")
+            .json(res_body)
+        )
+    }
+
     // add {key: token, value: email} to redis
+    let con = create_redis_client_connection();
+    let user: User = user_result.ok().unwrap();
+    let expiry_in_seconds: Option<i64> = Some(300);
+
+    let set_redis_result = set_token_email_in_redis(con, &token, &email, &expiry_in_seconds);
+    
+    if set_redis_result.await.is_err() { panic!("redis error, panic debug") }
+    
     // return ok
+    Ok(HttpResponse::Ok()
+        .content_type("application/json; charset=utf-8")
+        .json(true))
 }
 
 #[post("register/verify/{uidb64}/{token}")]

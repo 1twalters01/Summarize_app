@@ -90,7 +90,7 @@ impl LoginPasswordResponseSchema {
 #[derive(Serialize, Deserialize)]
 pub struct LoginTotpRequestSchema {
     pub login_password_response_token: String,
-    pub totp: String,
+    pub totp: i64,
 }
 
 #[derive(Debug)]
@@ -132,6 +132,17 @@ pub struct RegisterEmailResponseSchema {
     pub is_email_stored: bool,
     pub register_response_token: Option<String>,
 }
+
+impl RegisterEmailResponseSchema {
+    fn new() -> RegisterEmailResponseSchema {
+        RegisterEmailResponseSchema {
+            account_error: AccountError::new(),
+            is_email_stored: false,
+            register_response_token: None,
+        }
+    }
+}
+
 
 #[derive(Debug)]
 #[derive(Serialize, Deserialize)]
