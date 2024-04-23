@@ -40,7 +40,7 @@ pub struct LoginEmailRequestSchema {
 pub struct LoginEmailResponseSchema {
     pub account_error: AccountError,
     pub is_email_stored: bool,
-    pub login_email_response_token: String,
+    pub login_email_response_token: Option<String>,
 }
 
 impl LoginEmailResponseSchema {
@@ -48,7 +48,7 @@ impl LoginEmailResponseSchema {
         LoginEmailResponseSchema {
             account_error: AccountError::new(),
             is_email_stored: false,
-            login_email_response_token: String::new(),
+            login_email_response_token: None,
         }
     }
 }

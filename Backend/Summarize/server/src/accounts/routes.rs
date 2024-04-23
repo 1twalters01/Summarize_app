@@ -32,11 +32,10 @@ async fn login_email(data: Json<LoginEmailRequestSchema>) -> Result<impl Respond
     // Validate the email from the request body
     let validated_email = validate_email(email.clone());
     if validated_email.is_err() {
-        let error: AccountError = AccountError{
+        res_body.account_error = AccountError{
             is_error: true,
             error_message: Some(validated_email.err().unwrap())
         };
-        res_body.account_error = error;
 
         return Ok(HttpResponse::UnprocessableEntity()
             .content_type("application/json; charset=utf-8")
@@ -44,30 +43,43 @@ async fn login_email(data: Json<LoginEmailRequestSchema>) -> Result<impl Respond
         )
     }
 
+    // try to get the user from postgres using the email
     let pool = create_pg_pool_connection().await;
-
     let user_result: Result<User, sqlx::Error> = get_user_from_email_in_pg_users_table(&pool, email.as_str()).await;
+
+    // if user does not exist then return an error
     let is_email_stored = (&user_result).as_ref().ok().is_some();
     if is_email_stored == false {
-        res_body.is_email_stored = false;
-        return Ok(HttpResponse::Ok()
+        res_body.account_error = AccountError { is_error: true, error_message: Some(String::from("user does not exist")) };
+        return Ok(HttpResponse::NotFound()
             .content_type("application/json; charset=utf-8")
             .json(res_body)
         )
     }
-    
-    let con = create_redis_client_connection();
-    let token: String = generate_opaque_token_of_length(25);
-    let user: User = user_result.ok().unwrap();
-    let expiry_in_seconds: Option<i64> = Some(300);
 
+    // set is_email_stored field to true
+    res_body.is_email_stored = true;
+    
+    // create a token
+    let token: String = generate_opaque_token_of_length(25);
+
+    // serialize the user
+    let user: User = user_result.ok().unwrap();
     let user_json = serde_json::to_string(&user).unwrap();
+
+    // save {key: token, value: user} to redis cache for 300 seconds
+    let expiry_in_seconds: Option<i64> = Some(300);
+    let con = create_redis_client_connection();
     let set_redis_result = set_token_user_in_redis(con, &token, &user_json, &expiry_in_seconds);
     
-    if set_redis_result.await.is_err() { panic!("redis error, panic debug") }
+    // if redis fails then return an error
+    if set_redis_result.await.is_err() {
+        res_body.account_error = AccountError { is_error: true, error_message: Some(String::from("Server error")) };
+    }
     
+    // return success
     res_body.is_email_stored = true;
-    res_body.login_email_response_token = token;
+    res_body.login_email_response_token = Some(token);
     return Ok(HttpResponse::NotFound()
         .content_type("application/json; charset=utf-8")
         .json(res_body)
