@@ -1,55 +1,68 @@
 use actix_web::{get, post, HttpResponse, Responder, Result, web::Json};
 // use std::{fs, path::PathBuf};
-use crate::settings::datatypes::{ChangeEmailStruct, ChangeThemeStruct, ChangeUsernameStruct, ChangePasswordStruct, ToggleTotpStruct, Theme, DeleteAccountStruct};
+use crate::settings::schema::{
+    ChangeEmailRequestStruct, ChangeEmailResponseStruct,
+    ChangeUsernameRequestStruct, ChangeUsernameResponseStruct,
+    ChangePasswordRequestStruct, ChangePasswordResponseStruct,
+    DeleteAccountRequestStruct, DeleteAccountResponseStruct,
+    ToggleTotpRequestStruct, ToggleTotpResponseStruct, Theme,
+    ChangeThemeRequestStruct, ChangeThemeResponseStruct,
+};
 
 #[post("change-username")]
-async fn change_username(req_body: Json<ChangeUsernameStruct>) -> Result<impl Responder> {
-    let res_body: ChangeUsernameStruct = ChangeUsernameStruct {
-        username: req_body.clone().username,
-        password: req_body.into_inner().password,
-    };
+async fn change_username(req_body: Json<ChangeUsernameRequestStruct>) -> Result<impl Responder> {
+    let ChangeUsernameRequestStruct { username, password } = req_body.into_inner();
+    let res_body: ChangeUsernameResponseStruct = ChangeUsernameResponseStruct::new();
 
-    Ok(Json(res_body))
+    Ok(HttpResponse::Ok()
+        .content_type("application/json; charset=utf-8")
+        .json(res_body))
 }
 
 #[post("change-email")]
-async fn change_email(req_body: Json<ChangeEmailStruct>) -> Result<impl Responder> {
-// async fn change_email(req_body: Json<ChangeEmailStruct>) -> Result<impl Responder> {
-    let res_body: ChangeEmailStruct = ChangeEmailStruct {
-        email: req_body.clone().email,
-        password: req_body.into_inner().password,
-    };
+async fn change_email(req_body: Json<ChangeEmailRequestStruct>) -> Result<impl Responder> {
+    let ChangeEmailRequestStruct { email, password } = req_body.into_inner();
+    let res_body: ChangeEmailResponseStruct = ChangeEmailResponseStruct::new();
 
-    // Ok(Json(res_body))
     Ok(HttpResponse::Ok()
         .content_type("application/json; charset=utf-8")
-        .insert_header(("Authentication Token", ""))
         .json(res_body))
 }
 
 #[post("change-password")]
-async fn change_password(req_body: Json<ChangePasswordStruct>) -> Result<impl Responder> {
-    let res_body: ChangePasswordStruct = ChangePasswordStruct {
-        password: req_body.clone().password,
-        new_password: req_body.clone().new_password,
-        new_password_confirmation: req_body.into_inner().new_password_confirmation
-    };
+async fn change_password(req_body: Json<ChangePasswordRequestStruct>) -> Result<impl Responder> {
+    let ChangePasswordRequestStruct { new_password, new_password_confirmation, password } = req_body.into_inner();
+    let res_body: ChangePasswordResponseStruct = ChangePasswordResponseStruct::new();
 
-    Ok(Json(res_body))
+    Ok(HttpResponse::Ok()
+        .content_type("application/json; charset=utf-8")
+        .json(res_body))
 }
 
-#[get("get-totp")]
-async fn get_totp(req_body: Json<String>) -> Result<impl Responder> {
-    let totp: String = String::new();
-    Ok(Json(totp))
+#[post("delete-account")]
+async fn delete_account(req_body: Json<DeleteAccountRequestStruct>) -> Result<impl Responder> {
+    let DeleteAccountRequestStruct { password, password_confirmation } = req_body.into_inner();
+    let res_body: DeleteAccountResponseStruct = DeleteAccountResponseStruct::new();
+
+    Ok(HttpResponse::Ok()
+        .content_type("application/json; charset=utf-8")
+        .json(res_body))
 }
 
 #[post("toggle-totp")]
-async fn add_totp(req_body: Json<ToggleTotpStruct>) -> Result<impl Responder> {
-    let res_body: ToggleTotpStruct = ToggleTotpStruct {
-        totp: req_body.clone().totp,
-        password: req_body.into_inner().password,
-    };
+async fn toggle_totp(req_body: Json<ToggleTotpRequestStruct>) -> Result<impl Responder> {
+    let ToggleTotpRequestStruct { password, totp } = req_body.into_inner();
+    let res_body: ToggleTotpResponseStruct = ToggleTotpResponseStruct::new();
+
+    Ok(HttpResponse::Ok()
+        .content_type("application/json; charset=utf-8")
+        .json(res_body))
+}
+
+#[post("change-theme")]
+async fn change_theme(req_body: Json<ChangeThemeRequestStruct>) -> Result<impl Responder> {
+    let ChangeThemeRequestStruct { theme } = req_body.into_inner();
+    let res_body: ChangeThemeResponseStruct = ChangeThemeResponseStruct::new();
 
     Ok(Json(res_body))
 }
@@ -61,23 +74,5 @@ async fn get_theme(req_body: Json<Theme>) -> Result<impl Responder> {
     Ok(Json(theme))
 }
 
-#[post("change-theme")]
-async fn change_theme(req_body: Json<ChangeThemeStruct>) -> Result<impl Responder> {
-    let res_body: ChangeThemeStruct = ChangeThemeStruct {
-        theme: req_body.clone().theme,
-        password: req_body.into_inner().password,
-    };
 
-    Ok(Json(res_body))
-}
-
-#[post("delete-account")]
-async fn delete_account(req_body: Json<DeleteAccountStruct>) -> Result<impl Responder> {
-    let res_body: DeleteAccountStruct = DeleteAccountStruct {
-        password: req_body.clone().password,
-        password_confirmation: req_body.into_inner().password_confirmation,
-    };
-
-    Ok(Json(res_body))
-}
 

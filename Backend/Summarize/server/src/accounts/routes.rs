@@ -11,8 +11,8 @@ use crate::accounts::schema::{
     RegisterEmailRequestSchema, RegisterEmailResponseSchema,
     RegisterVerifyRequestSchema, RegisterVerifyResponseSchema,
     RegisterDetailsRequestSchema, RegisterDetailsResponseSchema, 
-    PasswordReset, 
-    PasswordResetConfirm
+    PasswordResetRequestSchema, PasswordResetResponseSchema, 
+    PasswordResetConfirmRequestSchema, PasswordResetConfirmResponseSchema,
 };
 use crate::accounts::validations::{validate_email, validate_password, validate_totp, validate_username, validate_first_name, validate_last_name};
 use crate::databases::connections::{create_pg_pool_connection, create_redis_client_connection};
