@@ -1,9 +1,12 @@
 use actix_web::{post, HttpRequest, HttpResponse, Responder, Result, web::Json};
-use crate::accounts::datatypes::users::User;
+use crate::accounts::datatypes::{
+    users::User,
+    token_object::UserRememberMe,
+};
 use crate::accounts::schema::{
     AccountError,
     LoginEmailRequestSchema, LoginEmailResponseSchema,
-    LoginPasswordRequestSchema, LoginPasswordResponseSchema,
+    LoginPasswordRequest, LoginPasswordRequestSchema, LoginPasswordResponseSchema,
     LoginTotpRequestSchema, LoginTotpResponseSchema,
     RegisterEmailRequestSchema, RegisterEmailResponseSchema,
     RegisterVerifyRequestSchema, RegisterVerifyResponseSchema,
@@ -17,6 +20,8 @@ use crate::accounts::db_queries::{
     get_user_from_email_in_pg_users_table,
     set_token_user_in_redis,
     get_user_from_token_in_redis,
+    set_token_tokenObject_in_redis,
+    delete_token_in_redis,
 };
 use crate::tokens::{
     generate_opaque_token_of_length,
@@ -26,7 +31,7 @@ use crate::tokens::{
 
 #[post("login/email")]
 async fn login_email(data: Json<LoginEmailRequestSchema>) -> Result<impl Responder> {
-    let email: String = data.into_inner().email;
+    let LoginEmailRequestSchema { email } = data.into_inner();
     let mut res_body: LoginEmailResponseSchema = LoginEmailResponseSchema::new();
 
     // Validate the email from the request body
@@ -75,6 +80,10 @@ async fn login_email(data: Json<LoginEmailRequestSchema>) -> Result<impl Respond
     // if redis fails then return an error
     if set_redis_result.await.is_err() {
         res_body.account_error = AccountError { is_error: true, error_message: Some(String::from("Server error")) };
+        return Ok(HttpResponse::FailedDependency()
+            .content_type("application/json; charset=utf-8")
+            .json(res_body)
+        )
     }
     
     // return success
@@ -88,18 +97,20 @@ async fn login_email(data: Json<LoginEmailRequestSchema>) -> Result<impl Respond
 
 
 #[post("login/password")]
-async fn login_password(data: Json<LoginPasswordRequestSchema>, req: HttpRequest) -> Result<impl Responder> {
+async fn login_password(data: Json<LoginPasswordRequest>, req: HttpRequest) -> Result<impl Responder> {
     let login_email_response_token: String = req.headers().get("login_email_response_token").unwrap().to_str().unwrap().to_string();
+    let LoginPasswordRequest { password, remember_me } = data.into_inner();
     let LoginPasswordRequestSchema { login_email_response_token, password, remember_me } = LoginPasswordRequestSchema {
         login_email_response_token,
-        password: data.clone().password,
-        remember_me: data.into_inner().remember_me,
+        password,
+        remember_me,
     };
     let mut res_body: LoginPasswordResponseSchema = LoginPasswordResponseSchema::new();
 
-    // get user from token in redis
+    // try to get user from token in redis
     let con = create_redis_client_connection();
     let user: User = match get_user_from_token_in_redis(con, &login_email_response_token) {
+        // if error return error
         Err(err) => {
             let error: AccountError = AccountError {
                 is_error: true,
@@ -131,7 +142,8 @@ async fn login_password(data: Json<LoginPasswordRequestSchema>, req: HttpRequest
     
 
     // check if password is correct for the given user
-    let check_password = user.check_password(&password);
+    let check_password: Result<(), std::io::Error> = user.check_password(&password);
+
     // let is_correct_password = fake_postgres_check_password(&password);
     if check_password.is_err() {
         let error: AccountError = AccountError{
@@ -151,10 +163,39 @@ async fn login_password(data: Json<LoginPasswordRequestSchema>, req: HttpRequest
 
     // see if account has a totp
     if user.is_totp_activated() == true {
-        // need to think of how to retain state of remember_me
-        // add a 0 or 1 to the end of the token to keep state?
-        // create a TokenObject{ totp: true, token: String } as an &str using serde_json?
+        // create a token and a serialized UserRememberMe{ remember_me: bool, token: String }
         let token: String = generate_opaque_token_of_length(25);
+        let token_object: UserRememberMe = UserRememberMe { remember_me, user };
+        let token_object_json = serde_json::to_string(&token_object).unwrap();
+
+        // save {key: token, value: UserRememberMe} to redis
+        let expiry_in_seconds: Option<i64> = Some(300);
+        let mut con = create_redis_client_connection();
+        let set_redis_result = set_token_tokenObject_in_redis(con, &token, &token_object_json, &expiry_in_seconds);
+    
+        // if redis fails then return an error
+        if set_redis_result.await.is_err() {
+            res_body.account_error = AccountError { is_error: true, error_message: Some(String::from("Server error")) };
+            return Ok(HttpResponse::FailedDependency()
+                .content_type("application/json; charset=utf-8")
+                .json(res_body)
+            )
+        }
+        
+        // delete old token
+        con = create_redis_client_connection();
+        let delete_redis_result = delete_token_in_redis(con, &login_email_response_token);
+
+        // if redis fails then return an error
+        if delete_redis_result.await.is_err() {
+            res_body.account_error = AccountError { is_error: true, error_message: Some(String::from("Server error")) };
+            return Ok(HttpResponse::FailedDependency()
+                .content_type("application/json; charset=utf-8")
+                .json(res_body)
+            )
+        }
+
+        // return success
         res_body.has_totp = true;
         res_body.login_password_response_token = Some(token);
         return Ok(HttpResponse::Ok()
@@ -446,7 +487,7 @@ async fn password_reset_confirm(req_body: Json<PasswordResetConfirmRequestSchema
 
     return Ok(HttpResponse::NotFound()
         .content_type("application/json; charset=utf-8")
-        .json(true))
+        .json(true));
 }
 
 
