@@ -143,8 +143,6 @@ async fn login_password(data: Json<LoginPasswordRequest>, req: HttpRequest) -> R
 
     // check if password is correct for the given user
     let check_password: Result<(), std::io::Error> = user.check_password(&password);
-
-    // let is_correct_password = fake_postgres_check_password(&password);
     if check_password.is_err() {
         let error: AccountError = AccountError{
             is_error: true,
@@ -204,11 +202,15 @@ async fn login_password(data: Json<LoginPasswordRequest>, req: HttpRequest) -> R
         )
     }
 
+    // generate token
     let token: String = generate_auth_token(&user, remember_me);
+    
+    // save auth token (use jwt intead?
     save_authentication_token(user.get_uuid(), &token);
+
+    // return success
     res_body.has_totp = false;
     res_body.auth_token = Some(token);
-
     Ok(HttpResponse::Ok()
         .content_type("application/json; charset=utf-8")
         .json(res_body)
@@ -219,11 +221,43 @@ async fn login_password(data: Json<LoginPasswordRequest>, req: HttpRequest) -> R
         
 #[post("login/totp")]
 async fn login_totp(data: Json<LoginTotpRequestSchema>, req: HttpRequest) -> Result<impl Responder> {
-    let LoginTotpRequestSchema { totp, login_password_response_token } = data.into_inner();
+    let login_password_response_token: String = req.headers().get("login_password_response_token").unwrap().to_str().unwrap().to_string();
+    let LoginTotpRequest { totp } = data.into_inner();
+    let LoginTotpRequestSchema { totp, login_password_response_token } = LoginTotpRequestschema { totp, login_password_response_token };
     let mut res_body: LoginTotpResponseSchema = LoginTotpResponseSchema::new();
 
-    let con = create_redis_client_connection();
-    let user: User = get_user_from_token_in_redis(con, &login_password_response_token).unwrap();
+    // Try to get TokenObject from redis
+    let mut con = create_redis_client_connection();
+    let user: UserRememberMe = get_userRememberMe_from_token_in_redis(con, &login_password_response_token).unwrap();
+    let (user, remember_me): (User, bool) = match get_userRememberMe_from_token_in_redis(con, &login_password_response_token) {
+        // if error return error
+        Err(err) => {
+            let error: AccountError = AccountError {
+                is_error: true,
+                error_message: Some(err),
+            };
+            res_body.account_error = error;
+            return Ok(HttpResponse::UnprocessableEntity()
+            .content_type("application/json; charset=utf-8")
+            .json(res_body))
+        },
+        Ok(user_remember_me) => (user_remember_me.user, user_remember_me.remember_me),
+    };
+
+    // check if the entered totp is a valid totp
+    let validated_totp = validate_totp(password.clone());
+    if validated_totp.is_err() {
+        let error: AccountError = AccountError{
+            is_error: true,
+            error_message: Some(validated_totp.err().unwrap())
+        };
+        res_body.account_error = error;
+
+        return Ok(HttpResponse::UnprocessableEntity()
+            .content_type("application/json; charset=utf-8")
+            .json(res_body))
+    }
+    println!("totp: {:#?}", totp);
 
     // see if account has a totp
     let has_totp = user.is_totp_activated();
@@ -239,15 +273,33 @@ async fn login_totp(data: Json<LoginTotpRequestSchema>, req: HttpRequest) -> Res
     // check totp
     let is_totp_correct = user.check_totp(totp);
     if is_totp_correct == false {
-        let error: AccountError = AccountError { is_error: true, error_message: Some(String::from("User does not have totp activated")) };
+        let error: AccountError = AccountError { is_error: true, error_message: Some(String::from("Incorrect totp")) };
         return Ok(HttpResponse::Ok()
             .content_type("application/json; charset=utf-8")
             .json(res_body)
         )
     }
 
-    let remember_me = user.remember_me;
+    // delete old token from redis
+        con = create_redis_client_connection();
+        let delete_redis_result = delete_token_in_redis(con, &login_password_response_token);
+
+        // if redis fails then return an error
+        if delete_redis_result.await.is_err() {
+            res_body.account_error = AccountError { is_error: true, error_message: Some(String::from("Server error")) };
+            return Ok(HttpResponse::FailedDependency()
+                .content_type("application/json; charset=utf-8")
+                .json(res_body)
+            )
+        }
+
+    // create auth token
     let token: String = generate_auth_token(&user, remember_me);
+
+    // save auth token (use jwt intead?
+    save_authentication_token(user.get_uuid(), &token);
+
+    // return success
     res_body.is_totp_correct = true;
     res_body.auth_token = Some(token);
     Ok(HttpResponse::Ok()
