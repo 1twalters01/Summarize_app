@@ -95,9 +95,15 @@ impl LoginPasswordResponseSchema {
 // Login Totp Structs
 #[derive(Debug)]
 #[derive(Serialize, Deserialize)]
+pub struct LoginTotpRequest {
+    pub totp: String,
+}
+
+#[derive(Debug)]
+#[derive(Serialize, Deserialize)]
 pub struct LoginTotpRequestSchema {
     pub login_password_response_token: String,
-    pub totp: i64,
+    pub totp: String,
 }
 
 #[derive(Debug)]
@@ -134,6 +140,13 @@ pub struct RegisterEmailRequestSchema {
 
 #[derive(Debug)]
 #[derive(Serialize, Deserialize)]
+pub struct RegisterEmailToken {
+    pub verification_token: String,
+    pub register_email_token: String,
+}
+
+#[derive(Debug)]
+#[derive(Serialize, Deserialize)]
 pub struct RegisterEmailResponseSchema {
     pub account_error: AccountError,
     pub is_email_stored: bool,
@@ -154,7 +167,7 @@ impl RegisterEmailResponseSchema {
 #[derive(Debug)]
 #[derive(Serialize, Deserialize)]
 pub struct RegisterVerifyRequestSchema {
-    pub register_response_token: String, // opaque token in place of the email
+    pub register_email_token: String, // opaque token in place of the email
     pub verification_token: String, // thing they enter on the site
 }
 

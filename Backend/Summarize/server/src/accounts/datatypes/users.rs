@@ -125,7 +125,7 @@ impl User {
         self.totp.set_url(url);
     }
 
-    pub fn check_totp(&mut self, totp: i64) -> bool {
+    pub fn check_totp(&mut self, totp: String) -> bool {
         if self.generate_totp_i64() == totp {
             return true;
         }
@@ -139,7 +139,7 @@ impl User {
         return false;
     }
 
-    fn generate_totp_i64(&mut self) -> i64 {
+    fn generate_totp_i64(&mut self) -> String {
         todo!();
     }
 

@@ -7,8 +7,8 @@ use crate::accounts::schema::{
     AccountError,
     LoginEmailRequestSchema, LoginEmailResponseSchema,
     LoginPasswordRequest, LoginPasswordRequestSchema, LoginPasswordResponseSchema,
-    LoginTotpRequestSchema, LoginTotpResponseSchema,
-    RegisterEmailRequestSchema, RegisterEmailResponseSchema,
+    LoginTotpRequest, LoginTotpRequestSchema, LoginTotpResponseSchema,
+    RegisterEmailRequestSchema, RegisterEmailToken, RegisterEmailResponseSchema,
     RegisterVerifyRequestSchema, RegisterVerifyResponseSchema,
     RegisterDetailsRequestSchema, RegisterDetailsResponseSchema, 
     PasswordResetRequestSchema, PasswordResetResponseSchema, 
@@ -19,14 +19,21 @@ use crate::databases::connections::{create_pg_pool_connection, create_redis_clie
 use crate::accounts::db_queries::{
     get_user_from_email_in_pg_users_table,
     set_token_user_in_redis,
+    set_token_email_in_redis,
     get_user_from_token_in_redis,
     set_token_tokenObject_in_redis,
     delete_token_in_redis,
+    get_user_remember_me_from_token_in_redis,
+    get_email_from_token_struct_in_redis,
 };
 use crate::tokens::{
     generate_opaque_token_of_length,
     generate_auth_token,
     save_authentication_token,
+};
+use crate::accounts::emails::{
+    compose_register_email_message,
+    send_email
 };
 
 #[post("login/email")]
@@ -220,16 +227,15 @@ async fn login_password(data: Json<LoginPasswordRequest>, req: HttpRequest) -> R
 
         
 #[post("login/totp")]
-async fn login_totp(data: Json<LoginTotpRequestSchema>, req: HttpRequest) -> Result<impl Responder> {
+async fn login_totp(data: Json<LoginTotpRequest>, req: HttpRequest) -> Result<impl Responder> {
     let login_password_response_token: String = req.headers().get("login_password_response_token").unwrap().to_str().unwrap().to_string();
     let LoginTotpRequest { totp } = data.into_inner();
-    let LoginTotpRequestSchema { totp, login_password_response_token } = LoginTotpRequestschema { totp, login_password_response_token };
+    let LoginTotpRequestSchema { totp, login_password_response_token } = LoginTotpRequestSchema { totp, login_password_response_token };
     let mut res_body: LoginTotpResponseSchema = LoginTotpResponseSchema::new();
 
     // Try to get TokenObject from redis
     let mut con = create_redis_client_connection();
-    let user: UserRememberMe = get_userRememberMe_from_token_in_redis(con, &login_password_response_token).unwrap();
-    let (user, remember_me): (User, bool) = match get_userRememberMe_from_token_in_redis(con, &login_password_response_token) {
+    let (mut user, remember_me): (User, bool) = match get_user_remember_me_from_token_in_redis(con, &login_password_response_token) {
         // if error return error
         Err(err) => {
             let error: AccountError = AccountError {
@@ -245,7 +251,7 @@ async fn login_totp(data: Json<LoginTotpRequestSchema>, req: HttpRequest) -> Res
     };
 
     // check if the entered totp is a valid totp
-    let validated_totp = validate_totp(password.clone());
+    let validated_totp = validate_totp(totp.clone());
     if validated_totp.is_err() {
         let error: AccountError = AccountError{
             is_error: true,
@@ -273,14 +279,15 @@ async fn login_totp(data: Json<LoginTotpRequestSchema>, req: HttpRequest) -> Res
     // check totp
     let is_totp_correct = user.check_totp(totp);
     if is_totp_correct == false {
-        let error: AccountError = AccountError { is_error: true, error_message: Some(String::from("Incorrect totp")) };
+        res_body.account_error = AccountError { is_error: true, error_message: Some(String::from("Incorrect totp")) };
+
         return Ok(HttpResponse::Ok()
             .content_type("application/json; charset=utf-8")
             .json(res_body)
         )
     }
 
-    // delete old token from redis
+        // delete old token from redis
         con = create_redis_client_connection();
         let delete_redis_result = delete_token_in_redis(con, &login_password_response_token);
 
@@ -308,6 +315,7 @@ async fn login_totp(data: Json<LoginTotpRequestSchema>, req: HttpRequest) -> Res
 }
 
 
+
 #[post("register/email")]
 async fn registerEmail(req_body: Json<RegisterEmailRequestSchema>) -> Result<impl Responder> {
     let RegisterEmailRequestSchema { email } = req_body.into_inner();
@@ -331,7 +339,7 @@ async fn registerEmail(req_body: Json<RegisterEmailRequestSchema>) -> Result<imp
     let pool = create_pg_pool_connection().await;
     let user_result: Result<User, sqlx::Error> = get_user_from_email_in_pg_users_table(&pool, email.as_str()).await;
 
-    // if user exists then return an error
+    // if email exists then return an error
     let is_email_stored = (&user_result).as_ref().ok().is_some();
     if is_email_stored == true {
         res_body.is_email_stored = true;
@@ -343,15 +351,21 @@ async fn registerEmail(req_body: Json<RegisterEmailRequestSchema>) -> Result<imp
     }
 
 
-
-    // create a token
-    let token = generate_opaque_token_of_length(25);
+    // create a verify token, a register email token, and a register_email_token_struct
+    let verification_token = generate_opaque_token_of_length(8);
+    let register_email_token = generate_opaque_token_of_length(25);
+    let token_struct: RegisterEmailToken = RegisterEmailToken {
+        register_email_token: register_email_token.clone(),
+        verification_token: verification_token.clone()
+    };
+    let token_struct_json: String = serde_json::to_string(&token_struct).unwrap();
 
     // try to email the account a message containing the token
-    let message_result: bool = compose_registerEmail_email(&token);
+    let message: String = compose_register_email_message(&verification_token, &register_email_token);
+    let message_result: Result<(), String>  = send_email(&message, &email);
 
     // if unable to email then return an error
-    if message_result = false {
+    if message_result.is_err() {
         let error: AccountError = AccountError { is_error: true, error_message: Some(String::from("unable to email this email address"))};
         res_body.account_error = error;
         return Ok(HttpResponse::Ok()
@@ -359,11 +373,11 @@ async fn registerEmail(req_body: Json<RegisterEmailRequestSchema>) -> Result<imp
             .json(res_body)
         )
     }
-   
-    // save {key: token, value: user} to redis cache for 300 seconds
+
+    // save {key: token, value: email} to redis cache for 300 seconds
     let expiry_in_seconds: Option<i64> = Some(300);
     let con = create_redis_client_connection();
-    let set_redis_result = set_token_user_in_redis(con, &token, &user_json, &expiry_in_seconds);
+    let set_redis_result = set_token_email_in_redis(con, &token_struct_json, &email, &expiry_in_seconds);
     
     // if redis fails then return an error
     if set_redis_result.await.is_err() {
@@ -375,36 +389,69 @@ async fn registerEmail(req_body: Json<RegisterEmailRequestSchema>) -> Result<imp
     }
    
     // return ok
-    res_body.register_response_token = Some(token);
+    res_body.register_response_token = Some(register_email_token);
     return Ok(HttpResponse::Ok()
         .content_type("application/json; charset=utf-8")
         .json(res_body))
 }
 
-#[post("register/verify/{uidb64}/{token}")]
-async fn registerVerify(req_body: Json<RegisterVerifyRequestSchema>) -> Result<impl Responder> {
-    let RegisterVerifyRequestSchema { register_response_token, verification_token } = req_body.into_inner();
+
+
+#[post("register/verify/{register_email_token}/{verification_token}")]
+// use this in the other case: register/verify
+// async fn registerVerify(req_body: Json<RegisterVerifyRequest>) -> Result<impl Responder> {
+//     let RegisterVerifyRequest { verification_token } = req_body.into_inner();
+//    let register_email_token: String = req.headers().get("register_email_token").unwrap().to_str().unwrap().to_string();
+async fn registerVerify(path: actix_web::web::Path<RegisterVerifyRequestSchema>) -> Result<impl Responder> {
+    let RegisterVerifyRequestSchema { register_email_token, verification_token } = path.into_inner(); 
     let mut res_body: RegisterVerifyResponseSchema = RegisterVerifyResponseSchema::new();
+
+    // Form RegisterToken struct
+    let token_struct: RegisterEmailToken = RegisterEmailToken {
+        verification_token,
+        register_email_token,
+    };
+    let token_struct_json = serde_json::to_string(&token_struct).unwrap();
     
     // Get email from token using redis
+    let mut con = create_redis_client_connection();
+    let email: String = match get_email_from_token_struct_in_redis(con, &token_struct_json) {
+        // if error return error
+        Err(err) => {
+            let error: AccountError = AccountError {
+                is_error: true,
+                error_message: Some(err),
+            };
+            res_body.account_error = error;
+            return Ok(HttpResponse::UnprocessableEntity()
+            .content_type("application/json; charset=utf-8")
+            .json(res_body))
+        },
+        Ok(email) => email,
+    };
     
-    // If no result or wrong format then return error
-    
-    // Check if email is in postgres database
-    
-    // if in database then return some conflict error
-    
-    // create temporary user in postgres with blank details for 5 mins?
-
 
     // create a token
     let token = generate_opaque_token_of_length(25);
 
-    // add {key: token, value: user postgres UUID} to redis
-    let con = create_redis_client_connection();
+    // add {key: token, value: email} to redis
+    con = create_redis_client_connection();
     let expiry_in_seconds: Option<i64> = Some(300);
     let set_redis_result = set_token_email_in_redis(con, &token, &email, &expiry_in_seconds);
     if set_redis_result.await.is_err() { panic!("redis error, panic debug") }
+
+    // delete old {key: token, value: email}
+    con = create_redis_client_connection();
+    let delete_redis_result = delete_token_in_redis(con, &token_struct_json);
+
+    // if redis fails then return an error
+    if delete_redis_result.await.is_err() {
+        res_body.account_error = AccountError { is_error: true, error_message: Some(String::from("Server error")) };
+        return Ok(HttpResponse::FailedDependency()
+            .content_type("application/json; charset=utf-8")
+            .json(res_body)
+        )
+    }
 
     // return ok
     res_body.is_verification_token_correct = true;
@@ -414,12 +461,15 @@ async fn registerVerify(req_body: Json<RegisterVerifyRequestSchema>) -> Result<i
         .json(res_body))
 }
 
+
+
 #[post("register/details/{uidb64}/{token}")]
-async fn registerDetails(req_body: Json<RegisterDetailsRequestSchema>) -> Result<impl Responder> {
+async fn registerDetails(req_body: Json<RegisterDetailsRequest>) -> Result<impl Responder> {
+    let RegisterDetailsRequest { username, password, password_confirmation, first_name, last_name } = req_body.into_inner();
+
     // use token (in header?)to get associated uuid
     // if no result or wrong format then return error
     
-    let RegisterDetailsRequestSchema { username, password, password_confirmation, first_name, last_name } = req_body.into_inner();
 
     // check if the username is already found in the database. If it is then return error
     let validated_username = validate_username(username.clone());
@@ -433,7 +483,7 @@ async fn registerDetails(req_body: Json<RegisterDetailsRequestSchema>) -> Result
         
         return Ok(HttpResponse::UnprocessableEntity()
             .content_type("application/json; charset=utf-8")
-            .json())
+            .json(res_body))
     }
 
     let validated_password = validate_password(password.clone());
