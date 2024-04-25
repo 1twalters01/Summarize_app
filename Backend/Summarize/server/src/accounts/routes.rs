@@ -313,30 +313,38 @@ async fn registerEmail(req_body: Json<RegisterEmailRequestSchema>) -> Result<imp
     let RegisterEmailRequestSchema { email } = req_body.into_inner();
     let mut res_body: RegisterEmailResponseSchema = RegisterEmailResponseSchema::new();
 
+    // Validate the email from the request body
     let validated_email = validate_email(email.clone());
     if validated_email.is_err() {
+        res_body.account_error = AccountError{
+            is_error: true,
+            error_message: Some(validated_email.err().unwrap())
+        };
+
         return Ok(HttpResponse::UnprocessableEntity()
-            .content_type("application/json; charset=utf-8")
-            .json(validated_email.err().unwrap()))
-    }
-    println!("email: {:#?}", email);
-
-    
-
-    // Check if email is in postgres database
-    let pool = create_pg_pool_connection().await;
-    let user_result: Result<User, sqlx::Error> = get_user_from_email_in_pg_users_table(&pool, email.as_str()).await;
-
-    // if in database then return some conflict error
-    if user_result.is_ok() == true {
-        let error: AccountError = AccountError { is_error: true, error_message: Some(String::from("email not found"))};
-        res_body.account_error = error;
-        return Ok(HttpResponse::Ok()
             .content_type("application/json; charset=utf-8")
             .json(res_body)
         )
     }
 
+    // try to get the user from postgres using the email
+    let pool = create_pg_pool_connection().await;
+    let user_result: Result<User, sqlx::Error> = get_user_from_email_in_pg_users_table(&pool, email.as_str()).await;
+
+    // if user exists then return an error
+    let is_email_stored = (&user_result).as_ref().ok().is_some();
+    if is_email_stored == false {
+        res_body.account_error = AccountError { is_error: true, error_message: Some(String::from("user does not exist")) };
+        return Ok(HttpResponse::Conflict() // change to real method - currently have no lsp
+            .content_type("application/json; charset=utf-8")
+            .json(res_body)
+        )
+    }
+
+
+
+
+    
     // create a token
     let token = generate_opaque_token_of_length(25);
 
