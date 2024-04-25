@@ -104,7 +104,7 @@ impl User {
         return self.email.to_owned();
     }
 
-    fn set_password(&mut self, password: String) -> Result<(), Error> {
+    pub fn set_password(&mut self, password: String) -> Result<(), Error> {
         return Password::set_password(&mut self.password, password);
     }
 

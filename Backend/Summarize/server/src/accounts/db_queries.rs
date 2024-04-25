@@ -19,6 +19,20 @@ pub async fn create_new_user_in_pg_users_table(pool: &Pool<Postgres>, user: User
 }
 
 
+pub async fn update_password_for_user_in_pg_users_table(pool: &Pool<Postgres>, user: &User) -> Result<(), sqlx::Error> {
+    let user_update_query = sqlx::query("")
+        .bind(user.password)
+        .execute(pool)
+        .await;
+
+    if let Err(err) = user_update_query {
+        return Err(err)
+    } else {
+        return Ok(());
+    }
+}
+
+
 pub async fn get_user_from_email_in_pg_users_table(pool: &Pool<Postgres>, email: &str) -> Result<User, sqlx::Error> {
     let user_select_query = sqlx::query("Select * from users WHERE email=($1)")
         .bind(email)

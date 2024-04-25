@@ -265,8 +265,6 @@ impl PasswordResetResponseSchema {
 #[derive(Debug)]
 #[derive(Serialize, Deserialize)]
 pub struct PasswordResetConfirmRequestSchema {
-    pub email: String, // Remove?
-    pub token: String, // token is saved to redis {k: email, v: token}
     pub password: String,
     pub password_confirmation: String,
 }
@@ -274,13 +272,13 @@ pub struct PasswordResetConfirmRequestSchema {
 #[derive(Debug)]
 #[derive(Serialize, Deserialize)]
 pub struct PasswordResetConfirmResponseSchema {
-    pub error: AccountError,
+    pub account_error: AccountError,
     pub success: bool,
 }
 
 impl PasswordResetConfirmResponseSchema {
-    pub fn new() -> PasswordResetResponseSchema {
-        PasswordResetResponseSchema {
+    pub fn new() -> PasswordResetConfirmResponseSchema {
+        PasswordResetConfirmResponseSchema {
             account_error: AccountError::new(),
             success: false,
         }

@@ -26,6 +26,7 @@ use crate::accounts::db_queries::{
     get_user_remember_me_from_token_in_redis,
     get_email_from_token_struct_in_redis,
     create_new_user_in_pg_users_table,
+    update_password_for_user_in_pg_users_table
 };
 use crate::tokens::{
     generate_opaque_token_of_length,
@@ -592,8 +593,9 @@ async fn password_reset(req_body: Json<PasswordResetRequestSchema>) -> Result<im
         )
     }
 
-    // get user
+    // get and serialize user
     let user: User = user_result.unwrap();
+    // should serialize just the uuid instead?
     let user_json: String = serde_json::to_string(&user).unwrap();
 
     // create a token
@@ -635,9 +637,13 @@ async fn password_reset(req_body: Json<PasswordResetRequestSchema>) -> Result<im
         .json(res_body))
 }
 
+
+
 #[post("password-reset/{uidb64}/{token}")]
-async fn password_reset_confirm(req_body: Json<PasswordResetConfirmRequestSchema>) -> Result<impl Responder> {
-    let PasswordResetConfirmResponseSchema { password, password_confirmation } = req_body.into_inner();
+async fn password_reset_confirm(req_body: Json<PasswordResetConfirmRequestSchema>, req: HttpRequest) -> Result<impl Responder> {
+    let password_reset_response_email_token: String = req.headers().get("password_reset_response_token").unwrap().to_str().unwrap().to_string();
+    let PasswordResetConfirmRequestSchema { password, password_confirmation } = req_body.into_inner();
+    let mut res_body: PasswordResetConfirmResponseSchema = PasswordResetConfirmResponseSchema::new();
 
     if password != password_confirmation {
         return Ok(HttpResponse::UnprocessableEntity()
@@ -652,11 +658,41 @@ async fn password_reset_confirm(req_body: Json<PasswordResetConfirmRequestSchema
             .json(validated_password.err().unwrap()))
     }
 
-    // get uuid from uidb64
-    let uuid = 
-    // if change is not allowed then error
-    // set username to the username
+    // get user from token in redis
+    let con = create_redis_client_connection();
+    let mut user: User = match get_user_from_token_in_redis(con, &password_reset_response_email_token) {
+        // if error return error
+        Err(err) => {
+            let error: AccountError = AccountError {
+                is_error: true,
+                error_message: Some(err),
+            };
+            res_body.account_error = error;
+            return Ok(HttpResponse::UnprocessableEntity()
+            .content_type("application/json; charset=utf-8")
+            .json(res_body))
+        },
+        Ok(email) => email,
+    };
 
+    // if change is not allowed then error
+    user.set_password(password);
+
+    // save change in postgres
+    let pool = create_pg_pool_connection().await;
+    let update_result: Result<(), sqlx::Error> = update_password_for_user_in_pg_users_table(&pool, &user).await;
+
+    // if sql update error then return an error
+    if update_result.is_err() {
+        res_body.account_error = AccountError { is_error: true, error_message: Some(String::from("internal error")) };
+        return Ok(HttpResponse::FailedDependency()
+            .content_type("application/json; charset=utf-8")
+            .json(res_body)
+        )
+    }
+    
+
+    // return success
     return Ok(HttpResponse::NotFound()
         .content_type("application/json; charset=utf-8")
         .json(true));
