@@ -333,8 +333,9 @@ async fn registerEmail(req_body: Json<RegisterEmailRequestSchema>) -> Result<imp
 
     // if user exists then return an error
     let is_email_stored = (&user_result).as_ref().ok().is_some();
-    if is_email_stored == false {
-        res_body.account_error = AccountError { is_error: true, error_message: Some(String::from("user does not exist")) };
+    if is_email_stored == true {
+        res_body.is_email_stored = true;
+        res_body.account_error = AccountError { is_error: true, error_message: Some(String::from("user already exists")) };
         return Ok(HttpResponse::Conflict() // change to real method - currently have no lsp
             .content_type("application/json; charset=utf-8")
             .json(res_body)
@@ -343,8 +344,6 @@ async fn registerEmail(req_body: Json<RegisterEmailRequestSchema>) -> Result<imp
 
 
 
-
-    
     // create a token
     let token = generate_opaque_token_of_length(25);
 
@@ -353,27 +352,31 @@ async fn registerEmail(req_body: Json<RegisterEmailRequestSchema>) -> Result<imp
 
     // if unable to email then return an error
     if message_result = false {
-        let error: AccountError = AccountError { is_error: true, error_message: Some(String::from("email not found"))};
+        let error: AccountError = AccountError { is_error: true, error_message: Some(String::from("unable to email this email address"))};
         res_body.account_error = error;
         return Ok(HttpResponse::Ok()
             .content_type("application/json; charset=utf-8")
             .json(res_body)
         )
     }
-
-    // add {key: token, value: email} to redis
-    let con = create_redis_client_connection();
-    let user: User = user_result.ok().unwrap();
+   
+    // save {key: token, value: user} to redis cache for 300 seconds
     let expiry_in_seconds: Option<i64> = Some(300);
-
-    let set_redis_result = set_token_email_in_redis(con, &token, &email, &expiry_in_seconds);
+    let con = create_redis_client_connection();
+    let set_redis_result = set_token_user_in_redis(con, &token, &user_json, &expiry_in_seconds);
     
-    if set_redis_result.await.is_err() { panic!("redis error, panic debug") }
-    
+    // if redis fails then return an error
+    if set_redis_result.await.is_err() {
+        res_body.account_error = AccountError { is_error: true, error_message: Some(String::from("Server error")) };
+        return Ok(HttpResponse::FailedDependency()
+            .content_type("application/json; charset=utf-8")
+            .json(res_body)
+        )
+    }
+   
     // return ok
-    res_body.is_email_stored = true;
     res_body.register_response_token = Some(token);
-    Ok(HttpResponse::Ok()
+    return Ok(HttpResponse::Ok()
         .content_type("application/json; charset=utf-8")
         .json(res_body))
 }
