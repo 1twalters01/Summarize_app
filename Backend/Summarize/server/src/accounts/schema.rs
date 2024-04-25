@@ -253,6 +253,15 @@ pub struct PasswordResetResponseSchema {
     // email a token to them
 }
 
+impl PasswordResetResponseSchema {
+    pub fn new() -> PasswordResetResponseSchema {
+        PasswordResetResponseSchema {
+            account_error: AccountError::new(),
+            success: false,
+        }
+    }
+}
+
 #[derive(Debug)]
 #[derive(Serialize, Deserialize)]
 pub struct PasswordResetConfirmRequestSchema {
@@ -269,15 +278,20 @@ pub struct PasswordResetConfirmResponseSchema {
     pub success: bool,
 }
 
-
-
-
-
-
-
-
+impl PasswordResetConfirmResponseSchema {
+    pub fn new() -> PasswordResetResponseSchema {
+        PasswordResetResponseSchema {
+            account_error: AccountError::new(),
+            success: false,
+        }
+    }
+}
 
     
+
+
+
+
 #[derive(Debug)]
 #[derive(Serialize, Deserialize)]
 pub struct Logout {
@@ -287,5 +301,15 @@ pub struct Logout {
 #[derive(Debug)]
 #[derive(Serialize, Deserialize)]
 pub struct LogoutResponse {
+    pub account_error: AccountError,
     pub success: bool,
+}
+
+impl LogoutResponse {
+    pub fn new() -> LogoutResponse {
+        LogoutResponse {
+            account_error: AccountError::new(),
+            success: false,
+        }
+    }
 }

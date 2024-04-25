@@ -34,7 +34,8 @@ use crate::tokens::{
 };
 use crate::accounts::emails::{
     compose_register_email_message,
-    send_email
+    compose_password_reset_email_message,
+    send_email,
 };
 
 #[post("login/email")]
@@ -590,15 +591,21 @@ async fn password_reset(req_body: Json<PasswordResetRequestSchema>) -> Result<im
             .json(res_body)
         )
     }
+
+    // get user
+    let user: User = user_result.unwrap();
+    let user_json: String = serde_json::to_string(&user).unwrap();
+
     // create a token
-    let token = generate_opaque_token_of_length(25);
+    let password_reset_response_token: String = generate_opaque_token_of_length(25);
 
     // try to email the account a message containing the token
-    let message_result: bool = compose_passwordResetEmail_email(&token);
+    let message: String = compose_password_reset_email_message(&password_reset_response_token, &user);
+    let message_result = send_email(&message, &email);
 
     // if unable to email then return an error
-    if message_result = false {
-        let error: AccountError = AccountError { is_error: true, error_message: Some(String::from("email not found"))};
+    if message_result.is_err() {
+        let error: AccountError = AccountError { is_error: true, error_message: Some(String::from("unable to send email"))};
         res_body.account_error = error;
         return Ok(HttpResponse::Ok()
             .content_type("application/json; charset=utf-8")
@@ -608,15 +615,21 @@ async fn password_reset(req_body: Json<PasswordResetRequestSchema>) -> Result<im
 
     // add {key: token, value: UUID} to redis
     let con = create_redis_client_connection();
-    let user: User = user_result.ok().unwrap();
     let expiry_in_seconds: Option<i64> = Some(300);
 
-    let set_redis_result = set_token_userUUID_in_redis(con, &token, &user.get_uuid(), &expiry_in_seconds);
+    let set_redis_result = set_token_user_in_redis(con, &password_reset_response_token, &user_json, &expiry_in_seconds);
     
-    if set_redis_result.await.is_err() { panic!("redis error, panic debug") }
+    // if redis fails then return an error
+    if set_redis_result.await.is_err() {
+        res_body.account_error = AccountError { is_error: true, error_message: Some(String::from("Server error")) };
+        return Ok(HttpResponse::FailedDependency()
+            .content_type("application/json; charset=utf-8")
+            .json(res_body)
+        )
+    }
+
     // return ok
-    res_body.is_email_stored = true;
-    res_body.register_response_token = Some(token);
+    res_body.success = true;
     Ok(HttpResponse::Ok()
         .content_type("application/json; charset=utf-8")
         .json(res_body))
