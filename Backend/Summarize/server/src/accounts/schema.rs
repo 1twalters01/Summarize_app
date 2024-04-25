@@ -191,6 +191,16 @@ impl RegisterVerifyResponseSchema {
 
 #[derive(Debug)]
 #[derive(Serialize, Deserialize)]
+pub struct RegisterDetailsRequest {
+    pub username: String,
+    pub password: String,
+    pub password_confirmation: String,
+    pub first_name: Option<String>,
+    pub last_name: Option<String>,
+}
+
+#[derive(Debug)]
+#[derive(Serialize, Deserialize)]
 pub struct RegisterDetailsRequestSchema {
     pub verify_response_token: String,
     pub username: String,
@@ -205,6 +215,15 @@ pub struct RegisterDetailsRequestSchema {
 pub struct RegisterDetailsResponseSchema {
     pub account_error: AccountError,
     pub success: bool,
+}
+
+impl RegisterDetailsResponseSchema {
+    pub fn new() -> RegisterDetailsResponseSchema {
+        RegisterDetailsResponseSchema {
+            account_error: AccountError::new(),
+            success: false,
+        }
+    }
 }
 
 

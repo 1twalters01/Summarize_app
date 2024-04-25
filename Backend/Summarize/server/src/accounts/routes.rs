@@ -10,7 +10,7 @@ use crate::accounts::schema::{
     LoginTotpRequest, LoginTotpRequestSchema, LoginTotpResponseSchema,
     RegisterEmailRequestSchema, RegisterEmailToken, RegisterEmailResponseSchema,
     RegisterVerifyRequestSchema, RegisterVerifyResponseSchema,
-    RegisterDetailsRequestSchema, RegisterDetailsResponseSchema, 
+    RegisterDetailsRequest, RegisterDetailsResponseSchema, 
     PasswordResetRequestSchema, PasswordResetResponseSchema, 
     PasswordResetConfirmRequestSchema, PasswordResetConfirmResponseSchema,
 };
@@ -25,6 +25,7 @@ use crate::accounts::db_queries::{
     delete_token_in_redis,
     get_user_remember_me_from_token_in_redis,
     get_email_from_token_struct_in_redis,
+    create_new_user_in_pg_users_table,
 };
 use crate::tokens::{
     generate_opaque_token_of_length,
@@ -399,7 +400,7 @@ async fn registerEmail(req_body: Json<RegisterEmailRequestSchema>) -> Result<imp
 
 #[post("register/verify/{register_email_token}/{verification_token}")]
 // use this in the other case: register/verify
-// async fn registerVerify(req_body: Json<RegisterVerifyRequest>) -> Result<impl Responder> {
+// async fn registerVerify(req_body: Json<RegisterVerifyRequest>, req: HttpRequest) -> Result<impl Responder> {
 //     let RegisterVerifyRequest { verification_token } = req_body.into_inner();
 //    let register_email_token: String = req.headers().get("register_email_token").unwrap().to_str().unwrap().to_string();
 async fn registerVerify(path: actix_web::web::Path<RegisterVerifyRequestSchema>) -> Result<impl Responder> {
@@ -431,13 +432,13 @@ async fn registerVerify(path: actix_web::web::Path<RegisterVerifyRequestSchema>)
     };
     
 
-    // create a token
-    let token = generate_opaque_token_of_length(25);
+    // create a new token
+    let register_verify_token = generate_opaque_token_of_length(25);
 
     // add {key: token, value: email} to redis
     con = create_redis_client_connection();
     let expiry_in_seconds: Option<i64> = Some(300);
-    let set_redis_result = set_token_email_in_redis(con, &token, &email, &expiry_in_seconds);
+    let set_redis_result = set_token_email_in_redis(con, &register_verify_token, &email, &expiry_in_seconds);
     if set_redis_result.await.is_err() { panic!("redis error, panic debug") }
 
     // delete old {key: token, value: email}
@@ -455,7 +456,7 @@ async fn registerVerify(path: actix_web::web::Path<RegisterVerifyRequestSchema>)
 
     // return ok
     res_body.is_verification_token_correct = true;
-    res_body.verify_response_token = Some(token);
+    res_body.verify_response_token = Some(register_verify_token);
     Ok(HttpResponse::Ok()
         .content_type("application/json; charset=utf-8")
         .json(res_body))
@@ -464,23 +465,39 @@ async fn registerVerify(path: actix_web::web::Path<RegisterVerifyRequestSchema>)
 
 
 #[post("register/details/{uidb64}/{token}")]
-async fn registerDetails(req_body: Json<RegisterDetailsRequest>) -> Result<impl Responder> {
+async fn registerDetails(req_body: Json<RegisterDetailsRequest>, req: HttpRequest) -> Result<impl Responder> {
     let RegisterDetailsRequest { username, password, password_confirmation, first_name, last_name } = req_body.into_inner();
+    let register_verify_token: String = req.headers().get("register_email_token").unwrap().to_str().unwrap().to_string();
+    let mut res_body: RegisterDetailsResponseSchema = RegisterDetailsResponseSchema::new();
 
-    // use token (in header?)to get associated uuid
-    // if no result or wrong format then return error
-    
+    // get the email from redis using the token
+    let con = create_redis_client_connection();
+    let email: String = match get_email_from_token_struct_in_redis(con, &register_verify_token) {
+        // if error return error
+        Err(err) => {
+            let error: AccountError = AccountError {
+                is_error: true,
+                error_message: Some(err),
+            };
+            res_body.account_error = error;
+            return Ok(HttpResponse::UnprocessableEntity()
+            .content_type("application/json; charset=utf-8")
+            .json(res_body))
+        },
+        Ok(email) => email,
+    };
 
     // check if the username is already found in the database. If it is then return error
     let validated_username = validate_username(username.clone());
     if validated_username.is_err() {
+        res_body.account_error = AccountError { is_error: false, error_message: Some(String::from("invalid username"))};
         return Ok(HttpResponse::UnprocessableEntity()
             .content_type("application/json; charset=utf-8")
-            .json(validated_username.err().unwrap()))
+            .json(res_body))
     }
 
     if password != password_confirmation {
-        
+        res_body.account_error = AccountError { is_error: false, error_message: Some(String::from("password does not match confirmation password"))};
         return Ok(HttpResponse::UnprocessableEntity()
             .content_type("application/json; charset=utf-8")
             .json(res_body))
@@ -488,9 +505,10 @@ async fn registerDetails(req_body: Json<RegisterDetailsRequest>) -> Result<impl 
 
     let validated_password = validate_password(password.clone());
     if validated_password.is_err() {
+        res_body.account_error = AccountError { is_error: false, error_message: Some(String::from("invalid password"))};
         return Ok(HttpResponse::UnprocessableEntity()
             .content_type("application/json; charset=utf-8")
-            .json(validated_password.err().unwrap()))
+            .json(res_body))
     }
     println!("password: {:#?}", password);
 
@@ -498,25 +516,53 @@ async fn registerDetails(req_body: Json<RegisterDetailsRequest>) -> Result<impl 
     if first_name.is_some() {
         let validated_first_name = validate_first_name(first_name.clone().unwrap());
         if validated_first_name.is_err() {
+            res_body.account_error = AccountError { is_error: false, error_message: Some(String::from("invalid first name"))};
             return Ok(HttpResponse::UnprocessableEntity()
                 .content_type("application/json; charset=utf-8")
-                .json(validated_first_name.err().unwrap()))
+                .json(res_body))
         }
     }
 
     if last_name.is_some() {
         let validated_last_name = validate_last_name(last_name.clone().unwrap());
         if validated_last_name.is_err() {
+            res_body.account_error = AccountError { is_error: false, error_message: Some(String::from("invalid last name"))};
             return Ok(HttpResponse::UnprocessableEntity()
                 .content_type("application/json; charset=utf-8")
-                .json(validated_last_name.err().unwrap()))
+                .json(res_body))
         }
     }
 
-    // save details to the user to postgres
+    let create_user: Result<User, std::io::Error> = User::new(username, email, password);
+    if create_user.is_err() {
+        res_body.account_error = AccountError { is_error: true, error_message: Some(String::from("internal error"))};
+        return Ok(HttpResponse::FailedDependency()
+            .content_type("application/json; charset=utf-8")
+            .json(res_body));
+    }
 
+    let user: User = create_user.unwrap();
+
+    // save details to the user to postgres
+    let pool = create_pg_pool_connection().await;
+    let save_user_result: Result<(), sqlx::Error> = create_new_user_in_pg_users_table(&pool, user).await;
+
+    // if error then return error
+    if save_user_result.is_err() {
+        res_body.account_error = AccountError { is_error: true, error_message: Some(String::from("internal error"))};
+        return Ok(HttpResponse::FailedDependency()
+            .content_type("application/json; charset=utf-8")
+            .json(res_body));
+    }
     
+    // return Ok
+    // create an auth token with remember me set to false and send it over as well?
+    res_body.success = true;
+    Ok(HttpResponse::Ok()
+        .content_type("application/json; charset=utf-8")
+        .json(res_body))
 }
+
 
 
 #[post("password-reset")]

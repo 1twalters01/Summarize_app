@@ -2,7 +2,21 @@ use redis::{Commands, Connection, ExistenceCheck, RedisResult, SetExpiry, SetOpt
 use sqlx::{Pool, Postgres};
 use crate::accounts::datatypes::users::User;
 
-use super::datatypes::token_object::{self, UserRememberMe};
+use super::datatypes::token_object::UserRememberMe;
+
+
+pub async fn create_new_user_in_pg_users_table(pool: &Pool<Postgres>, user: User) -> Result<(), sqlx::Error> {
+    let user_create_query = sqlx::query("INSERT INTO users WHERE email=($1), username=($2), password=($3), password_confirmation=($4), first_name=($5), last_name=($6)")
+        .bind(user.get_email())
+        .execute(pool)
+        .await;
+
+    if let Err(err) = user_create_query {
+        return Err(err)
+    } else {
+        return Ok(());
+    }
+}
 
 
 pub async fn get_user_from_email_in_pg_users_table(pool: &Pool<Postgres>, email: &str) -> Result<User, sqlx::Error> {
