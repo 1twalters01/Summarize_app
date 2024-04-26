@@ -37,8 +37,8 @@ impl User {
     pub fn new(username: String, email: String, password: String) -> Result<Self, Error> {
         match Password::new(password) {
             Ok(password) => {
-                let password = Self {
-                    id: Uuid::new_v4(),
+                let user = Self {
+                    uuid: Uuid::new_v4(),
                     username,
                     first_name: None,
                     last_name: None,
@@ -56,7 +56,7 @@ impl User {
                     is_anonymous: false,
                 };
 
-                return Ok(password);
+                return Ok(user);
             },
             Err(err) => return Err(err),
         }
@@ -71,12 +71,12 @@ impl User {
     }
 
     pub fn get_full_name(&self) -> String {
-        let first_name = match self.first_name {
+        let first_name = match self.first_name.clone() {
             Some(first_name) => first_name,
             None => String::new(),
         };
 
-        let last_name = match self.last_name {
+        let last_name = match self.last_name.clone() {
             Some(last_name) => last_name,
             None => String::new(),
         };
@@ -84,7 +84,7 @@ impl User {
     }
 
     pub fn get_first_name(&self) -> String {
-        let first_name = match self.first_name {
+        let first_name = match self.first_name.clone() {
             Some(first_name) => first_name,
             None => String::new(),
         };
@@ -93,7 +93,7 @@ impl User {
     }
 
     fn get_last_name(&self) -> String {
-        let last_name = match self.last_name {
+        let last_name = match self.last_name.clone() {
             Some(last_name) => last_name,
             None => String::new(),
         };
@@ -102,6 +102,10 @@ impl User {
 
     pub fn get_email(&self) -> String {
         return self.email.to_owned();
+    }
+
+    pub fn get_password(&self) -> String {
+        return self.password.get_password_string();
     }
 
     pub fn set_password(&mut self, password: String) -> Result<(), Error> {
@@ -152,11 +156,11 @@ impl User {
     }
 
     fn get_groups(&self) -> Vec<String> {
-        return self.groups;
+        return self.groups.clone();
     }
     
     fn get_user_permissions(&self) -> Vec<String>{
-        return self.user_permissions;
+        return self.user_permissions.clone();
     }
      
     fn has_permission(&self, permission: String) -> bool {

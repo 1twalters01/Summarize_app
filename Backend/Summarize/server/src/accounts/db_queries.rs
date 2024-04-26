@@ -21,7 +21,7 @@ pub async fn create_new_user_in_pg_users_table(pool: &Pool<Postgres>, user: User
 
 pub async fn update_password_for_user_in_pg_users_table(pool: &Pool<Postgres>, user: &User) -> Result<(), sqlx::Error> {
     let user_update_query = sqlx::query("")
-        .bind(user.password)
+        .bind(user.get_password())
         .execute(pool)
         .await;
 

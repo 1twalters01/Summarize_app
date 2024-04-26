@@ -10,7 +10,7 @@ pub struct Totp {
 }
 
 #[derive(Debug)]
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct TotpFields {
     pub url: String,
     pub last_updated: SystemTime,
@@ -25,7 +25,7 @@ impl Totp {
         }
     }
 
-    pub fn verify(&self) {
+    pub fn verify(&mut self) {
         self.verified = true;
         self.verified_at = Some(SystemTime::now());
     }
@@ -35,14 +35,14 @@ impl Totp {
     }
 
     pub fn get_url(&self) ->  Option<String> {
-        match self.fields {
+        match self.fields.clone() {
             Some(fields) => return Some(fields.url),
             None => return None,
         }
     }
 
     pub fn get_last_updated(&self) -> Option<SystemTime> {
-        match self.fields {
+        match self.fields.clone() {
             Some(fields) => return Some(fields.last_updated),
             None => return None,
         }
@@ -52,7 +52,7 @@ impl Totp {
         return self.verified_at;
     }
 
-    pub fn set_url(&self, url: String) {
+    pub fn set_url(&mut self, url: String) {
         let now = SystemTime::now();
         
         if self.verified == false {

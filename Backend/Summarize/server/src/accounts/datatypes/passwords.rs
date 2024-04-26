@@ -16,7 +16,6 @@ use serde::{Serialize, Deserialize};
 #[derive(Serialize, Deserialize)]
 pub struct Password {
     password_hash: String,
-    salt: SaltString,
 }
 
 impl Password {
@@ -25,6 +24,10 @@ impl Password {
             Ok(_) => return Ok(hash_password(password)), 
             Err(err) => return Err(err)
         }
+    }
+
+    pub fn get_password_string(&self) -> String {
+        return self.password_hash.clone();
     }
 
     pub fn set_password(&mut self, password: String) -> Result<(), Error> {
@@ -58,17 +61,11 @@ fn validate_password(password: &str) -> Result<(), Error> {
 }
 
 fn hash_password(password: String) -> Password {
-    // let salt = [0; 64].map(|_| rand::thread_rng().gen::<i64>());
-    let salt = SaltString::generate(&mut OsRng);
-
     // Argon2 with default params (Argon2id v19)
     let argon2 = Argon2::default();
-
+    let salt = SaltString::generate(&mut OsRng);
     let password_hash = argon2.hash_password(password.as_bytes(), &salt).unwrap().to_string();
-    // let parsed_hash = PasswordHash::new(&password_hash).unwrap().to_string();
-    // Argon2::default().verify_password(password.as_bytes(), &parsed_hash).is_ok();
-
-    return Password {password_hash, salt}
+    return Password {password_hash}
 }
 
 
