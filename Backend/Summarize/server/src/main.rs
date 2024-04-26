@@ -6,6 +6,7 @@ pub mod settings;
 pub mod databases;
 pub mod utils;
 pub mod tokens;
+pub mod ping;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -18,9 +19,8 @@ async fn main() -> std::io::Result<()> {
 
         App::new()
             .wrap(cors)
-            .service(accounts::routes::login_email)
-            .service(accounts::routes::login_password)
-            .service(accounts::routes::login_totp)
+            .configure(ping::urls::config)
+            .configure(accounts::urls::config)
     })
     .bind("127.0.0.1:8000")?
     .run()
