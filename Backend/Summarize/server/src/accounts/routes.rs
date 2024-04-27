@@ -18,8 +18,8 @@ use crate::accounts::validations::{validate_email, validate_password, validate_t
 use crate::databases::connections::{create_pg_pool_connection, create_redis_client_connection};
 use crate::accounts::db_queries::{
     get_user_from_email_in_pg_users_table,
+    set_key_value_in_redis,
     set_token_user_in_redis,
-    set_token_email_in_redis,
     get_user_from_token_in_redis,
     set_token_tokenObject_in_redis,
     delete_token_in_redis,
@@ -102,10 +102,11 @@ async fn register_email(req_body: Json<RegisterEmailRequestSchema>) -> Result<im
     // save {key: token, value: email} to redis cache for 300 seconds
     let expiry_in_seconds: Option<i64> = Some(300);
     let con = create_redis_client_connection();
-    let set_redis_result = set_token_email_in_redis(con, &token_struct_json, &email, &expiry_in_seconds);
+    let set_redis_result = set_key_value_in_redis(con, &token_struct_json, &email, &expiry_in_seconds).await;
 
     // if redis fails then return an error
-    if set_redis_result.await.is_err() {
+    if set_redis_result.is_err() {
+        println!("{:?}", set_redis_result);
         res_body.account_error = AccountError { is_error: true, error_message: Some(String::from("Server error")) };
         return Ok(HttpResponse::FailedDependency()
             .content_type("application/json; charset=utf-8")
@@ -443,7 +444,7 @@ async fn registerVerify(path: actix_web::web::Path<RegisterVerifyRequestSchema>)
     // add {key: token, value: email} to redis
     con = create_redis_client_connection();
     let expiry_in_seconds: Option<i64> = Some(300);
-    let set_redis_result = set_token_email_in_redis(con, &register_verify_token, &email, &expiry_in_seconds);
+    let set_redis_result = set_key_value_in_redis(con, &register_verify_token, &email, &expiry_in_seconds);
     if set_redis_result.await.is_err() { panic!("redis error, panic debug") }
 
     // delete old {key: token, value: email}

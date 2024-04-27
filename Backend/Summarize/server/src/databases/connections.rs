@@ -18,7 +18,7 @@ pub async fn create_pg_pool_connection() -> Pool<Postgres> {
 }
 
 pub fn create_redis_client_connection() -> Connection {
-    let url = format!("redis://127.0.0.1/");
+    let url = format!("redis://localhost:6379");
     let client = redis::Client::open(url).unwrap();
     let con = client.get_connection().unwrap();
     return con;

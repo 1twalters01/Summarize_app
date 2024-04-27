@@ -40,7 +40,7 @@ pub fn send_email(message: EmailMessage, email: &str) -> Result<(), lettre::tran
 pub fn compose_register_email_message(verify_token: &str, register_email_token: &str) -> EmailMessage {
     let message: EmailMessage = EmailMessage {
         subject: String::from("Register to Summarize"),
-        body: format!("<h1>Summarize</h2><p>Verify Token: {}</p><p>Register Email Token: {}</p>", verify_token, register_email_token)
+        body: format!("<h1>Summarize</h1><p>Verify Token: {}</p><p>Register Email Token: {}</p>", verify_token, register_email_token)
     };
     return message
 }

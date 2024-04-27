@@ -48,31 +48,37 @@ pub async fn get_user_from_email_in_pg_users_table(pool: &Pool<Postgres>, email:
     return Ok(user)
 }
 
+pub async fn set_key_value_in_redis(mut con: Connection, token: &str, email: &str, expiry_in_seconds: &Option<i64>) -> RedisResult<()> {
+    let _: () = con.set(token, email)?;
 
-pub async fn set_token_user_in_redis(mut con: Connection, token: &str, user_json: &str, expiry_in_seconds: &Option<i64>) -> RedisResult<Vec<usize>> {
-    let expiry: usize = match expiry_in_seconds {
-        Some(expiry_in_seconds) => *expiry_in_seconds as usize,
-        None => 0
+    if let Some(expiry) = expiry_in_seconds {
+        let _: () = con.expire(token, *expiry)?;
     };
 
-    let opts: SetOptions = SetOptions::default()
-        .conditional_set(ExistenceCheck::NX)
-        .get(true)
-        .with_expiration(SetExpiry::EX(expiry));
-    con.set_options(token, user_json, opts)
+
+    Ok(())
 }
 
-pub async fn set_token_email_in_redis(mut con: Connection, token: &str, email: &str, expiry_in_seconds: &Option<i64>) -> RedisResult<Vec<usize>> {
+
+pub async fn set_token_user_in_redis(mut con: Connection, token: &str, user_json: &str, expiry_in_seconds: &Option<i64>) -> RedisResult<()> {
     let expiry: usize = match expiry_in_seconds {
         Some(expiry_in_seconds) => *expiry_in_seconds as usize,
         None => 0
     };
 
-    let opts: SetOptions = SetOptions::default()
-        .conditional_set(ExistenceCheck::NX)
-        .get(true)
-        .with_expiration(SetExpiry::EX(expiry));
-    con.set_options(token, email, opts)
+    // let opts: SetOptions = SetOptions::default()
+    //     .conditional_set(ExistenceCheck::NX)
+    //     .get(true)
+    //     .with_expiration(SetExpiry::EX(expiry));
+    // con.set_options(token, user_json, opts);
+   
+    let res2: () = con.expire(token, expiry as i64)?;
+    println!("res2: {:?}", res2);
+    println!("hi");
+    let res: () = con.set(token, user_json)?;
+    println!("res: {:?}", res);
+
+    Ok(())
 }
 
 
