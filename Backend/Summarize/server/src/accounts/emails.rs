@@ -15,18 +15,17 @@ pub struct EmailMessage {
 
 pub fn send_email(message: EmailMessage, email: &str) -> Result<(), lettre::transport::smtp::Error> {
     // SMTP server credentials
-    let smtp_email: String = env::var("SMTP_EMAIL").unwrap();
     let smtp_username: String = env::var("SMTP_USERNAME").unwrap();
     let smtp_password: String = env::var("SMTP_PASSWORD").unwrap();
     let smtp_server: String = env::var("SMTP_SERVER").unwrap();
 
     let mailer = SmtpTransport::relay(&smtp_server).unwrap()
-        .credentials(Credentials::new(smtp_username, smtp_password))
+        .credentials(Credentials::new(smtp_username.clone(), smtp_password))
         .authentication(vec![Mechanism::Plain])
         .build();
 
     let email = Message::builder()
-        .from(smtp_email.parse().unwrap())
+        .from(smtp_username.parse().unwrap())
         .to(email.parse().unwrap())
         .subject(message.subject)
         .body(message.body)

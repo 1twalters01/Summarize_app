@@ -85,12 +85,13 @@ async fn register_email(req_body: Json<RegisterEmailRequestSchema>) -> Result<im
 
     // try to email the account a message containing the token
     let message = compose_register_email_message(&verification_token, &register_email_token);
-    println!("message: {:?}", message);
+    println!("message: {:#?}", message);
     let message_result = send_email(message, &email);
+    println!("{:#?}", message_result);
 
     // if unable to email then return an error
     if message_result.is_err() {
-        let error: AccountError = AccountError { is_error: true, error_message: Some(String::from("unable to email this email address"))};
+        let error: AccountError = AccountError { is_error: true, error_message: Some(String::from("unable to send an email to this address"))};
         res_body.account_error = error;
         return Ok(HttpResponse::Ok()
             .content_type("application/json; charset=utf-8")
