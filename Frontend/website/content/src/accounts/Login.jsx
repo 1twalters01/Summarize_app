@@ -96,6 +96,7 @@ const postLogin = async(mode, setMode, email, password, totp) => {
       validateModeEmail(email, password, totp);
       response = postLoginEmail(email)
         .then((res) => {
+            console.log(res);
             if (res === true) {
                 setMode(modeOptions.password)
             }});

@@ -39,6 +39,87 @@ use crate::accounts::emails::{
     send_email,
 };
 
+#[post("register/email")]
+async fn register_email(req_body: Json<RegisterEmailRequestSchema>) -> Result<impl Responder> {
+    let RegisterEmailRequestSchema { email } = req_body.into_inner();
+    let mut res_body: RegisterEmailResponseSchema = RegisterEmailResponseSchema::new();
+
+    // Validate the email from the request body
+    let validated_email = validate_email(email.clone());
+    if validated_email.is_err() {
+        res_body.account_error = AccountError{
+            is_error: true,
+            error_message: Some(validated_email.err().unwrap())
+        };
+
+        return Ok(HttpResponse::UnprocessableEntity()
+            .content_type("application/json; charset=utf-8")
+            .json(res_body)
+        )
+    }
+
+    // try to get the user from postgres using the email
+    let pool = create_pg_pool_connection().await;
+    let user_result: Result<User, sqlx::Error> = get_user_from_email_in_pg_users_table(&pool, email.as_str()).await;
+
+    // if email exists then return an error
+    let is_email_stored = (&user_result).as_ref().ok().is_some();
+    if is_email_stored == true {
+        res_body.is_email_stored = true;
+        res_body.account_error = AccountError { is_error: true, error_message: Some(String::from("user already exists")) };
+        return Ok(HttpResponse::Conflict() // change to real method - currently have no lsp
+            .content_type("application/json; charset=utf-8")
+            .json(res_body)
+        )
+    }
+
+
+    // create a verify token, a register email token, and a register_email_token_struct
+    let verification_token = generate_opaque_token_of_length(8);
+    let register_email_token = generate_opaque_token_of_length(64);
+    let token_struct: RegisterEmailToken = RegisterEmailToken {
+        register_email_token: register_email_token.clone(),
+        verification_token: verification_token.clone()
+    };
+    let token_struct_json: String = serde_json::to_string(&token_struct).unwrap();
+
+    // try to email the account a message containing the token
+    let message = compose_register_email_message(&verification_token, &register_email_token);
+    println!("message: {:?}", message);
+    let message_result = send_email(message, &email);
+
+    // if unable to email then return an error
+    if message_result.is_err() {
+        let error: AccountError = AccountError { is_error: true, error_message: Some(String::from("unable to email this email address"))};
+        res_body.account_error = error;
+        return Ok(HttpResponse::Ok()
+            .content_type("application/json; charset=utf-8")
+            .json(res_body)
+        )
+    }
+
+    // save {key: token, value: email} to redis cache for 300 seconds
+    let expiry_in_seconds: Option<i64> = Some(300);
+    let con = create_redis_client_connection();
+    let set_redis_result = set_token_email_in_redis(con, &token_struct_json, &email, &expiry_in_seconds);
+
+    // if redis fails then return an error
+    if set_redis_result.await.is_err() {
+        res_body.account_error = AccountError { is_error: true, error_message: Some(String::from("Server error")) };
+        return Ok(HttpResponse::FailedDependency()
+            .content_type("application/json; charset=utf-8")
+            .json(res_body)
+        )
+    }
+
+    // return ok
+    res_body.register_response_token = Some(register_email_token);
+    return Ok(HttpResponse::Ok()
+        .content_type("application/json; charset=utf-8")
+        .json(res_body))
+}
+
+
 #[post("login/email")]
 async fn login_email(data: Json<LoginEmailRequestSchema>) -> Result<impl Responder> {
     let LoginEmailRequestSchema { email } = data.into_inner();
@@ -59,6 +140,7 @@ async fn login_email(data: Json<LoginEmailRequestSchema>) -> Result<impl Respond
     }
 
     // try to get the user from postgres using the email
+    println!("email: {}", &email);
     let pool = create_pg_pool_connection().await;
     let user_result: Result<User, sqlx::Error> = get_user_from_email_in_pg_users_table(&pool, email.as_str()).await;
 
@@ -319,86 +401,6 @@ async fn login_totp(data: Json<LoginTotpRequest>, req: HttpRequest) -> Result<im
 
 
 
-#[post("register/email")]
-async fn registerEmail(req_body: Json<RegisterEmailRequestSchema>) -> Result<impl Responder> {
-    let RegisterEmailRequestSchema { email } = req_body.into_inner();
-    let mut res_body: RegisterEmailResponseSchema = RegisterEmailResponseSchema::new();
-
-    // Validate the email from the request body
-    let validated_email = validate_email(email.clone());
-    if validated_email.is_err() {
-        res_body.account_error = AccountError{
-            is_error: true,
-            error_message: Some(validated_email.err().unwrap())
-        };
-
-        return Ok(HttpResponse::UnprocessableEntity()
-            .content_type("application/json; charset=utf-8")
-            .json(res_body)
-        )
-    }
-
-    // try to get the user from postgres using the email
-    let pool = create_pg_pool_connection().await;
-    let user_result: Result<User, sqlx::Error> = get_user_from_email_in_pg_users_table(&pool, email.as_str()).await;
-
-    // if email exists then return an error
-    let is_email_stored = (&user_result).as_ref().ok().is_some();
-    if is_email_stored == true {
-        res_body.is_email_stored = true;
-        res_body.account_error = AccountError { is_error: true, error_message: Some(String::from("user already exists")) };
-        return Ok(HttpResponse::Conflict() // change to real method - currently have no lsp
-            .content_type("application/json; charset=utf-8")
-            .json(res_body)
-        )
-    }
-
-
-    // create a verify token, a register email token, and a register_email_token_struct
-    let verification_token = generate_opaque_token_of_length(8);
-    let register_email_token = generate_opaque_token_of_length(25);
-    let token_struct: RegisterEmailToken = RegisterEmailToken {
-        register_email_token: register_email_token.clone(),
-        verification_token: verification_token.clone()
-    };
-    let token_struct_json: String = serde_json::to_string(&token_struct).unwrap();
-
-    // try to email the account a message containing the token
-    let message: String = compose_register_email_message(&verification_token, &register_email_token);
-    let message_result: Result<(), String>  = send_email(&message, &email);
-
-    // if unable to email then return an error
-    if message_result.is_err() {
-        let error: AccountError = AccountError { is_error: true, error_message: Some(String::from("unable to email this email address"))};
-        res_body.account_error = error;
-        return Ok(HttpResponse::Ok()
-            .content_type("application/json; charset=utf-8")
-            .json(res_body)
-        )
-    }
-
-    // save {key: token, value: email} to redis cache for 300 seconds
-    let expiry_in_seconds: Option<i64> = Some(300);
-    let con = create_redis_client_connection();
-    let set_redis_result = set_token_email_in_redis(con, &token_struct_json, &email, &expiry_in_seconds);
-    
-    // if redis fails then return an error
-    if set_redis_result.await.is_err() {
-        res_body.account_error = AccountError { is_error: true, error_message: Some(String::from("Server error")) };
-        return Ok(HttpResponse::FailedDependency()
-            .content_type("application/json; charset=utf-8")
-            .json(res_body)
-        )
-    }
-   
-    // return ok
-    res_body.register_response_token = Some(register_email_token);
-    return Ok(HttpResponse::Ok()
-        .content_type("application/json; charset=utf-8")
-        .json(res_body))
-}
-
-
 
 #[post("register/verify/{register_email_token}/{verification_token}")]
 // use this in the other case: register/verify
@@ -602,8 +604,8 @@ async fn password_reset(req_body: Json<PasswordResetRequestSchema>) -> Result<im
     let password_reset_response_token: String = generate_opaque_token_of_length(25);
 
     // try to email the account a message containing the token
-    let message: String = compose_password_reset_email_message(&password_reset_response_token, &user);
-    let message_result = send_email(&message, &email);
+    let message = compose_password_reset_email_message(&password_reset_response_token, &user);
+    let message_result = send_email(message, &email);
 
     // if unable to email then return an error
     if message_result.is_err() {

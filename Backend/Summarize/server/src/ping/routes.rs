@@ -123,7 +123,7 @@ mod tests {
     // #[actix_web::test]
     // fn test_ping_get_only_auth() {
     // }
-    //
+
     // #[actix_web::test]
     // fn test_ping_get_not_auth() {
     // }
@@ -157,7 +157,7 @@ mod tests {
     // #[actix_web::test]
     // fn test_ping_post_only_auth() {
     // }
-    //
+
     // #[actix_web::test]
     // fn test_ping_post_not_auth() {
     // }

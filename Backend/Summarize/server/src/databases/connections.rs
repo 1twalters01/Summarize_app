@@ -8,7 +8,7 @@ pub async fn create_pg_pool_connection() -> Pool<Postgres> {
     let port: String = String::from("5432");
     let dbname: String = env::var("PG_DB_NAME").unwrap();
 
-    let url: String = format!("postgres://{username}:{password}@localhost:{port}/+{dbname}");
+    let url: String = format!("postgresql://{username}:{password}@localhost:{port}/{dbname}");
     let pool: Pool<Postgres> = PgPoolOptions::new()
         .max_connections(5)
         .connect(url.as_str())

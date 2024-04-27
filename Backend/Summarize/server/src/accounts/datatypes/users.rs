@@ -71,15 +71,9 @@ impl User {
     }
 
     pub fn get_full_name(&self) -> String {
-        let first_name = match self.first_name.clone() {
-            Some(first_name) => first_name,
-            None => String::new(),
-        };
+        let first_name = self.get_first_name();
+        let last_name = self.get_last_name();
 
-        let last_name = match self.last_name.clone() {
-            Some(last_name) => last_name,
-            None => String::new(),
-        };
         return format!("{} {}", first_name.to_owned(), last_name.to_owned());
     }
 

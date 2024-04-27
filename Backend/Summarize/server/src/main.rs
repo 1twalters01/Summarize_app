@@ -1,5 +1,6 @@
 use actix_web::{App, HttpServer};
 use actix_cors::Cors;
+use dotenv::dotenv;
 
 pub mod accounts;
 pub mod settings;
@@ -10,6 +11,8 @@ pub mod ping;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    dotenv().ok();
+
     HttpServer::new(|| {
         let cors = Cors::default()
             .allowed_origin("http://127.0.0.1:8080")
