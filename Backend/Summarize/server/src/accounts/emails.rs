@@ -5,6 +5,7 @@ use crate::accounts::datatypes::users::User;
 use lettre::{
     Message, SmtpTransport, Transport,
     transport::smtp::authentication::{Credentials, Mechanism},
+    message::header::ContentType,
 };
 
 #[derive(Debug)]
@@ -28,6 +29,7 @@ pub fn send_email(message: EmailMessage, email: &str) -> Result<(), lettre::tran
         .from(smtp_username.parse().unwrap())
         .to(email.parse().unwrap())
         .subject(message.subject)
+        .header(ContentType::TEXT_HTML)
         .body(message.body)
         .unwrap();
 

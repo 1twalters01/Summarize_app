@@ -166,6 +166,12 @@ impl RegisterEmailResponseSchema {
 
 #[derive(Debug)]
 #[derive(Serialize, Deserialize)]
+pub struct RegisterVerifyRequest {
+    pub verification_token: String, // thing they enter on the site
+}
+
+#[derive(Debug)]
+#[derive(Serialize, Deserialize)]
 pub struct RegisterVerifyRequestSchema {
     pub register_email_token: String, // opaque token in place of the email
     pub verification_token: String, // thing they enter on the site
@@ -176,7 +182,7 @@ pub struct RegisterVerifyRequestSchema {
 pub struct RegisterVerifyResponseSchema {
     pub account_error: AccountError,
     pub is_verification_token_correct: bool,
-    pub verify_response_token: Option<String>,
+    pub register_verification_token: Option<String>,
 }
 
 impl RegisterVerifyResponseSchema {
@@ -184,7 +190,7 @@ impl RegisterVerifyResponseSchema {
         RegisterVerifyResponseSchema {
             account_error: AccountError::new(),
             is_verification_token_correct: false,
-            verify_response_token: None,
+            register_verification_token: None,
         }
     }
 }
@@ -202,7 +208,7 @@ pub struct RegisterDetailsRequest {
 #[derive(Debug)]
 #[derive(Serialize, Deserialize)]
 pub struct RegisterDetailsRequestSchema {
-    pub verify_response_token: String,
+    pub register_verification_token: String,
     pub username: String,
     pub password: String,
     pub password_confirmation: String,
