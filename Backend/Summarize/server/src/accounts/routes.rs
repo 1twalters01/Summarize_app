@@ -151,6 +151,8 @@ async fn register_verify_link(path: actix_web::web::Path<RegisterVerifyRequestSc
 async fn register_verification_functionality(register_email_token: String, verification_token: String) -> Result<impl Responder> {
     let mut res_body: RegisterVerifyResponseSchema = RegisterVerifyResponseSchema::new();
 
+    // Validate tokens
+
     // Form RegisterToken struct
     let token_struct: RegisterEmailToken = RegisterEmailToken {
         verification_token,
