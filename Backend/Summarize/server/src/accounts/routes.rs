@@ -33,11 +33,11 @@ use crate::accounts::{
         PasswordResetRequestSchema, PasswordResetResponseSchema, 
         PasswordResetConfirmRequestSchema, PasswordResetConfirmResponseSchema,
     },
-    validations::{
-        validate_email, validate_username,
-        validate_password, validate_totp,
-        validate_first_name, validate_last_name
-    },
+};
+use crate::validations::{
+    validate_email, validate_username,
+    validate_password, validate_totp,
+    validate_first_name, validate_last_name
 };
 use crate::databases::connections::{
     create_pg_pool_connection,
@@ -78,7 +78,7 @@ async fn register_email(req_body: Json<RegisterEmailRequestSchema>) -> Result<im
     if is_email_stored == true {
         res_body.is_email_stored = true;
         res_body.account_error = AccountError { is_error: true, error_message: Some(String::from("user already exists")) };
-        return Ok(HttpResponse::Conflict() // change to real method - currently have no lsp
+        return Ok(HttpResponse::Conflict()
             .content_type("application/json; charset=utf-8")
             .json(res_body)
         )
@@ -102,7 +102,7 @@ async fn register_email(req_body: Json<RegisterEmailRequestSchema>) -> Result<im
     if message_result.is_err() {
         let error: AccountError = AccountError { is_error: true, error_message: Some(String::from("unable to send an email to this address"))};
         res_body.account_error = error;
-        return Ok(HttpResponse::Ok()
+        return Ok(HttpResponse::InternalServerError()
             .content_type("application/json; charset=utf-8")
             .json(res_body)
         )
@@ -433,7 +433,7 @@ async fn login_password(data: Json<LoginPasswordRequest>, req: HttpRequest) -> R
         res_body.account_error = error;
         res_body.is_password_correct = false;
         
-        return Ok(HttpResponse::Ok()
+        return Ok(HttpResponse::Unauthorized()
             .content_type("application/json; charset=utf-8")
             .json(res_body)
         )
@@ -544,7 +544,7 @@ async fn login_totp(data: Json<LoginTotpRequest>, req: HttpRequest) -> Result<im
     if has_totp == false {
         let error: AccountError = AccountError { is_error: true, error_message: Some(String::from("User does not have totp activated")) };
         res_body.account_error = error;
-        return Ok(HttpResponse::Ok()
+        return Ok(HttpResponse::Unauthorized()
             .content_type("application/json; charset=utf-8")
             .json(res_body)
         )
@@ -555,7 +555,7 @@ async fn login_totp(data: Json<LoginTotpRequest>, req: HttpRequest) -> Result<im
     if is_totp_correct == false {
         res_body.account_error = AccountError { is_error: true, error_message: Some(String::from("Incorrect totp")) };
 
-        return Ok(HttpResponse::Ok()
+        return Ok(HttpResponse::Unauthorized()
             .content_type("application/json; charset=utf-8")
             .json(res_body)
         )
@@ -611,7 +611,7 @@ async fn password_reset(req_body: Json<PasswordResetRequestSchema>) -> Result<im
     if user_result.is_ok() == false {
         let error: AccountError = AccountError { is_error: true, error_message: Some(String::from("email not found"))};
         res_body.account_error = error;
-        return Ok(HttpResponse::Ok()
+        return Ok(HttpResponse::NotFound()
             .content_type("application/json; charset=utf-8")
             .json(res_body)
         )
@@ -633,7 +633,7 @@ async fn password_reset(req_body: Json<PasswordResetRequestSchema>) -> Result<im
     if message_result.is_err() {
         let error: AccountError = AccountError { is_error: true, error_message: Some(String::from("unable to send email"))};
         res_body.account_error = error;
-        return Ok(HttpResponse::Ok()
+        return Ok(HttpResponse::InternalServerError()
             .content_type("application/json; charset=utf-8")
             .json(res_body)
         )
