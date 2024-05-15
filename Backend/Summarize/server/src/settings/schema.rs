@@ -38,8 +38,8 @@ pub struct ChangeUsernameRequestStruct {
 #[derive(Debug)]
 #[derive(Serialize, Deserialize)]
 pub struct ChangeUsernameResponseStruct {
-    settings_error: SettingsError,
-    success: bool,
+    pub settings_error: SettingsError,
+    pub success: bool,
 }
 
 impl ChangeUsernameResponseStruct {
@@ -63,8 +63,8 @@ pub struct ChangeEmailRequestStruct {
 #[derive(Debug)]
 #[derive(Serialize, Deserialize)]
 pub struct ChangeEmailResponseStruct {
-    settings_error: SettingsError,
-    success: bool,
+    pub settings_error: SettingsError,
+    pub success: bool,
 }
 
 impl ChangeEmailResponseStruct {
@@ -89,8 +89,8 @@ pub struct ChangePasswordRequestStruct {
 #[derive(Debug)]
 #[derive(Serialize, Deserialize)]
 pub struct ChangePasswordResponseStruct {
-    settings_error: SettingsError,
-    success: bool,
+    pub settings_error: SettingsError,
+    pub success: bool,
 }
 
 impl ChangePasswordResponseStruct {
@@ -139,8 +139,8 @@ pub struct ToggleTotpRequestStruct {
 #[derive(Debug)]
 #[derive(Serialize, Deserialize)]
 pub struct ToggleTotpResponseStruct {
-    settings_error: SettingsError,
-    success: bool,
+    pub settings_error: SettingsError,
+    pub success: bool,
 }
 
 impl ToggleTotpResponseStruct {
@@ -152,6 +152,21 @@ impl ToggleTotpResponseStruct {
     }
 }
 
+#[derive(Debug)]
+#[derive(Serialize, Deserialize)]
+pub struct GetThemeResponseStruct {
+    pub settings_error: SettingsError,
+    pub theme: Theme,
+}
+
+impl GetThemeResponseStruct {
+    pub fn new() -> GetThemeResponseStruct {
+        GetThemeResponseStruct {
+            settings_error: SettingsError::new(),
+            theme: Theme::Dark,
+        }
+    }
+}
 
 
 
@@ -180,42 +195,65 @@ pub struct CustomTheme {
 #[derive(Debug)]
 #[derive(Serialize, Deserialize)]
 pub struct PrimaryColours {
-    primary_colour_1: Colour,
-    primary_colour_2: Colour,
-    primary_colour_3: Colour,
-    primary_colour_4: Colour,
-    primary_colour_5: Colour,
+    pub primary_colour_1: Colour,
+    pub primary_colour_2: Colour,
+    pub primary_colour_3: Colour,
+    pub primary_colour_4: Colour,
+    pub primary_colour_5: Colour,
 }
 
 #[derive(Debug)]
 #[derive(Serialize, Deserialize)]
 pub struct SecondaryColours {
-    secondary_colour_1: Colour,
-    secondary_colour_2: Colour,
-    secondary_colour_3: Colour,
-    secondary_colour_4: Colour,
-    secondary_colour_5: Colour,
+    pub secondary_colour_1: Colour,
+    pub secondary_colour_2: Colour,
+    pub secondary_colour_3: Colour,
+    pub secondary_colour_4: Colour,
+    pub secondary_colour_5: Colour,
 }
 
 #[derive(Debug)]
 #[derive(Serialize, Deserialize)]
 pub struct Colour {
-    red: i8,
-    green: i8,
-    blue: i8,
-    alpha: i8,
+    pub red: i8,
+    pub green: i8,
+    pub blue: i8,
+    pub alpha: i8,
 }
 
 #[derive(Debug)]
 #[derive(Serialize, Deserialize)]
 pub struct ChangeThemeResponseStruct {
-    settings_error: SettingsError,
-    success: bool,
+    pub settings_error: SettingsError,
+    pub success: bool,
 }
 
 impl ChangeThemeResponseStruct {
     pub fn new() -> ChangeThemeResponseStruct {
         ChangeThemeResponseStruct {
+            settings_error: SettingsError::new(),
+            success: false,
+        }
+    }
+}
+
+
+#[derive(Debug)]
+#[derive(Serialize, Deserialize)]
+pub struct ChangeLanguageRequestStruct {
+    pub language: String,
+}
+
+#[derive(Debug)]
+#[derive(Serialize, Deserialize)]
+pub struct ChangeLanguageResponseStruct {
+    pub settings_error: SettingsError,
+    pub success: bool,
+}
+
+impl ChangeLanguageResponseStruct {
+    pub fn new() -> ChangeLanguageResponseStruct {
+        ChangeLanguageResponseStruct {
             settings_error: SettingsError::new(),
             success: false,
         }

@@ -1,24 +1,31 @@
 use actix_web::{get, post, web::Json, HttpRequest, HttpResponse, Responder, Result};
 // use std::{fs, path::PathBuf};
 use crate::settings::schema::{
+    SettingsError,
     ChangeEmailRequestStruct, ChangeEmailResponseStruct,
     ChangeUsernameRequestStruct, ChangeUsernameResponseStruct,
     ChangePasswordRequestStruct, ChangePasswordResponseStruct,
     DeleteAccountRequestStruct, DeleteAccountResponseStruct,
-    ToggleTotpRequestStruct, ToggleTotpResponseStruct, Theme,
+    ToggleTotpRequestStruct, ToggleTotpResponseStruct,
+    GetThemeResponseStruct,
     ChangeThemeRequestStruct, ChangeThemeResponseStruct,
+    ChangeLanguageRequestStruct, ChangeLanguageResponseStruct,
+};
+use crate::validations::{
+    validate_email, validate_username,
+    validate_password, validate_totp,
 };
 
 #[post("change-username")]
     async fn change_username(req_body: Json<ChangeUsernameRequestStruct>, req: HttpRequest) -> Result<impl Responder> {
     let ChangeUsernameRequestStruct { username, password } = req_body.into_inner();
-    let res_body: ChangeUsernameResponseStruct = ChangeUsernameResponseStruct::new();
+    let mut res_body: ChangeUsernameResponseStruct = ChangeUsernameResponseStruct::new();
 
     // Authenticate, is this done outside of this function?
 
     // validate password
     let validated_password = validate_password(password.clone());
-    if validated_password.is_error() {
+    if validated_password.is_err() {
         let error: SettingsError = SettingsError {
             is_error: true,
             error_message: Some(validated_password.err().unwrap())
@@ -32,7 +39,7 @@ use crate::settings::schema::{
 
     // validate username
     let validated_username = validate_username(username.clone());
-    if validated_username.is_error() {
+    if validated_username.is_err() {
         let error: SettingsError = SettingsError {
             is_error: true,
             error_message: Some(validated_username.err().unwrap())
@@ -60,13 +67,13 @@ use crate::settings::schema::{
 #[post("change-email")]
 async fn change_email(req_body: Json<ChangeEmailRequestStruct>, req: HttpRequest) -> Result<impl Responder> {
     let ChangeEmailRequestStruct { email, password } = req_body.into_inner();
-    let res_body: ChangeEmailResponseStruct = ChangeEmailResponseStruct::new();
+    let mut res_body: ChangeEmailResponseStruct = ChangeEmailResponseStruct::new();
 
     // Authenticate, is this done outside of this function?
 
     // validate password
     let validated_password = validate_password(password.clone());
-    if validated_password.is_error() {
+    if validated_password.is_err() {
         let error: SettingsError = SettingsError {
             is_error: true,
             error_message: Some(validated_password.err().unwrap())
@@ -80,7 +87,7 @@ async fn change_email(req_body: Json<ChangeEmailRequestStruct>, req: HttpRequest
 
     // validate email
     let validated_email = validate_email(email.clone());
-    if validated_email.is_error() {
+    if validated_email.is_err() {
         let error: SettingsError = SettingsError {
             is_error: true,
             error_message: Some(validated_email.err().unwrap())
@@ -109,7 +116,7 @@ async fn change_email(req_body: Json<ChangeEmailRequestStruct>, req: HttpRequest
 #[post("change-password")]
 async fn change_password(req_body: Json<ChangePasswordRequestStruct>, req: HttpRequest) -> Result<impl Responder> {
     let ChangePasswordRequestStruct { new_password, new_password_confirmation, password } = req_body.into_inner();
-    let res_body: ChangePasswordResponseStruct = ChangePasswordResponseStruct::new();
+    let mut res_body: ChangePasswordResponseStruct = ChangePasswordResponseStruct::new();
 
     // Authenticate, is this done outside of this function?
 
@@ -117,7 +124,7 @@ async fn change_password(req_body: Json<ChangePasswordRequestStruct>, req: HttpR
     if new_password != new_password_confirmation {
         let error: SettingsError = SettingsError {
             is_error: true,
-            error_message: Some(String("confirmation is not the same as the new password"))
+            error_message: Some(String::from("confirmation is not the same as the new password"))
         };
         res_body.settings_error = error;
 
@@ -128,7 +135,7 @@ async fn change_password(req_body: Json<ChangePasswordRequestStruct>, req: HttpR
 
     // validate password
     let validated_password = validate_password(password.clone());
-    if validated_password.is_error() {
+    if validated_password.is_err() {
         let error: SettingsError = SettingsError {
             is_error: true,
             error_message: Some(validated_password.err().unwrap())
@@ -142,7 +149,7 @@ async fn change_password(req_body: Json<ChangePasswordRequestStruct>, req: HttpR
 
     // validate new password
     let validated_new_password = validate_password(new_password.clone());
-    if validated_new_password.is_error() {
+    if validated_new_password.is_err() {
         let error: SettingsError = SettingsError {
             is_error: true,
             error_message: Some(validated_new_password.err().unwrap())
@@ -178,7 +185,7 @@ async fn delete_account(req_body: Json<DeleteAccountRequestStruct>, req: HttpReq
 #[post("toggle-totp")]
 async fn toggle_totp(req_body: Json<ToggleTotpRequestStruct>, req: HttpRequest) -> Result<impl Responder> {
     let ToggleTotpRequestStruct { password, totp } = req_body.into_inner();
-    let res_body: ToggleTotpResponseStruct = ToggleTotpResponseStruct::new();
+    let mut res_body: ToggleTotpResponseStruct = ToggleTotpResponseStruct::new();
 
     // Authenticate, is this done outside of this function?
 
@@ -194,7 +201,7 @@ async fn toggle_totp(req_body: Json<ToggleTotpRequestStruct>, req: HttpRequest) 
 
     // validate the entered totp code
     let validated_email = validate_totp(totp.clone());
-    if validated_email.is_error() {
+    if validated_email.is_err() {
         let error: SettingsError = SettingsError {
             is_error: true,
             error_message: Some(validated_email.err().unwrap())
@@ -210,7 +217,7 @@ async fn toggle_totp(req_body: Json<ToggleTotpRequestStruct>, req: HttpRequest) 
     
     // validate password
     let validated_password = validate_password(password.clone());
-    if validated_password.is_error() {
+    if validated_password.is_err() {
         let error: SettingsError = SettingsError {
             is_error: true,
             error_message: Some(validated_password.err().unwrap())
@@ -267,7 +274,7 @@ async fn change_theme(req_body: Json<ChangeThemeRequestStruct>, req: HttpRequest
 #[post("change-language")]
 async fn change_language(req_body: Json<ChangeLanguageRequestStruct>, req: HttpRequest) -> Result<impl Responder> {
     let ChangeLanguageRequestStruct { language } = req_body.into_inner();
-    let res_body: ChangeLanguageResponseStruct = ChangeLanguageREsponseStruct::new();
+    let res_body: ChangeLanguageResponseStruct = ChangeLanguageResponseStruct::new();
 
     // validate the language
     // update the user's language to the new one
