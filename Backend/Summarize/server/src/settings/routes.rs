@@ -1,4 +1,7 @@
 use actix_web::{get, post, web::Json, HttpRequest, HttpResponse, Responder, Result};
+use crate::accounts::datatypes::users::User;
+use crate::accounts::db_queries::{get_user_from_email_in_pg_users_table, get_user_from_username_in_pg_users_table};
+use crate::databases::connections::create_pg_pool_connection;
 // use std::{fs, path::PathBuf};
 use crate::settings::schema::{
     SettingsError,
@@ -52,10 +55,41 @@ use crate::validations::{
     }
 
     // error if username is already taken
+    let pool = create_pg_pool_connection().await;
+    let user_result: Result<User, sqlx::Error> = get_user_from_username_in_pg_users_table(&pool, &username).await;
 
+    let is_email_stored = (&user_result).as_ref().ok().is_some();
+    if is_email_stored == true {
+        res_body.success = false;
+        res_body.settings_error = SettingsError { is_error: true, error_message: Some(String::from("username already exists")) };
+        return Ok(HttpResponse::Conflict()
+            .content_type("application/json; charset=utf-8")
+            .json(res_body)
+        )
+    }
+
+    // if user_result is error then error
+    if user_result.is_err() {
+        res_body.settings_error = SettingsError { is_error: true, error_message: Some(String::from("error"))};
+        return Ok(HttpResponse::InternalServerError()
+            .content_type("application/json; charset=utf-8")
+            .json(res_body)
+        )
+    }
 
     // authenticate password
-
+    // let user: User = user_result.ok().unwrap();
+    if user.check_password(&password).is_err() {
+        res_body.success = false;
+        res_body.settings_error = SettingsError {
+            is_error: true,
+            error_message: Some(String::from("incorrect password")),
+        };
+        return Ok(HttpResponse::Unauthorized()
+            .content_type("application/json; charset=utf-8")
+            .json(res_body)
+        )
+    }
 
     // change username
 
@@ -100,9 +134,33 @@ async fn change_email(req_body: Json<ChangeEmailRequestStruct>, req: HttpRequest
     }
 
     // error if email is already taken
+    let pool = create_pg_pool_connection().await;
+    let user_result: Result<User, sqlx::Error> = get_user_from_email_in_pg_users_table(&pool, &email).await;
+
+    let is_email_stored = (&user_result).as_ref().ok().is_some();
+    if is_email_stored == true {
+        res_body.success = false;
+        res_body.settings_error = SettingsError { is_error: true, error_message: Some(String::from("username already exists")) };
+        return Ok(HttpResponse::Conflict()
+            .content_type("application/json; charset=utf-8")
+            .json(res_body)
+        )
+    }
 
 
     // authenticate password
+    // let user: User = user_result.ok().unwrap();
+    if user.check_password(&password).is_err() {
+        res_body.success = false;
+        res_body.settings_error = SettingsError {
+            is_error: true,
+            error_message: Some(String::from("incorrect password")),
+        };
+        return Ok(HttpResponse::Unauthorized()
+            .content_type("application/json; charset=utf-8")
+            .json(res_body)
+        )
+    }
 
 
     // change email
@@ -162,6 +220,18 @@ async fn change_password(req_body: Json<ChangePasswordRequestStruct>, req: HttpR
     }
 
     // authenticate password
+    let user: User = user_result.ok().unwrap();
+    if user.check_password(&password).is_err() {
+        res_body.success = false;
+        res_body.settings_error = SettingsError {
+            is_error: true,
+            error_message: Some(String::from("incorrect password")),
+        };
+        return Ok(HttpResponse::Unauthorized()
+            .content_type("application/json; charset=utf-8")
+            .json(res_body)
+        )
+    }
 
 
     // change password 

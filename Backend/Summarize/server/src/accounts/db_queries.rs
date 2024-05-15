@@ -48,6 +48,21 @@ pub async fn get_user_from_email_in_pg_users_table(pool: &Pool<Postgres>, email:
     return Ok(user)
 }
 
+pub async fn get_user_from_username_in_pg_users_table(pool: &Pool<Postgres>, username: &str) -> Result<User, sqlx::Error> {
+    let user_select_query = sqlx::query("Select * from users WHERE username=($1)")
+        .bind(username)
+        .fetch_all(pool)
+        .await;
+
+    if let Err(err) = user_select_query { return Err(err) }
+
+    let username = "username".to_string();
+    let email = "email".to_string();
+    let password = "password".to_string();
+    let user: User = User::new(username, email, password).unwrap();
+    return Ok(user)
+}
+
 pub async fn set_key_value_in_redis(mut con: Connection, token: &str, email: &str, expiry_in_seconds: &Option<i64>) -> RedisResult<()> {
     let _: () = con.set(token, email)?;
 

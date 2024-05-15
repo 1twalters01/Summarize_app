@@ -84,6 +84,18 @@ async fn register_email(req_body: Json<RegisterEmailRequestSchema>) -> Result<im
         )
     }
 
+    // if user_result is any other error then error
+    if user_result.is_err() {
+        res_body.account_error = AccountError {
+            is_error: true,
+            error_message: Some(String::from("error"))
+        };
+        return Ok(HttpResponse::InternalServerError()
+            .content_type("application/json; charset=utf-8")
+            .json(res_body)
+        )
+    }
+
 
     // create a verify token, a register email token, and a register_email_token_struct
     let verification_token = generate_opaque_token_of_length(8);
