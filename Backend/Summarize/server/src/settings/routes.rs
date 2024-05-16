@@ -20,7 +20,7 @@ use crate::validations::{
 };
 
 #[post("change-username")]
-    async fn change_username(req_body: Json<ChangeUsernameRequestStruct>, req: HttpRequest) -> Result<impl Responder> {
+async fn change_username(req_body: Json<ChangeUsernameRequestStruct>, req: HttpRequest) -> Result<impl Responder> {
     let ChangeUsernameRequestStruct { username, password } = req_body.into_inner();
     let mut res_body: ChangeUsernameResponseStruct = ChangeUsernameResponseStruct::new();
 
