@@ -2,7 +2,6 @@ use actix_web::{get, post, web::Json, HttpRequest, HttpResponse, Responder, Resu
 use crate::accounts::datatypes::users::User;
 use crate::accounts::db_queries::{get_user_from_email_in_pg_users_table, get_user_from_username_in_pg_users_table};
 use crate::databases::connections::create_pg_pool_connection;
-// use std::{fs, path::PathBuf};
 use crate::settings::schema::{
     SettingsError,
     ChangeEmailRequestStruct, ChangeEmailResponseStruct,
@@ -14,7 +13,7 @@ use crate::settings::schema::{
     ChangeThemeRequestStruct, ChangeThemeResponseStruct,
     ChangeLanguageRequestStruct, ChangeLanguageResponseStruct,
 };
-use crate::validations::{
+use crate::utils::validations::{
     validate_email, validate_username,
     validate_password, validate_totp,
 };
@@ -79,17 +78,17 @@ async fn change_username(req_body: Json<ChangeUsernameRequestStruct>, req: HttpR
 
     // authenticate password
     // let user: User = user_result.ok().unwrap();
-    if user.check_password(&password).is_err() {
-        res_body.success = false;
-        res_body.settings_error = SettingsError {
-            is_error: true,
-            error_message: Some(String::from("incorrect password")),
-        };
-        return Ok(HttpResponse::Unauthorized()
-            .content_type("application/json; charset=utf-8")
-            .json(res_body)
-        )
-    }
+    // if user.check_password(&password).is_err() {
+    //     res_body.success = false;
+    //     res_body.settings_error = SettingsError {
+    //         is_error: true,
+    //         error_message: Some(String::from("incorrect password")),
+    //     };
+    //     return Ok(HttpResponse::Unauthorized()
+    //         .content_type("application/json; charset=utf-8")
+    //         .json(res_body)
+    //     )
+    // }
 
     // change username
 
@@ -150,17 +149,17 @@ async fn change_email(req_body: Json<ChangeEmailRequestStruct>, req: HttpRequest
 
     // authenticate password
     // let user: User = user_result.ok().unwrap();
-    if user.check_password(&password).is_err() {
-        res_body.success = false;
-        res_body.settings_error = SettingsError {
-            is_error: true,
-            error_message: Some(String::from("incorrect password")),
-        };
-        return Ok(HttpResponse::Unauthorized()
-            .content_type("application/json; charset=utf-8")
-            .json(res_body)
-        )
-    }
+    // if user.check_password(&password).is_err() {
+    //     res_body.success = false;
+    //     res_body.settings_error = SettingsError {
+    //         is_error: true,
+    //         error_message: Some(String::from("incorrect password")),
+    //     };
+    //     return Ok(HttpResponse::Unauthorized()
+    //         .content_type("application/json; charset=utf-8")
+    //         .json(res_body)
+    //     )
+    // }
 
 
     // change email
@@ -220,18 +219,18 @@ async fn change_password(req_body: Json<ChangePasswordRequestStruct>, req: HttpR
     }
 
     // authenticate password
-    let user: User = user_result.ok().unwrap();
-    if user.check_password(&password).is_err() {
-        res_body.success = false;
-        res_body.settings_error = SettingsError {
-            is_error: true,
-            error_message: Some(String::from("incorrect password")),
-        };
-        return Ok(HttpResponse::Unauthorized()
-            .content_type("application/json; charset=utf-8")
-            .json(res_body)
-        )
-    }
+    // let user: User = user_result.ok().unwrap();
+    // if user.check_password(&password).is_err() {
+    //     res_body.success = false;
+    //     res_body.settings_error = SettingsError {
+    //         is_error: true,
+    //         error_message: Some(String::from("incorrect password")),
+    //     };
+    //     return Ok(HttpResponse::Unauthorized()
+    //         .content_type("application/json; charset=utf-8")
+    //         .json(res_body)
+    //     )
+    // }
 
 
     // change password 

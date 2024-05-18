@@ -34,7 +34,7 @@ use crate::accounts::{
         PasswordResetConfirmRequestSchema, PasswordResetConfirmResponseSchema,
     },
 };
-use crate::validations::{
+use crate::utils::validations::{
     validate_email, validate_username,
     validate_password, validate_totp,
     validate_first_name, validate_last_name
@@ -43,7 +43,7 @@ use crate::databases::connections::{
     create_pg_pool_connection,
     create_redis_client_connection
 };
-use crate::tokens::{
+use crate::utils::tokens::{
     generate_opaque_token_of_length,
     generate_auth_token,
     save_authentication_token,
@@ -712,7 +712,17 @@ async fn password_reset_confirm(req_body: Json<PasswordResetConfirmRequestSchema
     };
 
     // if change is not allowed then error
-    user.set_password(password);
+    let set_password_result = user.set_password(password);
+    if set_password_result.is_err() {
+        res_body.account_error = AccountError {
+            is_error: true,
+            error_message: Some(String::from("unable to set password")),
+        };
+        return Ok(HttpResponse::InternalServerError()
+            .content_type("application/json; charset=utf-8")
+            .json(res_body)
+        )
+    }
 
     // save change in postgres
     let pool = create_pg_pool_connection().await;

@@ -6,9 +6,7 @@ pub mod accounts;
 pub mod settings;
 pub mod databases;
 pub mod utils;
-pub mod tokens;
 pub mod ping;
-pub mod validations;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {

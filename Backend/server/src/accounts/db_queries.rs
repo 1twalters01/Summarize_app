@@ -87,8 +87,8 @@ pub async fn set_token_user_in_redis(mut con: Connection, token: &str, user_json
     //     .with_expiration(SetExpiry::EX(expiry));
     // con.set_options(token, user_json, opts);
    
-    let res2: () = con.expire(token, expiry as i64)?;
-    let res: () = con.set(token, user_json)?;
+    con.expire(token, expiry as i64)?;
+    con.set(token, user_json)?;
 
     Ok(())
 }
