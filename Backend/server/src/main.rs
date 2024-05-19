@@ -1,12 +1,12 @@
-use actix_web::{App, HttpServer};
 use actix_cors::Cors;
+use actix_web::{App, HttpServer};
 use dotenv::dotenv;
 
-pub mod accounts;
-pub mod settings;
 pub mod databases;
-pub mod utils;
+pub mod accounts;
 pub mod ping;
+pub mod settings;
+pub mod utils;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {

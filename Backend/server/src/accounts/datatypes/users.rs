@@ -1,15 +1,13 @@
+use serde::{Deserialize, Serialize};
 use std::{
-    time::SystemTime,
     io::{Error, ErrorKind},
+    time::SystemTime,
 };
-use serde::{Serialize, Deserialize};
 
-use uuid::Uuid;
 use crate::accounts::datatypes::{passwords::Password, totp::Totp};
+use uuid::Uuid;
 
-
-#[derive(Debug)]
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct User {
     uuid: Uuid,
     email: String,
@@ -22,14 +20,14 @@ pub struct User {
 
     created_at: SystemTime,
     last_login: SystemTime,
-    
+
     is_active: bool,
     is_staff: bool,
     is_superuser: bool,
     is_authenticated: bool,
     is_anonymous: bool,
 
-    groups: Vec<String>, // TODO
+    groups: Vec<String>,           // TODO
     user_permissions: Vec<String>, // TODO
 }
 
@@ -44,10 +42,10 @@ impl User {
                     last_name: None,
                     email,
                     password,
-                    totp: Totp::new(), 
+                    totp: Totp::new(),
                     created_at: SystemTime::now(),
                     last_login: SystemTime::now(),
-                    groups: Vec::new(), //todo!(),
+                    groups: Vec::new(),           //todo!(),
                     user_permissions: Vec::new(), //todo!(),
                     is_active: true,
                     is_staff: false,
@@ -57,7 +55,7 @@ impl User {
                 };
 
                 return Ok(user);
-            },
+            }
             Err(err) => return Err(err),
         }
     }
@@ -109,9 +107,12 @@ impl User {
     pub fn check_password(&self, password: &str) -> Result<(), Error> {
         match Password::check_password(&self.password, password) {
             Ok(_) => return Ok(()),
-            Err(err) => return Err(Error::new(
+            Err(err) => {
+                return Err(Error::new(
                     ErrorKind::InvalidData,
-                    format!("Invalid password: {}", err)))
+                    format!("Invalid password: {}", err),
+                ))
+            }
         }
     }
 
@@ -132,7 +133,7 @@ impl User {
 
     pub fn totp_required(&mut self) -> bool {
         if self.totp.fields.is_none() {
-            return true
+            return true;
         }
         return false;
     }
@@ -152,20 +153,23 @@ impl User {
     fn get_groups(&self) -> Vec<String> {
         return self.groups.clone();
     }
-    
-    fn get_user_permissions(&self) -> Vec<String>{
+
+    fn get_user_permissions(&self) -> Vec<String> {
         return self.user_permissions.clone();
     }
-     
+
     fn has_permission(&self, permission: String) -> bool {
         if self.user_permissions.contains(&permission) {
             return true;
         }
         return false;
     }
-    
+
     fn has_permissions(&self, permissions: Vec<String>) -> Vec<bool> {
-        return permissions.into_iter().map(|permission| self.user_permissions.contains(&permission)).collect();
+        return permissions
+            .into_iter()
+            .map(|permission| self.user_permissions.contains(&permission))
+            .collect();
     }
 
     fn get_is_user_active(&self) -> bool {

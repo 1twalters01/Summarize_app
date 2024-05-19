@@ -1,14 +1,21 @@
-use actix_web::web::ServiceConfig;
+use actix_web::web::{ServiceConfig, scope};
 use crate::accounts::routes;
 
 pub fn config(cfg: &mut ServiceConfig) {
-    cfg.service(routes::register_email)
-        .service(routes::register_verify)
-        .service(routes::register_verify_link)
-        .service(routes::register_details)
-        .service(routes::login_email)
-        .service(routes::login_password)
-        .service(routes::login_totp)
-        .service(routes::password_reset)
-        .service(routes::password_reset_confirm);
+    cfg
+        .service(scope("/register")
+            .service(routes::register::post_email)
+            .service(routes::register::post_verify)
+            .service(routes::register::link_verify)
+            .service(routes::register::post_details)
+        )
+        .service(scope("/login")
+            .service(routes::login::post_email)
+            .service(routes::login::post_password)
+            .service(routes::login::post_totp)
+        )
+        .service(routes::password_reset::post_email)
+        .service(routes::password_reset::post_verify)
+        .service(routes::password_reset::link_verify)
+        .service(routes::password_reset::post_password_reset);
 }

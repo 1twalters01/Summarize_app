@@ -1,25 +1,25 @@
-use actix_web::{get, post, web::Json, HttpRequest, HttpResponse, Responder, Result};
 use crate::accounts::datatypes::users::User;
-use crate::accounts::db_queries::{get_user_from_email_in_pg_users_table, get_user_from_username_in_pg_users_table};
+use crate::accounts::db_queries::{
+    get_user_from_email_in_pg_users_table, get_user_from_username_in_pg_users_table,
+};
 use crate::databases::connections::create_pg_pool_connection;
 use crate::settings::schema::{
-    SettingsError,
-    ChangeEmailRequestStruct, ChangeEmailResponseStruct,
-    ChangeUsernameRequestStruct, ChangeUsernameResponseStruct,
-    ChangePasswordRequestStruct, ChangePasswordResponseStruct,
-    DeleteAccountRequestStruct, DeleteAccountResponseStruct,
-    ToggleTotpRequestStruct, ToggleTotpResponseStruct,
-    GetThemeResponseStruct,
-    ChangeThemeRequestStruct, ChangeThemeResponseStruct,
-    ChangeLanguageRequestStruct, ChangeLanguageResponseStruct,
+    ChangeEmailRequestStruct, ChangeEmailResponseStruct, ChangeLanguageRequestStruct,
+    ChangeLanguageResponseStruct, ChangePasswordRequestStruct, ChangePasswordResponseStruct,
+    ChangeThemeRequestStruct, ChangeThemeResponseStruct, ChangeUsernameRequestStruct,
+    ChangeUsernameResponseStruct, DeleteAccountRequestStruct, DeleteAccountResponseStruct,
+    GetThemeResponseStruct, SettingsError, ToggleTotpRequestStruct, ToggleTotpResponseStruct,
 };
 use crate::utils::validations::{
-    validate_email, validate_username,
-    validate_password, validate_totp,
+    validate_email, validate_password, validate_totp, validate_username,
 };
+use actix_web::{get, post, web::Json, HttpRequest, HttpResponse, Responder, Result};
 
 #[post("change-username")]
-async fn change_username(req_body: Json<ChangeUsernameRequestStruct>, req: HttpRequest) -> Result<impl Responder> {
+async fn change_username(
+    req_body: Json<ChangeUsernameRequestStruct>,
+    req: HttpRequest,
+) -> Result<impl Responder> {
     let ChangeUsernameRequestStruct { username, password } = req_body.into_inner();
     let mut res_body: ChangeUsernameResponseStruct = ChangeUsernameResponseStruct::new();
 
@@ -30,13 +30,13 @@ async fn change_username(req_body: Json<ChangeUsernameRequestStruct>, req: HttpR
     if validated_password.is_err() {
         let error: SettingsError = SettingsError {
             is_error: true,
-            error_message: Some(validated_password.err().unwrap())
+            error_message: Some(validated_password.err().unwrap()),
         };
         res_body.settings_error = error;
 
         return Ok(HttpResponse::UnprocessableEntity()
             .content_type("application/json; charset=utf-8")
-            .json(res_body))
+            .json(res_body));
     }
 
     // validate username
@@ -44,36 +44,41 @@ async fn change_username(req_body: Json<ChangeUsernameRequestStruct>, req: HttpR
     if validated_username.is_err() {
         let error: SettingsError = SettingsError {
             is_error: true,
-            error_message: Some(validated_username.err().unwrap())
+            error_message: Some(validated_username.err().unwrap()),
         };
         res_body.settings_error = error;
 
         return Ok(HttpResponse::UnprocessableEntity()
             .content_type("application/json; charset=utf-8")
-            .json(res_body))
+            .json(res_body));
     }
 
     // error if username is already taken
     let pool = create_pg_pool_connection().await;
-    let user_result: Result<User, sqlx::Error> = get_user_from_username_in_pg_users_table(&pool, &username).await;
+    let user_result: Result<User, sqlx::Error> =
+        get_user_from_username_in_pg_users_table(&pool, &username).await;
 
     let is_email_stored = (&user_result).as_ref().ok().is_some();
     if is_email_stored == true {
         res_body.success = false;
-        res_body.settings_error = SettingsError { is_error: true, error_message: Some(String::from("username already exists")) };
+        res_body.settings_error = SettingsError {
+            is_error: true,
+            error_message: Some(String::from("username already exists")),
+        };
         return Ok(HttpResponse::Conflict()
             .content_type("application/json; charset=utf-8")
-            .json(res_body)
-        )
+            .json(res_body));
     }
 
     // if user_result is error then error
     if user_result.is_err() {
-        res_body.settings_error = SettingsError { is_error: true, error_message: Some(String::from("error"))};
+        res_body.settings_error = SettingsError {
+            is_error: true,
+            error_message: Some(String::from("error")),
+        };
         return Ok(HttpResponse::InternalServerError()
             .content_type("application/json; charset=utf-8")
-            .json(res_body)
-        )
+            .json(res_body));
     }
 
     // authenticate password
@@ -94,11 +99,14 @@ async fn change_username(req_body: Json<ChangeUsernameRequestStruct>, req: HttpR
 
     return Ok(HttpResponse::Ok()
         .content_type("application/json; charset=utf-8")
-        .json(res_body))
+        .json(res_body));
 }
 
 #[post("change-email")]
-async fn change_email(req_body: Json<ChangeEmailRequestStruct>, req: HttpRequest) -> Result<impl Responder> {
+async fn change_email(
+    req_body: Json<ChangeEmailRequestStruct>,
+    req: HttpRequest,
+) -> Result<impl Responder> {
     let ChangeEmailRequestStruct { email, password } = req_body.into_inner();
     let mut res_body: ChangeEmailResponseStruct = ChangeEmailResponseStruct::new();
 
@@ -109,13 +117,13 @@ async fn change_email(req_body: Json<ChangeEmailRequestStruct>, req: HttpRequest
     if validated_password.is_err() {
         let error: SettingsError = SettingsError {
             is_error: true,
-            error_message: Some(validated_password.err().unwrap())
+            error_message: Some(validated_password.err().unwrap()),
         };
         res_body.settings_error = error;
 
         return Ok(HttpResponse::UnprocessableEntity()
             .content_type("application/json; charset=utf-8")
-            .json(res_body))
+            .json(res_body));
     }
 
     // validate email
@@ -123,29 +131,31 @@ async fn change_email(req_body: Json<ChangeEmailRequestStruct>, req: HttpRequest
     if validated_email.is_err() {
         let error: SettingsError = SettingsError {
             is_error: true,
-            error_message: Some(validated_email.err().unwrap())
+            error_message: Some(validated_email.err().unwrap()),
         };
         res_body.settings_error = error;
 
         return Ok(HttpResponse::UnprocessableEntity()
             .content_type("application/json; charset=utf-8")
-            .json(res_body))
+            .json(res_body));
     }
 
     // error if email is already taken
     let pool = create_pg_pool_connection().await;
-    let user_result: Result<User, sqlx::Error> = get_user_from_email_in_pg_users_table(&pool, &email).await;
+    let user_result: Result<User, sqlx::Error> =
+        get_user_from_email_in_pg_users_table(&pool, &email).await;
 
     let is_email_stored = (&user_result).as_ref().ok().is_some();
     if is_email_stored == true {
         res_body.success = false;
-        res_body.settings_error = SettingsError { is_error: true, error_message: Some(String::from("username already exists")) };
+        res_body.settings_error = SettingsError {
+            is_error: true,
+            error_message: Some(String::from("username already exists")),
+        };
         return Ok(HttpResponse::Conflict()
             .content_type("application/json; charset=utf-8")
-            .json(res_body)
-        )
+            .json(res_body));
     }
-
 
     // authenticate password
     // let user: User = user_result.ok().unwrap();
@@ -161,18 +171,23 @@ async fn change_email(req_body: Json<ChangeEmailRequestStruct>, req: HttpRequest
     //     )
     // }
 
-
     // change email
-
 
     return Ok(HttpResponse::Ok()
         .content_type("application/json; charset=utf-8")
-        .json(res_body))
+        .json(res_body));
 }
 
 #[post("change-password")]
-async fn change_password(req_body: Json<ChangePasswordRequestStruct>, req: HttpRequest) -> Result<impl Responder> {
-    let ChangePasswordRequestStruct { new_password, new_password_confirmation, password } = req_body.into_inner();
+async fn change_password(
+    req_body: Json<ChangePasswordRequestStruct>,
+    req: HttpRequest,
+) -> Result<impl Responder> {
+    let ChangePasswordRequestStruct {
+        new_password,
+        new_password_confirmation,
+        password,
+    } = req_body.into_inner();
     let mut res_body: ChangePasswordResponseStruct = ChangePasswordResponseStruct::new();
 
     // Authenticate, is this done outside of this function?
@@ -181,13 +196,15 @@ async fn change_password(req_body: Json<ChangePasswordRequestStruct>, req: HttpR
     if new_password != new_password_confirmation {
         let error: SettingsError = SettingsError {
             is_error: true,
-            error_message: Some(String::from("confirmation is not the same as the new password"))
+            error_message: Some(String::from(
+                "confirmation is not the same as the new password",
+            )),
         };
         res_body.settings_error = error;
 
         return Ok(HttpResponse::UnprocessableEntity()
             .content_type("application/json; charset=utf-8")
-            .json(res_body))
+            .json(res_body));
     }
 
     // validate password
@@ -195,13 +212,13 @@ async fn change_password(req_body: Json<ChangePasswordRequestStruct>, req: HttpR
     if validated_password.is_err() {
         let error: SettingsError = SettingsError {
             is_error: true,
-            error_message: Some(validated_password.err().unwrap())
+            error_message: Some(validated_password.err().unwrap()),
         };
         res_body.settings_error = error;
 
         return Ok(HttpResponse::UnprocessableEntity()
             .content_type("application/json; charset=utf-8")
-            .json(res_body))
+            .json(res_body));
     }
 
     // validate new password
@@ -209,13 +226,13 @@ async fn change_password(req_body: Json<ChangePasswordRequestStruct>, req: HttpR
     if validated_new_password.is_err() {
         let error: SettingsError = SettingsError {
             is_error: true,
-            error_message: Some(validated_new_password.err().unwrap())
+            error_message: Some(validated_new_password.err().unwrap()),
         };
         res_body.settings_error = error;
 
         return Ok(HttpResponse::UnprocessableEntity()
             .content_type("application/json; charset=utf-8")
-            .json(res_body))
+            .json(res_body));
     }
 
     // authenticate password
@@ -232,18 +249,22 @@ async fn change_password(req_body: Json<ChangePasswordRequestStruct>, req: HttpR
     //     )
     // }
 
-
-    // change password 
-
+    // change password
 
     return Ok(HttpResponse::Ok()
         .content_type("application/json; charset=utf-8")
-        .json(res_body))
+        .json(res_body));
 }
 
 #[post("delete-account")]
-async fn delete_account(req_body: Json<DeleteAccountRequestStruct>, req: HttpRequest) -> Result<impl Responder> {
-    let DeleteAccountRequestStruct { password, password_confirmation } = req_body.into_inner();
+async fn delete_account(
+    req_body: Json<DeleteAccountRequestStruct>,
+    req: HttpRequest,
+) -> Result<impl Responder> {
+    let DeleteAccountRequestStruct {
+        password,
+        password_confirmation,
+    } = req_body.into_inner();
     let res_body: DeleteAccountResponseStruct = DeleteAccountResponseStruct::new();
 
     Ok(HttpResponse::Ok()
@@ -252,7 +273,10 @@ async fn delete_account(req_body: Json<DeleteAccountRequestStruct>, req: HttpReq
 }
 
 #[post("toggle-totp")]
-async fn toggle_totp(req_body: Json<ToggleTotpRequestStruct>, req: HttpRequest) -> Result<impl Responder> {
+async fn toggle_totp(
+    req_body: Json<ToggleTotpRequestStruct>,
+    req: HttpRequest,
+) -> Result<impl Responder> {
     let ToggleTotpRequestStruct { password, totp } = req_body.into_inner();
     let mut res_body: ToggleTotpResponseStruct = ToggleTotpResponseStruct::new();
 
@@ -260,10 +284,10 @@ async fn toggle_totp(req_body: Json<ToggleTotpRequestStruct>, req: HttpRequest) 
 
     // check if user has totp enabled
     // if no then:
-        // if totp is not none then return error
-        // generate a totp string
-        // set totp
-        // if error on setting totp then return error
+    // if totp is not none then return error
+    // generate a totp string
+    // set totp
+    // if error on setting totp then return error
 
     // get user's totp string
     // get totp code from string
@@ -273,42 +297,39 @@ async fn toggle_totp(req_body: Json<ToggleTotpRequestStruct>, req: HttpRequest) 
     if validated_email.is_err() {
         let error: SettingsError = SettingsError {
             is_error: true,
-            error_message: Some(validated_email.err().unwrap())
+            error_message: Some(validated_email.err().unwrap()),
         };
         res_body.settings_error = error;
 
         return Ok(HttpResponse::UnprocessableEntity()
             .content_type("application/json; charset=utf-8")
-            .json(res_body))
+            .json(res_body));
     }
 
     // if the entered totp doesn't match the generated code then error
-    
+
     // validate password
     let validated_password = validate_password(password.clone());
     if validated_password.is_err() {
         let error: SettingsError = SettingsError {
             is_error: true,
-            error_message: Some(validated_password.err().unwrap())
+            error_message: Some(validated_password.err().unwrap()),
         };
         res_body.settings_error = error;
 
         return Ok(HttpResponse::UnprocessableEntity()
             .content_type("application/json; charset=utf-8")
-            .json(res_body))
+            .json(res_body));
     }
 
-
-    // authenticate password 
-
+    // authenticate password
 
     // remove totp
     // if error on removal then return error
 
-
     return Ok(HttpResponse::Ok()
         .content_type("application/json; charset=utf-8")
-        .json(res_body))
+        .json(res_body));
 }
 
 #[get("get-theme")]
@@ -320,14 +341,16 @@ async fn get_theme(req: HttpRequest) -> Result<impl Responder> {
 
     // return ok
 
-
     return Ok(HttpResponse::Ok()
         .content_type("application/json; charset=utf-8")
-        .json(res_body))
+        .json(res_body));
 }
 
 #[post("change-theme")]
-async fn change_theme(req_body: Json<ChangeThemeRequestStruct>, req: HttpRequest) -> Result<impl Responder> {
+async fn change_theme(
+    req_body: Json<ChangeThemeRequestStruct>,
+    req: HttpRequest,
+) -> Result<impl Responder> {
     let ChangeThemeRequestStruct { theme } = req_body.into_inner();
     let res_body: ChangeThemeResponseStruct = ChangeThemeResponseStruct::new();
 
@@ -337,11 +360,14 @@ async fn change_theme(req_body: Json<ChangeThemeRequestStruct>, req: HttpRequest
 
     return Ok(HttpResponse::Ok()
         .content_type("application/json; charset=utf-8")
-        .json(res_body))
+        .json(res_body));
 }
 
 #[post("change-language")]
-async fn change_language(req_body: Json<ChangeLanguageRequestStruct>, req: HttpRequest) -> Result<impl Responder> {
+async fn change_language(
+    req_body: Json<ChangeLanguageRequestStruct>,
+    req: HttpRequest,
+) -> Result<impl Responder> {
     let ChangeLanguageRequestStruct { language } = req_body.into_inner();
     let res_body: ChangeLanguageResponseStruct = ChangeLanguageResponseStruct::new();
 
@@ -352,5 +378,3 @@ async fn change_language(req_body: Json<ChangeLanguageRequestStruct>, req: HttpR
         .content_type("application/json; charset=utf-8")
         .json(res_body));
 }
-
-

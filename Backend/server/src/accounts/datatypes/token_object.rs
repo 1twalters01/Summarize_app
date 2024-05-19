@@ -1,8 +1,7 @@
 use super::users::User;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug)]
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct UserRememberMe {
     pub remember_me: bool,
     pub user: User,

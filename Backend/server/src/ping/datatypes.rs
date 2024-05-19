@@ -1,4 +1,4 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Message {
@@ -10,4 +10,3 @@ pub struct DualMessage {
     pub message_1: String,
     pub message_2: String,
 }
-

@@ -1,16 +1,14 @@
-use std::time::SystemTime;
 use serde::{Deserialize, Serialize};
+use std::time::SystemTime;
 
-#[derive(Debug)]
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Totp {
     pub verified: bool,
     pub verified_at: Option<SystemTime>,
     pub fields: Option<TotpFields>,
 }
 
-#[derive(Debug)]
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TotpFields {
     pub url: String,
     pub last_updated: SystemTime,
@@ -34,7 +32,7 @@ impl Totp {
         return self.verified;
     }
 
-    pub fn get_url(&self) ->  Option<String> {
+    pub fn get_url(&self) -> Option<String> {
         match self.fields.clone() {
             Some(fields) => return Some(fields.url),
             None => return None,
@@ -54,12 +52,15 @@ impl Totp {
 
     pub fn set_url(&mut self, url: String) {
         let now = SystemTime::now();
-        
+
         if self.verified == false {
             self.verified = true;
             self.verified_at = Some(now);
         }
-        let fields = TotpFields{url, last_updated: now};
+        let fields = TotpFields {
+            url,
+            last_updated: now,
+        };
         self.fields = Some(fields);
     }
 }
