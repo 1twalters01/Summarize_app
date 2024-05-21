@@ -13,6 +13,3 @@ pub fn generate_auth_token(user: &User, remember_me: bool) -> String {
     return generate_opaque_token_of_length(32);
 }
 
-pub fn save_authentication_token(uuid: Uuid, token: &str) {
-    //TODO
-}

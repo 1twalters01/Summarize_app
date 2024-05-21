@@ -1,3 +1,4 @@
+pub mod auth;
 pub mod datatypes;
 pub mod db_queries;
 pub mod emails;

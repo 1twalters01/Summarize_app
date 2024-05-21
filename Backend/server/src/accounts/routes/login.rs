@@ -20,7 +20,7 @@ use crate::{
         set_key_value_in_redis, delete_key_in_redis,
     },
     utils::tokens::{
-        generate_auth_token, generate_opaque_token_of_length, save_authentication_token,
+        generate_auth_token, generate_opaque_token_of_length, 
     },
     utils::validations::{
         validate_email, validate_password, validate_totp,
@@ -224,7 +224,7 @@ async fn post_password(
     let token: String = generate_auth_token(&user, remember_me);
 
     // save auth token (use jwt intead?
-    save_authentication_token(user.get_uuid(), &token);
+
 
     // return success
     res_body.has_totp = false;
@@ -331,7 +331,7 @@ async fn post_totp(data: Json<LoginTotpRequest>, req: HttpRequest) -> Result<imp
     let token: String = generate_auth_token(&user, remember_me);
 
     // save auth token (use jwt intead?
-    save_authentication_token(user.get_uuid(), &token);
+
 
     // return success
     res_body.is_totp_correct = true;
@@ -339,5 +339,51 @@ async fn post_totp(data: Json<LoginTotpRequest>, req: HttpRequest) -> Result<imp
     Ok(HttpResponse::Ok()
         .content_type("application/json; charset=utf-8")
         .json(res_body))
+}
+
+
+use crate::accounts::auth::generate_access_token;
+use crate::accounts::db_queries::get_user_from_refresh_token_in_postgres_auth_table;
+use crate::accounts::auth::AuthTokens;
+use crate::accounts::schema::RefreshTokenResponseSchema;
+#[post("/totp")]
+async fn refresh_token(data: Json<AuthTokens>, req: HttpRequest) -> Result<impl Responder> {
+    let mut res_body: RefreshTokenResponseSchema = RefreshTokenResponseSchema::new();
+    let refresh_token: String = match &data.refresh_token {
+        None => {
+            let error: AccountError = AccountError {
+                is_error: true,
+                error_message: Some(String::from("Internal server error")),
+            };
+            res_body.account_error = error;
+            return Ok(HttpResponse::Unauthorized()
+                .content_type("application/json; charset=utf-8")
+                .json(res_body))
+        },
+        Some(refresh_token) => refresh_token.to_string(),
+    };
+
+    let pool = create_pg_pool_connection().await;
+    let user: User = match get_user_from_refresh_token_in_postgres_auth_table(&pool, &refresh_token).await {
+        Ok(user) => user,
+        Err(err) => {
+            let error: AccountError = AccountError {
+                is_error: true,
+                error_message: Some(err.to_string()),
+            };
+            res_body.account_error = error;
+            return Ok(HttpResponse::UnprocessableEntity()
+                .content_type("application/json; charset=utf-8")
+                .json(res_body));
+        },
+    };
+
+    let access_token = generate_access_token(&user);
+
+    let auth_tokens: AuthTokens = AuthTokens { refresh_token: Some(refresh_token), access_token };
+
+    Ok(HttpResponse::Ok()
+        .content_type("application/json; charset=utf-8")
+        .json(auth_tokens))
 }
 
