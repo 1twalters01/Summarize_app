@@ -7,8 +7,12 @@ pub async fn create_new_user_in_pg_users_table(
     pool: &Pool<Postgres>,
     user: User,
 ) -> Result<(), sqlx::Error> {
-    let user_create_query = sqlx::query("INSERT INTO users WHERE email=($1), username=($2), password=($3), password_confirmation=($4), first_name=($5), last_name=($6)")
+    let user_create_query = sqlx::query("INSERT INTO users WHERE email=($1), username=($2), password=($3), first_name=($4), last_name=($5)")
         .bind(user.get_email())
+        .bind(user.get_username())
+        .bind(user.get_password())
+        .bind(user.get_first_name())
+        .bind(user.get_last_name())
         .execute(pool)
         .await;
 
@@ -80,6 +84,17 @@ pub async fn save_refresh_token_user_in_postgres_auth_table(
     refresh_token: &str,
     user: &User,
 ) -> Result<(), sqlx::Error> {
+    let save_refresh_token_query = sqlx::query("INSERT INTO auth WHERE refresh_token=($1), user=($2)ame=($6)")
+        .bind(refresh_token)
+        .bind(user.get_uuid().to_string())
+        .execute(pool)
+        .await;
+
+    if let Err(err) = save_refresh_token_query {
+        return Err(err);
+    } else {
+        return Ok(());
+    }
     
 }
 

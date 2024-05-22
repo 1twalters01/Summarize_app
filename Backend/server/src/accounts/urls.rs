@@ -13,9 +13,12 @@ pub fn config(cfg: &mut ServiceConfig) {
             .service(routes::login::post_email)
             .service(routes::login::post_password)
             .service(routes::login::post_totp)
+            .service(routes::login::refresh_token)
         )
-        .service(routes::password_reset::post_email)
-        .service(routes::password_reset::post_verify)
-        .service(routes::password_reset::link_verify)
-        .service(routes::password_reset::post_password_reset);
+        .service(scope("/password-reset")
+            .service(routes::password_reset::post_email)
+            .service(routes::password_reset::post_verify)
+            .service(routes::password_reset::link_verify)
+            .service(routes::password_reset::post_password_reset)
+        );
 }

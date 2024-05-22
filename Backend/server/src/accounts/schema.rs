@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
 
+use super::auth::AuthTokens;
+
 // Login Structs
 
 // Login Error Struct
@@ -60,7 +62,7 @@ pub struct LoginPasswordResponseSchema {
     pub account_error: AccountError,
     pub is_password_correct: bool,
     pub has_totp: bool,
-    pub auth_token: Option<String>,
+    pub auth_tokens: Option<AuthTokens>,
     pub login_password_response_token: Option<String>,
 }
 
@@ -70,7 +72,7 @@ impl LoginPasswordResponseSchema {
             account_error: AccountError::new(),
             is_password_correct: false,
             has_totp: false,
-            auth_token: None,
+            auth_tokens: None,
             login_password_response_token: None,
         }
     }
@@ -92,7 +94,7 @@ pub struct LoginTotpRequestSchema {
 pub struct LoginTotpResponseSchema {
     pub account_error: AccountError,
     pub is_totp_correct: bool,
-    pub auth_token: Option<String>,
+    pub auth_tokens: Option<AuthTokens>,
 }
 
 impl LoginTotpResponseSchema {
@@ -100,7 +102,7 @@ impl LoginTotpResponseSchema {
         LoginTotpResponseSchema {
             account_error: AccountError::new(),
             is_totp_correct: false,
-            auth_token: None,
+            auth_tokens: None,
         }
     }
 }

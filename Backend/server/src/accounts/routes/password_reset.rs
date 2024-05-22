@@ -54,7 +54,6 @@ async fn post_email(req_body: Json<PasswordResetRequestSchema>) -> Result<impl R
 
     // get and serialize user
     let user: User = user_result.unwrap();
-    // should serialize just the uuid instead?
     let user_json: String = serde_json::to_string(&user).unwrap();
 
     // create a token
@@ -121,7 +120,7 @@ async fn post_verify(
     password_reset_verification_functionality(register_email_token, verification_token).await
 }
 
-#[post("password-reset/{uidb64}/{token}")]
+#[post("{uidb64}/{token}")]
 async fn link_verify(
     path: actix_web::web::Path<VerifyRequestSchema>,
 ) -> Result<impl Responder> {
@@ -205,7 +204,7 @@ async fn password_reset_verification_functionality(
 }
 
 
-#[post("password-reset/confirmation")]
+#[post("confirmation")]
 async fn post_password_reset(
     req_body: Json<PasswordResetConfirmRequestSchema>,
     req: HttpRequest,

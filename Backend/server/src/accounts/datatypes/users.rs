@@ -84,7 +84,7 @@ impl User {
         return first_name;
     }
 
-    fn get_last_name(&self) -> String {
+    pub fn get_last_name(&self) -> String {
         let last_name = match self.last_name.clone() {
             Some(last_name) => last_name,
             None => String::new(),

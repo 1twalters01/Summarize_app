@@ -5,7 +5,7 @@ use jsonwebtoken::{encode, decode, Header, Algorithm, Validation, EncodingKey, D
 use chrono::{Duration, Utc};
 use crate::{accounts::datatypes::users::User, utils::tokens::generate_opaque_token_of_length};
 
-use super::db_queries::save_refresh_token_user_in_postgres_auth_table;
+use super::{db_queries::save_refresh_token_user_in_postgres_auth_table, schema::AccountError};
 use crate::databases::connections::create_pg_pool_connection;
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -21,7 +21,7 @@ pub struct AuthTokens {
     pub access_token: String,
 }
 
-async fn generate_auth_tokens(user: User, remember_me: bool) -> AuthTokens {
+pub async fn generate_auth_tokens(user: User, remember_me: bool) -> Result<AuthTokens, AccountError> {
     let refresh_token;
     if remember_me == true {
         refresh_token = Some(generate_opaque_token_of_length(32));
@@ -33,14 +33,20 @@ async fn generate_auth_tokens(user: User, remember_me: bool) -> AuthTokens {
     
     // save refresh token
     let pool = create_pg_pool_connection().await; 
-    save_refresh_token_user_in_postgres_auth_table(&pool, &refresh_token.clone().unwrap(), &user);
+    if let Err(err) = save_refresh_token_user_in_postgres_auth_table(&pool, &refresh_token.clone().unwrap(), &user).await {
+        let error: AccountError = AccountError {
+            is_error: true,
+            error_message: Some(err.to_string()),
+        };
+        return Err(error);
+    };
 
     let tokens = AuthTokens {
         access_token,
         refresh_token,
     };
 
-    return tokens;
+    return Ok(tokens);
 }
 
 pub fn generate_access_token(user: &User) -> String {

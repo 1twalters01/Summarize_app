@@ -2,28 +2,35 @@ use actix_web::{post, web::Json, HttpRequest, HttpResponse, Responder, Result};
 
 use crate::{
     accounts::{
-        datatypes::{token_object::UserRememberMe, users::User},
+        auth::{
+            AuthTokens,
+            generate_auth_tokens,
+            generate_access_token,
+        },
+        datatypes::{
+            token_object::UserRememberMe,
+            users::User
+        },
         db_queries::{
             get_user_from_email_in_pg_users_table,
             get_user_from_token_in_redis, get_user_remember_me_from_token_in_redis,
-        },
-        schema::{
+            get_user_from_refresh_token_in_postgres_auth_table
+        }, schema::{
             AccountError,
             LoginEmailRequestSchema, LoginEmailResponseSchema, LoginPasswordRequest,
             LoginPasswordRequestSchema, LoginPasswordResponseSchema, LoginTotpRequest,
             LoginTotpRequestSchema, LoginTotpResponseSchema,
-        },
+            RefreshTokenResponseSchema,
+        }
     },
     databases::connections::{
-        create_pg_pool_connection,
-        create_redis_client_connection,
-        set_key_value_in_redis, delete_key_in_redis,
+        create_pg_pool_connection, create_redis_client_connection, delete_key_in_redis, set_key_value_in_redis
     },
-    utils::tokens::{
-        generate_auth_token, generate_opaque_token_of_length, 
-    },
-    utils::validations::{
-        validate_email, validate_password, validate_totp,
+    utils::{
+        tokens::generate_opaque_token_of_length,
+        validations::{
+            validate_email, validate_password, validate_totp,
+        },
     },
 };
 
@@ -220,15 +227,20 @@ async fn post_password(
             .json(res_body));
     }
 
-    // generate token
-    let token: String = generate_auth_token(&user, remember_me);
-
-    // save auth token (use jwt intead?
-
+    // generate tokens
+    let auth_tokens: AuthTokens = match generate_auth_tokens(user, remember_me).await {
+        Ok(tokens) => tokens,
+        Err(error) => {
+            res_body.account_error = error;
+            return Ok(HttpResponse::FailedDependency()
+                .content_type("application/json; charset=utf-8")
+                .json(res_body));
+        },
+    };
 
     // return success
     res_body.has_totp = false;
-    res_body.auth_token = Some(token);
+    res_body.auth_tokens = Some(auth_tokens);
     Ok(HttpResponse::Ok()
         .content_type("application/json; charset=utf-8")
         .json(res_body))
@@ -327,27 +339,28 @@ async fn post_totp(data: Json<LoginTotpRequest>, req: HttpRequest) -> Result<imp
             .json(res_body));
     }
 
-    // create auth token
-    let token: String = generate_auth_token(&user, remember_me);
-
-    // save auth token (use jwt intead?
-
+    // create auth tokens
+    let auth_tokens: AuthTokens = match generate_auth_tokens(user, remember_me).await {
+        Ok(tokens) => tokens,
+        Err(error) => {
+            res_body.account_error = error;
+            return Ok(HttpResponse::FailedDependency()
+                .content_type("application/json; charset=utf-8")
+                .json(res_body));
+        },
+    };
 
     // return success
     res_body.is_totp_correct = true;
-    res_body.auth_token = Some(token);
+    res_body.auth_tokens = Some(auth_tokens);
     Ok(HttpResponse::Ok()
         .content_type("application/json; charset=utf-8")
         .json(res_body))
 }
 
 
-use crate::accounts::auth::generate_access_token;
-use crate::accounts::db_queries::get_user_from_refresh_token_in_postgres_auth_table;
-use crate::accounts::auth::AuthTokens;
-use crate::accounts::schema::RefreshTokenResponseSchema;
-#[post("/totp")]
-async fn refresh_token(data: Json<AuthTokens>, req: HttpRequest) -> Result<impl Responder> {
+#[post("/refresh-token")]
+async fn refresh_token(data: Json<AuthTokens>) -> Result<impl Responder> {
     let mut res_body: RefreshTokenResponseSchema = RefreshTokenResponseSchema::new();
     let refresh_token: String = match &data.refresh_token {
         None => {
