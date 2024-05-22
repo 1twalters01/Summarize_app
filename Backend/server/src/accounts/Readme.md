@@ -1,26 +1,26 @@
 1. User Management
-    [ ] User Registration - Endpoints for new users to sign up, including:
-        [ ] form validations
-        [ ] captcha verfication
-        [ ] email/phone number confirmation
-    [ ] User Login - Mechanisms for users to log in using:
-        [ ] email and password
-        [ ] OAuth/social logins
-            [ ] Google
-            [ ] Facebook
-            [ ] Apple
-            [ ] Twitter
-    [ ] Password Recovery - This includes secure token generation
+    * [ ] User Registration - Endpoints for new users to sign up, including:
+        * [ ] form validations
+        * [ ] captcha verfication
+        * [ ] email/phone number confirmation
+    * [ ] User Login - Mechanisms for users to log in using:
+        * [ ] email and password
+        * [ ] OAuth/social logins
+            * [ ] Google
+            * [ ] Facebook
+            * [ ] Apple
+            * [ ] Twitter
+    * [ ] Password Recovery - This includes secure token generation
 
 2. Authentication
-    [ ] Password Authentication using Argon2
-    [ ] MFA
-        [ ] 2FA
-            [ ] TOTP authenticator app
-            [ ] OTP SMS
-            [ ] biometrics
-        [ ] login via email link
-    [ ] OAuth and OpenID Connect
+    * [ ] Password Authentication using Argon2
+    * [ ] MFA
+        * [ ] 2FA
+            * [ ] TOTP authenticator app
+            * [ ] OTP SMS
+            * [ ] biometrics
+        * [ ] login via email link
+    * [ ] OAuth and OpenID Connect
     [ ] Session Management - Secure handling of user sessions, including:
         [ ] session expiration
         [ ] session renewal
