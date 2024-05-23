@@ -60,6 +60,10 @@ impl Author {
         return bio;
     }
 
+    pub fn get_social_media(&self) -> Vec<SocialMedia> {
+        self.social_media
+    }
+
     pub fn is_user(&self) -> bool {
         self.user.is_some()
     }
@@ -72,4 +76,12 @@ impl Author {
 
         return id;
     }
+    pub fn get_average_rating(&self) -> f32 {
+        self.average_rating
+    }
+        
 }
+
+
+
+
