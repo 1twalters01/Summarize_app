@@ -1,5 +1,7 @@
-use users::user::User;
 use uuid::Uuid;
+
+use crate::accounts::datatypes::users::User;
+use crate::authors::datatypes::social_media::SocialMedia;
 
 pub struct Author {
     uuid: Uuid,
