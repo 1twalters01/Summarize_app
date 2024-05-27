@@ -15,8 +15,10 @@ jsonwebtoken = "9.3.0"
 lettre = { version = "0.11.7", features = ["smtp-transport", "rustls-tls", "hostname", "builder"] }
 rand = "0.8.5"
 redis = { version = "0.25.2", features = ["tokio-comp"] }
+reqwest = { version = "0.12.4", features = ["json"] }
 serde = { version = "1.0.197", features = ["derive"] }
 serde_json = "1.0.114"
 sqlx = { version = "0.7.4", features = ["runtime-tokio", "postgres"] }
 tokio = { version = "1.37.0", features = ["full"] }
+url = "2.5.0"
 uuid = { version = "1.8.0", features = ["v4", "fast-rng", "macro-diagnostics", "serde"] }

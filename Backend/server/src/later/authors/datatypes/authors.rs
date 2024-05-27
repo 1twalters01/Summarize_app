@@ -1,17 +1,95 @@
 use uuid::Uuid;
+use chronos::time;
 
 use crate::accounts::datatypes::users::User;
 use crate::authors::datatypes::social_media::SocialMedia;
 
 pub struct Author {
     uuid: Uuid,
-    first_name: Option<String>,
-    last_name: Option<String>,
-    bio: Option<String>,
-    social_media: Vec<SocialMedia>,
+    information: Information,
+    biography: Biography,
+    works: Works,
+    achievements: Achievements,
+    genres: Genres,
+    influences: Influences,
+    multimedia: Vec<Multimedia>,
+    engagement: Engagement,
+    community: Community,
+    quotes: String,
+    publication_information: PublicationInformation,
     user: Option<User>,
     average_rating: f32,
 }
+
+pub struct Information {
+    first_name: Option<String>,
+    middle_names: Vec<String>,
+    last_name: Option<String>,
+    languages: Option<String>,
+    date_of_birth: time,
+    date_of_death: option<time>,
+}
+
+pub struct Biography {
+    early_life: Option<String>,
+    career_overview: Option<String>,
+    personal_life: Option<String>,
+}
+
+pub struct Works {
+    bibliography: Vec<Book>,
+    notable_works: Option<Book>,
+    collaborations: Vec<Collaboration>,
+}
+
+pub struct Collaboration{
+    authors: vec<Author>,
+    book: Book,
+}
+
+pub struct Achievements {
+    awards: Vec<String>,
+    bestsellers: Vec<Book>,
+    critical_acclaim: Vec<String>,
+}
+
+pub struct Genres {
+    primary: vec<Genre>,
+    writing_style: String,
+}
+
+pub struct Influences {
+    literary_influences: vec<LiteraryInfluences>,
+    personal_inspirations: String,
+}
+
+pub enum LiteraryInfluences {
+    Author,
+    Book,
+}
+
+pub enum Multimedia {
+// links
+    Photos(String),
+    Videos(String),
+    Audio(String),
+}
+
+pub struct Engagement {
+    website: String,
+    social_media: Vec<SocialMedia>,
+    interviews: Vec<String>, // links
+    articles: Vec<String>, //links
+}
+
+pub struct Community {
+}
+
+pub struct PublicationInformation {
+    publisher_details: Publishers,
+}
+
+
 
 impl Author {
     pub fn new(first_name: Option<String>, last_name: Option<String>) -> Author {
@@ -19,7 +97,7 @@ impl Author {
             uuid: Uuid::new_v4(),
             first_name,
             last_name,
-            bio: None
+            bio: None,
             social_media: Vec::new(),
             user: None,
             average_rating: 0.0,
