@@ -15,6 +15,94 @@ use crate::utils::validations::{
 };
 use actix_web::{get, post, web::Json, HttpRequest, HttpResponse, Responder, Result};
 
+#[post("change-name")]
+async fn change_name(
+    req_body: Json<ChangeUsernameRequestStruct>,
+    req: HttpRequest,
+) -> Result<impl Responder> {
+    let ChangeNameRequestStruct { firstname, lastname, password } = req_body.into_inner();
+    let mut res_body: ChangeNameResponseStruct = ChangeNameResponseStruct::new();
+
+    // Authenticate, is this done outside of this function?
+
+    // validate password
+    let validated_password = validate_password(password.clone());
+    if validated_password.is_err() {
+        let error: SettingsError = SettingsError {
+            is_error: true,
+            error_message: Some(validated_password.err().unwrap()),
+        };
+        res_body.settings_error = error;
+
+        return Ok(HttpResponse::UnprocessableEntity()
+            .content_type("application/json; charset=utf-8")
+            .json(res_body));
+    }
+
+    // validate firstname
+    let validated_firstname = validate_firstname(firstname.clone());
+    if validated_firstname.is_err() {
+        let error: SettingsError = SettingsError {
+            is_error: true,
+            error_message: Some(validated_username.err().unwrap()),
+        };
+        res_body.settings_error = error;
+
+        return Ok(HttpResponse::UnprocessableEntity()
+            .content_type("application/json; charset=utf-8")
+            .json(res_body));
+    }
+
+    
+    // validate lastname
+    let validated_lastname = validate_lastname(lastname.clone());
+    if validated_lastname.is_err() {
+        let error: SettingsError = SettingsError {
+            is_error: true,
+            error_message: Some(validated_lastname.err().unwrap()),
+        };
+        res_body.settings_error = error;
+
+        return Ok(HttpResponse::UnprocessableEntity()
+            .content_type("application/json; charset=utf-8")
+            .json(res_body));
+    }
+
+    // authenticate password
+    // let user: User = user_result.ok().unwrap();
+    // if user.check_password(&password).is_err() {
+    //     res_body.success = false;
+    //     res_body.settings_error = SettingsError {
+    //         is_error: true,
+    //         error_message: Some(String::from("incorrect password")),
+    //     };
+    //     return Ok(HttpResponse::Unauthorized()
+    //         .content_type("application/json; charset=utf-8")
+    //         .json(res_body)
+    //     )
+    // }
+
+    // change name
+    let pool = create_pg_pool_connection().await;
+    let update_result: Result<(), sqlx::Error> =
+        update_firstname_and_lastname_for_user_in_pg_users_table(&pool, &user).await;
+
+    // if sql update error then return an error
+    if update_result.is_err() {
+        res_body.account_error = AccountError {
+            is_error: true,
+            error_message: Some(String::from("internal error")),
+        };
+        return Ok(HttpResponse::FailedDependency()
+            .content_type("application/json; charset=utf-8")
+            .json(res_body));
+    }
+
+    return Ok(HttpResponse::Ok()
+        .content_type("application/json; charset=utf-8")
+        .json(res_body));
+}
+
 #[post("change-username")]
 async fn change_username(
     req_body: Json<ChangeUsernameRequestStruct>,
@@ -96,6 +184,20 @@ async fn change_username(
     // }
 
     // change username
+    let pool = create_pg_pool_connection().await;
+    let update_result: Result<(), sqlx::Error> =
+        update_username_for_user_in_pg_users_table(&pool, &user).await;
+
+    // if sql update error then return an error
+    if update_result.is_err() {
+        res_body.account_error = AccountError {
+            is_error: true,
+            error_message: Some(String::from("internal error")),
+        };
+        return Ok(HttpResponse::FailedDependency()
+            .content_type("application/json; charset=utf-8")
+            .json(res_body));
+    }
 
     return Ok(HttpResponse::Ok()
         .content_type("application/json; charset=utf-8")
@@ -172,6 +274,20 @@ async fn change_email(
     // }
 
     // change email
+    let pool = create_pg_pool_connection().await;
+    let update_result: Result<(), sqlx::Error> =
+        update_password_for_user_in_pg_users_table(&pool, &user).await;
+
+    // if sql update error then return an error
+    if update_result.is_err() {
+        res_body.account_error = AccountError {
+            is_error: true,
+            error_message: Some(String::from("internal error")),
+        };
+        return Ok(HttpResponse::FailedDependency()
+            .content_type("application/json; charset=utf-8")
+            .json(res_body));
+    }
 
     return Ok(HttpResponse::Ok()
         .content_type("application/json; charset=utf-8")
@@ -250,6 +366,20 @@ async fn change_password(
     // }
 
     // change password
+    let pool = create_pg_pool_connection().await;
+    let update_result: Result<(), sqlx::Error> =
+        update_password_for_user_in_pg_users_table(&pool, &user).await;
+
+    // if sql update error then return an error
+    if update_result.is_err() {
+        res_body.account_error = AccountError {
+            is_error: true,
+            error_message: Some(String::from("internal error")),
+        };
+        return Ok(HttpResponse::FailedDependency()
+            .content_type("application/json; charset=utf-8")
+            .json(res_body));
+    }
 
     return Ok(HttpResponse::Ok()
         .content_type("application/json; charset=utf-8")
