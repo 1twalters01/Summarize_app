@@ -1,8 +1,19 @@
-use actix_web::{post, web, HttpResponse, Responder, Result};
+use actix_web::{get, post, web, HttpResponse, Responder, Result};
 use serde::Deserialize;
+
+#[get("/captcha")]
+async fn get_captcha() -> impl Result<Responder> {
+    // generate captcha
+    // get answer for captcha
+    // generate 64 bit token
+    // save { key: token, value: answer } to redis
+    // send image and token
+}
+
 
 #[derive(Deserialize)]
 struct CaptchaResponse {
+    token: String,
     response: String,
 }
 
@@ -10,7 +21,7 @@ struct CaptchaResponse {
 async fn verify_captcha(data: web::Json<CaptchaResponse>) -> impl Result<Responder> {
     // Retrieve the solution from the session or database
     let con = create_redis_client_connection();
-    let solution: User = match get_captcha_solution_from_token_in_redis(con, &token) {
+    let solution: User = match get_captcha_solution_from_token_in_redis(con, &data.token) {
         // if error return error
         Err(err) => {
             let error: AccountError = AccountError {
