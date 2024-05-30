@@ -39,6 +39,28 @@ impl ChangeUsernameResponseStruct {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+pub struct ChangeNameRequestStruct {
+    pub first_name: String,
+    pub last_name: String,
+    pub password: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ChangeNameResponseStruct {
+    pub settings_error: SettingsError,
+    pub success: bool,
+}
+
+impl ChangeNameResponseStruct {
+    pub fn new() -> ChangeNameResponseStruct {
+        ChangeNameResponseStruct {
+            settings_error: SettingsError::new(),
+            success: false,
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
 pub struct ChangeEmailRequestStruct {
     pub email: String,
     pub password: String,

@@ -1,3 +1,15 @@
+pub fn validate_name(name: String) -> Result<(), String> {
+    if name.contains("@") | name.contains(".") != true {
+        return Err("Invalid email".to_string());
+    }
+
+    if name.len() <= 1 {
+        return Err("Name is too short".to_string());
+    }
+
+    return Ok(());
+}
+
 pub fn validate_email(email: String) -> Result<(), String> {
     if email.contains("@") | email.contains(".") != true {
         return Err("Invalid email".to_string());

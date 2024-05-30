@@ -2,35 +2,26 @@ use actix_web::{post, web::Json, HttpRequest, HttpResponse, Responder, Result};
 
 use crate::{
     accounts::{
-        auth::{
-            AuthTokens,
-            generate_auth_tokens,
-            generate_access_token,
-        },
-        datatypes::{
-            token_object::UserRememberMe,
-            users::User
-        },
+        auth::{generate_access_token, generate_auth_tokens, AuthTokens},
+        datatypes::{token_object::UserRememberMe, users::User},
         db_queries::{
             get_user_from_email_in_pg_users_table,
-            get_user_from_token_in_redis, get_user_remember_me_from_token_in_redis,
-            get_user_from_refresh_token_in_postgres_auth_table
-        }, schema::{
-            AccountError,
-            LoginEmailRequestSchema, LoginEmailResponseSchema, LoginPasswordRequest,
+            get_user_from_refresh_token_in_postgres_auth_table, get_user_from_token_in_redis,
+            get_user_remember_me_from_token_in_redis,
+        },
+        schema::{
+            AccountError, LoginEmailRequestSchema, LoginEmailResponseSchema, LoginPasswordRequest,
             LoginPasswordRequestSchema, LoginPasswordResponseSchema, LoginTotpRequest,
-            LoginTotpRequestSchema, LoginTotpResponseSchema,
-            RefreshTokenResponseSchema,
-        }
+            LoginTotpRequestSchema, LoginTotpResponseSchema, RefreshTokenResponseSchema,
+        },
     },
     databases::connections::{
-        create_pg_pool_connection, create_redis_client_connection, delete_key_in_redis, set_key_value_in_redis
+        create_pg_pool_connection, create_redis_client_connection, delete_key_in_redis,
+        set_key_value_in_redis,
     },
     utils::{
         tokens::generate_opaque_token_of_length,
-        validations::{
-            validate_email, validate_password, validate_totp,
-        },
+        validations::{validate_email, validate_password, validate_totp},
     },
 };
 
@@ -235,7 +226,7 @@ async fn post_password(
             return Ok(HttpResponse::FailedDependency()
                 .content_type("application/json; charset=utf-8")
                 .json(res_body));
-        },
+        }
     };
 
     // return success
@@ -347,7 +338,7 @@ async fn post_totp(data: Json<LoginTotpRequest>, req: HttpRequest) -> Result<imp
             return Ok(HttpResponse::FailedDependency()
                 .content_type("application/json; charset=utf-8")
                 .json(res_body));
-        },
+        }
     };
 
     // return success
@@ -357,7 +348,6 @@ async fn post_totp(data: Json<LoginTotpRequest>, req: HttpRequest) -> Result<imp
         .content_type("application/json; charset=utf-8")
         .json(res_body))
 }
-
 
 #[post("/refresh-token")]
 async fn refresh_token(data: Json<AuthTokens>) -> Result<impl Responder> {
@@ -371,32 +361,35 @@ async fn refresh_token(data: Json<AuthTokens>) -> Result<impl Responder> {
             res_body.account_error = error;
             return Ok(HttpResponse::Unauthorized()
                 .content_type("application/json; charset=utf-8")
-                .json(res_body))
-        },
+                .json(res_body));
+        }
         Some(refresh_token) => refresh_token.to_string(),
     };
 
     let pool = create_pg_pool_connection().await;
-    let user: User = match get_user_from_refresh_token_in_postgres_auth_table(&pool, &refresh_token).await {
-        Ok(user) => user,
-        Err(err) => {
-            let error: AccountError = AccountError {
-                is_error: true,
-                error_message: Some(err.to_string()),
-            };
-            res_body.account_error = error;
-            return Ok(HttpResponse::UnprocessableEntity()
-                .content_type("application/json; charset=utf-8")
-                .json(res_body));
-        },
-    };
+    let user: User =
+        match get_user_from_refresh_token_in_postgres_auth_table(&pool, &refresh_token).await {
+            Ok(user) => user,
+            Err(err) => {
+                let error: AccountError = AccountError {
+                    is_error: true,
+                    error_message: Some(err.to_string()),
+                };
+                res_body.account_error = error;
+                return Ok(HttpResponse::UnprocessableEntity()
+                    .content_type("application/json; charset=utf-8")
+                    .json(res_body));
+            }
+        };
 
     let access_token = generate_access_token(&user);
 
-    let auth_tokens: AuthTokens = AuthTokens { refresh_token: Some(refresh_token), access_token };
+    let auth_tokens: AuthTokens = AuthTokens {
+        refresh_token: Some(refresh_token),
+        access_token,
+    };
 
     Ok(HttpResponse::Ok()
         .content_type("application/json; charset=utf-8")
         .json(auth_tokens))
 }
-

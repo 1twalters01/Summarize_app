@@ -4,21 +4,19 @@ use crate::{
     accounts::{
         datatypes::users::User,
         db_queries::{
-            create_new_user_in_pg_users_table,
-            get_email_from_token_struct_in_redis, get_user_from_email_in_pg_users_table,
+            create_new_user_in_pg_users_table, get_email_from_token_struct_in_redis,
+            get_user_from_email_in_pg_users_table,
         },
         emails::{compose_register_email_message, send_email},
         schema::{
-            AccountError,
-            RegisterEmailRequestSchema, RegisterEmailResponseSchema,
-            VerifyRequest, VerifyRequestSchema, VerifyResponseSchema, DualVerificationToken,
-            RegisterDetailsRequest, RegisterDetailsResponseSchema,
+            AccountError, DualVerificationToken, RegisterDetailsRequest,
+            RegisterDetailsResponseSchema, RegisterEmailRequestSchema, RegisterEmailResponseSchema,
+            VerifyRequest, VerifyRequestSchema, VerifyResponseSchema,
         },
     },
     databases::connections::{
-        create_pg_pool_connection,
-        create_redis_client_connection,
-        set_key_value_in_redis, delete_key_in_redis,
+        create_pg_pool_connection, create_redis_client_connection, delete_key_in_redis,
+        set_key_value_in_redis,
     },
     utils::{
         tokens::generate_opaque_token_of_length,
@@ -127,10 +125,7 @@ async fn post_email(req_body: Json<RegisterEmailRequestSchema>) -> Result<impl R
 }
 
 #[post("/verify")]
-async fn post_verify(
-    req_body: Json<VerifyRequest>,
-    req: HttpRequest,
-) -> Result<impl Responder> {
+async fn post_verify(req_body: Json<VerifyRequest>, req: HttpRequest) -> Result<impl Responder> {
     let VerifyRequest { verification_token } = req_body.into_inner();
     let register_email_token: String = req
         .headers()
@@ -143,9 +138,7 @@ async fn post_verify(
 }
 
 #[post("/verify/{register_email_token}/{verification_token}")]
-async fn link_verify(
-    path: actix_web::web::Path<VerifyRequestSchema>,
-) -> Result<impl Responder> {
+async fn link_verify(path: actix_web::web::Path<VerifyRequestSchema>) -> Result<impl Responder> {
     let VerifyRequestSchema {
         header_token,
         verification_token,
@@ -222,7 +215,7 @@ async fn register_verification_functionality(
     res_body.verification_confirmation_token = Some(register_verification_token);
     return Ok(HttpResponse::Ok()
         .content_type("application/json; charset=utf-8")
-        .json(res_body))
+        .json(res_body));
 }
 
 #[post("/details")]
@@ -363,4 +356,3 @@ async fn post_details(
         .content_type("application/json; charset=utf-8")
         .json(res_body))
 }
-

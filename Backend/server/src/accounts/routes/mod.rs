@@ -1,5 +1,5 @@
-pub mod password_reset;
-pub mod register;
+pub mod captcha;
 pub mod login;
 pub mod oauth2;
-pub mod captcha;
+pub mod password_reset;
+pub mod register;

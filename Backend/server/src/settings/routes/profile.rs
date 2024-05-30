@@ -1,26 +1,33 @@
 use crate::accounts::datatypes::users::User;
 use crate::accounts::db_queries::{
     get_user_from_email_in_pg_users_table, get_user_from_username_in_pg_users_table,
+    update_password_for_user_in_pg_users_table,
 };
 use crate::databases::connections::create_pg_pool_connection;
 use crate::settings::schema::{
     ChangeEmailRequestStruct, ChangeEmailResponseStruct, ChangeLanguageRequestStruct,
-    ChangeLanguageResponseStruct, ChangePasswordRequestStruct, ChangePasswordResponseStruct,
-    ChangeThemeRequestStruct, ChangeThemeResponseStruct, ChangeUsernameRequestStruct,
-    ChangeUsernameResponseStruct, DeleteAccountRequestStruct, DeleteAccountResponseStruct,
-    GetThemeResponseStruct, SettingsError, ToggleTotpRequestStruct, ToggleTotpResponseStruct,
+    ChangeLanguageResponseStruct, ChangeNameRequestStruct, ChangeNameResponseStruct,
+    ChangePasswordRequestStruct, ChangePasswordResponseStruct, ChangeThemeRequestStruct,
+    ChangeThemeResponseStruct, ChangeUsernameRequestStruct, ChangeUsernameResponseStruct,
+    DeleteAccountRequestStruct, DeleteAccountResponseStruct, GetThemeResponseStruct, SettingsError,
+    ToggleTotpRequestStruct, ToggleTotpResponseStruct,
 };
 use crate::utils::validations::{
-    validate_email, validate_password, validate_totp, validate_username,
+    validate_email, validate_name, validate_password, validate_totp, validate_username,
 };
 use actix_web::{get, post, web::Json, HttpRequest, HttpResponse, Responder, Result};
+use sqlx::{Pool, Postgres};
 
 #[post("change-name")]
 async fn change_name(
-    req_body: Json<ChangeUsernameRequestStruct>,
-    req: HttpRequest,
+    req_body: Json<ChangeNameRequestStruct>,
+    // req: HttpRequest,
 ) -> Result<impl Responder> {
-    let ChangeNameRequestStruct { firstname, lastname, password } = req_body.into_inner();
+    let ChangeNameRequestStruct {
+        first_name,
+        last_name,
+        password,
+    } = req_body.into_inner();
     let mut res_body: ChangeNameResponseStruct = ChangeNameResponseStruct::new();
 
     // Authenticate, is this done outside of this function?
@@ -40,11 +47,11 @@ async fn change_name(
     }
 
     // validate firstname
-    let validated_firstname = validate_firstname(firstname.clone());
+    let validated_firstname = validate_name(first_name.clone());
     if validated_firstname.is_err() {
         let error: SettingsError = SettingsError {
             is_error: true,
-            error_message: Some(validated_username.err().unwrap()),
+            error_message: Some(validated_firstname.err().unwrap()),
         };
         res_body.settings_error = error;
 
@@ -53,9 +60,8 @@ async fn change_name(
             .json(res_body));
     }
 
-    
     // validate lastname
-    let validated_lastname = validate_lastname(lastname.clone());
+    let validated_lastname = validate_name(last_name.clone());
     if validated_lastname.is_err() {
         let error: SettingsError = SettingsError {
             is_error: true,
@@ -85,11 +91,11 @@ async fn change_name(
     // change name
     let pool = create_pg_pool_connection().await;
     let update_result: Result<(), sqlx::Error> =
-        update_firstname_and_lastname_for_user_in_pg_users_table(&pool, &user).await;
+        update_first_name_and_last_name_for_user_in_pg_users_table(&pool, &first_name, &last_name).await;
 
     // if sql update error then return an error
     if update_result.is_err() {
-        res_body.account_error = AccountError {
+        res_body.settings_error = SettingsError {
             is_error: true,
             error_message: Some(String::from("internal error")),
         };
@@ -103,10 +109,28 @@ async fn change_name(
         .json(res_body));
 }
 
+pub async fn update_first_name_and_last_name_for_user_in_pg_users_table (
+    pool: &Pool<Postgres>,
+    first_name: &str,
+    last_name: &str,
+) -> Result<(), sqlx::Error> {
+    let user_update_query = sqlx::query("")
+        .bind(first_name)
+        .bind(last_name)
+        .execute(pool)
+        .await;
+
+    if let Err(err) = user_update_query {
+        return Err(err);
+    } else {
+        return Ok(());
+    }
+}
+
 #[post("change-username")]
 async fn change_username(
     req_body: Json<ChangeUsernameRequestStruct>,
-    req: HttpRequest,
+    // req: HttpRequest,
 ) -> Result<impl Responder> {
     let ChangeUsernameRequestStruct { username, password } = req_body.into_inner();
     let mut res_body: ChangeUsernameResponseStruct = ChangeUsernameResponseStruct::new();
@@ -186,11 +210,11 @@ async fn change_username(
     // change username
     let pool = create_pg_pool_connection().await;
     let update_result: Result<(), sqlx::Error> =
-        update_username_for_user_in_pg_users_table(&pool, &user).await;
+        update_username_for_user_in_pg_users_table(&pool, &username).await;
 
     // if sql update error then return an error
     if update_result.is_err() {
-        res_body.account_error = AccountError {
+        res_body.settings_error = SettingsError {
             is_error: true,
             error_message: Some(String::from("internal error")),
         };
@@ -204,10 +228,26 @@ async fn change_username(
         .json(res_body));
 }
 
+pub async fn update_username_for_user_in_pg_users_table (
+    pool: &Pool<Postgres>,
+    username: &str,
+) -> Result<(), sqlx::Error> {
+    let user_update_query = sqlx::query("")
+        .bind(username)
+        .execute(pool)
+        .await;
+
+    if let Err(err) = user_update_query {
+        return Err(err);
+    } else {
+        return Ok(());
+    }
+}
+
 #[post("change-email")]
 async fn change_email(
     req_body: Json<ChangeEmailRequestStruct>,
-    req: HttpRequest,
+    // req: HttpRequest,
 ) -> Result<impl Responder> {
     let ChangeEmailRequestStruct { email, password } = req_body.into_inner();
     let mut res_body: ChangeEmailResponseStruct = ChangeEmailResponseStruct::new();
@@ -276,11 +316,11 @@ async fn change_email(
     // change email
     let pool = create_pg_pool_connection().await;
     let update_result: Result<(), sqlx::Error> =
-        update_password_for_user_in_pg_users_table(&pool, &user).await;
+        update_email_for_user_in_pg_users_table(&pool, &email).await;
 
     // if sql update error then return an error
     if update_result.is_err() {
-        res_body.account_error = AccountError {
+        res_body.settings_error = SettingsError {
             is_error: true,
             error_message: Some(String::from("internal error")),
         };
@@ -293,6 +333,23 @@ async fn change_email(
         .content_type("application/json; charset=utf-8")
         .json(res_body));
 }
+
+pub async fn update_email_for_user_in_pg_users_table (
+    pool: &Pool<Postgres>,
+    email: &str,
+) -> Result<(), sqlx::Error> {
+    let user_update_query = sqlx::query("")
+        .bind(email)
+        .execute(pool)
+        .await;
+
+    if let Err(err) = user_update_query {
+        return Err(err);
+    } else {
+        return Ok(());
+    }
+}
+
 
 #[post("change-password")]
 async fn change_password(
@@ -368,11 +425,11 @@ async fn change_password(
     // change password
     let pool = create_pg_pool_connection().await;
     let update_result: Result<(), sqlx::Error> =
-        update_password_for_user_in_pg_users_table(&pool, &user).await;
+        update_password_for_user_in_pg_users_table(&pool, &password).await;
 
     // if sql update error then return an error
     if update_result.is_err() {
-        res_body.account_error = AccountError {
+        res_body.settings_error = SettingsError {
             is_error: true,
             error_message: Some(String::from("internal error")),
         };

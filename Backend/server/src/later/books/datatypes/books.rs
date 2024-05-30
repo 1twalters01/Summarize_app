@@ -1,5 +1,5 @@
 use chronos::time;
-use uuid:Uuid;
+use uuid::Uuid;
 
 pub struct Book {
     information: Information,
@@ -10,17 +10,20 @@ pub struct Book {
 }
 
 pub struct Information {
-    uuid: UUID
+    uuid: UUID,
     title: String,
+    image: Bytes,
     subtitle: String,
     authors: Vec<Author>,
-    secondary_authors: Vec<Author>,
+    contributors: Vec<Author>,
     publication_date: time,
     publisher: Publisher,
 }
 
 pub struct Details {
     isbn: ISBN,
+    original_languages: Vec<String>,
+    translations: Vec<String>,
     editions: Vec<String>,
     formats: Vec<Format>,
     page_count: u64,

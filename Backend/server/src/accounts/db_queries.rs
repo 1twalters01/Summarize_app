@@ -2,7 +2,6 @@ use crate::accounts::datatypes::{token_object::UserRememberMe, users::User};
 use redis::{Commands, Connection, RedisResult};
 use sqlx::{Pool, Postgres};
 
-
 pub async fn create_new_user_in_pg_users_table(
     pool: &Pool<Postgres>,
     user: User,
@@ -25,10 +24,12 @@ pub async fn create_new_user_in_pg_users_table(
 
 pub async fn update_password_for_user_in_pg_users_table(
     pool: &Pool<Postgres>,
-    user: &User,
+    // user: &str,
+    password: &str,
 ) -> Result<(), sqlx::Error> {
     let user_update_query = sqlx::query("")
-        .bind(user.get_password())
+        // .bind(user)
+        .bind(password)
         .execute(pool)
         .await;
 
@@ -84,21 +85,19 @@ pub async fn save_refresh_token_user_in_postgres_auth_table(
     refresh_token: &str,
     user: &User,
 ) -> Result<(), sqlx::Error> {
-    let save_refresh_token_query = sqlx::query("INSERT INTO auth WHERE refresh_token=($1), user=($2)ame=($6)")
-        .bind(refresh_token)
-        .bind(user.get_uuid().to_string())
-        .execute(pool)
-        .await;
+    let save_refresh_token_query =
+        sqlx::query("INSERT INTO auth WHERE refresh_token=($1), user=($2)ame=($6)")
+            .bind(refresh_token)
+            .bind(user.get_uuid().to_string())
+            .execute(pool)
+            .await;
 
     if let Err(err) = save_refresh_token_query {
         return Err(err);
     } else {
         return Ok(());
     }
-    
 }
-
-
 
 pub async fn get_user_from_refresh_token_in_postgres_auth_table(
     pool: &Pool<Postgres>,
@@ -152,4 +151,16 @@ pub fn get_email_from_token_struct_in_redis(
         Err(err) => return Err(err.to_string()),
     };
     return Ok(email);
+}
+
+pub fn get_captcha_solution_from_token_in_redis(
+    mut con: Connection,
+    mut token: &str,
+) -> Result<String, String> {
+    let redis_result: RedisResult<String> = con.get(token);
+    let solution: String = match redis_result {
+        Ok(solution) => solution,
+        Err(err) => return Err(err.to_string()),
+    };
+    return Ok(solution);
 }

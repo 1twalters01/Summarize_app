@@ -143,8 +143,8 @@ pub struct VerifyRequest {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct VerifyRequestSchema {
-    pub header_token: String, // opaque token in place of the email
-    pub verification_token: String,   // thing they enter on the site
+    pub header_token: String,       // opaque token in place of the email
+    pub verification_token: String, // thing they enter on the site
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -275,4 +275,3 @@ impl RefreshTokenResponseSchema {
         }
     }
 }
-

@@ -4,24 +4,25 @@ use crate::{
     accounts::{
         datatypes::users::User,
         db_queries::{
-            get_email_from_token_struct_in_redis, get_user_from_email_in_pg_users_table, get_user_from_token_in_redis, update_password_for_user_in_pg_users_table
+            get_email_from_token_struct_in_redis, get_user_from_email_in_pg_users_table,
+            get_user_from_token_in_redis, update_password_for_user_in_pg_users_table,
         },
         emails::{compose_password_reset_email_message, send_email},
         schema::{
-            AccountError, DualVerificationToken, PasswordResetConfirmRequestSchema, PasswordResetConfirmResponseSchema, PasswordResetRequestSchema, PasswordResetResponseSchema, VerifyRequest, VerifyRequestSchema, VerifyResponseSchema
+            AccountError, DualVerificationToken, PasswordResetConfirmRequestSchema,
+            PasswordResetConfirmResponseSchema, PasswordResetRequestSchema,
+            PasswordResetResponseSchema, VerifyRequest, VerifyRequestSchema, VerifyResponseSchema,
         },
     },
     databases::connections::{
-        create_pg_pool_connection, create_redis_client_connection, delete_key_in_redis, set_key_value_in_redis
+        create_pg_pool_connection, create_redis_client_connection, delete_key_in_redis,
+        set_key_value_in_redis,
     },
     utils::{
         tokens::generate_opaque_token_of_length,
-        validations::{
-            validate_email,validate_password,
-        },
-    }
+        validations::{validate_email, validate_password},
+    },
 };
-
 
 #[post("password-reset")]
 async fn post_email(req_body: Json<PasswordResetRequestSchema>) -> Result<impl Responder> {
@@ -105,10 +106,7 @@ async fn post_email(req_body: Json<PasswordResetRequestSchema>) -> Result<impl R
 }
 
 #[post("/verify")]
-async fn post_verify(
-    req_body: Json<VerifyRequest>,
-    req: HttpRequest,
-) -> Result<impl Responder> {
+async fn post_verify(req_body: Json<VerifyRequest>, req: HttpRequest) -> Result<impl Responder> {
     let VerifyRequest { verification_token } = req_body.into_inner();
     let register_email_token: String = req
         .headers()
@@ -121,9 +119,7 @@ async fn post_verify(
 }
 
 #[post("{uidb64}/{token}")]
-async fn link_verify(
-    path: actix_web::web::Path<VerifyRequestSchema>,
-) -> Result<impl Responder> {
+async fn link_verify(path: actix_web::web::Path<VerifyRequestSchema>) -> Result<impl Responder> {
     let VerifyRequestSchema {
         header_token,
         verification_token,
@@ -141,7 +137,7 @@ async fn password_reset_verification_functionality(
     // Validate tokens
 
     // Form RegisterToken struct
-   let token_struct: DualVerificationToken = DualVerificationToken {
+    let token_struct: DualVerificationToken = DualVerificationToken {
         verification_token,
         header_token,
     };
@@ -203,7 +199,6 @@ async fn password_reset_verification_functionality(
         .json(true));
 }
 
-
 #[post("confirmation")]
 async fn post_password_reset(
     req_body: Json<PasswordResetConfirmRequestSchema>,
@@ -239,21 +234,20 @@ async fn post_password_reset(
 
     // get user from token in redis
     let con = create_redis_client_connection();
-    let mut user: User =
-        match get_user_from_token_in_redis(con, &verification_confirmation_token) {
-            // if error return error
-            Err(err) => {
-                let error: AccountError = AccountError {
-                    is_error: true,
-                    error_message: Some(err),
-                };
-                res_body.account_error = error;
-                return Ok(HttpResponse::UnprocessableEntity()
-                    .content_type("application/json; charset=utf-8")
-                    .json(res_body));
-            }
-            Ok(email) => email,
-        };
+    let mut user: User = match get_user_from_token_in_redis(con, &verification_confirmation_token) {
+        // if error return error
+        Err(err) => {
+            let error: AccountError = AccountError {
+                is_error: true,
+                error_message: Some(err),
+            };
+            res_body.account_error = error;
+            return Ok(HttpResponse::UnprocessableEntity()
+                .content_type("application/json; charset=utf-8")
+                .json(res_body));
+        }
+        Ok(email) => email,
+    };
 
     // if change is not allowed then error
     let set_password_result = user.set_password(password);
@@ -270,7 +264,7 @@ async fn post_password_reset(
     // save change in postgres
     let pool = create_pg_pool_connection().await;
     let update_result: Result<(), sqlx::Error> =
-        update_password_for_user_in_pg_users_table(&pool, &user).await;
+        update_password_for_user_in_pg_users_table(&pool, &user.get_password()).await;
 
     // if sql update error then return an error
     if update_result.is_err() {
@@ -288,4 +282,3 @@ async fn post_password_reset(
         .content_type("application/json; charset=utf-8")
         .json(true));
 }
-

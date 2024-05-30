@@ -1,9 +1,8 @@
-use std::env;
 use actix_web::Result;
-use serde::{Serialize, Deserialize};
 use reqwest::Client;
+use serde::{Deserialize, Serialize};
+use std::env;
 use url::Url;
-
 
 pub struct OAuth2Client {
     client: Client,
@@ -61,8 +60,14 @@ impl OAuth2Client {
         let client_secret = env::var("").unwrap();
         let redirect_uri = env::var("").unwrap();
         // let jwt_secret = env::var("").unwrap();
- 
-        let oauth_client: OAuth2Client = OAuth2Client::from(&auth_url, &token_url, &client_id, &client_secret, &redirect_uri);
+
+        let oauth_client: OAuth2Client = OAuth2Client::from(
+            &auth_url,
+            &token_url,
+            &client_id,
+            &client_secret,
+            &redirect_uri,
+        );
 
         return oauth_client;
     }
@@ -79,7 +84,10 @@ impl OAuth2Client {
         return url.to_string();
     }
 
-    pub async fn get_access_tokens_from_code(&self, code: &str) -> Result<TokenResponse, reqwest::Error> {
+    pub async fn get_access_tokens_from_code(
+        &self,
+        code: &str,
+    ) -> Result<TokenResponse, reqwest::Error> {
         let params = TokenRequest {
             client_id: self.client_id.clone(),
             client_secret: self.client_secret.clone(),
@@ -88,7 +96,8 @@ impl OAuth2Client {
             grant_type: "authorization_code".to_string(),
         };
 
-        let response = self.client
+        let response = self
+            .client
             .post(&self.token_url)
             .form(&params)
             .send()
@@ -102,7 +111,10 @@ impl OAuth2Client {
         }
     }
 
-    pub async fn refresh_access_token(&self, refresh_token: &str) -> Result<TokenResponse, reqwest::Error> {
+    pub async fn refresh_access_token(
+        &self,
+        refresh_token: &str,
+    ) -> Result<TokenResponse, reqwest::Error> {
         let params = RefreshTokenRequest {
             client_id: self.client_id.clone(),
             client_secret: self.client_secret.clone(),
@@ -110,7 +122,8 @@ impl OAuth2Client {
             grant_type: "refresh_token".to_string(),
         };
 
-        let response = self.client
+        let response = self
+            .client
             .post(&self.token_url)
             .form(&params)
             .send()
@@ -143,4 +156,3 @@ struct RefreshTokenRequest {
 pub struct RefreshTokenQuery {
     pub refresh_token: String,
 }
-

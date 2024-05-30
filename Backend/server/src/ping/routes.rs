@@ -1,5 +1,5 @@
 use crate::ping::datatypes::{DualMessage, Message};
-use actix_web::{get, post, web::Json, HttpRequest, HttpResponse, Responder, Result};
+use actix_web::{get, post, web::Json, HttpResponse, Responder, Result};
 
 // get (any auth)
 #[get("ping/any_auth")]

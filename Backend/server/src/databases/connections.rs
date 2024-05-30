@@ -42,4 +42,3 @@ pub async fn set_key_value_in_redis(
 pub async fn delete_key_in_redis(mut con: Connection, key: &str) -> RedisResult<()> {
     con.del(key)
 }
-

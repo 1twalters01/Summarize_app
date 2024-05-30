@@ -2,13 +2,13 @@ use actix_cors::Cors;
 use actix_web::{App, HttpServer};
 use dotenv::dotenv;
 
-pub mod utils;
 pub mod databases;
-pub mod middleware;
+pub mod utils;
+// pub mod middleware;
 
-pub mod ping;
 pub mod accounts;
-pub mod subscriptions;
+pub mod ping;
+// pub mod subscriptions;
 pub mod settings;
 
 #[actix_web::main]
