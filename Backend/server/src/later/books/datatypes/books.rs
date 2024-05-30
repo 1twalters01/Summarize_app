@@ -1,4 +1,5 @@
 use chronos::time;
+use uuid:Uuid;
 
 pub struct Book {
     information: Information,
@@ -9,6 +10,7 @@ pub struct Book {
 }
 
 pub struct Information {
+    uuid: UUID
     title: String,
     subtitle: String,
     authors: Vec<Author>,
@@ -24,6 +26,8 @@ pub struct Details {
     page_count: u64,
     original_language: String,
     cover_image: String, //link
+    publisher: Publisher,
+    blurb: String,
 }
 
 pub enum Format {

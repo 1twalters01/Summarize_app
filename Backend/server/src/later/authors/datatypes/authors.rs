@@ -1,5 +1,6 @@
 use uuid::Uuid;
 use chronos::time;
+use url:: Url;
 
 use crate::accounts::datatypes::users::User;
 use crate::authors::datatypes::social_media::SocialMedia;
@@ -89,6 +90,18 @@ pub struct PublicationInformation {
     publisher_details: Publishers,
 }
 
+pub struct SocialMedia {
+    text: String,
+    url: Url,
+    provider: Provider,
+}
+
+enum Provider {
+    None,
+    Amazon,
+    Instagram,
+    Twitter,
+}
 
 
 impl Author {
@@ -148,7 +161,7 @@ impl Author {
         self.user.is_some()
     }
 
-    pub fn get_user(&self) -> Option<String> {
+    pub fn get_user_id(&self) -> Option<String> {
         let id: Option<String> = match self.user {
             Ok(res) => res.get_id(&self).unwrap(),
             None => None,
