@@ -55,6 +55,7 @@ where
             if let Some(auth_header) = req.headers().get("Authorization") {
                 let validated_auth_header = validate_auth_header(auth_header);
                 if validated_auth_header.is_ok() {
+                    req.extensions_mut().insert(token_data.claims);
                     return svc.call(req).await;
                 }
             }
