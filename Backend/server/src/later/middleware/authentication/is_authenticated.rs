@@ -9,6 +9,8 @@ use std::rc::Rc;
 use std::future::{ready, Future};
 use std::pin::Pin;
 
+use crate::accounts::auth::Claims;
+
 pub struct IsAuthenticated;
 
 impl<S, B> Transform<S, ServiceRequest> for IsAuthenticated
@@ -52,7 +54,7 @@ where
         Box::pin(async move {
             if let Some(auth_header) = req.headers().get("Authorization") {
                 let validated_auth_header = validate_auth_header(auth_header);
-                if validated_auth_header.is_ok() {  // Replace this logic with your own authentication check
+                if validated_auth_header.is_ok() {
                     return svc.call(req).await;
                 }
             }
@@ -63,4 +65,17 @@ where
     }
 }
 
-pub fn validate_auth_header(auth_header: String) {}
+pub fn validate_auth_header(auth_header: String) -> Result<(), ()> {
+    let validation = Validation::default();
+    let decoding_key = DecodingKey::from_secret(secret.as_ref());
+
+    if auth_str.starts_with("Bearer ") {
+    let token = &auth_header[7..];
+
+        if let Ok(_token_data) = decode::<Claims>(token, &decoding_key, &validation) {
+            return Ok(());
+        }
+    }
+
+    return Err(());
+}
