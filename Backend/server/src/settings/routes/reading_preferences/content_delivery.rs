@@ -1,4 +1,6 @@
-use crate::{databases::connections::create_pg_pool_connection, settings::schema::SettingsError};
+use crate::{
+    settings::schema::SettingsError, utils::database_connections::create_pg_pool_connection,
+};
 use actix_web::{post, web::Json, HttpResponse, Responder, Result};
 use serde::{Deserialize, Serialize};
 use sqlx::{Pool, Postgres};
@@ -356,4 +358,3 @@ pub async fn update_delivery_methods_for_user_in_pg_content_delivery_table(
         return Ok(());
     }
 }
-

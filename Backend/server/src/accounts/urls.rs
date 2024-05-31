@@ -1,4 +1,4 @@
-use crate::accounts::routes;
+use crate::{accounts::routes, middleware};
 use actix_web::web::{scope, ServiceConfig};
 
 pub fn config(cfg: &mut ServiceConfig) {
@@ -11,6 +11,7 @@ pub fn config(cfg: &mut ServiceConfig) {
     )
     .service(
         scope("/login")
+            .wrap(middleware::authentication::is_authenticated::IsAuthenticated)
             .service(routes::login::post_email)
             .service(routes::login::post_password)
             .service(routes::login::post_totp)

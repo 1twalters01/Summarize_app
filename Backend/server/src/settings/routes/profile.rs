@@ -3,7 +3,6 @@ use crate::accounts::db_queries::{
     get_user_from_email_in_pg_users_table, get_user_from_username_in_pg_users_table,
     update_password_for_user_in_pg_users_table,
 };
-use crate::databases::connections::create_pg_pool_connection;
 use crate::settings::schema::{
     ChangeEmailRequestStruct, ChangeEmailResponseStruct, ChangeLanguageRequestStruct,
     ChangeLanguageResponseStruct, ChangeNameRequestStruct, ChangeNameResponseStruct,
@@ -12,8 +11,11 @@ use crate::settings::schema::{
     DeleteAccountRequestStruct, DeleteAccountResponseStruct, GetThemeResponseStruct, SettingsError,
     ToggleTotpRequestStruct, ToggleTotpResponseStruct,
 };
-use crate::utils::validations::{
-    validate_email, validate_name, validate_password, validate_totp, validate_username,
+use crate::utils::{
+    database_connections::create_pg_pool_connection,
+    validations::{
+        validate_email, validate_name, validate_password, validate_totp, validate_username,
+    },
 };
 use actix_web::{get, post, web::Json, HttpRequest, HttpResponse, Responder, Result};
 use sqlx::{Pool, Postgres};
@@ -91,7 +93,8 @@ async fn change_name(
     // change name
     let pool = create_pg_pool_connection().await;
     let update_result: Result<(), sqlx::Error> =
-        update_first_name_and_last_name_for_user_in_pg_users_table(&pool, &first_name, &last_name).await;
+        update_first_name_and_last_name_for_user_in_pg_users_table(&pool, &first_name, &last_name)
+            .await;
 
     // if sql update error then return an error
     if update_result.is_err() {
@@ -109,7 +112,7 @@ async fn change_name(
         .json(res_body));
 }
 
-pub async fn update_first_name_and_last_name_for_user_in_pg_users_table (
+pub async fn update_first_name_and_last_name_for_user_in_pg_users_table(
     pool: &Pool<Postgres>,
     first_name: &str,
     last_name: &str,
@@ -228,14 +231,11 @@ async fn change_username(
         .json(res_body));
 }
 
-pub async fn update_username_for_user_in_pg_users_table (
+pub async fn update_username_for_user_in_pg_users_table(
     pool: &Pool<Postgres>,
     username: &str,
 ) -> Result<(), sqlx::Error> {
-    let user_update_query = sqlx::query("")
-        .bind(username)
-        .execute(pool)
-        .await;
+    let user_update_query = sqlx::query("").bind(username).execute(pool).await;
 
     if let Err(err) = user_update_query {
         return Err(err);
@@ -334,14 +334,11 @@ async fn change_email(
         .json(res_body));
 }
 
-pub async fn update_email_for_user_in_pg_users_table (
+pub async fn update_email_for_user_in_pg_users_table(
     pool: &Pool<Postgres>,
     email: &str,
 ) -> Result<(), sqlx::Error> {
-    let user_update_query = sqlx::query("")
-        .bind(email)
-        .execute(pool)
-        .await;
+    let user_update_query = sqlx::query("").bind(email).execute(pool).await;
 
     if let Err(err) = user_update_query {
         return Err(err);
@@ -349,7 +346,6 @@ pub async fn update_email_for_user_in_pg_users_table (
         return Ok(());
     }
 }
-
 
 #[post("change-password")]
 async fn change_password(

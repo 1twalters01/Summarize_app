@@ -3,8 +3,10 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     accounts::{db_queries::get_captcha_solution_from_token_in_redis, schema::AccountError},
-    databases::connections::{create_redis_client_connection, set_key_value_in_redis},
-    utils::tokens::generate_opaque_token_of_length,
+    utils::{
+        database_connections::{create_redis_client_connection, set_key_value_in_redis},
+        tokens::generate_opaque_token_of_length,
+    },
 };
 
 #[derive(Serialize)]

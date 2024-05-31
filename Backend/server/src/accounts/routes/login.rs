@@ -15,11 +15,11 @@ use crate::{
             LoginTotpRequestSchema, LoginTotpResponseSchema, RefreshTokenResponseSchema,
         },
     },
-    databases::connections::{
-        create_pg_pool_connection, create_redis_client_connection, delete_key_in_redis,
-        set_key_value_in_redis,
-    },
     utils::{
+        database_connections::{
+            create_pg_pool_connection, create_redis_client_connection, delete_key_in_redis,
+            set_key_value_in_redis,
+        },
         tokens::generate_opaque_token_of_length,
         validations::{validate_email, validate_password, validate_totp},
     },

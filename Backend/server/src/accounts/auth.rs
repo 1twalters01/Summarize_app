@@ -7,10 +7,10 @@ use jsonwebtoken::{encode, EncodingKey, Header};
 use serde::{Deserialize, Serialize};
 
 use super::{db_queries::save_refresh_token_user_in_postgres_auth_table, schema::AccountError};
-use crate::databases::connections::create_pg_pool_connection;
+use crate::utils::database_connections::create_pg_pool_connection;
 
 #[derive(Serialize, Deserialize, Debug)]
-struct Claims {
+pub struct Claims {
     sub: String,
     exp: usize,
 }
