@@ -1,16 +1,22 @@
-pub fn validate_name(name: String) -> Result<(), String> {
-    if name.contains("@") | name.contains(".") != true {
-        return Err("Invalid email".to_string());
+pub fn validate_name(name: &str) -> Result<(), String> {
+    if name.len() >= 30 {
+        return Err("Name is too long".to_string());
     }
 
-    if name.len() <= 1 {
-        return Err("Name is too short".to_string());
+    if name
+        .as_bytes()
+        .iter()
+        .map(|b| b.is_ascii_alphabetic())
+        .collect::<Vec<bool>>()
+        .contains(&false)
+    {
+        return Err("Name is invalid".to_string());
     }
 
     return Ok(());
 }
 
-pub fn validate_email(email: String) -> Result<(), String> {
+pub fn validate_email(email: &str) -> Result<(), String> {
     if email.contains("@") | email.contains(".") != true {
         return Err("Invalid email".to_string());
     }
@@ -22,7 +28,7 @@ pub fn validate_email(email: String) -> Result<(), String> {
     return Ok(());
 }
 
-pub fn validate_password(password: String) -> Result<(), String> {
+pub fn validate_password(password: &str) -> Result<(), String> {
     if password.len() < 8 {
         return Err("Password is too short".to_string());
     }
@@ -30,7 +36,7 @@ pub fn validate_password(password: String) -> Result<(), String> {
     return Ok(());
 }
 
-pub fn validate_totp(totp: String) -> Result<(), String> {
+pub fn validate_totp(totp: &str) -> Result<(), String> {
     if totp.len() != 6 {
         return Err("Totp incorrect".to_string());
     }
@@ -48,7 +54,7 @@ pub fn validate_totp(totp: String) -> Result<(), String> {
     return Ok(());
 }
 
-pub fn validate_username(username: String) -> Result<(), String> {
+pub fn validate_username(username: &str) -> Result<(), String> {
     if username.len() >= 30 {
         return Err("Username is too long".to_string());
     }

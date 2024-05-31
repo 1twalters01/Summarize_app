@@ -2,7 +2,7 @@ use actix_web::{
     body::{BoxBody, EitherBody},
     dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform},
     http::header::HeaderValue,
-    Error, HttpMessage, HttpResponse,
+    Error, HttpResponse,
 };
 use futures_util::future::{ok, Ready};
 use jsonwebtoken::{decode, DecodingKey, TokenData, Validation};

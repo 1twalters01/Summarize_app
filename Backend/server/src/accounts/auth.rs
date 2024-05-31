@@ -11,8 +11,8 @@ use crate::utils::database_connections::create_pg_pool_connection;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Claims {
-    sub: String,
-    exp: usize,
+    pub sub: String,
+    pub exp: usize,
 }
 
 #[derive(Serialize, Deserialize, Debug)]

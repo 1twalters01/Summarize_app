@@ -4,7 +4,13 @@ use std::{
     time::SystemTime,
 };
 
-use crate::accounts::datatypes::{passwords::Password, totp::Totp};
+use crate::{
+    accounts::{
+        datatypes::{passwords::Password, totp::Totp},
+        db_queries::get_user_from_uuid_in_pg_users_table,
+    },
+    utils::database_connections::create_pg_pool_connection,
+};
 use uuid::Uuid;
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -56,6 +62,17 @@ impl User {
 
                 return Ok(user);
             }
+            Err(err) => return Err(err),
+        }
+    }
+
+    pub async fn from_uuid_str(uuid: &str) -> Result<Self, sqlx::Error> {
+        let pool = create_pg_pool_connection().await;
+        let get_user_result: Result<User, sqlx::Error> =
+            get_user_from_uuid_in_pg_users_table(&pool, uuid).await;
+
+        match get_user_result {
+            Ok(user) => return Ok(user),
             Err(err) => return Err(err),
         }
     }

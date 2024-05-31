@@ -1,3 +1,4 @@
+use crate::accounts::auth::Claims;
 use crate::accounts::datatypes::users::User;
 use crate::accounts::db_queries::{
     get_user_from_email_in_pg_users_table, get_user_from_username_in_pg_users_table,
@@ -17,13 +18,14 @@ use crate::utils::{
         validate_email, validate_name, validate_password, validate_totp, validate_username,
     },
 };
+use actix_web::HttpMessage;
 use actix_web::{get, post, web::Json, HttpRequest, HttpResponse, Responder, Result};
 use sqlx::{Pool, Postgres};
 
 #[post("change-name")]
 async fn change_name(
     req_body: Json<ChangeNameRequestStruct>,
-    // req: HttpRequest,
+    req: HttpRequest,
 ) -> Result<impl Responder> {
     let ChangeNameRequestStruct {
         first_name,
@@ -32,10 +34,8 @@ async fn change_name(
     } = req_body.into_inner();
     let mut res_body: ChangeNameResponseStruct = ChangeNameResponseStruct::new();
 
-    // Authenticate, is this done outside of this function?
-
     // validate password
-    let validated_password = validate_password(password.clone());
+    let validated_password = validate_password(&password);
     if validated_password.is_err() {
         let error: SettingsError = SettingsError {
             is_error: true,
@@ -49,7 +49,7 @@ async fn change_name(
     }
 
     // validate firstname
-    let validated_firstname = validate_name(first_name.clone());
+    let validated_firstname = validate_name(&first_name);
     if validated_firstname.is_err() {
         let error: SettingsError = SettingsError {
             is_error: true,
@@ -63,7 +63,7 @@ async fn change_name(
     }
 
     // validate lastname
-    let validated_lastname = validate_name(last_name.clone());
+    let validated_lastname = validate_name(&last_name);
     if validated_lastname.is_err() {
         let error: SettingsError = SettingsError {
             is_error: true,
@@ -77,18 +77,43 @@ async fn change_name(
     }
 
     // authenticate password
-    // let user: User = user_result.ok().unwrap();
-    // if user.check_password(&password).is_err() {
-    //     res_body.success = false;
-    //     res_body.settings_error = SettingsError {
-    //         is_error: true,
-    //         error_message: Some(String::from("incorrect password")),
-    //     };
-    //     return Ok(HttpResponse::Unauthorized()
-    //         .content_type("application/json; charset=utf-8")
-    //         .json(res_body)
-    //     )
-    // }
+    let user_uuid: String = match req.extensions().get::<Claims>() {
+        Some(claims) => claims.sub.clone(),
+        None => {
+            res_body.settings_error = SettingsError {
+                is_error: true,
+                error_message: Some(String::from("error")),
+            };
+            return Ok(HttpResponse::InternalServerError()
+                .content_type("application/json; charset=utf-8")
+                .json(res_body));
+        }
+    };
+
+    let user_result: Result<User, sqlx::Error> = User::from_uuid_str(&user_uuid).await;
+    let user: User = match user_result {
+        Err(_) => {
+            res_body.settings_error = SettingsError {
+                is_error: true,
+                error_message: Some(String::from("error")),
+            };
+            return Ok(HttpResponse::InternalServerError()
+                .content_type("application/json; charset=utf-8")
+                .json(res_body));
+        }
+        Ok(user) => user,
+    };
+
+    if user.check_password(&password).is_err() {
+        res_body.success = false;
+        res_body.settings_error = SettingsError {
+            is_error: true,
+            error_message: Some(String::from("incorrect password")),
+        };
+        return Ok(HttpResponse::Unauthorized()
+            .content_type("application/json; charset=utf-8")
+            .json(res_body));
+    }
 
     // change name
     let pool = create_pg_pool_connection().await;
@@ -133,15 +158,13 @@ pub async fn update_first_name_and_last_name_for_user_in_pg_users_table(
 #[post("change-username")]
 async fn change_username(
     req_body: Json<ChangeUsernameRequestStruct>,
-    // req: HttpRequest,
+    req: HttpRequest,
 ) -> Result<impl Responder> {
     let ChangeUsernameRequestStruct { username, password } = req_body.into_inner();
     let mut res_body: ChangeUsernameResponseStruct = ChangeUsernameResponseStruct::new();
 
-    // Authenticate, is this done outside of this function?
-
     // validate password
-    let validated_password = validate_password(password.clone());
+    let validated_password = validate_password(&password);
     if validated_password.is_err() {
         let error: SettingsError = SettingsError {
             is_error: true,
@@ -155,13 +178,12 @@ async fn change_username(
     }
 
     // validate username
-    let validated_username = validate_username(username.clone());
+    let validated_username = validate_username(&username);
     if validated_username.is_err() {
-        let error: SettingsError = SettingsError {
+        res_body.settings_error = SettingsError {
             is_error: true,
             error_message: Some(validated_username.err().unwrap()),
         };
-        res_body.settings_error = error;
 
         return Ok(HttpResponse::UnprocessableEntity()
             .content_type("application/json; charset=utf-8")
@@ -197,18 +219,43 @@ async fn change_username(
     }
 
     // authenticate password
-    // let user: User = user_result.ok().unwrap();
-    // if user.check_password(&password).is_err() {
-    //     res_body.success = false;
-    //     res_body.settings_error = SettingsError {
-    //         is_error: true,
-    //         error_message: Some(String::from("incorrect password")),
-    //     };
-    //     return Ok(HttpResponse::Unauthorized()
-    //         .content_type("application/json; charset=utf-8")
-    //         .json(res_body)
-    //     )
-    // }
+    let user_uuid: String = match req.extensions().get::<Claims>() {
+        Some(claims) => claims.sub.clone(),
+        None => {
+            res_body.settings_error = SettingsError {
+                is_error: true,
+                error_message: Some(String::from("error")),
+            };
+            return Ok(HttpResponse::InternalServerError()
+                .content_type("application/json; charset=utf-8")
+                .json(res_body));
+        }
+    };
+
+    let user_result: Result<User, sqlx::Error> = User::from_uuid_str(&user_uuid).await;
+    let user: User = match user_result {
+        Err(_) => {
+            res_body.settings_error = SettingsError {
+                is_error: true,
+                error_message: Some(String::from("error")),
+            };
+            return Ok(HttpResponse::InternalServerError()
+                .content_type("application/json; charset=utf-8")
+                .json(res_body));
+        }
+        Ok(user) => user,
+    };
+
+    if user.check_password(&password).is_err() {
+        res_body.success = false;
+        res_body.settings_error = SettingsError {
+            is_error: true,
+            error_message: Some(String::from("incorrect password")),
+        };
+        return Ok(HttpResponse::Unauthorized()
+            .content_type("application/json; charset=utf-8")
+            .json(res_body));
+    }
 
     // change username
     let pool = create_pg_pool_connection().await;
@@ -247,15 +294,13 @@ pub async fn update_username_for_user_in_pg_users_table(
 #[post("change-email")]
 async fn change_email(
     req_body: Json<ChangeEmailRequestStruct>,
-    // req: HttpRequest,
+    req: HttpRequest,
 ) -> Result<impl Responder> {
     let ChangeEmailRequestStruct { email, password } = req_body.into_inner();
     let mut res_body: ChangeEmailResponseStruct = ChangeEmailResponseStruct::new();
 
-    // Authenticate, is this done outside of this function?
-
     // validate password
-    let validated_password = validate_password(password.clone());
+    let validated_password = validate_password(&password);
     if validated_password.is_err() {
         let error: SettingsError = SettingsError {
             is_error: true,
@@ -269,7 +314,7 @@ async fn change_email(
     }
 
     // validate email
-    let validated_email = validate_email(email.clone());
+    let validated_email = validate_email(&email);
     if validated_email.is_err() {
         let error: SettingsError = SettingsError {
             is_error: true,
@@ -300,18 +345,43 @@ async fn change_email(
     }
 
     // authenticate password
-    // let user: User = user_result.ok().unwrap();
-    // if user.check_password(&password).is_err() {
-    //     res_body.success = false;
-    //     res_body.settings_error = SettingsError {
-    //         is_error: true,
-    //         error_message: Some(String::from("incorrect password")),
-    //     };
-    //     return Ok(HttpResponse::Unauthorized()
-    //         .content_type("application/json; charset=utf-8")
-    //         .json(res_body)
-    //     )
-    // }
+    let user_uuid: String = match req.extensions().get::<Claims>() {
+        Some(claims) => claims.sub.clone(),
+        None => {
+            res_body.settings_error = SettingsError {
+                is_error: true,
+                error_message: Some(String::from("error")),
+            };
+            return Ok(HttpResponse::InternalServerError()
+                .content_type("application/json; charset=utf-8")
+                .json(res_body));
+        }
+    };
+
+    let user_result: Result<User, sqlx::Error> = User::from_uuid_str(&user_uuid).await;
+    let user: User = match user_result {
+        Err(_) => {
+            res_body.settings_error = SettingsError {
+                is_error: true,
+                error_message: Some(String::from("error")),
+            };
+            return Ok(HttpResponse::InternalServerError()
+                .content_type("application/json; charset=utf-8")
+                .json(res_body));
+        }
+        Ok(user) => user,
+    };
+
+    if user.check_password(&password).is_err() {
+        res_body.success = false;
+        res_body.settings_error = SettingsError {
+            is_error: true,
+            error_message: Some(String::from("incorrect password")),
+        };
+        return Ok(HttpResponse::Unauthorized()
+            .content_type("application/json; charset=utf-8")
+            .json(res_body));
+    }
 
     // change email
     let pool = create_pg_pool_connection().await;
@@ -359,8 +429,6 @@ async fn change_password(
     } = req_body.into_inner();
     let mut res_body: ChangePasswordResponseStruct = ChangePasswordResponseStruct::new();
 
-    // Authenticate, is this done outside of this function?
-
     // error if new_password != new_password_confirmation
     if new_password != new_password_confirmation {
         let error: SettingsError = SettingsError {
@@ -377,7 +445,7 @@ async fn change_password(
     }
 
     // validate password
-    let validated_password = validate_password(password.clone());
+    let validated_password = validate_password(&password);
     if validated_password.is_err() {
         let error: SettingsError = SettingsError {
             is_error: true,
@@ -391,7 +459,7 @@ async fn change_password(
     }
 
     // validate new password
-    let validated_new_password = validate_password(new_password.clone());
+    let validated_new_password = validate_password(&new_password);
     if validated_new_password.is_err() {
         let error: SettingsError = SettingsError {
             is_error: true,
@@ -405,18 +473,43 @@ async fn change_password(
     }
 
     // authenticate password
-    // let user: User = user_result.ok().unwrap();
-    // if user.check_password(&password).is_err() {
-    //     res_body.success = false;
-    //     res_body.settings_error = SettingsError {
-    //         is_error: true,
-    //         error_message: Some(String::from("incorrect password")),
-    //     };
-    //     return Ok(HttpResponse::Unauthorized()
-    //         .content_type("application/json; charset=utf-8")
-    //         .json(res_body)
-    //     )
-    // }
+    let user_uuid: String = match req.extensions().get::<Claims>() {
+        Some(claims) => claims.sub.clone(),
+        None => {
+            res_body.settings_error = SettingsError {
+                is_error: true,
+                error_message: Some(String::from("error")),
+            };
+            return Ok(HttpResponse::InternalServerError()
+                .content_type("application/json; charset=utf-8")
+                .json(res_body));
+        }
+    };
+
+    let user_result: Result<User, sqlx::Error> = User::from_uuid_str(&user_uuid).await;
+    let user: User = match user_result {
+        Err(_) => {
+            res_body.settings_error = SettingsError {
+                is_error: true,
+                error_message: Some(String::from("error")),
+            };
+            return Ok(HttpResponse::InternalServerError()
+                .content_type("application/json; charset=utf-8")
+                .json(res_body));
+        }
+        Ok(user) => user,
+    };
+
+    if user.check_password(&password).is_err() {
+        res_body.success = false;
+        res_body.settings_error = SettingsError {
+            is_error: true,
+            error_message: Some(String::from("incorrect password")),
+        };
+        return Ok(HttpResponse::Unauthorized()
+            .content_type("application/json; charset=utf-8")
+            .json(res_body));
+    }
 
     // change password
     let pool = create_pg_pool_connection().await;
@@ -476,7 +569,7 @@ async fn toggle_totp(
     // get totp code from string
 
     // validate the entered totp code
-    let validated_email = validate_totp(totp.clone());
+    let validated_email = validate_totp(&totp);
     if validated_email.is_err() {
         let error: SettingsError = SettingsError {
             is_error: true,
@@ -492,7 +585,7 @@ async fn toggle_totp(
     // if the entered totp doesn't match the generated code then error
 
     // validate password
-    let validated_password = validate_password(password.clone());
+    let validated_password = validate_password(&password);
     if validated_password.is_err() {
         let error: SettingsError = SettingsError {
             is_error: true,

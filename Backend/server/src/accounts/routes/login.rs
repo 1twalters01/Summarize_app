@@ -31,7 +31,7 @@ async fn post_email(data: Json<LoginEmailRequestSchema>) -> Result<impl Responde
     let mut res_body: LoginEmailResponseSchema = LoginEmailResponseSchema::new();
 
     // Validate the email from the request body
-    let validated_email = validate_email(email.clone());
+    let validated_email = validate_email(&email);
     if validated_email.is_err() {
         res_body.account_error = AccountError {
             is_error: true,
@@ -140,7 +140,7 @@ async fn post_password(
     };
 
     // check if the entered password is a valid password
-    let validated_password = validate_password(password.clone());
+    let validated_password = validate_password(&password);
     if validated_password.is_err() {
         let error: AccountError = AccountError {
             is_error: true,
@@ -275,7 +275,7 @@ async fn post_totp(data: Json<LoginTotpRequest>, req: HttpRequest) -> Result<imp
         };
 
     // check if the entered totp is a valid totp
-    let validated_totp = validate_totp(totp.clone());
+    let validated_totp = validate_totp(&totp);
     if validated_totp.is_err() {
         let error: AccountError = AccountError {
             is_error: true,

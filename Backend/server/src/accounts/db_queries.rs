@@ -80,6 +80,26 @@ pub async fn get_user_from_username_in_pg_users_table(
     return Ok(user);
 }
 
+pub async fn get_user_from_uuid_in_pg_users_table(
+    pool: &Pool<Postgres>,
+    uuid: &str,
+) -> Result<User, sqlx::Error> {
+    let user_select_query = sqlx::query("Select * from users WHERE uuid=($1)")
+        .bind(uuid)
+        .fetch_all(pool)
+        .await;
+
+    if let Err(err) = user_select_query {
+        return Err(err);
+    }
+
+    let username = "username".to_string();
+    let email = "email".to_string();
+    let password = "password".to_string();
+    let user: User = User::new(username, email, password).unwrap();
+    return Ok(user);
+}
+
 pub async fn save_refresh_token_user_in_postgres_auth_table(
     pool: &Pool<Postgres>,
     refresh_token: &str,

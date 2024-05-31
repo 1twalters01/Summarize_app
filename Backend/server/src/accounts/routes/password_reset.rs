@@ -29,7 +29,7 @@ async fn post_email(req_body: Json<PasswordResetRequestSchema>) -> Result<impl R
     let PasswordResetRequestSchema { email } = req_body.into_inner();
     let mut res_body: PasswordResetResponseSchema = PasswordResetResponseSchema::new();
 
-    let validated_email = validate_email(email.clone());
+    let validated_email = validate_email(&email);
     if validated_email.is_err() {
         return Ok(HttpResponse::UnprocessableEntity()
             .content_type("application/json; charset=utf-8")
@@ -225,7 +225,7 @@ async fn post_password_reset(
             .json(false));
     }
 
-    let validated_password = validate_password(password.clone());
+    let validated_password = validate_password(&password);
     if validated_password.is_err() {
         return Ok(HttpResponse::UnprocessableEntity()
             .content_type("application/json; charset=utf-8")

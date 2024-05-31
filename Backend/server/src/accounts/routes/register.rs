@@ -33,7 +33,7 @@ async fn post_email(req_body: Json<RegisterEmailRequestSchema>) -> Result<impl R
     let mut res_body: RegisterEmailResponseSchema = RegisterEmailResponseSchema::new();
 
     // Validate the email from the request body
-    let validated_email = validate_email(email.clone());
+    let validated_email = validate_email(&email);
     if validated_email.is_err() {
         res_body.account_error = AccountError {
             is_error: true,
@@ -259,7 +259,7 @@ async fn post_details(
         };
 
     // check if the username is already found in the database. If it is then return error
-    let validated_username = validate_username(username.clone());
+    let validated_username = validate_username(&username);
     if validated_username.is_err() {
         res_body.account_error = AccountError {
             is_error: false,
@@ -282,7 +282,7 @@ async fn post_details(
             .json(res_body));
     }
 
-    let validated_password = validate_password(password.clone());
+    let validated_password = validate_password(&password);
     if validated_password.is_err() {
         res_body.account_error = AccountError {
             is_error: false,
