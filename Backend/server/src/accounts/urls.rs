@@ -4,6 +4,7 @@ use actix_web::web::{scope, ServiceConfig};
 pub fn config(cfg: &mut ServiceConfig) {
     cfg.service(
         scope("/register")
+            .wrap(middleware::authentication::not_authenticated::NotAuthenticated)
             .service(routes::register::post_email)
             .service(routes::register::post_verify)
             .service(routes::register::link_verify)
@@ -11,7 +12,7 @@ pub fn config(cfg: &mut ServiceConfig) {
     )
     .service(
         scope("/login")
-            .wrap(middleware::authentication::is_authenticated::IsAuthenticated)
+            .wrap(middleware::authentication::not_authenticated::NotAuthenticated)
             .service(routes::login::post_email)
             .service(routes::login::post_password)
             .service(routes::login::post_totp)
@@ -19,6 +20,7 @@ pub fn config(cfg: &mut ServiceConfig) {
     )
     .service(
         scope("/password-reset")
+            .wrap(middleware::authentication::not_authenticated::NotAuthenticated)
             .service(routes::password_reset::post_email)
             .service(routes::password_reset::post_verify)
             .service(routes::password_reset::link_verify)
@@ -26,6 +28,7 @@ pub fn config(cfg: &mut ServiceConfig) {
     )
     .service(
         scope("/oauth2")
+            .wrap(middleware::authentication::not_authenticated::NotAuthenticated)
             // make google oauth account be the same as logging in regularly if using a gmail
             .service(routes::oauth2::authorise)
             .service(routes::oauth2::callback)
