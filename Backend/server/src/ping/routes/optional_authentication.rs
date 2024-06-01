@@ -1,6 +1,7 @@
 use crate::ping::datatypes::{DualMessage, Message};
 use actix_web::{web::Json, HttpResponse, Responder, Result};
 
+/// A get route function that has no authentication requirements for the user
 pub async fn ping_get_any_auth() -> Result<impl Responder> {
     let message: Message = Message {
         message: String::from("Ping any authorization level from server"),
@@ -11,6 +12,7 @@ pub async fn ping_get_any_auth() -> Result<impl Responder> {
         .json(message));
 }
 
+/// A post route function that has no authentication requirements for the user
 pub async fn ping_post_any_auth(data: Json<Message>) -> Result<impl Responder> {
     println!("data: {:#?}", data);
     let req_data: String = data.into_inner().message;
@@ -175,4 +177,3 @@ mod tests {
         );
     }
 }
-

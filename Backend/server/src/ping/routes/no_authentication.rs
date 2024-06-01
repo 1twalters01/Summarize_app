@@ -1,6 +1,7 @@
 use crate::ping::datatypes::{DualMessage, Message};
 use actix_web::{web::Json, HttpResponse, Responder, Result};
 
+/// A get route function that requires the user to be unauthenticated
 pub async fn ping_get_not_auth() -> Result<impl Responder> {
     let message: Message = Message {
         message: String::from("Ping only not authorized level from server"),
@@ -11,6 +12,7 @@ pub async fn ping_get_not_auth() -> Result<impl Responder> {
         .json(message));
 }
 
+/// A post route function that requires the user to be unauthenticated
 pub async fn ping_post_not_auth(data: Json<Message>) -> Result<impl Responder> {
     let req_data: String = data.into_inner().message;
 
@@ -159,4 +161,3 @@ mod tests {
         assert!(response.status().is_client_error());
     }
 }
-

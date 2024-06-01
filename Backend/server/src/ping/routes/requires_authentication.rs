@@ -4,6 +4,7 @@ use crate::{
 };
 use actix_web::{web::Json, HttpMessage, HttpRequest, HttpResponse, Responder, Result};
 
+/// A get route function that requires the user to be authenticated
 pub async fn ping_get_only_auth(req: HttpRequest) -> Result<impl Responder> {
     let message: Message = Message {
         message: String::from("Ping only authorized level from server"),
@@ -17,6 +18,7 @@ pub async fn ping_get_only_auth(req: HttpRequest) -> Result<impl Responder> {
         .json(message));
 }
 
+/// A post route function that requires the user to be authenticated
 pub async fn ping_post_only_auth(data: Json<Message>) -> Result<impl Responder> {
     let req_data: String = data.into_inner().message;
 
@@ -176,4 +178,3 @@ mod tests {
         );
     }
 }
-
