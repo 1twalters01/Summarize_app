@@ -5,8 +5,8 @@ use dotenv::dotenv;
 pub mod middleware;
 pub mod utils;
 
-pub mod accounts;
 pub mod ping;
+pub mod accounts;
 // pub mod subscriptions;
 pub mod settings;
 
@@ -25,6 +25,7 @@ async fn main() -> std::io::Result<()> {
             .wrap(cors)
             .configure(ping::urls::config)
             .configure(accounts::urls::config)
+            .configure(settings::urls::config)
     })
     .bind("127.0.0.1:8000")?
     .run()

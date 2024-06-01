@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use super::{db_queries::save_refresh_token_user_in_postgres_auth_table, schema::AccountError};
 use crate::utils::database_connections::create_pg_pool_connection;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Claims {
     pub sub: String,
     pub exp: usize,
