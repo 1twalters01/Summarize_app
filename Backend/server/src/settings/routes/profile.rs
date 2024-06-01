@@ -1,28 +1,27 @@
 use crate::accounts::auth::Claims;
 use crate::accounts::datatypes::users::User;
 use crate::accounts::db_queries::{
-    get_user_from_email_in_pg_users_table, get_user_from_username_in_pg_users_table,
-    update_password_for_user_in_pg_users_table,
+    delete_user_from_uuid_in_pg_users_table, get_code_from_token_in_redis, get_user_from_email_in_pg_users_table, get_user_from_username_in_pg_users_table, update_password_for_user_in_pg_users_table
 };
 use crate::settings::schema::{
-    ChangeEmailRequestStruct, ChangeEmailResponseStruct, ChangeLanguageRequestStruct,
-    ChangeLanguageResponseStruct, ChangeNameRequestStruct, ChangeNameResponseStruct,
-    ChangePasswordRequestStruct, ChangePasswordResponseStruct, ChangeThemeRequestStruct,
-    ChangeThemeResponseStruct, ChangeUsernameRequestStruct, ChangeUsernameResponseStruct,
+    ChangeEmailRequestStruct, ChangeEmailResponseStruct,
+    ChangeNameRequestStruct, ChangeNameResponseStruct,
+    ChangePasswordRequestStruct, ChangePasswordResponseStruct,
+    ChangeUsernameRequestStruct, ChangeUsernameResponseStruct,
     DeleteAccountConfirmationRequestStruct, DeleteAccountConfirmationResponseStruct,
-    DeleteAccountRequestStruct, DeleteAccountResponseStruct, GetThemeResponseStruct, SettingsError,
-    ToggleTotpRequestStruct, ToggleTotpResponseStruct,
+    DeleteAccountRequestStruct, DeleteAccountResponseStruct,
+    SettingsError,
 };
 use crate::utils::database_connections::{create_redis_client_connection, set_key_value_in_redis};
 use crate::utils::tokens::generate_opaque_token_of_length;
 use crate::utils::{
     database_connections::create_pg_pool_connection,
     validations::{
-        validate_email, validate_name, validate_password, validate_totp, validate_username,
+        validate_email, validate_name, validate_password, validate_username,
     },
 };
 use actix_web::HttpMessage;
-use actix_web::{get, post, web::Json, HttpRequest, HttpResponse, Responder, Result};
+use actix_web::{post, web::Json, HttpRequest, HttpResponse, Responder, Result};
 use sqlx::{Pool, Postgres};
 
 #[post("change-name")]
@@ -626,126 +625,74 @@ async fn delete_account_confirmation(
     req: HttpRequest,
 ) -> Result<impl Responder> {
     let DeleteAccountConfirmationRequestStruct {
-        confirmation,
+        confirmation_code,
         token,
     } = req_body.into_inner();
-    let res_body: DeleteAccountConfirmationResponseStruct =
+    let mut res_body: DeleteAccountConfirmationResponseStruct =
         DeleteAccountConfirmationResponseStruct::new();
 
     // validate the confirmation code
+    
     // get stored code from token else error
+    let con = create_redis_client_connection();
+    let stored_code: String = match get_code_from_token_in_redis(con, &token) {
+        // if error return error
+        Err(err) => {
+            let error: SettingsError = SettingsError {
+                is_error: true,
+                error_message: Some(err),
+            };
+            res_body.settings_error = error;
+            return Ok(HttpResponse::UnprocessableEntity()
+                .content_type("application/json; charset=utf-8")
+                .json(res_body));
+        }
+        Ok(code) => code,
+    };
+    
     // check if code == stored code else error
-    // delete user else error
-    // return success
+    if stored_code != confirmation_code {
+        res_body.settings_error = SettingsError {
+            is_error: true,
+            error_message: Some(String::from("invalid code")),
+        };
+        return Ok(HttpResponse::UnprocessableEntity()
+            .content_type("application/json; charset=utf-8")
+            .json(res_body));
+    }
 
+    // Get user uuid
+    let user_uuid: String = match req.extensions().get::<Claims>() {
+        Some(claims) => claims.sub.clone(),
+        None => {
+            res_body.settings_error = SettingsError {
+                is_error: true,
+                error_message: Some(String::from("error")),
+            };
+            return Ok(HttpResponse::InternalServerError()
+                .content_type("application/json; charset=utf-8")
+                .json(res_body));
+        }
+    };
+    
+    // delete user else error
+    let pool = create_pg_pool_connection().await;
+    let user_result: Result<(), sqlx::Error> =
+        delete_user_from_uuid_in_pg_users_table(&pool, &user_uuid).await;
+
+    if user_result.is_err() {
+        res_body.settings_error = SettingsError {
+            is_error: true,
+            error_message: Some(String::from("Error deleting user, try again later")),
+        };
+        return Ok(HttpResponse::InternalServerError()
+            .content_type("application/json; charset=utf-8")
+            .json(res_body));
+    }
+
+    // return success
     Ok(HttpResponse::Ok()
         .content_type("application/json; charset=utf-8")
         .json(res_body))
 }
 
-#[post("toggle-totp")]
-async fn toggle_totp(
-    req_body: Json<ToggleTotpRequestStruct>,
-    req: HttpRequest,
-) -> Result<impl Responder> {
-    let ToggleTotpRequestStruct { password, totp } = req_body.into_inner();
-    let mut res_body: ToggleTotpResponseStruct = ToggleTotpResponseStruct::new();
-
-    // Authenticate, is this done outside of this function?
-
-    // check if user has totp enabled
-    // if no then:
-    // if totp is not none then return error
-    // generate a totp string
-    // set totp
-    // if error on setting totp then return error
-
-    // get user's totp string
-    // get totp code from string
-
-    // validate the entered totp code
-    let validated_email = validate_totp(&totp);
-    if validated_email.is_err() {
-        let error: SettingsError = SettingsError {
-            is_error: true,
-            error_message: Some(validated_email.err().unwrap()),
-        };
-        res_body.settings_error = error;
-
-        return Ok(HttpResponse::UnprocessableEntity()
-            .content_type("application/json; charset=utf-8")
-            .json(res_body));
-    }
-
-    // if the entered totp doesn't match the generated code then error
-
-    // validate password
-    let validated_password = validate_password(&password);
-    if validated_password.is_err() {
-        let error: SettingsError = SettingsError {
-            is_error: true,
-            error_message: Some(validated_password.err().unwrap()),
-        };
-        res_body.settings_error = error;
-
-        return Ok(HttpResponse::UnprocessableEntity()
-            .content_type("application/json; charset=utf-8")
-            .json(res_body));
-    }
-
-    // authenticate password
-
-    // remove totp
-    // if error on removal then return error
-
-    return Ok(HttpResponse::Ok()
-        .content_type("application/json; charset=utf-8")
-        .json(res_body));
-}
-
-#[get("get-theme")]
-async fn get_theme(req: HttpRequest) -> Result<impl Responder> {
-    let res_body: GetThemeResponseStruct = GetThemeResponseStruct::new();
-    // get user's device - from header? - this means no req_body
-    // get user's theme for the device
-    // if error when getting the user's theme then return error
-
-    // return ok
-
-    return Ok(HttpResponse::Ok()
-        .content_type("application/json; charset=utf-8")
-        .json(res_body));
-}
-
-#[post("change-theme")]
-async fn change_theme(
-    req_body: Json<ChangeThemeRequestStruct>,
-    req: HttpRequest,
-) -> Result<impl Responder> {
-    let ChangeThemeRequestStruct { theme } = req_body.into_inner();
-    let res_body: ChangeThemeResponseStruct = ChangeThemeResponseStruct::new();
-
-    // get user's device (linux app, windows app, mac app, android app, ios app, desktop website, mobile website)
-    // set user's theme for the current device to what was entered
-    // if setting error then return error
-
-    return Ok(HttpResponse::Ok()
-        .content_type("application/json; charset=utf-8")
-        .json(res_body));
-}
-
-#[post("change-language")]
-async fn change_language(
-    req_body: Json<ChangeLanguageRequestStruct>,
-    req: HttpRequest,
-) -> Result<impl Responder> {
-    let ChangeLanguageRequestStruct { language } = req_body.into_inner();
-    let res_body: ChangeLanguageResponseStruct = ChangeLanguageResponseStruct::new();
-
-    // validate the language
-    // update the user's language to the new one
-    // if error when updating then error
-    return Ok(HttpResponse::Ok()
-        .content_type("application/json; charset=utf-8")
-        .json(res_body));
-}

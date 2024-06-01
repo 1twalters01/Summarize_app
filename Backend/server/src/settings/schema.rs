@@ -1,6 +1,5 @@
 use serde::{Deserialize, Serialize};
 
-// Settings Structs
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SettingsError {
@@ -125,7 +124,7 @@ impl DeleteAccountResponseStruct {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct DeleteAccountConfirmationRequestStruct {
-    pub confirmation: String,
+    pub confirmation_code: String,
     pub token: String,
 }
 

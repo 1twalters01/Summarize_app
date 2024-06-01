@@ -5,8 +5,8 @@ use dotenv::dotenv;
 pub mod middleware;
 pub mod utils;
 
-pub mod accounts;
 pub mod ping;
+pub mod accounts;
 // pub mod subscriptions;
 pub mod settings;
 

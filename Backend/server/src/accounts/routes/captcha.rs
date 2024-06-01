@@ -2,7 +2,7 @@ use actix_web::{get, post, web, HttpResponse, Responder, Result};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    accounts::{db_queries::get_captcha_solution_from_token_in_redis, schema::AccountError},
+    accounts::{db_queries::get_code_from_token_in_redis, schema::AccountError},
     utils::{
         database_connections::{create_redis_client_connection, set_key_value_in_redis},
         tokens::generate_opaque_token_of_length,
@@ -86,7 +86,7 @@ async fn verify_captcha(data: web::Json<CaptchaResponse>) -> Result<impl Respond
 
     // Retrieve the solution from the session or database
     let con = create_redis_client_connection();
-    let solution: String = match get_captcha_solution_from_token_in_redis(con, &token) {
+    let solution: String = match get_code_from_token_in_redis(con, &token) {
         // if error return error
         Err(err) => {
             let error: AccountError = AccountError {

@@ -6,7 +6,8 @@ pub async fn create_new_user_in_pg_users_table(
     pool: &Pool<Postgres>,
     user: User,
 ) -> Result<(), sqlx::Error> {
-    let user_create_query = sqlx::query("INSERT INTO users WHERE email=($1), username=($2), password=($3), first_name=($4), last_name=($5)")
+    let user_create_query = sqlx::query("INSERT INTO users WHERE uuid=($1), email=($2), username=($3), password=($4), first_name=($5), last_name=($6)")
+        .bind(user.get_uuid().to_string())
         .bind(user.get_email())
         .bind(user.get_username())
         .bind(user.get_password())
@@ -16,6 +17,22 @@ pub async fn create_new_user_in_pg_users_table(
         .await;
 
     if let Err(err) = user_create_query {
+        return Err(err);
+    } else {
+        return Ok(());
+    }
+}
+
+pub async fn delete_user_from_uuid_in_pg_users_table(
+    pool: &Pool<Postgres>,
+    uuid: &str,
+) -> Result<(), sqlx::Error> {
+    let user_delete_query = sqlx::query("Delete FROM users WHERE uuid=($1)")
+        .bind(uuid)
+        .execute(pool)
+        .await;
+
+    if let Err(err) = user_delete_query {
         return Err(err);
     } else {
         return Ok(());
@@ -173,14 +190,14 @@ pub fn get_email_from_token_struct_in_redis(
     return Ok(email);
 }
 
-pub fn get_captcha_solution_from_token_in_redis(
+pub fn get_code_from_token_in_redis(
     mut con: Connection,
     mut token: &str,
 ) -> Result<String, String> {
     let redis_result: RedisResult<String> = con.get(token);
-    let solution: String = match redis_result {
-        Ok(solution) => solution,
+    let code: String = match redis_result {
+        Ok(code) => code,
         Err(err) => return Err(err.to_string()),
     };
-    return Ok(solution);
+    return Ok(code);
 }
