@@ -5,7 +5,13 @@ use crate::accounts::db_queries::{
     update_password_for_user_in_pg_users_table,
 };
 use crate::settings::schema::{
-    ChangeEmailRequestStruct, ChangeEmailResponseStruct, ChangeLanguageRequestStruct, ChangeLanguageResponseStruct, ChangeNameRequestStruct, ChangeNameResponseStruct, ChangePasswordRequestStruct, ChangePasswordResponseStruct, ChangeThemeRequestStruct, ChangeThemeResponseStruct, ChangeUsernameRequestStruct, ChangeUsernameResponseStruct, DeleteAccountConfirmationRequestStruct, DeleteAccountConfirmationResponseStruct, DeleteAccountRequestStruct, DeleteAccountResponseStruct, GetThemeResponseStruct, SettingsError, ToggleTotpRequestStruct, ToggleTotpResponseStruct
+    ChangeEmailRequestStruct, ChangeEmailResponseStruct, ChangeLanguageRequestStruct,
+    ChangeLanguageResponseStruct, ChangeNameRequestStruct, ChangeNameResponseStruct,
+    ChangePasswordRequestStruct, ChangePasswordResponseStruct, ChangeThemeRequestStruct,
+    ChangeThemeResponseStruct, ChangeUsernameRequestStruct, ChangeUsernameResponseStruct,
+    DeleteAccountConfirmationRequestStruct, DeleteAccountConfirmationResponseStruct,
+    DeleteAccountRequestStruct, DeleteAccountResponseStruct, GetThemeResponseStruct, SettingsError,
+    ToggleTotpRequestStruct, ToggleTotpResponseStruct,
 };
 use crate::utils::database_connections::{create_redis_client_connection, set_key_value_in_redis};
 use crate::utils::tokens::generate_opaque_token_of_length;
@@ -534,9 +540,7 @@ async fn delete_account(
     req_body: Json<DeleteAccountRequestStruct>,
     req: HttpRequest,
 ) -> Result<impl Responder> {
-    let DeleteAccountRequestStruct {
-        password,
-    } = req_body.into_inner();
+    let DeleteAccountRequestStruct { password } = req_body.into_inner();
     let mut res_body: DeleteAccountResponseStruct = DeleteAccountResponseStruct::new();
 
     // validate password
@@ -625,7 +629,8 @@ async fn delete_account_confirmation(
         confirmation,
         token,
     } = req_body.into_inner();
-    let res_body: DeleteAccountConfirmationResponseStruct = DeleteAccountConfirmationResponseStruct::new();
+    let res_body: DeleteAccountConfirmationResponseStruct =
+        DeleteAccountConfirmationResponseStruct::new();
 
     // validate the confirmation code
     // get stored code from token else error
