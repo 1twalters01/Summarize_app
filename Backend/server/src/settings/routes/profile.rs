@@ -5,13 +5,10 @@ use crate::accounts::db_queries::{
     update_password_for_user_in_pg_users_table,
 };
 use crate::settings::schema::{
-    ChangeEmailRequestStruct, ChangeEmailResponseStruct, ChangeLanguageRequestStruct,
-    ChangeLanguageResponseStruct, ChangeNameRequestStruct, ChangeNameResponseStruct,
-    ChangePasswordRequestStruct, ChangePasswordResponseStruct, ChangeThemeRequestStruct,
-    ChangeThemeResponseStruct, ChangeUsernameRequestStruct, ChangeUsernameResponseStruct,
-    DeleteAccountRequestStruct, DeleteAccountResponseStruct, GetThemeResponseStruct, SettingsError,
-    ToggleTotpRequestStruct, ToggleTotpResponseStruct,
+    ChangeEmailRequestStruct, ChangeEmailResponseStruct, ChangeLanguageRequestStruct, ChangeLanguageResponseStruct, ChangeNameRequestStruct, ChangeNameResponseStruct, ChangePasswordRequestStruct, ChangePasswordResponseStruct, ChangeThemeRequestStruct, ChangeThemeResponseStruct, ChangeUsernameRequestStruct, ChangeUsernameResponseStruct, DeleteAccountConfirmationRequestStruct, DeleteAccountConfirmationResponseStruct, DeleteAccountRequestStruct, DeleteAccountResponseStruct, GetThemeResponseStruct, SettingsError, ToggleTotpRequestStruct, ToggleTotpResponseStruct
 };
+use crate::utils::database_connections::{create_redis_client_connection, set_key_value_in_redis};
+use crate::utils::tokens::generate_opaque_token_of_length;
 use crate::utils::{
     database_connections::create_pg_pool_connection,
     validations::{
@@ -539,9 +536,102 @@ async fn delete_account(
 ) -> Result<impl Responder> {
     let DeleteAccountRequestStruct {
         password,
-        password_confirmation,
     } = req_body.into_inner();
-    let res_body: DeleteAccountResponseStruct = DeleteAccountResponseStruct::new();
+    let mut res_body: DeleteAccountResponseStruct = DeleteAccountResponseStruct::new();
+
+    // validate password
+    let validated_password = validate_password(&password);
+    if validated_password.is_err() {
+        let error: SettingsError = SettingsError {
+            is_error: true,
+            error_message: Some(validated_password.err().unwrap()),
+        };
+        res_body.settings_error = error;
+
+        return Ok(HttpResponse::UnprocessableEntity()
+            .content_type("application/json; charset=utf-8")
+            .json(res_body));
+    }
+
+    // authenticate password
+    let user_uuid: String = match req.extensions().get::<Claims>() {
+        Some(claims) => claims.sub.clone(),
+        None => {
+            res_body.settings_error = SettingsError {
+                is_error: true,
+                error_message: Some(String::from("error")),
+            };
+            return Ok(HttpResponse::InternalServerError()
+                .content_type("application/json; charset=utf-8")
+                .json(res_body));
+        }
+    };
+
+    let user_result: Result<User, sqlx::Error> = User::from_uuid_str(&user_uuid).await;
+    let user: User = match user_result {
+        Err(_) => {
+            res_body.settings_error = SettingsError {
+                is_error: true,
+                error_message: Some(String::from("error")),
+            };
+            return Ok(HttpResponse::InternalServerError()
+                .content_type("application/json; charset=utf-8")
+                .json(res_body));
+        }
+        Ok(user) => user,
+    };
+
+    if user.check_password(&password).is_err() {
+        res_body.success = false;
+        res_body.settings_error = SettingsError {
+            is_error: true,
+            error_message: Some(String::from("incorrect password")),
+        };
+        return Ok(HttpResponse::Unauthorized()
+            .content_type("application/json; charset=utf-8")
+            .json(res_body));
+    }
+
+    // save {key: token, value: code} to redis
+    let expiry_in_seconds: Option<i64> = Some(300);
+    let con = create_redis_client_connection();
+    let token = generate_opaque_token_of_length(64);
+    let code = generate_opaque_token_of_length(6);
+    let set_redis_result = set_key_value_in_redis(con, &token, &code, &expiry_in_seconds).await;
+
+    // if redis fails then return an error
+    if set_redis_result.is_err() {
+        res_body.settings_error = SettingsError {
+            is_error: true,
+            error_message: Some(String::from("Server error")),
+        };
+        return Ok(HttpResponse::FailedDependency()
+            .content_type("application/json; charset=utf-8")
+            .json(res_body));
+    }
+
+    // return the token
+    Ok(HttpResponse::Ok()
+        .content_type("application/json; charset=utf-8")
+        .json(res_body))
+}
+
+#[post("delete-account/confirmation")]
+async fn delete_account_confirmation(
+    req_body: Json<DeleteAccountConfirmationRequestStruct>,
+    req: HttpRequest,
+) -> Result<impl Responder> {
+    let DeleteAccountConfirmationRequestStruct {
+        confirmation,
+        token,
+    } = req_body.into_inner();
+    let res_body: DeleteAccountConfirmationResponseStruct = DeleteAccountConfirmationResponseStruct::new();
+
+    // validate the confirmation code
+    // get stored code from token else error
+    // check if code == stored code else error
+    // delete user else error
+    // return success
 
     Ok(HttpResponse::Ok()
         .content_type("application/json; charset=utf-8")

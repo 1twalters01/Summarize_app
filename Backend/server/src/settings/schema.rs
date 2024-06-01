@@ -106,7 +106,6 @@ impl ChangePasswordResponseStruct {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct DeleteAccountRequestStruct {
     pub password: String,
-    pub password_confirmation: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -118,6 +117,27 @@ pub struct DeleteAccountResponseStruct {
 impl DeleteAccountResponseStruct {
     pub fn new() -> DeleteAccountResponseStruct {
         DeleteAccountResponseStruct {
+            settings_error: SettingsError::new(),
+            success: false,
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct DeleteAccountConfirmationRequestStruct {
+    pub confirmation: String,
+    pub token: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct DeleteAccountConfirmationResponseStruct {
+    pub settings_error: SettingsError,
+    pub success: bool,
+}
+
+impl DeleteAccountConfirmationResponseStruct {
+    pub fn new() -> DeleteAccountConfirmationResponseStruct {
+        DeleteAccountConfirmationResponseStruct {
             settings_error: SettingsError::new(),
             success: false,
         }
