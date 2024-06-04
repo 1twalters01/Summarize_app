@@ -1,8 +1,6 @@
 use actix_web::{get, post,  HttpResponse, Responder, Result, web::{Json, Bytes}};
-// use users::credentials::Credentials;
 use std::{fs, path::PathBuf};
 use crate::datatypes::route::{Route, Method};
-// use users::user::User;
 
 #[get("/get-routes/")]
 async fn get_routes() -> Result<impl Responder> {
@@ -42,6 +40,27 @@ async fn get_routes() -> Result<impl Responder> {
     ]; 
 
     Ok(Json(routes))
+}
+
+
+#[get("/712.bundle.js")]
+async fn register() -> Result<impl Responder> {
+    let script_path: PathBuf = "../content/dist/main/javascript/712.bundle.js".into();
+    let script_data = Bytes::from(fs::read(&script_path).unwrap());
+
+    Ok(HttpResponse::Ok()
+        .content_type("text/javascript")
+        .body(script_data))
+}
+
+#[get("/682.bundle.js")]
+async fn register_verify() -> Result<impl Responder> {
+    let script_path: PathBuf = "../content/dist/main/javascript/682.bundle.js".into();
+    let script_data = Bytes::from(fs::read(&script_path).unwrap());
+
+    Ok(HttpResponse::Ok()
+        .content_type("text/javascript")
+        .body(script_data))
 }
 
 #[get("/{param:.*?}")]
@@ -90,17 +109,6 @@ async fn logout() -> Result<impl Responder> {
         .content_type("text/javascript")
         .body(data))
 }
-
-#[get("/116.bundle.js")]
-async fn register() -> Result<impl Responder> {
-    let script_path: PathBuf = "../content/dist/main/javascript/116.bundle.js".into();
-    let script_data = Bytes::from(fs::read(&script_path).unwrap());
-
-    Ok(HttpResponse::Ok()
-        .content_type("text/javascript")
-        .body(script_data))
-}
-
 #[get("/452.bundle.js")]
 async fn activate() -> Result<impl Responder> {
     let script_path: PathBuf = "../content/dist/main/javascript/116.bundle.js".into();

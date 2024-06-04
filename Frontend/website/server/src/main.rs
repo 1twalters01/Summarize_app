@@ -3,6 +3,7 @@ mod accounts;
 mod app;
 mod settings;
 mod datatypes;
+mod utils;
 // extern crate users;
 use actix_web::{web, App, HttpServer};
 
@@ -10,6 +11,7 @@ use actix_web::{web, App, HttpServer};
 async fn main() -> std::io::Result<()> {
     HttpServer::new(|| {
         App::new()
+            .service(utils::routes::cookies)
             .service(index::routes::get_routes)
 
             .service(index::routes::favicon)
@@ -59,6 +61,7 @@ async fn main() -> std::io::Result<()> {
             .service(accounts::routes::login_totp)
             .service(accounts::routes::logout)
             .service(accounts::routes::register)
+            .service(accounts::routes::register_verify)
             .service(accounts::routes::activate)
             .service(accounts::routes::username_reset)
             .service(accounts::routes::username_reset_token)
