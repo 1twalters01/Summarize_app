@@ -1,4 +1,5 @@
 use actix_web::{get, post, web, HttpResponse, Responder, Result};
+use captcha::{filters::{Dots, Noise}, Captcha};
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -24,14 +25,20 @@ impl GetCaptchaResponseSchema {
     }
 }
 
-#[get("/captcha")]
+#[get("/get")]
 async fn get_captcha() -> Result<impl Responder> {
     let mut res_body: GetCaptchaResponseSchema = GetCaptchaResponseSchema::new();
 
     // generate captcha
+    let mut captcha = Captcha::new();
+    captcha.add_chars(6)
+        .apply_filter(Noise::new(0.4))
+        .apply_filter(Dots::new(10));
+
+    let image_data = captcha.as_png().unwrap();
 
     // get answer for captcha
-    let answer = String::from("captcha answer");
+    let answer: String = captcha.chars_as_string();
 
     // generate 64 bit token
     let token = generate_opaque_token_of_length(64);
@@ -52,10 +59,30 @@ async fn get_captcha() -> Result<impl Responder> {
             .json(res_body));
     }
 
-    // send image and token
+    // create body that will be used for multipart
+    let mut body = Vec::new();
+    let boundary = "BOUNDARY";
+
+    // Add image part to body
+    body.extend_from_slice(format!("--{}\r\n", boundary).as_bytes());
+    body.extend_from_slice(b"Content-Disposition: form-data; name=\"image.png\"\r\n");
+    body.extend_from_slice(b"Content-Type: image/png\r\n\r\n");
+    body.extend_from_slice(&image_data);
+    body.extend_from_slice(b"\r\n");
+
+    // Add text part
+    body.extend_from_slice(format!("--{}\r\n", boundary).as_bytes());
+    body.extend_from_slice(b"Content-Disposition: form-data; name=\"text\"\r\n");
+    body.extend_from_slice(b"Content-Type: text/plain\r\n\r\n");
+    body.extend_from_slice(answer.as_bytes());
+    body.extend_from_slice(b"\r\n");
+
+    // End the multipart body
+    body.extend_from_slice(format!("--{}--\r\n", boundary).as_bytes());
+
     return Ok(HttpResponse::Unauthorized()
         .content_type("application/json; charset=utf-8")
-        .json(true));
+        .json(body));
 }
 
 #[derive(Deserialize)]
@@ -79,7 +106,7 @@ impl CaptchaResponseSchema {
     }
 }
 
-#[post("/verify_captcha")]
+#[post("/verify")]
 async fn verify_captcha(data: web::Json<CaptchaResponse>) -> Result<impl Responder> {
     let CaptchaResponse { token, response } = data.into_inner();
     let mut res_body: CaptchaResponseSchema = CaptchaResponseSchema::new();

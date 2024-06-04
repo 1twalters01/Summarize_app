@@ -33,5 +33,10 @@ pub fn config(cfg: &mut ServiceConfig) {
             .service(routes::oauth2::authorise)
             .service(routes::oauth2::callback)
             .service(routes::oauth2::refresh),
+    )
+    .service(
+        scope("/captcha")
+        .service(routes::captcha::get_captcha)
+        .service(routes::captcha::verify_captcha),
     );
 }
