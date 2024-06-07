@@ -9,9 +9,12 @@ use crate::{
         },
         emails::{compose_register_email_message, send_email},
         schema::{
-            AccountError, DualVerificationToken, RegisterDetailsRequest,
-            RegisterDetailsResponseSchema, RegisterEmailRequestSchema, RegisterEmailResponseSchema,
-            VerifyRequest, VerifyRequestSchema, VerifyResponseSchema,
+            register::{
+                DualVerificationToken, RegisterDetailsRequest,
+                RegisterDetailsResponseSchema, RegisterEmailRequestSchema, RegisterEmailResponseSchema,
+                VerifyRequest, VerifyRequestSchema, VerifyResponseSchema,
+            },
+            errors::AccountError,
         },
     },
     utils::{

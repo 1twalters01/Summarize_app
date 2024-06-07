@@ -1,4 +1,4 @@
-use crate::accounts::auth::Claims;
+use crate::accounts::schema::auth::Claims;
 use crate::accounts::datatypes::users::User;
 use crate::accounts::db_queries::{
     delete_user_from_uuid_in_pg_users_table, get_code_from_token_in_redis, get_user_from_email_in_pg_users_table, get_user_from_username_in_pg_users_table, update_password_for_user_in_pg_users_table

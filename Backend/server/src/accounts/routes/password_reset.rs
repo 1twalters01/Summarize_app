@@ -9,9 +9,16 @@ use crate::{
         },
         emails::{compose_password_reset_email_message, send_email},
         schema::{
-            AccountError, DualVerificationToken, PasswordResetConfirmRequestSchema,
-            PasswordResetConfirmResponseSchema, PasswordResetRequestSchema,
-            PasswordResetResponseSchema, VerifyRequest, VerifyRequestSchema, VerifyResponseSchema,
+            errors::AccountError,
+            password_reset::{
+                PasswordResetConfirmRequestSchema,
+                PasswordResetConfirmResponseSchema, PasswordResetRequestSchema,
+                PasswordResetResponseSchema,
+            },
+            register::{
+                DualVerificationToken,
+                VerifyRequest, VerifyRequestSchema, VerifyResponseSchema,
+            }
         },
     },
     utils::{

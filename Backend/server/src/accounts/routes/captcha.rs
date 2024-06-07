@@ -1,29 +1,18 @@
 use actix_web::{get, post, web, HttpResponse, Responder, Result};
 use captcha::{filters::{Dots, Noise}, Captcha};
-use serde::{Deserialize, Serialize};
 
 use crate::{
-    accounts::{db_queries::get_code_from_token_in_redis, schema::AccountError},
+    accounts::{
+        db_queries::get_code_from_token_in_redis,
+        schema::{
+            captcha::{CaptchaResponse, CaptchaResponseSchema, GetCaptchaResponseSchema}, errors::AccountError
+        },
+    },
     utils::{
         database_connections::{create_redis_client_connection, set_key_value_in_redis},
         tokens::generate_opaque_token_of_length,
     },
 };
-
-#[derive(Serialize)]
-struct GetCaptchaResponseSchema {
-    account_error: AccountError,
-    success: bool,
-}
-
-impl GetCaptchaResponseSchema {
-    pub fn new() -> GetCaptchaResponseSchema {
-        GetCaptchaResponseSchema {
-            account_error: AccountError::new(),
-            success: false,
-        }
-    }
-}
 
 #[get("/get")]
 async fn get_captcha() -> Result<impl Responder> {
@@ -85,26 +74,6 @@ async fn get_captcha() -> Result<impl Responder> {
         .json(body));
 }
 
-#[derive(Deserialize)]
-struct CaptchaResponse {
-    token: String,
-    response: String,
-}
-
-#[derive(Serialize)]
-struct CaptchaResponseSchema {
-    account_error: AccountError,
-    success: bool,
-}
-
-impl CaptchaResponseSchema {
-    pub fn new() -> CaptchaResponseSchema {
-        CaptchaResponseSchema {
-            account_error: AccountError::new(),
-            success: false,
-        }
-    }
-}
 
 #[post("/verify")]
 async fn verify_captcha(data: web::Json<CaptchaResponse>) -> Result<impl Responder> {

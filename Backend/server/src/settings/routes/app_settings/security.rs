@@ -1,12 +1,10 @@
-use crate::accounts::auth::Claims;
+use crate::accounts::schema::auth::Claims;
 use crate::accounts::datatypes::users::User;
 use crate::settings::schema::{
     SettingsError, ToggleTotpRequestStruct, ToggleTotpResponseStruct
 };
-use crate::utils::{
-    validations::{
-        validate_password, validate_totp,
-    },
+use crate::utils::validations::{
+    validate_password, validate_totp
 };
 use actix_web::{post, web::Json, HttpRequest, HttpResponse, Responder, Result};
 

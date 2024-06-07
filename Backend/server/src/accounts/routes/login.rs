@@ -2,7 +2,6 @@ use actix_web::{post, web::Json, HttpRequest, HttpResponse, Responder, Result};
 
 use crate::{
     accounts::{
-        auth::{generate_access_token, generate_auth_tokens, AuthTokens},
         datatypes::{token_object::UserRememberMe, users::User},
         db_queries::{
             get_user_from_email_in_pg_users_table,
@@ -10,9 +9,14 @@ use crate::{
             get_user_remember_me_from_token_in_redis,
         },
         schema::{
-            AccountError, LoginEmailRequestSchema, LoginEmailResponseSchema, LoginPasswordRequest,
-            LoginPasswordRequestSchema, LoginPasswordResponseSchema, LoginTotpRequest,
-            LoginTotpRequestSchema, LoginTotpResponseSchema, RefreshTokenResponseSchema,
+            auth::{AccessToken, AuthTokens},
+            errors::AccountError,
+            login::{
+                LoginEmailRequestSchema, LoginEmailResponseSchema, LoginPasswordRequest,
+                LoginPasswordRequestSchema, LoginPasswordResponseSchema, LoginTotpRequest,
+                LoginTotpRequestSchema, LoginTotpResponseSchema,
+            },
+            refresh_token::RefreshTokenResponseSchema,
         },
     },
     utils::{
@@ -219,7 +223,7 @@ async fn post_password(
     }
 
     // generate tokens
-    let auth_tokens: AuthTokens = match generate_auth_tokens(user, remember_me).await {
+    let auth_tokens: AuthTokens = match AuthTokens::new(user, remember_me).await {
         Ok(tokens) => tokens,
         Err(error) => {
             res_body.account_error = error;
@@ -331,7 +335,7 @@ async fn post_totp(data: Json<LoginTotpRequest>, req: HttpRequest) -> Result<imp
     }
 
     // create auth tokens
-    let auth_tokens: AuthTokens = match generate_auth_tokens(user, remember_me).await {
+    let auth_tokens: AuthTokens = match AuthTokens::new(user, remember_me).await {
         Ok(tokens) => tokens,
         Err(error) => {
             res_body.account_error = error;
@@ -382,7 +386,7 @@ async fn refresh_token(data: Json<AuthTokens>) -> Result<impl Responder> {
             }
         };
 
-    let access_token = generate_access_token(&user);
+    let access_token = AccessToken::new(&user);
 
     let auth_tokens: AuthTokens = AuthTokens {
         refresh_token: Some(refresh_token),

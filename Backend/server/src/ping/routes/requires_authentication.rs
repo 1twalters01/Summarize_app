@@ -1,5 +1,5 @@
 use crate::{
-    accounts::auth::Claims,
+    accounts::schema::auth::Claims,
     ping::datatypes::{DualMessage, Message},
 };
 use actix_web::{web::Json, HttpMessage, HttpRequest, HttpResponse, Responder, Result};
@@ -41,7 +41,7 @@ mod tests {
     use serde_json::json;
 
     use crate::{
-        accounts::{auth::generate_access_token, datatypes::users::User},
+        accounts::{schema::auth::AccessToken, datatypes::users::User},
         middleware,
         ping::routes::requires_authentication::*,
     };
@@ -81,7 +81,7 @@ mod tests {
         let password = String::from("i23oj3rfw");
 
         let user: User = User::new(username, email, password).unwrap();
-        let token = generate_access_token(&user);
+        let token: String = AccessToken::new(&user).to_string();
         let auth_token = String::from("Bearer ") + &token;
 
         let mut request = test::TestRequest::get()
@@ -144,7 +144,7 @@ mod tests {
         let password = String::from("i23oj3rfw");
 
         let user: User = User::new(username, email, password).unwrap();
-        let token = generate_access_token(&user);
+        let token: String = AccessToken::new(&user).to_string();
         let auth_token = String::from("Bearer ") + &token;
 
         let data_text: String = String::from("Ping from test");

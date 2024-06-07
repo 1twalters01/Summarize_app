@@ -1,5 +1,5 @@
 use crate::{
-    accounts::oauth2::{CallbackQuery, OAuth2Client, RefreshTokenQuery},
+    accounts::schema::oauth2::{CallbackQuery, OAuth2Client, RefreshTokenQuery},
     utils::tokens::generate_opaque_token_of_length,
 };
 use actix_web::{post, web, HttpResponse, Responder, Result};
