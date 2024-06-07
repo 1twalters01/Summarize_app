@@ -3,11 +3,14 @@ use actix_web::{post, web::Json, HttpRequest, HttpResponse, Responder, Result};
 use crate::{
     accounts::{
         datatypes::users::User,
-        db_queries::{
-            create_new_user_in_pg_users_table, get_email_from_token_struct_in_redis,
-            get_user_from_email_in_pg_users_table,
+        queries::{
+            postgres::{
+                create_new_user_in_pg_users_table,
+                get_user_from_email_in_pg_users_table,
+            },
+            redis::get_email_from_token_struct_in_redis,
         },
-        emails::{compose_register_email_message, send_email},
+        emails::compose_register_email_message,
         schema::{
             register::{
                 DualVerificationToken, RegisterDetailsRequest,
@@ -22,6 +25,7 @@ use crate::{
             create_pg_pool_connection, create_redis_client_connection, delete_key_in_redis,
             set_key_value_in_redis,
         },
+        email_handler::send_email,
         tokens::generate_opaque_token_of_length,
         validations::{
             validate_email, validate_first_name, validate_last_name, validate_password,

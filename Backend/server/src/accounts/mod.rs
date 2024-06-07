@@ -1,5 +1,5 @@
 pub mod datatypes;
-pub mod db_queries;
+pub mod queries;
 pub mod emails;
 pub mod routes;
 pub mod schema;

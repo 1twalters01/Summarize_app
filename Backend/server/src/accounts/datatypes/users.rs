@@ -7,7 +7,7 @@ use std::{
 use crate::{
     accounts::{
         datatypes::{passwords::Password, totp::Totp},
-        db_queries::get_user_from_uuid_in_pg_users_table,
+        queries::postgres::get_user_from_uuid_in_pg_users_table,
     },
     utils::database_connections::create_pg_pool_connection,
 };

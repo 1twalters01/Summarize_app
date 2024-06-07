@@ -3,10 +3,15 @@ use actix_web::{post, web::Json, HttpRequest, HttpResponse, Responder, Result};
 use crate::{
     accounts::{
         datatypes::{token_object::UserRememberMe, users::User},
-        db_queries::{
-            get_user_from_email_in_pg_users_table,
-            get_user_from_refresh_token_in_postgres_auth_table, get_user_from_token_in_redis,
-            get_user_remember_me_from_token_in_redis,
+        queries::{
+            postgres::{
+                get_user_from_email_in_pg_users_table,
+                get_user_from_refresh_token_in_postgres_auth_table,
+            },
+            redis::{
+                get_user_from_token_in_redis,
+                get_user_remember_me_from_token_in_redis,
+            },
         },
         schema::{
             auth::{AccessToken, AuthTokens},

@@ -3,7 +3,7 @@ use captcha::{filters::{Dots, Noise}, Captcha};
 
 use crate::{
     accounts::{
-        db_queries::get_code_from_token_in_redis,
+        queries::redis::get_code_from_token_in_redis,
         schema::{
             captcha::{CaptchaResponse, CaptchaResponseSchema, GetCaptchaResponseSchema}, errors::AccountError
         },

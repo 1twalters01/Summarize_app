@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     accounts::{
         datatypes::users::User,
-        db_queries::save_refresh_token_user_in_postgres_auth_table,
+        queries::postgres::save_refresh_token_user_in_postgres_auth_table,
         schema::errors::AccountError
     },
     utils::{

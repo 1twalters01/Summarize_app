@@ -3,11 +3,17 @@ use actix_web::{post, web::Json, HttpRequest, HttpResponse, Responder, Result};
 use crate::{
     accounts::{
         datatypes::users::User,
-        db_queries::{
-            get_email_from_token_struct_in_redis, get_user_from_email_in_pg_users_table,
-            get_user_from_token_in_redis, update_password_for_user_in_pg_users_table,
+        queries::{
+            postgres::{
+                get_user_from_email_in_pg_users_table,
+                update_password_for_user_in_pg_users_table,
+            },
+            redis::{
+                get_email_from_token_struct_in_redis,
+                get_user_from_token_in_redis,
+            }
         },
-        emails::{compose_password_reset_email_message, send_email},
+        emails::compose_password_reset_email_message,
         schema::{
             errors::AccountError,
             password_reset::{
@@ -26,6 +32,7 @@ use crate::{
             create_pg_pool_connection, create_redis_client_connection, delete_key_in_redis,
             set_key_value_in_redis,
         },
+        email_handler::send_email,
         tokens::generate_opaque_token_of_length,
         validations::{validate_email, validate_password},
     },
