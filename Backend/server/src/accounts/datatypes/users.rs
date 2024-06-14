@@ -13,7 +13,7 @@ use crate::{
 };
 use uuid::Uuid;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct User {
     uuid: Uuid,
     email: String,

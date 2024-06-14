@@ -9,7 +9,7 @@ use std::{
     result::Result,
 };
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Password {
     password_hash: String,
 }

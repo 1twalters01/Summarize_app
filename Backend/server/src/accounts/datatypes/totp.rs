@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::time::SystemTime;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Totp {
     pub verified: bool,
     pub verified_at: Option<SystemTime>,

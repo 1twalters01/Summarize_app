@@ -335,7 +335,7 @@ async fn change_email(
 
     // error if email is already taken
     let pool = create_pg_pool_connection().await;
-    let user_result: Result<User, sqlx::Error> =
+    let user_result: Result<Option<User>, sqlx::Error> =
         get_user_from_email_in_pg_users_table(&pool, &email).await;
 
     let is_email_stored = (&user_result).as_ref().ok().is_some();

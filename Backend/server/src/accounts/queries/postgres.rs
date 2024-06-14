@@ -1,5 +1,6 @@
 use crate::accounts::datatypes::users::User;
-use sqlx::{Pool, Postgres};
+use sqlx::{postgres::PgRow, Pool, Postgres};
+use sqlx::Row;
 
 pub async fn create_new_user_in_pg_users_table(
     pool: &Pool<Postgres>,
@@ -59,21 +60,26 @@ pub async fn update_password_for_user_in_pg_users_table(
 pub async fn get_user_from_email_in_pg_users_table(
     pool: &Pool<Postgres>,
     email: &str,
-) -> Result<User, sqlx::Error> {
+) -> Result<Option<User>, sqlx::Error> {
     let user_select_query = sqlx::query("Select * from users WHERE email=($1)")
         .bind(email)
         .fetch_all(pool)
         .await;
 
-    if let Err(err) = user_select_query {
-        return Err(err);
-    }
+    match user_select_query {
+        Err(err) => return Err(err),
+        Ok(res) => {
+            if res.len() == 0 { return Ok(None) }
 
-    let username = "username".to_string();
-    let email = "email".to_string();
-    let password = "password".to_string();
-    let user: User = User::new(username, email, password).unwrap();
-    return Ok(user);
+            let username: String = res[0].get("username");
+            let email: String = res[0].get("email");
+            let password: String = res[0].get("password");
+            
+            let user: User = User::new(username, email, password).unwrap();
+            println!("user: {:#?}", user);
+            return Ok(Some(user));
+        },
+    }
 }
 
 pub async fn get_user_from_username_in_pg_users_table(

@@ -54,32 +54,35 @@ async fn post_email(req_body: Json<RegisterEmailRequestSchema>) -> Result<impl R
 
     // try to get the user from postgres using the email
     let pool = create_pg_pool_connection().await;
-    let user_result: Result<User, sqlx::Error> =
+    let user_result: Result<Option<User>, sqlx::Error> =
         get_user_from_email_in_pg_users_table(&pool, &email).await;
 
-    // if email exists then return an error
-    let is_email_stored = (&user_result).as_ref().ok().is_some();
-    if is_email_stored == true {
-        res_body.is_email_stored = true;
-        res_body.account_error = AccountError {
-            is_error: true,
-            error_message: Some(String::from("user already exists")),
-        };
-        return Ok(HttpResponse::Conflict()
-            .content_type("application/json; charset=utf-8")
-            .json(res_body));
-    }
+    println!("user_result: {:?}", user_result);
 
-    // if user_result is any other error then error
-    if user_result.is_err() {
-        res_body.account_error = AccountError {
-            is_error: true,
-            error_message: Some(String::from("error")),
-        };
-        return Ok(HttpResponse::InternalServerError()
-            .content_type("application/json; charset=utf-8")
-            .json(res_body));
-    }
+    let user = match user_result {
+        Err(err) => {
+            println!("error: {:#?}", err);
+            res_body.account_error = AccountError {
+                is_error: true,
+                error_message: Some(String::from("error")),
+            };
+            return Ok(HttpResponse::InternalServerError()
+                .content_type("application/json; charset=utf-8")
+                .json(res_body));
+        },
+        Ok(user_option) if user_option.is_some() == true => {
+            res_body.is_email_stored = true;
+            res_body.account_error = AccountError {
+                is_error: true,
+                error_message: Some(String::from("user already exists")),
+            };
+            return Ok(HttpResponse::Conflict()
+                .content_type("application/json; charset=utf-8")
+                .json(res_body));
+        },
+        Ok(user_option) => user_option,
+    };
+    println!("user: {:#?}", user);
 
     // create a verify token, a register email token, and a register_email_token_struct
     let verification_token = generate_opaque_token_of_length(8);

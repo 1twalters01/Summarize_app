@@ -52,10 +52,11 @@ async fn post_email(req_body: Json<PasswordResetRequestSchema>) -> Result<impl R
 
     // Check if email is in postgres database
     let pool = create_pg_pool_connection().await;
-    let user_result: Result<User, sqlx::Error> =
+    let user_result: Result<Option<User>, sqlx::Error> =
         get_user_from_email_in_pg_users_table(&pool, email.as_str()).await;
 
     // if not in database then return some not found error
+    let user_option = (&user_result).as_ref().ok();
     if user_result.is_ok() == false {
         let error: AccountError = AccountError {
             is_error: true,
@@ -68,7 +69,25 @@ async fn post_email(req_body: Json<PasswordResetRequestSchema>) -> Result<impl R
     }
 
     // get and serialize user
-    let user: User = user_result.unwrap();
+    // let user: User = user_result.unwrap();
+    let user: User = match user_option {
+        None => {
+            res_body.account_error = AccountError {
+                is_error: true,
+                error_message: Some(String::from("user does not exist")),
+            };
+            return Ok(HttpResponse::NotFound()
+                .content_type("application/json; charset=utf-8")
+                .json(res_body));
+        },
+        Some(res) => {
+            let mut value: User = User::new("test".to_string(), "test".to_string(), "test".to_string()).unwrap();
+            if let Some(val) = res {
+                value = val.clone();
+            }
+            value
+        },
+    };
     let user_json: String = serde_json::to_string(&user).unwrap();
 
     // create a token

@@ -55,12 +55,12 @@ async fn post_email(data: Json<LoginEmailRequestSchema>) -> Result<impl Responde
     // try to get the user from postgres using the email
     println!("email: {}", &email);
     let pool = create_pg_pool_connection().await;
-    let user_result: Result<User, sqlx::Error> =
+    let user_result: Result<Option<User>, sqlx::Error> =
         get_user_from_email_in_pg_users_table(&pool, email.as_str()).await;
 
     // if user does not exist then return an error
-    let is_email_stored = (&user_result).as_ref().ok().is_some();
-    if is_email_stored == false {
+    let user_option = (&user_result).as_ref().ok();
+    if user_option.is_some() == false {
         res_body.account_error = AccountError {
             is_error: true,
             error_message: Some(String::from("user does not exist")),
@@ -77,7 +77,26 @@ async fn post_email(data: Json<LoginEmailRequestSchema>) -> Result<impl Responde
     let token: String = generate_opaque_token_of_length(25);
 
     // serialize the user
-    let user: User = user_result.ok().unwrap();
+    // let user: User = user_result.unwrap();
+    let user: User = match user_option {
+        None => {
+            res_body.account_error = AccountError {
+                is_error: true,
+                error_message: Some(String::from("user does not exist")),
+            };
+            return Ok(HttpResponse::NotFound()
+                .content_type("application/json; charset=utf-8")
+                .json(res_body));
+        },
+        Some(res) => {
+            let mut value: User = User::new("test".to_string(), "test".to_string(), "test".to_string()).unwrap();
+            if let Some(val) = res {
+                value = val.clone();
+            }
+            value
+        },
+    };
+
     let user_json = serde_json::to_string(&user).unwrap();
 
     // save {key: token, value: user} to redis cache for 300 seconds
