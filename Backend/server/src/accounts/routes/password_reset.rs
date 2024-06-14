@@ -102,7 +102,7 @@ async fn post_email(req_body: Json<PasswordResetRequestSchema>) -> Result<impl R
     );
 
     // if redis fails then return an error
-    if set_redis_result.await.is_err() {
+    if set_redis_result.is_err() {
         res_body.account_error = AccountError {
             is_error: true,
             error_message: Some(String::from("Server error")),
@@ -186,7 +186,7 @@ async fn password_reset_verification_functionality(
         &email,
         &expiry_in_seconds,
     );
-    if set_redis_result.await.is_err() {
+    if set_redis_result.is_err() {
         panic!("redis error, panic debug")
     }
 

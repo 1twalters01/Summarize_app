@@ -110,7 +110,7 @@ async fn post_email(req_body: Json<RegisterEmailRequestSchema>) -> Result<impl R
     let expiry_in_seconds: Option<i64> = Some(300);
     let con = create_redis_client_connection();
     let set_redis_result =
-        set_key_value_in_redis(con, &token_struct_json, &email, &expiry_in_seconds).await;
+        set_key_value_in_redis(con, &token_struct_json, &email, &expiry_in_seconds);
 
     // if redis fails then return an error
     if set_redis_result.is_err() {
@@ -198,7 +198,7 @@ async fn register_verification_functionality(
         &email,
         &expiry_in_seconds,
     );
-    if set_redis_result.await.is_err() {
+    if set_redis_result.is_err() {
         panic!("redis error, panic debug")
     }
 

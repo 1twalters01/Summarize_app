@@ -604,7 +604,7 @@ async fn delete_account(
     let con = create_redis_client_connection();
     let token = generate_opaque_token_of_length(64);
     let code = generate_opaque_token_of_length(6);
-    let set_redis_result = set_key_value_in_redis(con, &token, &code, &expiry_in_seconds).await;
+    let set_redis_result = set_key_value_in_redis(con, &token, &code, &expiry_in_seconds);
 
     // if redis fails then return an error
     if set_redis_result.is_err() {

@@ -38,7 +38,7 @@ async fn get_captcha() -> Result<impl Responder> {
     let set_redis_result = set_key_value_in_redis(con, &token, &answer, &expiry_in_seconds);
 
     // if redis fails then return an error
-    if set_redis_result.await.is_err() {
+    if set_redis_result.is_err() {
         res_body.account_error = AccountError {
             is_error: true,
             error_message: Some(String::from("Server error")),

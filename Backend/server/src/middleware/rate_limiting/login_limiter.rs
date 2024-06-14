@@ -4,7 +4,8 @@ use std::{rc::Rc, task::{Context, Poll}};
 use std::time::Duration;
 use tokio::time::sleep;
 
-use crate::{accounts::queries::redis::get_code_from_token_in_redis, utils::database_connections::{create_redis_client_connection, set_key_value_in_redis}};
+use crate::utils::database_connections::{create_redis_client_connection, set_key_value_in_redis};
+use redis::{Commands, Connection, RedisResult, ErrorKind};
 
 struct RateLimiter;
 
@@ -15,7 +16,6 @@ where
     B: 'static,
 {
     type Response = ServiceResponse<EitherBody<B, BoxBody>>;
-    // type Response = ServiceResponse<B>;
     type Error = Error;
     type InitError = ();
     type Transform = RateLimiterMiddleware<S>;
@@ -53,12 +53,7 @@ where
 
         // query if ip is in cache
         let mut con = create_redis_client_connection();
-        let ip_query = get_code_from_token_in_redis(con, &ip);
-
-        // do stuff to get ip_result = Result<Option<i64>, sqlx::error>
-        // i.e. wrap ok value of ip_query with Some, if sqlx::error is due to no hit then none,
-        // else sqlx::error
-        let ip_result: Result<Option<i64>, sqlx::Error>;
+        let ip_result: Result<Option<i64>, String> = get_count_from_ip_in_redis(con, &ip);
 
         // if ip_result is error then return fail
         if ip_result.is_err() {
@@ -114,3 +109,26 @@ where
         }
     }
 }
+
+pub fn get_count_from_ip_in_redis(
+    mut con: Connection,
+    ip: &str,
+) -> Result<Option<i64>, String> {
+    let redis_result: RedisResult<String> = con.get(ip);
+    match redis_result {
+        Ok(res) => {
+            match res.parse::<i64>() {
+                Ok(res) => return Ok(Some(res)),
+                Err(err) => return Err(err.to_string()),
+            }
+        },
+        Err(err) => {
+            match err.kind() {
+                // Defo wrong, need to test what happens when trying to get a value that doesn't exist in the redis cache and change the error kind to that
+                ErrorKind::ResponseError => return Ok(None),
+                _ => return Err(err.to_string()),
+            }
+        },
+    };
+}
+

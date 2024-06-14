@@ -24,7 +24,7 @@ pub fn create_redis_client_connection() -> Connection {
     return con;
 }
 
-pub async fn set_key_value_in_redis(
+pub fn set_key_value_in_redis(
     mut con: Connection,
     key: &str,
     value: &str,
