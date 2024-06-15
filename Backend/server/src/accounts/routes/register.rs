@@ -380,3 +380,115 @@ async fn post_details(
         .content_type("application/json; charset=utf-8")
         .json(res_body))
 }
+
+
+
+#[cfg(test)]
+mod tests {
+    use actix_web::{test, web, App};
+    use dotenv::dotenv;
+    use serde_json::json;
+
+    #[actix_web::test]
+    async fn test_post_email_while_being_authenticated_without_email() {
+    }
+    #[actix_web::test]
+    async fn test_post_email_while_being_authenticated_with_email() {
+    }
+
+    #[actix_web::test]
+    async fn test_post_email_while_not_being_authenticated_without_email() {
+    }
+    #[actix_web::test]
+    async fn test_post_email_while_not_being_authenticated_with_email() {
+    }
+
+
+
+
+    
+    #[actix_web::test]
+    async fn test_post_verification_while_being_authenticated_without_verification_token_without_header_token() {
+    }
+
+    #[actix_web::test]
+    async fn test_post_verification_while_being_authenticated_without_verification_token_with_header_token() {
+    }
+    
+    #[actix_web::test]
+    async fn test_post_verification_while_being_authenticated_with_verification_token_without_header_token() {
+    }
+    
+    #[actix_web::test]
+    async fn test_post_verification_while_being_authenticated_with_verification_token_with_header_token() {
+    }
+    
+    #[actix_web::test]
+    async fn test_post_verification_while_not_being_authenticated_without_verification_token_without_header_token() {
+    }
+
+    #[actix_web::test]
+    async fn test_post_verification_while_not_being_authenticated_without_verification_token_with_header_token() {
+    }
+    
+    #[actix_web::test]
+    async fn test_post_verification_while_not_being_authenticated_with_verification_token_without_header_token() {
+    }
+    
+    #[actix_web::test]
+    async fn test_post_verification_while_not_being_authenticated_with_verification_token_with_header_token() {
+    }
+
+
+
+
+    
+    #[actix_web::test]
+    async fn test_post_details_while_being_authenticated_with_header_token_username_password_confirmation_first_last() {
+    }
+    
+    #[actix_web::test]
+    async fn test_post_details_while_being_authenticated_with_header_token_without_username_password_confirmation_first_last() {
+    }
+    
+    #[actix_web::test]
+    async fn test_post_details_while_being_authenticated_token_with_header_token_username_password_without_confirmation_first_last() {
+    }
+    
+    #[actix_web::test]
+    async fn test_post_details_while_being_authenticated_with_header_token_username_password_confirmation_without_first_last() {
+    }
+    
+    #[actix_web::test]
+    async fn test_post_details_while_being_authenticated_with_header_token_username_password_confirmation_first_without_last() {
+    }
+    
+    #[actix_web::test]
+    async fn test_post_details_while_being_authenticated_without_header_token_username_password_confirmation_with_first_last() {
+    }
+
+
+    #[actix_web::test]
+    async fn test_post_details_while_not_being_authenticated_with_header_token_username_password_confirmation_first_last() {
+    }
+    
+    #[actix_web::test]
+    async fn test_post_details_while_not_being_authenticated_with_header_token_without_username_password_confirmation_first_last() {
+    }
+    
+    #[actix_web::test]
+    async fn test_post_details_while_not_being_authenticated_token_with_header_token_username_password_without_confirmation_first_last() {
+    }
+    
+    #[actix_web::test]
+    async fn test_post_details_while_not_being_authenticated_with_header_token_username_password_confirmation_without_first_last() {
+    }
+    
+    #[actix_web::test]
+    async fn test_post_details_while_not_being_authenticated_with_header_token_username_password_confirmation_first_without_last() {
+    }
+    
+    #[actix_web::test]
+    async fn test_post_details_while_not_being_authenticated_without_header_token_username_password_confirmation_with_first_last() {
+    }
+}
