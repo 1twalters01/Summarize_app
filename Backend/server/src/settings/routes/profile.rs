@@ -96,7 +96,7 @@ async fn change_name(
         }
     };
 
-    let user_result: Result<User, sqlx::Error> = User::from_uuid_str(&user_uuid).await;
+    let user_result: Result<Option<User>, sqlx::Error> = User::from_uuid_str(&user_uuid).await;
     let user: User = match user_result {
         Err(_) => {
             res_body.settings_error = SettingsError {
@@ -107,7 +107,18 @@ async fn change_name(
                 .content_type("application/json; charset=utf-8")
                 .json(res_body));
         }
-        Ok(user) => user,
+        Ok(user) => match user {
+            Some(user) => user,
+            None => {
+                res_body.settings_error = SettingsError {
+                    is_error: true,
+                    error_message: Some(String::from("Invalid user")),
+                };
+                return Ok(HttpResponse::InternalServerError()
+                    .content_type("application/json; charset=utf-8")
+                    .json(res_body));
+            }
+        },
     };
 
     if user.check_password(&password).is_err() {
@@ -198,7 +209,7 @@ async fn change_username(
 
     // error if username is already taken
     let pool = create_pg_pool_connection().await;
-    let user_result: Result<User, sqlx::Error> =
+    let user_result: Result<Option<User>, sqlx::Error> =
         get_user_from_username_in_pg_users_table(&pool, &username).await;
 
     let is_email_stored = (&user_result).as_ref().ok().is_some();
@@ -238,7 +249,7 @@ async fn change_username(
         }
     };
 
-    let user_result: Result<User, sqlx::Error> = User::from_uuid_str(&user_uuid).await;
+    let user_result: Result<Option<User>, sqlx::Error> = User::from_uuid_str(&user_uuid).await;
     let user: User = match user_result {
         Err(_) => {
             res_body.settings_error = SettingsError {
@@ -249,7 +260,19 @@ async fn change_username(
                 .content_type("application/json; charset=utf-8")
                 .json(res_body));
         }
-        Ok(user) => user,
+      
+        Ok(user) => match user {
+            Some(user) => user,
+            None => {
+                res_body.settings_error = SettingsError {
+                    is_error: true,
+                    error_message: Some(String::from("error")),
+                };
+                return Ok(HttpResponse::InternalServerError()
+                    .content_type("application/json; charset=utf-8")
+                    .json(res_body));
+            },
+        },
     };
 
     if user.check_password(&password).is_err() {
@@ -364,7 +387,7 @@ async fn change_email(
         }
     };
 
-    let user_result: Result<User, sqlx::Error> = User::from_uuid_str(&user_uuid).await;
+    let user_result: Result<Option<User>, sqlx::Error> = User::from_uuid_str(&user_uuid).await;
     let user: User = match user_result {
         Err(_) => {
             res_body.settings_error = SettingsError {
@@ -375,7 +398,18 @@ async fn change_email(
                 .content_type("application/json; charset=utf-8")
                 .json(res_body));
         }
-        Ok(user) => user,
+        Ok(user) => match user {
+            Some(user) => user,
+            None => {
+                res_body.settings_error = SettingsError {
+                    is_error: true,
+                    error_message: Some(String::from("error")),
+                };
+                return Ok(HttpResponse::InternalServerError()
+                    .content_type("application/json; charset=utf-8")
+                    .json(res_body));
+            },
+        },
     };
 
     if user.check_password(&password).is_err() {
@@ -492,7 +526,7 @@ async fn change_password(
         }
     };
 
-    let user_result: Result<User, sqlx::Error> = User::from_uuid_str(&user_uuid).await;
+    let user_result: Result<Option<User>, sqlx::Error> = User::from_uuid_str(&user_uuid).await;
     let user: User = match user_result {
         Err(_) => {
             res_body.settings_error = SettingsError {
@@ -503,7 +537,18 @@ async fn change_password(
                 .content_type("application/json; charset=utf-8")
                 .json(res_body));
         }
-        Ok(user) => user,
+        Ok(user) => match user {
+            Some(user) => user,
+            None => {
+                res_body.settings_error = SettingsError {
+                    is_error: true,
+                    error_message: Some(String::from("error")),
+                };
+                return Ok(HttpResponse::InternalServerError()
+                    .content_type("application/json; charset=utf-8")
+                    .json(res_body));
+            },
+        },
     };
 
     if user.check_password(&password).is_err() {
@@ -574,7 +619,7 @@ async fn delete_account(
         }
     };
 
-    let user_result: Result<User, sqlx::Error> = User::from_uuid_str(&user_uuid).await;
+    let user_result: Result<Option<User>, sqlx::Error> = User::from_uuid_str(&user_uuid).await;
     let user: User = match user_result {
         Err(_) => {
             res_body.settings_error = SettingsError {
@@ -585,7 +630,18 @@ async fn delete_account(
                 .content_type("application/json; charset=utf-8")
                 .json(res_body));
         }
-        Ok(user) => user,
+        Ok(user) => match user {
+            Some(user) => user,
+            None => {
+                res_body.settings_error = SettingsError {
+                    is_error: true,
+                    error_message: Some(String::from("error")),
+                };
+                return Ok(HttpResponse::InternalServerError()
+                    .content_type("application/json; charset=utf-8")
+                    .json(res_body));
+            },
+        },
     };
 
     if user.check_password(&password).is_err() {

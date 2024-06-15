@@ -46,7 +46,7 @@ pub struct VerifyRequestSchema {
 pub struct VerifyResponseSchema {
     pub account_error: AccountError,
     pub is_verification_token_correct: bool,
-    pub verification_confirmation_token: Option<String>,
+    pub register_response_token: Option<String>,
 }
 
 impl VerifyResponseSchema {
@@ -54,7 +54,7 @@ impl VerifyResponseSchema {
         VerifyResponseSchema {
             account_error: AccountError::new(),
             is_verification_token_correct: false,
-            verification_confirmation_token: None,
+            register_response_token: None,
         }
     }
 }

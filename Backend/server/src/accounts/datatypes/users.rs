@@ -38,14 +38,14 @@ pub struct User {
 }
 
 impl User {
-    pub fn new(username: String, email: String, password: String) -> Result<Self, Error> {
+    pub fn new(username: String, email: String, password: String, first_name: Option<String>, last_name: Option<String>) -> Result<Self, Error> {
         match Password::new(password) {
             Ok(password) => {
                 let user = Self {
                     uuid: Uuid::new_v4(),
                     username,
-                    first_name: None,
-                    last_name: None,
+                    first_name,
+                    last_name,
                     email,
                     password,
                     totp: Totp::new(),
@@ -66,9 +66,37 @@ impl User {
         }
     }
 
-    pub async fn from_uuid_str(uuid: &str) -> Result<Self, sqlx::Error> {
+    pub fn from_all(id: Uuid, username: String, email: String, password_hash: String, first_name: Option<String>, last_name: Option<String>) -> Result<Self, Error> {
+        let password = match Password::from_hash(password_hash) {
+            Ok(password) => password,
+            Err(err) => return Err(err),
+        };
+
+        return Ok(Self {
+            uuid: id,
+            email,
+            username,
+            first_name,
+            last_name,
+            password,
+            totp: Totp::new(),
+            created_at: SystemTime::now(),
+            last_login: SystemTime::now(),
+            groups: Vec::new(),           //todo!(),
+            user_permissions: Vec::new(), //todo!(),
+            is_active: true,
+            is_staff: false,
+            is_superuser: false,
+            is_authenticated: false,
+            is_anonymous: false,
+        });
+    }
+            
+
+
+    pub async fn from_uuid_str(uuid: &str) -> Result<Option<Self>, sqlx::Error> {
         let pool = create_pg_pool_connection().await;
-        let get_user_result: Result<User, sqlx::Error> =
+        let get_user_result: Result<Option<User>, sqlx::Error> =
             get_user_from_uuid_in_pg_users_table(&pool, uuid).await;
 
         match get_user_result {

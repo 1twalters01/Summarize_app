@@ -89,7 +89,7 @@ async fn post_email(data: Json<LoginEmailRequestSchema>) -> Result<impl Responde
                 .json(res_body));
         },
         Some(res) => {
-            let mut value: User = User::new("test".to_string(), "test".to_string(), "test".to_string()).unwrap();
+            let mut value: User = User::new("test".to_string(), "test".to_string(), "test".to_string(), Some("test".to_string()), Some("test".to_string())).unwrap();
             if let Some(val) = res {
                 value = val.clone();
             }
@@ -397,7 +397,20 @@ async fn refresh_token(data: Json<AuthTokens>) -> Result<impl Responder> {
     let pool = create_pg_pool_connection().await;
     let user: User =
         match get_user_from_refresh_token_in_postgres_auth_table(&pool, &refresh_token).await {
-            Ok(user) => user,
+            Ok(user) => match user {
+                Some(user) => user,
+                None => {
+                    let error: AccountError = AccountError {
+                        is_error: true,
+                        error_message: Some("invalid refresh token".to_string()),
+                    };
+                    res_body.account_error = error;
+                    return Ok(HttpResponse::UnprocessableEntity()
+                        .content_type("application/json; charset=utf-8")
+                        .json(res_body));
+                }
+
+            },
             Err(err) => {
                 let error: AccountError = AccountError {
                     is_error: true,

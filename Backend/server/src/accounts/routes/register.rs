@@ -57,14 +57,12 @@ async fn post_email(req_body: Json<RegisterEmailRequestSchema>) -> Result<impl R
     let user_result: Result<Option<User>, sqlx::Error> =
         get_user_from_email_in_pg_users_table(&pool, &email).await;
 
-    println!("user_result: {:?}", user_result);
 
-    let user = match user_result {
+    match user_result {
         Err(err) => {
-            println!("error: {:#?}", err);
             res_body.account_error = AccountError {
                 is_error: true,
-                error_message: Some(String::from("error")),
+                error_message: Some(format!("error: {:?}", err)),
             };
             return Ok(HttpResponse::InternalServerError()
                 .content_type("application/json; charset=utf-8")
@@ -80,9 +78,8 @@ async fn post_email(req_body: Json<RegisterEmailRequestSchema>) -> Result<impl R
                 .content_type("application/json; charset=utf-8")
                 .json(res_body));
         },
-        Ok(user_option) => user_option,
+        Ok(_) => {},
     };
-    println!("user: {:#?}", user);
 
     // create a verify token, a register email token, and a register_email_token_struct
     let verification_token = generate_opaque_token_of_length(8);
@@ -117,7 +114,6 @@ async fn post_email(req_body: Json<RegisterEmailRequestSchema>) -> Result<impl R
 
     // if redis fails then return an error
     if set_redis_result.is_err() {
-        println!("{:?}", set_redis_result);
         res_body.account_error = AccountError {
             is_error: true,
             error_message: Some(String::from("Server error")),
@@ -139,7 +135,7 @@ async fn post_verify(req_body: Json<VerifyRequest>, req: HttpRequest) -> Result<
     let VerifyRequest { verification_token } = req_body.into_inner();
     let register_email_token: String = req
         .headers()
-        .get("header_token")
+        .get("register_email_token")
         .unwrap()
         .to_str()
         .unwrap()
@@ -171,6 +167,7 @@ async fn register_verification_functionality(
         header_token,
     };
     let token_struct_json = serde_json::to_string(&token_struct).unwrap();
+    println!("schema: {:#?}", token_struct_json);
 
     // Get email from token using redis
     let mut con = create_redis_client_connection();
@@ -222,7 +219,7 @@ async fn register_verification_functionality(
 
     // return ok
     res_body.is_verification_token_correct = true;
-    res_body.verification_confirmation_token = Some(register_verification_token);
+    res_body.register_response_token = Some(register_verification_token);
     return Ok(HttpResponse::Ok()
         .content_type("application/json; charset=utf-8")
         .json(res_body));
@@ -243,7 +240,7 @@ async fn post_details(
 
     let verification_confirmation_token: String = req
         .headers()
-        .get("verification_confirmation_token")
+        .get("register_verification_token")
         .unwrap()
         .to_str()
         .unwrap()
@@ -251,7 +248,7 @@ async fn post_details(
     let mut res_body: RegisterDetailsResponseSchema = RegisterDetailsResponseSchema::new();
 
     // get the email from redis using the token
-    let con = create_redis_client_connection();
+    let mut con = create_redis_client_connection();
     let email: String =
         match get_email_from_token_struct_in_redis(con, &verification_confirmation_token) {
             // if error return error
@@ -302,7 +299,6 @@ async fn post_details(
             .content_type("application/json; charset=utf-8")
             .json(res_body));
     }
-    println!("password: {:#?}", password);
 
     if first_name.is_some() {
         let validated_first_name = validate_first_name(first_name.clone().unwrap());
@@ -330,7 +326,7 @@ async fn post_details(
         }
     }
 
-    let create_user: Result<User, std::io::Error> = User::new(username, email, password);
+    let create_user: Result<User, std::io::Error> = User::new(username, email, password, first_name, last_name);
     if create_user.is_err() {
         res_body.account_error = AccountError {
             is_error: true,
@@ -345,14 +341,32 @@ async fn post_details(
 
     // save details to the user to postgres
     let pool = create_pg_pool_connection().await;
+    println!("place 1");
     let save_user_result: Result<(), sqlx::Error> =
         create_new_user_in_pg_users_table(&pool, user).await;
+    println!("place 2");
 
     // if error then return error
     if save_user_result.is_err() {
         res_body.account_error = AccountError {
             is_error: true,
             error_message: Some(String::from("internal error")),
+        };
+        return Ok(HttpResponse::FailedDependency()
+            .content_type("application/json; charset=utf-8")
+            .json(res_body));
+    }
+    println!("place 3");
+
+    // delete old {key: token, value: email}
+    con = create_redis_client_connection();
+    let delete_redis_result = delete_key_in_redis(con, &verification_confirmation_token);
+
+    // if redis fails then return an error
+    if delete_redis_result.await.is_err() {
+        res_body.account_error = AccountError {
+            is_error: true,
+            error_message: Some(String::from("Server error")),
         };
         return Ok(HttpResponse::FailedDependency()
             .content_type("application/json; charset=utf-8")

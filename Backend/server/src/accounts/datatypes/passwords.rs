@@ -22,6 +22,10 @@ impl Password {
         }
     }
 
+    pub fn from_hash(password_hash: String) -> Result<Self, Error> {
+        return Ok(Password { password_hash });
+    }
+
     pub fn get_password_string(&self) -> String {
         return self.password_hash.clone();
     }

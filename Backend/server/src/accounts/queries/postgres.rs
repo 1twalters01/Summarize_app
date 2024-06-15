@@ -1,13 +1,13 @@
 use crate::accounts::datatypes::users::User;
-use sqlx::{postgres::PgRow, Pool, Postgres};
-use sqlx::Row;
+use sqlx::{Row, Pool, Postgres};
+use uuid::Uuid;
 
 pub async fn create_new_user_in_pg_users_table(
     pool: &Pool<Postgres>,
     user: User,
 ) -> Result<(), sqlx::Error> {
-    let user_create_query = sqlx::query("INSERT INTO users WHERE uuid=($1), email=($2), username=($3), password=($4), first_name=($5), last_name=($6)")
-        .bind(user.get_uuid().to_string())
+    let user_create_query = sqlx::query("INSERT INTO users(uuid, email, username, password, first_name, last_name) VALUES (($1), ($2), ($3), ($4), ($5), ($6));")
+        .bind(user.get_uuid())
         .bind(user.get_email())
         .bind(user.get_username())
         .bind(user.get_password())
@@ -17,8 +17,10 @@ pub async fn create_new_user_in_pg_users_table(
         .await;
 
     if let Err(err) = user_create_query {
+        println!("err: {:#?}", err);
         return Err(err);
     } else {
+        println!("yooo");
         return Ok(());
     }
 }
@@ -71,11 +73,14 @@ pub async fn get_user_from_email_in_pg_users_table(
         Ok(res) => {
             if res.len() == 0 { return Ok(None) }
 
+            let id: Uuid = res[0].get("uuid");
             let username: String = res[0].get("username");
             let email: String = res[0].get("email");
             let password: String = res[0].get("password");
+            let first_name: Option<String> = res[0].get("first_name");
+            let last_name: Option<String> = res[0].get("last_name");
             
-            let user: User = User::new(username, email, password).unwrap();
+            let user: User = User::from_all(id, username, email, password, first_name, last_name).unwrap();
             println!("user: {:#?}", user);
             return Ok(Some(user));
         },
@@ -85,41 +90,57 @@ pub async fn get_user_from_email_in_pg_users_table(
 pub async fn get_user_from_username_in_pg_users_table(
     pool: &Pool<Postgres>,
     username: &str,
-) -> Result<User, sqlx::Error> {
+) -> Result<Option<User>, sqlx::Error> {
     let user_select_query = sqlx::query("Select * from users WHERE username=($1)")
         .bind(username)
         .fetch_all(pool)
         .await;
 
-    if let Err(err) = user_select_query {
-        return Err(err);
-    }
+    match user_select_query {
+        Err(err) => return Err(err),
+        Ok(res) => {
+            if res.len() == 0 { return Ok(None) }
 
-    let username = "username".to_string();
-    let email = "email".to_string();
-    let password = "password".to_string();
-    let user: User = User::new(username, email, password).unwrap();
-    return Ok(user);
+            let id: Uuid = res[0].get("uuid");
+            let username: String = res[0].get("username");
+            let email: String = res[0].get("email");
+            let password: String = res[0].get("password");
+            let first_name: Option<String> = res[0].get("first_name");
+            let last_name: Option<String> = res[0].get("last_name");
+            
+            let user: User = User::from_all(id, username, email, password, first_name, last_name).unwrap();
+            println!("user: {:#?}", user);
+            return Ok(Some(user));
+        },
+    }
 }
 
 pub async fn get_user_from_uuid_in_pg_users_table(
     pool: &Pool<Postgres>,
     uuid: &str,
-) -> Result<User, sqlx::Error> {
+) -> Result<Option<User>, sqlx::Error> {
     let user_select_query = sqlx::query("Select * from users WHERE uuid=($1)")
         .bind(uuid)
         .fetch_all(pool)
         .await;
+    
+    match user_select_query {
+        Err(err) => return Err(err),
+        Ok(res) => {
+            if res.len() == 0 { return Ok(None) }
 
-    if let Err(err) = user_select_query {
-        return Err(err);
+            let id: Uuid = res[0].get("uuid");
+            let username: String = res[0].get("username");
+            let email: String = res[0].get("email");
+            let password: String = res[0].get("password");
+            let first_name: Option<String> = res[0].get("first_name");
+            let last_name: Option<String> = res[0].get("last_name");
+            
+            let user: User = User::from_all(id, username, email, password, first_name, last_name).unwrap();
+            println!("user: {:#?}", user);
+            return Ok(Some(user));
+        },
     }
-
-    let username = "username".to_string();
-    let email = "email".to_string();
-    let password = "password".to_string();
-    let user: User = User::new(username, email, password).unwrap();
-    return Ok(user);
 }
 
 pub async fn save_refresh_token_user_in_postgres_auth_table(
@@ -144,18 +165,27 @@ pub async fn save_refresh_token_user_in_postgres_auth_table(
 pub async fn get_user_from_refresh_token_in_postgres_auth_table(
     pool: &Pool<Postgres>,
     refresh_token: &str,
-) -> Result<User, sqlx::Error> {
+) -> Result<Option<User>, sqlx::Error> {
     let user_select_query = sqlx::query("Select user from refresh_tokens WHERE refresh_token=($1)")
         .bind(refresh_token)
         .fetch_all(pool)
         .await;
 
-    if let Err(err) = user_select_query {
-        return Err(err);
+    match user_select_query {
+        Err(err) => return Err(err),
+        Ok(res) => {
+            if res.len() == 0 { return Ok(None) }
+
+            let id: Uuid = res[0].get("uuid");
+            let username: String = res[0].get("username");
+            let email: String = res[0].get("email");
+            let password: String = res[0].get("password");
+            let first_name: Option<String> = res[0].get("first_name");
+            let last_name: Option<String> = res[0].get("last_name");
+            
+            let user: User = User::from_all(id, username, email, password, first_name, last_name).unwrap();
+            println!("user: {:#?}", user);
+            return Ok(Some(user));
+        },
     }
-    let username = "username".to_string();
-    let email = "email".to_string();
-    let password = "password".to_string();
-    let user: User = User::new(username, email, password).unwrap();
-    return Ok(user);
 }

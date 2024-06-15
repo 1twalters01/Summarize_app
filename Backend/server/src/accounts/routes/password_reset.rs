@@ -81,7 +81,7 @@ async fn post_email(req_body: Json<PasswordResetRequestSchema>) -> Result<impl R
                 .json(res_body));
         },
         Some(res) => {
-            let mut value: User = User::new("test".to_string(), "test".to_string(), "test".to_string()).unwrap();
+            let mut value: User = User::new("test".to_string(), "test".to_string(), "test".to_string(), Some("test".to_string()), Some("test".to_string())).unwrap();
             if let Some(val) = res {
                 value = val.clone();
             }
@@ -226,7 +226,7 @@ async fn password_reset_verification_functionality(
 
     // return ok
     res_body.is_verification_token_correct = true;
-    res_body.verification_confirmation_token = Some(password_reset_verification_token);
+    res_body.register_response_token = Some(password_reset_verification_token);
     return Ok(HttpResponse::NotFound()
         .content_type("application/json; charset=utf-8")
         .json(true));
