@@ -38,7 +38,7 @@ use crate::{
     },
 };
 
-#[post("password-reset")]
+
 async fn post_email(req_body: Json<PasswordResetRequestSchema>) -> Result<impl Responder> {
     let PasswordResetRequestSchema { email } = req_body.into_inner();
     let mut res_body: PasswordResetResponseSchema = PasswordResetResponseSchema::new();
@@ -138,7 +138,6 @@ async fn post_email(req_body: Json<PasswordResetRequestSchema>) -> Result<impl R
         .json(res_body))
 }
 
-#[post("/verify")]
 async fn post_verify(req_body: Json<VerifyRequest>, req: HttpRequest) -> Result<impl Responder> {
     let VerifyRequest { verification_token } = req_body.into_inner();
     let register_email_token: String = req
@@ -151,7 +150,6 @@ async fn post_verify(req_body: Json<VerifyRequest>, req: HttpRequest) -> Result<
     password_reset_verification_functionality(register_email_token, verification_token).await
 }
 
-#[post("{uidb64}/{token}")]
 async fn link_verify(path: actix_web::web::Path<VerifyRequestSchema>) -> Result<impl Responder> {
     let VerifyRequestSchema {
         header_token,
@@ -232,7 +230,6 @@ async fn password_reset_verification_functionality(
         .json(true));
 }
 
-#[post("confirmation")]
 async fn post_password_reset(
     req_body: Json<PasswordResetConfirmRequestSchema>,
     req: HttpRequest,
