@@ -34,7 +34,7 @@ use crate::{
     },
 };
 
-#[post("/email")]
+
 async fn post_email(data: Json<LoginEmailRequestSchema>) -> Result<impl Responder> {
     let LoginEmailRequestSchema { email } = data.into_inner();
     let mut res_body: LoginEmailResponseSchema = LoginEmailResponseSchema::new();
@@ -123,7 +123,6 @@ async fn post_email(data: Json<LoginEmailRequestSchema>) -> Result<impl Responde
         .json(res_body));
 }
 
-#[post("/password")]
 async fn post_password(
     data: Json<LoginPasswordRequest>,
     req: HttpRequest,
@@ -265,7 +264,6 @@ async fn post_password(
         .json(res_body))
 }
 
-#[post("/totp")]
 async fn post_totp(data: Json<LoginTotpRequest>, req: HttpRequest) -> Result<impl Responder> {
     let login_password_response_token: String = req
         .headers()
@@ -377,7 +375,6 @@ async fn post_totp(data: Json<LoginTotpRequest>, req: HttpRequest) -> Result<imp
         .json(res_body))
 }
 
-#[post("/refresh-token")]
 async fn refresh_token(data: Json<AuthTokens>) -> Result<impl Responder> {
     let mut res_body: RefreshTokenResponseSchema = RefreshTokenResponseSchema::new();
     let refresh_token: String = match &data.refresh_token {
