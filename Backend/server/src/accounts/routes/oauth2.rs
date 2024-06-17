@@ -5,7 +5,6 @@ use crate::{
 use actix_web::{post, web, HttpResponse, Responder, Result};
 
 // redirect the user to the authorization server
-#[post("/authorise")]
 async fn authorise() -> Result<impl Responder> {
     let oauth_client: OAuth2Client = OAuth2Client::new_google();
     let scope = "https://www.googleapis.com/auth/userinfo.email";
@@ -18,7 +17,6 @@ async fn authorise() -> Result<impl Responder> {
 }
 
 // exchanges the authorization code for tokens, and returns the tokens
-#[post("/callback")]
 async fn callback(query: web::Query<CallbackQuery>) -> Result<impl Responder> {
     // check that state is valid
     let oauth_client: OAuth2Client = OAuth2Client::new_google();
@@ -28,8 +26,7 @@ async fn callback(query: web::Query<CallbackQuery>) -> Result<impl Responder> {
     };
 }
 
-#[post("/refresh")]
-async fn refresh(data: web::Json<RefreshTokenQuery>) -> Result<impl Responder> {
+async fn refresh_token(data: web::Json<RefreshTokenQuery>) -> Result<impl Responder> {
     let oauth_client: OAuth2Client = OAuth2Client::new_google();
     match oauth_client.refresh_access_token(&data.refresh_token).await {
         Ok(token_response) => return Ok(HttpResponse::Ok().json(token_response)),
