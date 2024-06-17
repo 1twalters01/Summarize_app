@@ -5,38 +5,90 @@ pub fn config(cfg: &mut ServiceConfig) {
     cfg.service(
         scope("/register")
             .wrap(middleware::authentication::not_authenticated::NotAuthenticated)
-            .service(routes::register::post_email)
-            .service(routes::register::post_verify)
-            .service(routes::register::link_verify)
-            .service(routes::register::post_details),
+            .route(
+                "/email",
+                web::post().to(routes::register::post_email),
+            )
+            .route(
+                "/verify",
+                web::post().to(routes::register::post_verify),
+            )
+            .route(
+                "/verify/{register_email_token}/{verification_token}",
+                web::post().to(routes::register::link_verify),
+            )
+            .route(
+                "/details",
+                web::post().to(routes::register::post_details),
+            ),
     )
     .service(
         scope("/login")
             .wrap(middleware::authentication::not_authenticated::NotAuthenticated)
-            .service(routes::login::post_email)
-            .service(routes::login::post_password)
-            .service(routes::login::post_totp)
-            .service(routes::login::refresh_token),
+            .route(
+                "/email",
+                web::post().to(routes::login::post_email),
+            )
+            .route(
+                "/password",
+                web::post().to(routes::login::post_password),
+            )
+            .route(
+                "/totp",
+                web::post().to(routes::login::post_totp),
+            )
+            .route(
+                "/refresh-token",
+                web::post().to(routes::login::refresh_token),
+            ),
     )
     .service(
         scope("/password-reset")
             .wrap(middleware::authentication::not_authenticated::NotAuthenticated)
-            .service(routes::password_reset::post_email)
-            .service(routes::password_reset::post_verify)
-            .service(routes::password_reset::link_verify)
-            .service(routes::password_reset::post_password_reset),
+            .route(
+                "/email",
+                web::post().to(routes::password_reset::post_email),
+            )
+            .route(
+                "/verify",
+                web::post().to(routes::password_reset::post_verify),
+            )
+            .route(
+                "/verify/{uidb64}/{token}",
+                web::post().to(routes::password_reset::link_verify),
+            )
+            .route(
+                "/password-reset-confirmation",
+                web::post().to(routes::password_reset::post_password_reset),
+            ),
+    )
+    .service(
+        scope("/captcha")
+            .service(routes::captcha::get_captcha)
+            .route(
+                "/get",
+                web::get().to(routes::captcha::get_captcha),
+            )
+            .route(
+                "/verify",
+                web::post().to(routes::captcha::verify_captcha),
+            ),
     )
     .service(
         scope("/oauth2")
             .wrap(middleware::authentication::not_authenticated::NotAuthenticated)
             // make google oauth account be the same as logging in regularly if using a gmail
-            .service(routes::oauth2::authorise)
-            .service(routes::oauth2::callback)
-            .service(routes::oauth2::refresh),
-    )
-    .service(
-        scope("/captcha")
-        .service(routes::captcha::get_captcha)
-        .service(routes::captcha::verify_captcha),
+            .route(
+                "/authorise",
+                web::post().to(routes::oauth2::authorise),
+            )
+            .route(
+                "/callback",
+                web::post().to(routes::oauth2::callback),
+            )
+            .route(
+                "/refresh-token",
+                web::post().to(routes::oauth2::refresh),
+            ),
     );
 }
