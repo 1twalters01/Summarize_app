@@ -57,17 +57,16 @@ async fn main() -> std::io::Result<()> {
 
             .service(index::routes::main_js)
 
-            .service(accounts::routes::login)
-            .service(accounts::routes::login_totp)
-            .service(accounts::routes::logout)
-            .service(accounts::routes::register)
-            .service(accounts::routes::register_verify)
-            .service(accounts::routes::register_details)
-            .service(accounts::routes::activate)
-            .service(accounts::routes::username_reset)
-            .service(accounts::routes::username_reset_token)
-            .service(accounts::routes::password_reset)
-            .service(accounts::routes::password_reset_token)
+            .configure(accounts::urls::main::config)
+            // .service(accounts::routes::login)
+            // .service(accounts::routes::login_totp)
+            // .service(accounts::routes::logout)
+            // .service(accounts::routes::register)
+            // .service(accounts::routes::register_verify)
+            // .service(accounts::routes::register_details)
+            // .service(accounts::routes::activate)
+            // .service(accounts::routes::password_reset)
+            // .service(accounts::routes::password_reset_token)
 
             .service(settings::routes::change_username)
             .service(settings::routes::change_password)
@@ -76,11 +75,11 @@ async fn main() -> std::io::Result<()> {
             .service(settings::routes::close_account)
             .service(settings::routes::two_factor_auth)
 
-            .service(
-                web::scope("/accounts")
-                .service(accounts::routes::get_routes)
-                .service(accounts::routes::main_html)
-            )
+            // .service(
+            //     web::scope("/accounts")
+            //     .service(accounts::routes::get_routes)
+            //     .service(accounts::routes::main_html)
+            // )
             .service(
                 web::scope("/settings")
                 .service(settings::routes::get_routes)

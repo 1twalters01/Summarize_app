@@ -1,7 +1,8 @@
-import { createSignal, Switch, Match } from 'solid-js';
-import RegisterEmailForm from './RegisterEmailForm';
-import RegisterVerificationForm from './RegisterVerificationForm';
-import RegisterDetailsForm from './RegisterDetailsForm';
+import { createSignal, Switch, Match, lazy } from 'solid-js';
+const RegisterEmailForm = lazy(() => import('./RegisterEmailForm'));
+const RegisterVerificationForm = lazy(() => import('./RegisterVerificationForm'));
+const RegisterDetailsForm = lazy(() => import('./RegisterDetailsForm'));
+
 /** 
   * @template T
   * @typedef { import('solid-js').Accessor<T> } Accessor
@@ -34,9 +35,9 @@ const Register = () => {
   const [mode, setMode] = createSignal(modeOptions.email);
   console.log(mode());
 
-  const emailMode = () => {
-    setMode(modeOptions.email);
-  };
+  // const emailMode = () => {
+  //   setMode(modeOptions.email);
+  // };
 
   const verificationMode = () => {
     setMode(modeOptions.verify);
