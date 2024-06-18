@@ -1,4 +1,4 @@
-use actix_web::{post, web::Json, HttpRequest, HttpResponse, Responder, Result};
+use actix_web::{web::Json, HttpRequest, HttpResponse, Responder, Result};
 
 use crate::{
     accounts::{
@@ -35,7 +35,7 @@ use crate::{
 };
 
 
-async fn post_email(data: Json<LoginEmailRequestSchema>) -> Result<impl Responder> {
+pub async fn post_email(data: Json<LoginEmailRequestSchema>) -> Result<impl Responder> {
     let LoginEmailRequestSchema { email } = data.into_inner();
     let mut res_body: LoginEmailResponseSchema = LoginEmailResponseSchema::new();
 
@@ -123,7 +123,7 @@ async fn post_email(data: Json<LoginEmailRequestSchema>) -> Result<impl Responde
         .json(res_body));
 }
 
-async fn post_password(
+pub async fn post_password(
     data: Json<LoginPasswordRequest>,
     req: HttpRequest,
 ) -> Result<impl Responder> {
@@ -264,7 +264,7 @@ async fn post_password(
         .json(res_body))
 }
 
-async fn post_totp(data: Json<LoginTotpRequest>, req: HttpRequest) -> Result<impl Responder> {
+pub async fn post_totp(data: Json<LoginTotpRequest>, req: HttpRequest) -> Result<impl Responder> {
     let login_password_response_token: String = req
         .headers()
         .get("login_password_response_token")
@@ -375,7 +375,7 @@ async fn post_totp(data: Json<LoginTotpRequest>, req: HttpRequest) -> Result<imp
         .json(res_body))
 }
 
-async fn refresh_token(data: Json<AuthTokens>) -> Result<impl Responder> {
+pub async fn refresh_token(data: Json<AuthTokens>) -> Result<impl Responder> {
     let mut res_body: RefreshTokenResponseSchema = RefreshTokenResponseSchema::new();
     let refresh_token: String = match &data.refresh_token {
         None => {

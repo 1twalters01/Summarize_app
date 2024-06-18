@@ -1,5 +1,5 @@
 use crate::{accounts::routes, middleware};
-use actix_web::web::{scope, ServiceConfig};
+use actix_web::web::{get, post, scope, ServiceConfig};
 
 pub fn config(cfg: &mut ServiceConfig) {
     cfg.service(
@@ -7,19 +7,19 @@ pub fn config(cfg: &mut ServiceConfig) {
             .wrap(middleware::authentication::not_authenticated::NotAuthenticated)
             .route(
                 "/email",
-                web::post().to(routes::register::post_email),
+                post().to(routes::register::post_email),
             )
             .route(
                 "/verify",
-                web::post().to(routes::register::post_verify),
+                post().to(routes::register::post_verify),
             )
             .route(
                 "/verify/{register_email_token}/{verification_token}",
-                web::post().to(routes::register::link_verify),
+                post().to(routes::register::link_verify),
             )
             .route(
                 "/details",
-                web::post().to(routes::register::post_details),
+                post().to(routes::register::post_details),
             ),
     )
     .service(
@@ -27,19 +27,19 @@ pub fn config(cfg: &mut ServiceConfig) {
             .wrap(middleware::authentication::not_authenticated::NotAuthenticated)
             .route(
                 "/email",
-                web::post().to(routes::login::post_email),
+                post().to(routes::login::post_email),
             )
             .route(
                 "/password",
-                web::post().to(routes::login::post_password),
+                post().to(routes::login::post_password),
             )
             .route(
                 "/totp",
-                web::post().to(routes::login::post_totp),
+                post().to(routes::login::post_totp),
             )
             .route(
                 "/refresh-token",
-                web::post().to(routes::login::refresh_token),
+                post().to(routes::login::refresh_token),
             ),
     )
     .service(
@@ -47,31 +47,30 @@ pub fn config(cfg: &mut ServiceConfig) {
             .wrap(middleware::authentication::not_authenticated::NotAuthenticated)
             .route(
                 "/email",
-                web::post().to(routes::password_reset::post_email),
+                post().to(routes::password_reset::post_email),
             )
             .route(
                 "/verify",
-                web::post().to(routes::password_reset::post_verify),
+                post().to(routes::password_reset::post_verify),
             )
             .route(
                 "/verify/{uidb64}/{token}",
-                web::post().to(routes::password_reset::link_verify),
+                post().to(routes::password_reset::link_verify),
             )
             .route(
                 "/password-reset-confirmation",
-                web::post().to(routes::password_reset::post_password_reset),
+                post().to(routes::password_reset::post_password_reset),
             ),
     )
     .service(
         scope("/captcha")
-            .service(routes::captcha::get_captcha)
             .route(
                 "/get",
-                web::get().to(routes::captcha::get_captcha),
+                get().to(routes::captcha::get_captcha),
             )
             .route(
                 "/verify",
-                web::post().to(routes::captcha::verify_captcha),
+                post().to(routes::captcha::verify_captcha),
             ),
     )
     .service(
@@ -80,15 +79,15 @@ pub fn config(cfg: &mut ServiceConfig) {
             // make google oauth account be the same as logging in regularly if using a gmail
             .route(
                 "/authorise",
-                web::post().to(routes::oauth2::authorise),
+                post().to(routes::oauth2::authorise),
             )
             .route(
                 "/callback",
-                web::post().to(routes::oauth2::callback),
+                post().to(routes::oauth2::callback),
             )
             .route(
                 "/refresh-token",
-                web::post().to(routes::oauth2::refresh),
+                post().to(routes::oauth2::refresh_token),
             ),
     );
 }

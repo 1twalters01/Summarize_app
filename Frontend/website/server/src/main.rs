@@ -62,6 +62,7 @@ async fn main() -> std::io::Result<()> {
             .service(accounts::routes::logout)
             .service(accounts::routes::register)
             .service(accounts::routes::register_verify)
+            .service(accounts::routes::register_details)
             .service(accounts::routes::activate)
             .service(accounts::routes::username_reset)
             .service(accounts::routes::username_reset_token)

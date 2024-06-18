@@ -1,4 +1,4 @@
-use actix_web::{post, web::Json, HttpRequest, HttpResponse, Responder, Result};
+use actix_web::{web::Json, HttpRequest, HttpResponse, Responder, Result};
 
 use crate::{
     accounts::{
@@ -34,7 +34,7 @@ use crate::{
     },
 };
 
-async fn post_email(req_body: Json<RegisterEmailRequestSchema>) -> Result<impl Responder> {
+pub async fn post_email(req_body: Json<RegisterEmailRequestSchema>) -> Result<impl Responder> {
     let RegisterEmailRequestSchema { email } = req_body.into_inner();
     let mut res_body: RegisterEmailResponseSchema = RegisterEmailResponseSchema::new();
 
@@ -129,7 +129,7 @@ async fn post_email(req_body: Json<RegisterEmailRequestSchema>) -> Result<impl R
         .json(res_body));
 }
 
-async fn post_verify(req_body: Json<VerifyRequest>, req: HttpRequest) -> Result<impl Responder> {
+pub async fn post_verify(req_body: Json<VerifyRequest>, req: HttpRequest) -> Result<impl Responder> {
     let VerifyRequest { verification_token } = req_body.into_inner();
     let register_email_token: String = req
         .headers()
@@ -141,7 +141,7 @@ async fn post_verify(req_body: Json<VerifyRequest>, req: HttpRequest) -> Result<
     register_verification_functionality(register_email_token, verification_token).await
 }
 
-async fn link_verify(path: actix_web::web::Path<VerifyRequestSchema>) -> Result<impl Responder> {
+pub async fn link_verify(path: actix_web::web::Path<VerifyRequestSchema>) -> Result<impl Responder> {
     let VerifyRequestSchema {
         header_token,
         verification_token,
@@ -222,7 +222,7 @@ async fn register_verification_functionality(
         .json(res_body));
 }
 
-async fn post_details(
+pub async fn post_details(
     req_body: Json<RegisterDetailsRequest>,
     req: HttpRequest,
 ) -> Result<impl Responder> {

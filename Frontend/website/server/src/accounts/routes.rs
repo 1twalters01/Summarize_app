@@ -63,6 +63,16 @@ async fn register_verify() -> Result<impl Responder> {
         .body(script_data))
 }
 
+#[get("/773.bundle.js")]
+async fn register_details() -> Result<impl Responder> {
+    let script_path: PathBuf = "../content/dist/main/javascript/773.bundle.js".into();
+    let script_data = Bytes::from(fs::read(&script_path).unwrap());
+
+    Ok(HttpResponse::Ok()
+        .content_type("text/javascript")
+        .body(script_data))
+}
+
 #[get("/{param:.*?}")]
 async fn main_html() -> Result<impl Responder> {
     let path: PathBuf = "../content/dist/main/main.html".into();

@@ -1,6 +1,7 @@
 import { createSignal, Switch, Match } from 'solid-js';
 import RegisterEmailForm from './RegisterEmailForm';
 import RegisterVerificationForm from './RegisterVerificationForm';
+import RegisterDetailsForm from './RegisterDetailsForm';
 /** 
   * @template T
   * @typedef { import('solid-js').Accessor<T> } Accessor
@@ -57,7 +58,7 @@ const Register = () => {
           <RegisterVerificationForm detailsMode={detailsMode} />
         </Match>
         <Match when={modeOptions.details === mode()}>
-          <p>text</p>
+          <RegisterDetailsForm />
         </Match>
       </Switch>
     </>

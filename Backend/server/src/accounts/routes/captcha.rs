@@ -14,7 +14,7 @@ use crate::{
     },
 };
 
-async fn get_captcha() -> Result<impl Responder> {
+pub async fn get_captcha() -> Result<impl Responder> {
     let mut res_body: GetCaptchaResponseSchema = GetCaptchaResponseSchema::new();
 
     // generate captcha
@@ -74,7 +74,7 @@ async fn get_captcha() -> Result<impl Responder> {
 }
 
 
-async fn verify_captcha(data: web::Json<CaptchaResponse>) -> Result<impl Responder> {
+pub async fn verify_captcha(data: web::Json<CaptchaResponse>) -> Result<impl Responder> {
     let CaptchaResponse { token, response } = data.into_inner();
     let mut res_body: CaptchaResponseSchema = CaptchaResponseSchema::new();
 

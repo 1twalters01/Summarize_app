@@ -46,9 +46,12 @@ const postRegister = async(token, props) => {
   /** @type {Promise<number|void|Response>} */
   let response = postRegisterVerification(token)
     .then((res) => {
-      setCookie("register_verify_token", res.register_verify_token, 1800);
-      deleteCookie("register_email_token");
-      props.detailsMode();
+      console.log(res);
+      if (res.register_response_token != null) {
+        setCookie("register_verification_token", res.register_response_token, 1800);
+        deleteCookie("register_email_token"); 
+        props.detailsMode();
+      }
     }) 
 
   return response;

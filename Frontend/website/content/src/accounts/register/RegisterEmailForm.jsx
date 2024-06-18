@@ -43,7 +43,7 @@ const postRegister = async(email, props) => {
   /** @type {Promise<number|void|Response>} */
   let response = postRegisterEmail(email)
     .then((res) => {
-      if (res.register_response_token != 0) {
+      if (res.register_response_token != null) {
         setCookie("register_email_token", res.register_response_token, 5);
         props.verificationMode();
       }
