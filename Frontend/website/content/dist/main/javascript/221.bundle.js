@@ -1,1 +1,0 @@
-"use strict";(self.webpackChunkSummarize=self.webpackChunkSummarize||[]).push([[221],{221:(e,s,a)=>{a.r(s),a.d(s,{default:()=>r});var u=(0,a(743).vs)("<h1>Change Password");const r=()=>u()}}]);
