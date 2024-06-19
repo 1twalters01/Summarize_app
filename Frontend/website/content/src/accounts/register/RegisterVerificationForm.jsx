@@ -46,7 +46,6 @@ const postRegister = async(token, props) => {
   /** @type {Promise<number|void|Response>} */
   let response = postRegisterVerification(token)
     .then((res) => {
-      console.log(res);
       if (res.register_response_token != null) {
         setCookie("register_verification_token", res.register_response_token, 1800);
         deleteCookie("register_email_token"); 
@@ -79,7 +78,7 @@ const RegisterVerificationForm = (props) => {
         onInput={e => setToken(e.target.value)}
         required
       />
-      <input type="submit" value="Login" />
+      <input type="submit" value="Submit" />
     </form>
   );
 };

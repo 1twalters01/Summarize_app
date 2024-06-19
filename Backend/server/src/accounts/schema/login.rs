@@ -14,7 +14,7 @@ pub struct LoginEmailRequestSchema {
 pub struct LoginEmailResponseSchema {
     pub account_error: AccountError,
     pub is_email_stored: bool,
-    pub login_email_response_token: Option<String>,
+    pub login_response_token: Option<String>,
 }
 
 impl LoginEmailResponseSchema {
@@ -22,7 +22,7 @@ impl LoginEmailResponseSchema {
         LoginEmailResponseSchema {
             account_error: AccountError::new(),
             is_email_stored: false,
-            login_email_response_token: None,
+            login_response_token: None,
         }
     }
 }
@@ -36,7 +36,7 @@ pub struct LoginPasswordRequest {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LoginPasswordRequestSchema {
-    pub login_email_response_token: String, // Change to a token stored on redis?
+    pub login_email_token: String, // Change to a token stored on redis?
     pub password: String,
     pub remember_me: bool,
 }
@@ -47,7 +47,7 @@ pub struct LoginPasswordResponseSchema {
     pub is_password_correct: bool,
     pub has_totp: bool,
     pub auth_tokens: Option<AuthTokens>,
-    pub login_password_response_token: Option<String>,
+    pub login_response_token: Option<String>,
 }
 
 impl LoginPasswordResponseSchema {
@@ -57,7 +57,7 @@ impl LoginPasswordResponseSchema {
             is_password_correct: false,
             has_totp: false,
             auth_tokens: None,
-            login_password_response_token: None,
+            login_response_token: None,
         }
     }
 }

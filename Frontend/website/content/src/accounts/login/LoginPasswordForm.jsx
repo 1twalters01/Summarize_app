@@ -1,5 +1,5 @@
 import { createSignal } from 'solid-js';
-import { setCookie } from '../../utils/cookies';
+import { getCookie, setCookie, deleteCookie } from '../../utils/cookies';
 
 /** @template T
   * @typedef { import('solid-js').Accessor<T> } Accessor
@@ -17,41 +17,44 @@ import { setCookie } from '../../utils/cookies';
   * @property {Function} totpMode - go to next screen
 */
 
-
-
-/** @param {Accessor<string>} password The user's email address */
-const postLoginPassword = async(password) => {
-  const response = await fetch("http://127.0.0.1:8000/login/totp", {
+/**
+  * @param {Accessor<string>} password The user's password
+  * @param {Accessor<boolean>} rememberMe The user's remember me status
+  */
+const postLoginPassword = async(password, rememberMe) => {
+  let login_response_token = getCookie("login_email_token");
+  if (login_response_token == null) {
+      login_response_token = "";
+  }
+  const response = await fetch("http://127.0.0.1:8000/login/password", {
     method: "POST",
     mode: "cors",
     headers: {
       "Content-Type": "application/json",
+      "login_email_token": login_response_token,
     },
     body: JSON.stringify({
       "password": password(),
+      "remember_me": rememberMe(),
     })
   });
 
   return response.json();
 }
 
-
-/** @typedef {object} LoginResponse
-    * @property {String} login_response_token - string response from server
-*/
-
 /**
-  * @param {Accessor<string>} password The user's password 
-  * @param {Function} postLoginFunction The relevent function for post login
+  * @param {Accessor<string>} password The user's password
+  * @param {Accessor<boolean>} rememberMe The user's remember me status
   * @param {props} props
 */
-const postLogin = async(password, postLoginFunction, props) => {
+const postLogin = async(password, rememberMe, props) => {
   /** @type {Promise<number|void|Response>} */
-  let response = postLoginFunction(password)
-    .then((/** @type {LoginResponse} */ res) => {
-      let login_response_token = res.login_response_token;
-      if (login_response_token != null) {
-        setCookie("login_password_token", login_response_token, 5);
+  let response = postLoginPassword(password, rememberMe)
+    .then((res) => {
+        console.log(res);
+      if (res.login_response_token != null) {
+        setCookie("register_verification_token", res.login_response_token, 1800);
+        deleteCookie("login_email_token"); 
         props.totpMode();
       }
     }) 
@@ -59,32 +62,38 @@ const postLogin = async(password, postLoginFunction, props) => {
   return response;
 };
 
-
 /** @param {props} props */
 const LoginPasswordForm = (props) => {
   /** @type {Signal<String>} */
-  const [password, setPassword] = createSignal("");
+  const [password, setToken] = createSignal("");
+  const [rememberMe, setRememberMe] = createSignal(false);
 
   /** @param {SubmitEvent} e */
-  function PostLogin(e) {
+  function PostRegister(e) {
     e.preventDefault();
-    postLogin(password, postLoginPassword, props);
+    console.log("password: ", password());
+
+    let response = postLogin(password, rememberMe, props);
+    response.then((response) => console.log("response: ", response));
   }
 
   return (
-    <form onSubmit={PostLogin} >
+    <form onSubmit={PostRegister} >
       <input
         type="password"
         placeholder="password"
-        onInput={e => setPassword(e.target.value)}
+        onInput={e => setToken(e.target.value)}
         required
       />
-      <input type="submit" value="Login" />
+      <input
+        type="checkbox"
+        checked={rememberMe()}
+        onChange={e => setRememberMe(e.target.checked)}
+      />
+      <input type="submit" value="Submit" />
     </form>
   );
 };
 
 export default LoginPasswordForm;
-
-
 

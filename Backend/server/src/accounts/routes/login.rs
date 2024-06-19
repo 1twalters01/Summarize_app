@@ -53,50 +53,43 @@ pub async fn post_email(data: Json<LoginEmailRequestSchema>) -> Result<impl Resp
     }
 
     // try to get the user from postgres using the email
-    println!("email: {}", &email);
     let pool = create_pg_pool_connection().await;
     let user_result: Result<Option<User>, sqlx::Error> =
         get_user_from_email_in_pg_users_table(&pool, email.as_str()).await;
 
-    // if user does not exist then return an error
-    let user_option = (&user_result).as_ref().ok();
-    if user_option.is_some() == false {
-        res_body.account_error = AccountError {
-            is_error: true,
-            error_message: Some(String::from("user does not exist")),
-        };
-        return Ok(HttpResponse::NotFound()
-            .content_type("application/json; charset=utf-8")
-            .json(res_body));
-    }
-
-    // set is_email_stored field to true
-    res_body.is_email_stored = true;
-
-    // create a token
-    let token: String = generate_opaque_token_of_length(25);
-
-    // serialize the user
-    // let user: User = user_result.unwrap();
-    let user: User = match user_option {
-        None => {
+    // if user does not exist or is none then return an error
+    let user: User = match user_result {
+        Err(error) => {
             res_body.account_error = AccountError {
                 is_error: true,
-                error_message: Some(String::from("user does not exist")),
+                error_message: Some(error.to_string()),
             };
             return Ok(HttpResponse::NotFound()
                 .content_type("application/json; charset=utf-8")
                 .json(res_body));
         },
-        Some(res) => {
-            let mut value: User = User::new("test".to_string(), "test".to_string(), "test".to_string(), Some("test".to_string()), Some("test".to_string())).unwrap();
-            if let Some(val) = res {
-                value = val.clone();
-            }
-            value
+        Ok(user_option) => match user_option {
+            None => {
+                res_body.account_error = AccountError {
+                    is_error: true,
+                    error_message: Some(String::from("user does not exist")),
+                };
+                return Ok(HttpResponse::NotFound()
+                    .content_type("application/json; charset=utf-8")
+                    .json(res_body));
+            },
+            Some(user) => user,
         },
     };
 
+    // set is_email_stored field to true
+    res_body.is_email_stored = true;
+    println!("email: {}", &email);
+
+    // create a token
+    let token: String = generate_opaque_token_of_length(25);
+
+    // serialize the user
     let user_json = serde_json::to_string(&user).unwrap();
 
     // save {key: token, value: user} to redis cache for 300 seconds
@@ -117,33 +110,35 @@ pub async fn post_email(data: Json<LoginEmailRequestSchema>) -> Result<impl Resp
 
     // return success
     res_body.is_email_stored = true;
-    res_body.login_email_response_token = Some(token);
-    return Ok(HttpResponse::NotFound()
+    res_body.login_response_token = Some(token);
+    return Ok(HttpResponse::Ok()
         .content_type("application/json; charset=utf-8")
         .json(res_body));
 }
+
 
 pub async fn post_password(
     data: Json<LoginPasswordRequest>,
     req: HttpRequest,
 ) -> Result<impl Responder> {
-    let login_email_response_token: String = req
+    let login_email_token: String = req
         .headers()
-        .get("login_email_response_token")
+        .get("login_email_token")
         .unwrap()
         .to_str()
         .unwrap()
         .to_string();
+    println!("token: {:?}", login_email_token);
     let LoginPasswordRequest {
         password,
         remember_me,
     } = data.into_inner();
     let LoginPasswordRequestSchema {
-        login_email_response_token,
+        login_email_token,
         password,
         remember_me,
     } = LoginPasswordRequestSchema {
-        login_email_response_token,
+        login_email_token,
         password,
         remember_me,
     };
@@ -151,7 +146,7 @@ pub async fn post_password(
 
     // try to get user from token in redis
     let con = create_redis_client_connection();
-    let user: User = match get_user_from_token_in_redis(con, &login_email_response_token) {
+    let user: User = match get_user_from_token_in_redis(con, &login_email_token) {
         // if error return error
         Err(err) => {
             let error: AccountError = AccountError {
@@ -224,7 +219,7 @@ pub async fn post_password(
 
         // delete old token
         con = create_redis_client_connection();
-        let delete_redis_result = delete_key_in_redis(con, &login_email_response_token);
+        let delete_redis_result = delete_key_in_redis(con, &login_email_token);
 
         // if redis fails then return an error
         if delete_redis_result.await.is_err() {
@@ -239,12 +234,13 @@ pub async fn post_password(
 
         // return success
         res_body.has_totp = true;
-        res_body.login_password_response_token = Some(token);
+        res_body.login_response_token = Some(token);
         return Ok(HttpResponse::Ok()
             .content_type("application/json; charset=utf-8")
             .json(res_body));
     }
 
+    // update last login time
     // generate tokens
     let auth_tokens: AuthTokens = match AuthTokens::new(user, remember_me).await {
         Ok(tokens) => tokens,
@@ -356,6 +352,7 @@ pub async fn post_totp(data: Json<LoginTotpRequest>, req: HttpRequest) -> Result
             .json(res_body));
     }
 
+    // update last login time
     // create auth tokens
     let auth_tokens: AuthTokens = match AuthTokens::new(user, remember_me).await {
         Ok(tokens) => tokens,

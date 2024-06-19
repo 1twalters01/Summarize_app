@@ -57,7 +57,7 @@ async fn main() -> std::io::Result<()> {
 
             .service(index::routes::main_js)
 
-            .configure(accounts::urls::main::config)
+            .configure(accounts::urls::config)
             // .service(accounts::routes::login)
             // .service(accounts::routes::login_totp)
             // .service(accounts::routes::logout)

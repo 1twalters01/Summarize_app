@@ -18,7 +18,6 @@ import { setCookie } from '../../utils/cookies';
 */
 
 
-
 /** @param {Accessor<string>} email The user's email address */
 const postLoginEmail = async(email) => {
   const response = await fetch("http://127.0.0.1:8000/login/email", {

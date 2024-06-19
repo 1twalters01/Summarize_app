@@ -73,16 +73,19 @@ pub async fn get_user_from_email_in_pg_users_table(
         Ok(res) => {
             if res.len() == 0 { return Ok(None) }
 
-            let id: Uuid = res[0].get("uuid");
+            let id: Option<Uuid> = res[0].get("uuid");
             let username: String = res[0].get("username");
             let email: String = res[0].get("email");
             let password: String = res[0].get("password");
             let first_name: Option<String> = res[0].get("first_name");
             let last_name: Option<String> = res[0].get("last_name");
             
-            let user: User = User::from_all(id, username, email, password, first_name, last_name).unwrap();
-            println!("user: {:#?}", user);
-            return Ok(Some(user));
+            let user = match id {
+                None => None,
+                Some(id) => Some(User::from_all(id, username, email, password, first_name, last_name).unwrap()),
+            };
+
+            return Ok(user);
         },
     }
 }
