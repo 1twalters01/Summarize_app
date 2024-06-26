@@ -16,14 +16,6 @@ pub struct Route {
 }
 
 impl Route {
-    pub fn new() -> Route {
-        Route {
-            endpoint: String::new(),
-            method: Vec::new(),
-            description: String::new(),
-        }
-    }
-
     pub fn from(endpoint: String, method: Vec<Method>, description: String) -> Route {
         Route { endpoint, method, description }
     }

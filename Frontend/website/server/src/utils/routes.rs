@@ -1,15 +1,22 @@
-use actix_web::{get, post,  HttpResponse, Responder, Result, web::{Json, Bytes}};
+use actix_web::{HttpResponse, Responder, Result, web::Bytes};
 use std::{fs, path::PathBuf};
-// use crate::datatypes::route::{Route, Method};
 
-
-#[get("/504.bundle.js")]
-async fn cookies() -> Result<impl Responder> {
-    let script_path: PathBuf = "../content/dist/main/javascript/504.bundle.js".into();
-    let script_data = Bytes::from(fs::read(&script_path).unwrap());
+pub async fn main_html() -> Result<impl Responder> {
+    let path: PathBuf = "../content/dist/main/index.html".into();
+    let data = Bytes::from(fs::read(&path).unwrap());
 
     Ok(HttpResponse::Ok()
-        .content_type("text/javascript")
-        .body(script_data))
+        .content_type("text/html; charset=UTF-8")
+        .body(data))
 }
+
+pub async fn main_js() -> Result<impl Responder> {
+    let path: PathBuf = "../content/dist/main/javascript/bundle.js".into();
+    let data = Bytes::from(fs::read(&path).unwrap());
+
+    Ok(HttpResponse::Ok()
+        .content_type("text/javascript; charset=UTF-8")
+        .body(data))
+}
+
 

@@ -1,10 +1,9 @@
-use actix_web::{get, post,  HttpResponse, Responder, Result, web::{Json, Bytes}};
-use std::{fs, path::PathBuf};
-use crate::datatypes::route::{Route, Method};
+use actix_web::{get, Responder, Result, web::Json};
+use crate::utils::status_codes::datatypes::{Route, Method};
 
 #[get("/get-routes")]
 async fn get_routes() -> Result<impl Responder> {
-    let routes: [Route; 7] = [
+    let routes: [Route; 6] = [
         Route::from(
             String::from("/error-500/"),
             Vec::from([Method::Get]),
