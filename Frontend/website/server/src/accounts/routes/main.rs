@@ -51,9 +51,9 @@ pub async fn main_html() -> Result<impl Responder> {
         .body(data))
 }
 
-#[get("/175.bundle.js")]
+#[get("/653.bundle.js")]
 pub async fn navbar() -> Result<impl Responder> {
-    let path: PathBuf = "../content/dist/main/javascript/175.bundle.js".into();
+    let path: PathBuf = "../content/dist/main/javascript/653.bundle.js".into();
     let data = Bytes::from(fs::read(&path).unwrap());
 
     Ok(HttpResponse::Ok()

@@ -85,4 +85,3 @@ const RegisterVerificationForm = (props) => {
 
 export default RegisterVerificationForm;
 
-

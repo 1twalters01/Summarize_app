@@ -2,8 +2,8 @@ use actix_web::{get,  HttpResponse, Responder, Result, web::{Json, Bytes}};
 use std::{fs, path::PathBuf};
 use crate::datatypes::route::{Route, Method};
 
-#[get("/get-routes/")]
-async fn get_routes() -> Result<impl Responder> {
+// #[get("/get-routes/")]
+pub async fn get_routes() -> Result<impl Responder> {
     let routes: [Route; 21] = [
         Route::from(
             String::from("/"),
@@ -105,19 +105,19 @@ async fn favicon() -> Result<impl Responder> {
         .body(image_content))
 }
 
-#[get("/")]
-async fn index_html() -> Result<impl Responder> {
-    let path: PathBuf = "../content/dist/index/index.html".into();
+#[get("/517.bundle.js")]
+pub async fn index() -> Result<impl Responder> {
+    let path: PathBuf = "../content/dist/main/javascript/517.bundle.js".into();
     let data = Bytes::from(fs::read(&path).unwrap());
 
     Ok(HttpResponse::Ok()
-        .content_type("text/html; charset=UTF-8")
+        .content_type("text/javascript")
         .body(data))
 }
 
 #[get("/index.css")]
 async fn index_css() -> Result<impl Responder> {
-    let path: PathBuf = "../content/dist/index/index.css".into();
+    let path: PathBuf = "../content/dist/home/index.css".into();
     let data = Bytes::from(fs::read(&path).unwrap());
 
     Ok(HttpResponse::Ok()
@@ -125,18 +125,18 @@ async fn index_css() -> Result<impl Responder> {
         .body(data))
 }
 
-#[get("/index.js")]
-async fn index_js() -> Result<impl Responder> {
-    let path: PathBuf = "../content/dist/index/index.js".into();
+#[get("/720.bundle.js")]
+pub async fn pricing() -> Result<impl Responder> {
+    let path: PathBuf = "../content/dist/main/javascript/720.bundle.js".into();
     let data = Bytes::from(fs::read(&path).unwrap());
 
     Ok(HttpResponse::Ok()
-        .content_type("text/javascript; charset=UTF-8")
+        .content_type("text/javascript")
         .body(data))
 }
 #[get("/pricing/")]
 async fn pricing_html() -> Result<impl Responder> {
-    let path: PathBuf = "../content/dist/index/pricing.html".into();
+    let path: PathBuf = "../content/dist/home/pricing.html".into();
     let data = Bytes::from(fs::read(&path).unwrap());
 
     Ok(HttpResponse::Ok()
@@ -146,7 +146,7 @@ async fn pricing_html() -> Result<impl Responder> {
 
 #[get("/pricing.js")]
 async fn pricing_js() -> Result<impl Responder> {
-    let path: PathBuf = "../content/dist/index/pricing.js".into();
+    let path: PathBuf = "../content/dist/home/pricing.js".into();
     let data = Bytes::from(fs::read(&path).unwrap());
 
     Ok(HttpResponse::Ok()
@@ -154,89 +154,10 @@ async fn pricing_js() -> Result<impl Responder> {
         .body(data))
 }
 
-#[get("/download/")]
-async fn download_html() -> Result<impl Responder> {
-    let path: PathBuf = "../content/dist/index/ownload.html".into();
-    let data = Bytes::from(fs::read(&path).unwrap());
-
-    Ok(HttpResponse::Ok()
-        .content_type("text/html; charset=UTF-8")
-        .body(data))
-}
-
-#[get("/download.js")]
-async fn download_js() -> Result<impl Responder> {
-    let path: PathBuf = "../content/dist/index/download.js".into();
-    let data = Bytes::from(fs::read(&path).unwrap());
-
-    Ok(HttpResponse::Ok()
-        .content_type("text/javascript; charset=UTF-8")
-        .body(data))
-}
-
-#[get("/download/web-clipper/")]
-async fn download_web_clipper_html() -> Result<impl Responder> {
-    let path: PathBuf = "../content/dist/index/download-web-clipper.html".into();
-    let data = Bytes::from(fs::read(&path).unwrap());
-
-    Ok(HttpResponse::Ok()
-      .content_type("text/html; charset=UTF-8")
-      .body(data))
-}
-
-#[get("/download/web-clipper.js")]
-async fn download_web_clipper_js() -> Result<impl Responder> {
-    let path: PathBuf = "../content/dist/index/download-web-clipper.js".into();
-    let data = Bytes::from(fs::read(&path).unwrap());
-
-    Ok(HttpResponse::Ok()
-      .content_type("text/javascript; charset=UTF-8")
-      .body(data))
-}
-
-#[get("/download/mobile/")]
-async fn download_mobile_html() -> Result<impl Responder> {
-    let path: PathBuf = "../content/dist/index/download-mobile.html".into();
-    let data = Bytes::from(fs::read(&path).unwrap());
-
-    Ok(HttpResponse::Ok()
-        .content_type("text/html; charset=UTF-8")
-        .body(data))
-}
-
-#[get("/download/mobile.js")]
-async fn download_mobile_js() -> Result<impl Responder> {
-    let path: PathBuf = "../content/dist/index/download-mobile.js".into();
-    let data = Bytes::from(fs::read(&path).unwrap());
-
-    Ok(HttpResponse::Ok()
-        .content_type("text/javascript; charset=UTF-8")
-        .body(data))
-}
-
-#[get("/download/desktop/")]
-async fn download_desktop_html() -> Result<impl Responder> {
-    let path: PathBuf = "../content/dist/index/download-desktop.html".into();
-    let data = Bytes::from(fs::read(&path).unwrap());
-
-    Ok(HttpResponse::Ok()
-        .content_type("text/html; charset=UTF-8")
-        .body(data))
-}
-
-#[get("/download/desktop.js")]
-async fn download_desktop_js() -> Result<impl Responder> {
-    let path: PathBuf = "../content/dist/index/download-desktop.js".into();
-    let data = Bytes::from(fs::read(&path).unwrap());
-
-    Ok(HttpResponse::Ok()
-        .content_type("text/javascript; charset=UTF-8")
-        .body(data))
-}
 
 #[get("/library/")]
 async fn library_html() -> Result<impl Responder> {
-    let path: PathBuf = "../content/dist/index/library.html".into();
+    let path: PathBuf = "../content/dist/home/library.html".into();
     let data = Bytes::from(fs::read(&path).unwrap());
 
     Ok(HttpResponse::Ok()
@@ -246,7 +167,7 @@ async fn library_html() -> Result<impl Responder> {
 
 #[get("/library.js")]
 async fn library_js() -> Result<impl Responder> {
-    let path: PathBuf = "../content/dist/index/library.js".into();
+    let path: PathBuf = "../content/dist/home/library.js".into();
     let data = Bytes::from(fs::read(&path).unwrap());
 
     Ok(HttpResponse::Ok()
@@ -256,7 +177,7 @@ async fn library_js() -> Result<impl Responder> {
 
 #[get("/community/")]
 async fn community_html() -> Result<impl Responder> {
-    let path: PathBuf = "../content/dist/index/community.html".into();
+    let path: PathBuf = "../content/dist/home/community.html".into();
     let data = Bytes::from(fs::read(&path).unwrap());
 
     Ok(HttpResponse::Ok()
@@ -266,7 +187,7 @@ async fn community_html() -> Result<impl Responder> {
 
 #[get("/community.js")]
 async fn community_js() -> Result<impl Responder> {
-    let path: PathBuf = "../content/dist/index/community.js".into();
+    let path: PathBuf = "../content/dist/home/community.js".into();
     let data = Bytes::from(fs::read(&path).unwrap());
 
     Ok(HttpResponse::Ok()
@@ -276,7 +197,7 @@ async fn community_js() -> Result<impl Responder> {
 
 #[get("/sync/")]
 async fn sync_html() -> Result<impl Responder> {
-    let path: PathBuf = "../content/dist/index/sync.html".into();
+    let path: PathBuf = "../content/dist/home/sync.html".into();
     let data = Bytes::from(fs::read(&path).unwrap());
 
     Ok(HttpResponse::Ok()
@@ -286,7 +207,7 @@ async fn sync_html() -> Result<impl Responder> {
 
 #[get("/sync.js")]
 async fn sync_js() -> Result<impl Responder> {
-    let path: PathBuf = "../content/dist/index/sync.js".into();
+    let path: PathBuf = "../content/dist/home/sync.js".into();
     let data = Bytes::from(fs::read(&path).unwrap());
 
     Ok(HttpResponse::Ok()
@@ -296,7 +217,7 @@ async fn sync_js() -> Result<impl Responder> {
 
 #[get("/terms/")]
 async fn terms_html() -> Result<impl Responder> {
-    let path: PathBuf = "../content/dist/index/terms.html".into();
+    let path: PathBuf = "../content/dist/home/terms.html".into();
     let data = Bytes::from(fs::read(&path).unwrap());
 
     Ok(HttpResponse::Ok()
@@ -306,7 +227,7 @@ async fn terms_html() -> Result<impl Responder> {
 
 #[get("/terms.js")]
 async fn terms_js() -> Result<impl Responder> {
-    let path: PathBuf = "../content/dist/index/terms.js".into();
+    let path: PathBuf = "../content/dist/home/terms.js".into();
     let data = Bytes::from(fs::read(&path).unwrap());
 
     Ok(HttpResponse::Ok()
@@ -316,7 +237,7 @@ async fn terms_js() -> Result<impl Responder> {
 
 #[get("/terms/pdf")]
 async fn terms_pdf() -> Result<impl Responder> {
-    let path: PathBuf = "../content/dist/index/Terms Statement.pdf".into();
+    let path: PathBuf = "../content/dist/home/Terms Statement.pdf".into();
     let data = Bytes::from(fs::read(&path).unwrap());
 
     Ok(HttpResponse::Ok()
@@ -326,7 +247,7 @@ async fn terms_pdf() -> Result<impl Responder> {
 
 #[get("/privacy/")]
 async fn privacy_html() -> Result<impl Responder> {
-    let path: PathBuf = "../content/dist/index/privacy.html".into();
+    let path: PathBuf = "../content/dist/home/privacy.html".into();
     let data = Bytes::from(fs::read(&path).unwrap());
 
     Ok(HttpResponse::Ok()
@@ -336,7 +257,7 @@ async fn privacy_html() -> Result<impl Responder> {
 
 #[get("/privacy.js")]
 async fn privacy_js() -> Result<impl Responder> {
-    let path: PathBuf = "../content/dist/index/privacy.js".into();
+    let path: PathBuf = "../content/dist/home/privacy.js".into();
     let data = Bytes::from(fs::read(&path).unwrap());
 
     Ok(HttpResponse::Ok()
@@ -346,7 +267,7 @@ async fn privacy_js() -> Result<impl Responder> {
 
 #[get("/privacy/pdf")]
 async fn privacy_pdf() -> Result<impl Responder> {
-    let path: PathBuf = "../content/dist/index/Privacy Statement.pdf".into();
+    let path: PathBuf = "../content/dist/home/Privacy Statement.pdf".into();
     let data = Bytes::from(fs::read(&path).unwrap());
 
     Ok(HttpResponse::Ok()
@@ -356,7 +277,7 @@ async fn privacy_pdf() -> Result<impl Responder> {
 
 #[get("/blog/")]
 async fn blog_html() -> Result<impl Responder> {
-    let path: PathBuf = "../content/dist/index/blog.html".into();
+    let path: PathBuf = "../content/dist/home/blog.html".into();
     let data = Bytes::from(fs::read(&path).unwrap());
 
     Ok(HttpResponse::Ok()
@@ -366,7 +287,7 @@ async fn blog_html() -> Result<impl Responder> {
 
 #[get("/blog.js")]
 async fn blog_js() -> Result<impl Responder> {
-    let path: PathBuf = "../content/dist/index/blog.js".into();
+    let path: PathBuf = "../content/dist/home/blog.js".into();
     let data = Bytes::from(fs::read(&path).unwrap());
 
     Ok(HttpResponse::Ok()
@@ -376,7 +297,7 @@ async fn blog_js() -> Result<impl Responder> {
 
 #[get("/ai/")]
 async fn ai_html() -> Result<impl Responder> {
-    let path: PathBuf = "../content/dist/index/ai.html".into();
+    let path: PathBuf = "../content/dist/home/ai.html".into();
     let data = Bytes::from(fs::read(&path).unwrap());
 
     Ok(HttpResponse::Ok()
@@ -386,7 +307,7 @@ async fn ai_html() -> Result<impl Responder> {
 
 #[get("/ai.js")]
 async fn ai_js() -> Result<impl Responder> {
-    let path: PathBuf = "../content/dist/index/ai.js".into();
+    let path: PathBuf = "../content/dist/home/ai.js".into();
     let data = Bytes::from(fs::read(&path).unwrap());
 
     Ok(HttpResponse::Ok()
@@ -396,7 +317,7 @@ async fn ai_js() -> Result<impl Responder> {
 
 #[get("/releases/")]
 async fn releases_html() -> Result<impl Responder> {
-    let path: PathBuf = "../content/dist/index/releases.html".into();
+    let path: PathBuf = "../content/dist/home/releases.html".into();
     let data = Bytes::from(fs::read(&path).unwrap());
 
     Ok(HttpResponse::Ok()
@@ -406,7 +327,7 @@ async fn releases_html() -> Result<impl Responder> {
 
 #[get("/releases.js")]
 async fn releases_js() -> Result<impl Responder> {
-    let path: PathBuf = "../content/dist/index/releases.js".into();
+    let path: PathBuf = "../content/dist/home/releases.js".into();
     let data = Bytes::from(fs::read(&path).unwrap());
 
     Ok(HttpResponse::Ok()
@@ -416,7 +337,7 @@ async fn releases_js() -> Result<impl Responder> {
 
 #[get("/email-us/")]
 async fn email_us_html() -> Result<impl Responder> {
-    let path: PathBuf = "../content/dist/website/index/email-us.html".into();
+    let path: PathBuf = "../content/dist/website/home/email-us.html".into();
     let data = Bytes::from(fs::read(&path).unwrap());
 
     Ok(HttpResponse::Ok()
@@ -426,7 +347,7 @@ async fn email_us_html() -> Result<impl Responder> {
 
 #[get("/email-us.js")]
 async fn email_us_js() -> Result<impl Responder> {
-    let path: PathBuf = "../content/dist/website/index/email-us.js".into();
+    let path: PathBuf = "../content/dist/website/home/email-us.js".into();
     let data = Bytes::from(fs::read(&path).unwrap());
 
     Ok(HttpResponse::Ok()
@@ -434,9 +355,9 @@ async fn email_us_js() -> Result<impl Responder> {
         .body(data))
 }
 
-#[get("/{param:.*?}")]
-async fn main_html() -> Result<impl Responder> {
-    let path: PathBuf = "../content/dist/main/main.html".into();
+// #[get("/{param:.*?}")]
+pub async fn main_html() -> Result<impl Responder> {
+    let path: PathBuf = "../content/dist/main/index.html".into();
     let data = Bytes::from(fs::read(&path).unwrap());
 
     Ok(HttpResponse::Ok()

@@ -4,86 +4,36 @@ mod app;
 mod settings;
 mod datatypes;
 mod utils;
-// extern crate users;
-use actix_web::{web, App, HttpServer};
+use std::{fs, path::PathBuf};
+use actix_files as files;
+
+use actix_web::{web::{get, route, Bytes}, App, HttpResponse, HttpServer};
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     HttpServer::new(|| {
         App::new()
-            .service(utils::routes::cookies)
-            .service(index::routes::get_routes)
-
-            .service(index::routes::favicon)
-            .service(index::routes::index_html)
-            .service(index::routes::index_css)
-            .service(index::routes::index_js)
-
-            .service(index::routes::pricing_html)
-            .service(index::routes::pricing_js)
-
-            .service(index::routes::download_html)
-            .service(index::routes::download_js)
-            .service(index::routes::download_web_clipper_html)
-            .service(index::routes::download_web_clipper_js)
-            .service(index::routes::download_mobile_html)
-            .service(index::routes::download_mobile_js)
-            .service(index::routes::download_desktop_html)
-            .service(index::routes::download_desktop_js)
-
-            .service(index::routes::library_html)
-            .service(index::routes::library_js)
-            .service(index::routes::community_html)
-            .service(index::routes::community_js)
-            .service(index::routes::sync_html)
-            .service(index::routes::sync_js)
-
-            .service(index::routes::terms_html)
-            .service(index::routes::terms_js)
-            .service(index::routes::terms_pdf)
-            .service(index::routes::privacy_html)
-            .service(index::routes::privacy_js)
-            .service(index::routes::privacy_pdf)
-            
-            .service(index::routes::blog_html)
-            .service(index::routes::blog_js)
-            .service(index::routes::ai_html)
-            .service(index::routes::ai_js)
-
-            .service(index::routes::releases_html)
-            .service(index::routes::releases_js)
-            .service(index::routes::email_us_html)
-            .service(index::routes::email_us_js)
-
             .service(index::routes::main_js)
+            .route(
+                "/",
+                get().to(index::routes::main_html)
+            )
+            .route(
+                "{param:.*[^.bundle.js]}",
+                get().to(index::routes::main_html)
+            )
+            .service(files::Files::new("", "../content/dist/main/javascript"))
+            // .configure(index::urls::config)
+            // .configure(accounts::urls::config)
+            .default_service(
+                route().to(|| async {
+                    let path: PathBuf = "../content/dist/main/index.html".into();
+                    let data = Bytes::from(fs::read(&path).unwrap());
 
-            .configure(accounts::urls::config)
-            // .service(accounts::routes::login)
-            // .service(accounts::routes::login_totp)
-            // .service(accounts::routes::logout)
-            // .service(accounts::routes::register)
-            // .service(accounts::routes::register_verify)
-            // .service(accounts::routes::register_details)
-            // .service(accounts::routes::activate)
-            // .service(accounts::routes::password_reset)
-            // .service(accounts::routes::password_reset_token)
-
-            .service(settings::routes::change_username)
-            .service(settings::routes::change_password)
-            .service(settings::routes::change_email)
-            .service(settings::routes::change_theme)
-            .service(settings::routes::close_account)
-            .service(settings::routes::two_factor_auth)
-
-            // .service(
-            //     web::scope("/accounts")
-            //     .service(accounts::routes::get_routes)
-            //     .service(accounts::routes::main_html)
-            // )
-            .service(
-                web::scope("/settings")
-                .service(settings::routes::get_routes)
-                // .service(settings::routes::main_html)
+                    HttpResponse::Ok()
+                        .content_type("text/html; charset=UTF-8")
+                        .body(data)
+                })
             )
     })
     .bind("127.0.0.1:8080")?

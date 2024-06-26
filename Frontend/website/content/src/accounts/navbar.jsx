@@ -1,20 +1,22 @@
+import { A } from "@solidjs/router";
+
 const Navbar = () => {
     return (
       <nav>
         <div>
-          <a href="http://127.0.0.1:8080/">
+          <A href="/">
             <img src="http://127.0.0.1:8080/favicon.ico" />
             <span>Summarize</span>
-          </a>
+          </A>
         </div>
 
         <div>
-          <a href="http://127.0.0.1:8080/pricing/">Pricing</a>
+          <A href="/pricing/">Pricing</A>
         </div>
 
         <div>
-          <a href="http://127.0.0.1:8080/accounts/login/">Log in</a>
-          <a href="http://127.0.0.1:8080/accounts/register/">Sign up</a>
+          <A href="/login/">Log in</A>
+          <A href="/register/">Sign up</A>
        </div>
       </nav>
     )
