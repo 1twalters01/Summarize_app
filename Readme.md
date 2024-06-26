@@ -1,5 +1,5 @@
 # Summarise
-[Polyglot datatypes goes brr](https://github.com/1twalters01/Summarize_app/blob/main/Backend/Summarize/polyglot/src/datatypes.rs)
+[Polyglot datatypes goes brr](https://github.com/1twalters01/Summarize_app/blob/main/Backend/polyglot/src/datatypes.rs)
 
 ## Lanugages
 * Server:
