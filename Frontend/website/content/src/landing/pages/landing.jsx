@@ -40,20 +40,21 @@ const Landing = () => {
 
           <div>
             <div>
-              <h3><a href="">Download</a></h3>
+              <h3>Download</h3>
               <a href="/downloads/mobile">iOS & Android</a>
               <a href="/downloads/desktop">Mac, Windows & Linux</a>
               <a href="/downloads/web-clipper">Web Clipper</a>
             </div>
 
             <div>
-              <a href="">Blog</a>
-              <a href="">Community</a>
-              <a href="">Webinars</a>
+              <h3>Community</h3>
+              <a href="/blog">Blog</a>
+              <a href="/community">Community</a>
+              <a href="/webinars">Webinars</a>
             </div>
             <div>
               <h3><a href = "">Resources</a></h3>
-              <a href="http://127.0.0.1:8080/pricing/">Pricing</a>
+              <a href="/pricing/">Pricing</a>
               <a href="">About us</a>
               <a href="">Email us</a>
               <a href="">Security</a>
