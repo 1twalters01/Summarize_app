@@ -7,8 +7,8 @@ const Landing = () => {
 
       <div>
         <div>
-          <h1>All of your knowledge, in one place</h1>
-          <h2>Summarize helps you to improve your knowledge retention rate</h2>
+          <h1>Your knowledge, one place</h1>
+          <h2>Improve your knowledge retention with Summarize</h2>
         </div>
 
         <div>
@@ -53,14 +53,21 @@ const Landing = () => {
               <a href="/webinars">Webinars</a>
             </div>
             <div>
-              <h3><a href = "">Resources</a></h3>
-              <a href="/pricing/">Pricing</a>
-              <a href="">About us</a>
-              <a href="">Email us</a>
-              <a href="">Security</a>
-              <a href="">Terms & conditions</a>
-              <a href="">Privacy</a>
-              <a href="">Cookie settings</a>
+              <h3>Products</h3>
+                <a href="/pricing">Pricing</a>
+                <a href="/releases">Releases</a>
+                <a href="/ai">AI</a>
+                <a href="/library">Library</a>
+                <a href="/sync">Sync</a>
+            </div>
+            <div>
+              <h3>Company</h3>
+              <a href="/about-us">About us</a>
+              <a href="/email-us">Email us</a>
+              <a href="/security">Security</a>
+              <a href="/cookie-settings">Cookie settings</a>
+              <a href="/terms">Terms & conditions</a>
+              <a href="/privacy">Privacy</a>
             </div>
           </div>
 
