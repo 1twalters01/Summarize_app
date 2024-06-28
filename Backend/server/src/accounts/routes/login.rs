@@ -145,7 +145,7 @@ pub async fn post_password(
     let mut res_body: LoginPasswordResponseSchema = LoginPasswordResponseSchema::new();
 
     // try to get user from token in redis
-    let con = create_redis_client_connection();
+    let mut con = create_redis_client_connection();
     let user: User = match get_user_from_token_in_redis(con, &login_email_token) {
         // if error return error
         Err(err) => {
@@ -252,6 +252,21 @@ pub async fn post_password(
         }
     };
 
+    // delete old token
+    con = create_redis_client_connection();
+    let delete_redis_result = delete_key_in_redis(con, &login_email_token);
+
+    // if redis fails then return an error
+    if delete_redis_result.await.is_err() {
+        res_body.account_error = AccountError {
+            is_error: true,
+            error_message: Some(String::from("Server error")),
+        };
+        return Ok(HttpResponse::FailedDependency()
+            .content_type("application/json; charset=utf-8")
+            .json(res_body));
+    }
+
     // return success
     res_body.has_totp = false;
     res_body.auth_tokens = Some(auth_tokens);
@@ -261,9 +276,9 @@ pub async fn post_password(
 }
 
 pub async fn post_totp(data: Json<LoginTotpRequest>, req: HttpRequest) -> Result<impl Responder> {
-    let login_password_response_token: String = req
+    let login_email_token: String = req
         .headers()
-        .get("login_password_response_token")
+        .get("login_email_token")
         .unwrap()
         .to_str()
         .unwrap()
@@ -271,17 +286,17 @@ pub async fn post_totp(data: Json<LoginTotpRequest>, req: HttpRequest) -> Result
     let LoginTotpRequest { totp } = data.into_inner();
     let LoginTotpRequestSchema {
         totp,
-        login_password_response_token,
+        login_email_token,
     } = LoginTotpRequestSchema {
         totp,
-        login_password_response_token,
+        login_email_token,
     };
     let mut res_body: LoginTotpResponseSchema = LoginTotpResponseSchema::new();
 
     // Try to get TokenObject from redis
     let mut con = create_redis_client_connection();
     let (mut user, remember_me): (User, bool) =
-        match get_user_remember_me_from_token_in_redis(con, &login_password_response_token) {
+        match get_user_remember_me_from_token_in_redis(con, &login_email_token) {
             // if error return error
             Err(err) => {
                 let error: AccountError = AccountError {
@@ -339,7 +354,7 @@ pub async fn post_totp(data: Json<LoginTotpRequest>, req: HttpRequest) -> Result
 
     // delete old token from redis
     con = create_redis_client_connection();
-    let delete_redis_result = delete_key_in_redis(con, &login_password_response_token);
+    let delete_redis_result = delete_key_in_redis(con, &login_email_token);
 
     // if redis fails then return an error
     if delete_redis_result.await.is_err() {
@@ -363,6 +378,21 @@ pub async fn post_totp(data: Json<LoginTotpRequest>, req: HttpRequest) -> Result
                 .json(res_body));
         }
     };
+
+    // delete old token
+    con = create_redis_client_connection();
+    let delete_redis_result = delete_key_in_redis(con, &login_email_token);
+
+    // if redis fails then return an error
+    if delete_redis_result.await.is_err() {
+        res_body.account_error = AccountError {
+            is_error: true,
+            error_message: Some(String::from("Server error")),
+        };
+        return Ok(HttpResponse::FailedDependency()
+            .content_type("application/json; charset=utf-8")
+            .json(res_body));
+    }
 
     // return success
     res_body.is_totp_correct = true;
