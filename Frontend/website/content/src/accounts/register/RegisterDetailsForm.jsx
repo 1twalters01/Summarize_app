@@ -56,11 +56,8 @@ const postDetails = async(username, password, passwordConfirmation, firstName, l
   /** @type {Promise<number|void|Response>} */
   let response = postRegisterDetails(username, password, passwordConfirmation, firstName, lastName)
     .then((res) => {
-      setCookie("register_verify_token", res.register_verify_token, 1800);
-      deleteCookie("register_email_token");
-    }) 
-
-  return response;
+      deleteCookie("register_verify_token");
+    })
 };
 
 const RegisterDetailsForm = () => {
@@ -74,8 +71,9 @@ const RegisterDetailsForm = () => {
   /** @param {SubmitEvent} e */
   function PostRegister(e) {
     e.preventDefault();
-    let response = postDetails(username, password, passwordConfirmation, firstName, lastName);
-    response.then((response) => console.log("response: ", response));
+    postDetails(username, password, passwordConfirmation, firstName, lastName);
+    const navigate = useNavigate();
+    navigate('/login');
   }
 
   return (
