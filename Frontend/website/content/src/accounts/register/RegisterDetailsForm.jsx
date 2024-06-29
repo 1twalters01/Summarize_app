@@ -1,4 +1,5 @@
 import { createSignal } from 'solid-js';
+import { useNavigate } from '@solidjs/router';
 import { getCookie, setCookie, deleteCookie } from '../../utils/cookies';
 
 /** @template T
@@ -73,7 +74,7 @@ const RegisterDetailsForm = () => {
     e.preventDefault();
     postDetails(username, password, passwordConfirmation, firstName, lastName);
     const navigate = useNavigate();
-    navigate('/login');
+    navigate("/login", { replace: true });
   }
 
   return (
