@@ -58,7 +58,7 @@ pub fn config(cfg: &mut ServiceConfig) {
                 post().to(routes::password_reset::link_verify),
             )
             .route(
-                "/password-reset-confirmation",
+                "/password",
                 post().to(routes::password_reset::post_password_reset),
             ),
     )

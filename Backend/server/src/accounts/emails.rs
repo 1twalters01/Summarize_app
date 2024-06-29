@@ -17,12 +17,15 @@ pub fn compose_register_email_message(
 }
 
 pub fn compose_password_reset_email_message(
-    password_reset_response_token: &str,
-    user: &User,
+    verify_token: &str,
+    register_email_token: &str,
 ) -> EmailMessage {
     let message = EmailMessage {
         subject: String::from("Summarize Password Reset"),
-        body: format!("Token: {}", password_reset_response_token),
+        body: format!(
+            "<h1>Summarize</h1><p>Verify Token: {}</p><p>Password Reset Email Token: {}</p>",
+            verify_token, register_email_token
+        ),
     };
     return message;
 }

@@ -1,5 +1,6 @@
 import { createSignal } from 'solid-js';
-import { getCookie, setCookie, deleteCookie } from '../../utils/cookies';
+import { useNavigate } from '@solidjs/router';
+import { getCookie, deleteCookie } from '../../utils/cookies';
 
 /** @template T
   * @typedef { import('solid-js').Accessor<T> } Accessor
@@ -28,7 +29,7 @@ const postPasswordResetPassword = async(password, passwordConfirmation) => {
     mode: "cors",
     headers: {
       "Content-Type": "application/json",
-      "password_reset_password_token": password_reset_response_token,
+      "password_reset_verification_token": password_reset_response_token,
     },
     body: JSON.stringify({
       "password": password(),
@@ -44,14 +45,15 @@ const postPasswordResetPassword = async(password, passwordConfirmation) => {
   * @param {Accessor<string>} passwordConfirmation Confirmation of the user's new password
 */
 const postPassword = async(password, passwordConfirmation) => {
-  /** @type {Promise<number|void|Response>} */
-  let response = postPasswordResetPassword(password, passwordConfirmation)
+  postPasswordResetPassword(password, passwordConfirmation)
     .then((res) => {
-      setCookie("password_reset_password_token", res.password_reset_password_token, 1800);
-      deleteCookie("password_reset_email_token");
-    }) 
+      if (res.account_error.is_error == false) {
+        deleteCookie("password_reset_verification_token");
+        const navigate = useNavigate();
+        navigate("/login", { replace: true });
+      }
 
-  return response;
+    }) 
 };
 
 const PasswordResetPasswordForm = () => {

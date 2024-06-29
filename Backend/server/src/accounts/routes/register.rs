@@ -15,7 +15,7 @@ use crate::{
             register::{
                 DualVerificationToken, RegisterDetailsRequest,
                 RegisterDetailsResponseSchema, RegisterEmailRequestSchema, RegisterEmailResponseSchema,
-                VerifyRequest, VerifyRequestSchema, VerifyResponseSchema,
+                VerificationRequest, VerificationRequestSchema, VerificationResponseSchema,
             },
             errors::AccountError,
         },
@@ -129,8 +129,8 @@ pub async fn post_email(req_body: Json<RegisterEmailRequestSchema>) -> Result<im
         .json(res_body));
 }
 
-pub async fn post_verify(req_body: Json<VerifyRequest>, req: HttpRequest) -> Result<impl Responder> {
-    let VerifyRequest { verification_token } = req_body.into_inner();
+pub async fn post_verify(req_body: Json<VerificationRequest>, req: HttpRequest) -> Result<impl Responder> {
+    let VerificationRequest { verification_token } = req_body.into_inner();
     let register_email_token: String = req
         .headers()
         .get("register_email_token")
@@ -141,8 +141,8 @@ pub async fn post_verify(req_body: Json<VerifyRequest>, req: HttpRequest) -> Res
     register_verification_functionality(register_email_token, verification_token).await
 }
 
-pub async fn link_verify(path: actix_web::web::Path<VerifyRequestSchema>) -> Result<impl Responder> {
-    let VerifyRequestSchema {
+pub async fn link_verify(path: actix_web::web::Path<VerificationRequestSchema>) -> Result<impl Responder> {
+    let VerificationRequestSchema {
         header_token,
         verification_token,
     } = path.into_inner();
@@ -154,7 +154,7 @@ async fn register_verification_functionality(
     header_token: String,
     verification_token: String,
 ) -> Result<impl Responder> {
-    let mut res_body: VerifyResponseSchema = VerifyResponseSchema::new();
+    let mut res_body: VerificationResponseSchema = VerificationResponseSchema::new();
 
     // Validate tokens
 
@@ -215,7 +215,6 @@ async fn register_verification_functionality(
     }
 
     // return ok
-    res_body.is_verification_token_correct = true;
     res_body.register_response_token = Some(register_verification_token);
     return Ok(HttpResponse::Ok()
         .content_type("application/json; charset=utf-8")

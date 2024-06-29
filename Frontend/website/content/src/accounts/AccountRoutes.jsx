@@ -18,11 +18,11 @@ let AccountRoutes = () => {
   return (
     <>
       <Route path="register/" component={Register} />
-      <Route path="login/" component={Login} />
-      <Route path="logout/" component={Logout} />
       <Route path="activate/:uidb64/:token/" component={Activate} />
+      <Route path="login/" component={Login} />
       <Route path="password-reset/" component={PasswordReset} />
       <Route path="password-reset/:uidb64/:token/" component={PasswordResetToken} />
+      <Route path="logout/" component={Logout} />
     </>
   )
 };

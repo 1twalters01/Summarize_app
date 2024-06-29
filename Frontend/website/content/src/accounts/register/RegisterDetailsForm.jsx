@@ -1,6 +1,6 @@
 import { createSignal } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
-import { getCookie, setCookie, deleteCookie } from '../../utils/cookies';
+import { getCookie, deleteCookie } from '../../utils/cookies';
 
 /** @template T
   * @typedef { import('solid-js').Accessor<T> } Accessor
@@ -54,10 +54,11 @@ const postRegisterDetails = async(username, password, passwordConfirmation, firs
   * @param {Accessor<string>} lastName The user's last name (optional)
 */
 const postDetails = async(username, password, passwordConfirmation, firstName, lastName) => {
-  /** @type {Promise<number|void|Response>} */
-  let response = postRegisterDetails(username, password, passwordConfirmation, firstName, lastName)
-    .then((res) => {
+  postRegisterDetails(username, password, passwordConfirmation, firstName, lastName)
+    .then(() => {
       deleteCookie("register_verify_token");
+      const navigate = useNavigate();
+      navigate("/login", { replace: true });
     })
 };
 
@@ -73,8 +74,6 @@ const RegisterDetailsForm = () => {
   function PostRegister(e) {
     e.preventDefault();
     postDetails(username, password, passwordConfirmation, firstName, lastName);
-    const navigate = useNavigate();
-    navigate("/login", { replace: true });
   }
 
   return (

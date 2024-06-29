@@ -29,7 +29,7 @@ pub async fn delete_user_from_uuid_in_pg_users_table(
     pool: &Pool<Postgres>,
     uuid: &str,
 ) -> Result<(), sqlx::Error> {
-    let user_delete_query = sqlx::query("Delete FROM users WHERE uuid=($1)")
+    let user_delete_query = sqlx::query("Delete FROM users WHERE uuid=($1);")
         .bind(uuid)
         .execute(pool)
         .await;
@@ -43,12 +43,12 @@ pub async fn delete_user_from_uuid_in_pg_users_table(
 
 pub async fn update_password_for_user_in_pg_users_table(
     pool: &Pool<Postgres>,
-    // user: &str,
-    password: &str,
+    user: &User,
 ) -> Result<(), sqlx::Error> {
-    let user_update_query = sqlx::query("")
+    let user_update_query = sqlx::query("UPDATE users SET password=($1) WHERE uuid=($2);")
         // .bind(user)
-        .bind(password)
+        .bind(user.get_password())
+        .bind(user.get_uuid())
         .execute(pool)
         .await;
 

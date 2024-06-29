@@ -1,5 +1,6 @@
 import { createSignal } from 'solid-js';
 import { setCookie } from '../../utils/cookies';
+import { A } from '@solidjs/router';
 
 /** @template T
   * @typedef { import('solid-js').Accessor<T> } Accessor
@@ -65,15 +66,17 @@ const LoginEmailForm = (props) => {
   }
 
   return (
-    <form onSubmit={PostLogin} >
-      <input
-        type="email"
-        placeholder="email"
-        onInput={e => setEmail(e.target.value)}
-        required
-      />
-      <input type="submit" value="Login" />
-    </form>
+    <>
+      <form onSubmit={PostLogin} >
+        <input
+          type="email"
+          placeholder="email"
+          onInput={e => setEmail(e.target.value)}
+          required
+        />
+        <input type="submit" value="Login" />
+      </form>
+    </>
   );
 };
 

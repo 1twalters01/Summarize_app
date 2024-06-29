@@ -32,26 +32,26 @@ impl RegisterEmailResponseSchema {
 
 // Register Verify Structs
 #[derive(Debug, Serialize, Deserialize)]
-pub struct VerifyRequest {
+pub struct VerificationRequest {
     pub verification_token: String, // thing they enter on the site
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct VerifyRequestSchema {
+pub struct VerificationRequestSchema {
     pub header_token: String,       // opaque token in place of the email
     pub verification_token: String, // thing they enter on the site
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct VerifyResponseSchema {
+pub struct VerificationResponseSchema {
     pub account_error: AccountError,
     pub is_verification_token_correct: bool,
     pub register_response_token: Option<String>,
 }
 
-impl VerifyResponseSchema {
-    pub fn new() -> VerifyResponseSchema {
-        VerifyResponseSchema {
+impl VerificationResponseSchema {
+    pub fn new() -> VerificationResponseSchema {
+        VerificationResponseSchema {
             account_error: AccountError::new(),
             is_verification_token_correct: false,
             register_response_token: None,

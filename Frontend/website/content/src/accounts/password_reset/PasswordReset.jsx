@@ -60,7 +60,7 @@ const PasswordReset = () => {
           <PasswordResetEmailForm verificationMode={verificationMode} />
         </Match>
         <Match when={modeOptions.verify === mode()}>
-          <PasswordResetVerificationForm detailsMode={detailsMode} />
+          <PasswordResetVerificationForm passwordMode={detailsMode} />
         </Match>
         <Match when={modeOptions.password === mode()}>
           <PasswordResetPasswordForm />

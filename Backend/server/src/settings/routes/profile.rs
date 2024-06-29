@@ -527,7 +527,7 @@ async fn change_password(
     };
 
     let user_result: Result<Option<User>, sqlx::Error> = User::from_uuid_str(&user_uuid).await;
-    let user: User = match user_result {
+    let mut user: User = match user_result {
         Err(_) => {
             res_body.settings_error = SettingsError {
                 is_error: true,
@@ -563,9 +563,10 @@ async fn change_password(
     }
 
     // change password
+    user.set_password(password);
     let pool = create_pg_pool_connection().await;
     let update_result: Result<(), sqlx::Error> =
-        update_password_for_user_in_pg_users_table(&pool, &password).await;
+        update_password_for_user_in_pg_users_table(&pool, &user).await;
 
     // if sql update error then return an error
     if update_result.is_err() {
