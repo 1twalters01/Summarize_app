@@ -52,12 +52,8 @@ const Register = () => {
   return (
     <>
       <Navbar />
-      <h1>Register</h1>
 
-      <div>
-          <a href="/login/">Log in</a>
-          <a href="/register/">Sign up</a>
-      </div>
+      <h1>Register</h1>
 
       <Switch>
         <Match when={modeOptions.email === mode()}>
@@ -75,5 +71,3 @@ const Register = () => {
 };
 
 export default Register;
-
-

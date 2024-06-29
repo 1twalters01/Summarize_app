@@ -1,5 +1,6 @@
 import { createSignal } from 'solid-js';
 import { getCookie, setCookie, deleteCookie } from '../../utils/cookies';
+import { A } from '@solidjs/router';
 
 /** @template T
   * @typedef { import('solid-js').Accessor<T> } Accessor
@@ -51,11 +52,24 @@ const postLogin = async(password, rememberMe, props) => {
   /** @type {Promise<number|void|Response>} */
   let response = postLoginPassword(password, rememberMe)
     .then((res) => {
-        console.log(res);
-      if (res.login_response_token != null) {
-        setCookie("register_verification_token", res.login_response_token, 1800);
-        deleteCookie("login_email_token"); 
-        props.totpMode();
+      console.log("response: \n");
+      console.log(res);
+      console.log(res.account_error.is_error);
+      if (res.account_error.is_error == false) {
+        deleteCookie("login_email_token");
+
+        if (res.has_totp == true) {
+          setCookie("login_password_token", res.login_response_token, 1800);
+          props.totpMode();
+        } else {
+          let bearer_token = "Bearer " + res.auth_tokens.access_token;
+          setCookie("Authorization", bearer_token, 1800);
+
+          let refresh_token = res.auth_tokens.refresh_token;
+          if (refresh_token != null) {
+              setCookie("Refresh", refresh_token, 18000)
+          }
+        }
       }
     }) 
 
@@ -69,7 +83,7 @@ const LoginPasswordForm = (props) => {
   const [rememberMe, setRememberMe] = createSignal(false);
 
   /** @param {SubmitEvent} e */
-  function PostRegister(e) {
+  function PostLogin(e) {
     e.preventDefault();
     console.log("password: ", password());
 
@@ -78,20 +92,24 @@ const LoginPasswordForm = (props) => {
   }
 
   return (
-    <form onSubmit={PostRegister} >
-      <input
-        type="password"
-        placeholder="password"
-        onInput={e => setToken(e.target.value)}
-        required
-      />
-      <input
-        type="checkbox"
-        checked={rememberMe()}
-        onChange={e => setRememberMe(e.target.checked)}
-      />
-      <input type="submit" value="Submit" />
-    </form>
+    <>
+      <form onSubmit={PostLogin} >
+        <input
+          type="password"
+          placeholder="password"
+          onInput={e => setToken(e.target.value)}
+          required
+        />
+        <input
+          type="checkbox"
+          checked={rememberMe()}
+          onChange={e => setRememberMe(e.target.checked)}
+        />
+        <input type="submit" value="Submit" />
+      </form>
+
+      <A href="/password-reset">Forgot your password?</A>
+    </>
   );
 };
 

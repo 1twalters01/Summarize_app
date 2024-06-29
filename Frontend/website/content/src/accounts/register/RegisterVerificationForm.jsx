@@ -71,15 +71,18 @@ const RegisterVerificationForm = (props) => {
   }
 
   return (
-    <form onSubmit={PostRegister} >
-      <input
-        type="text"
-        placeholder="token"
-        onInput={e => setToken(e.target.value)}
-        required
-      />
-      <input type="submit" value="Submit" />
-    </form>
+    <>
+      <form onSubmit={PostRegister} >
+        <input
+          type="text"
+          placeholder="token"
+          onInput={e => setToken(e.target.value)}
+          required
+        />
+        <input type="submit" value="Submit" />
+      </form>
+
+    </>
   );
 };
 

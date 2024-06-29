@@ -55,11 +55,6 @@ const Login = () => {
 
       <h1>Login</h1>
       
-      <div>
-          <a href="/login/">Log in</a>
-          <a href="/register/">Sign up</a>
-      </div>
-
       <Switch>
         <Match when={mode() == modeOptions.email}>
           <LoginEmailForm passwordMode={passwordMode} />

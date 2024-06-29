@@ -276,9 +276,9 @@ pub async fn post_password(
 }
 
 pub async fn post_totp(data: Json<LoginTotpRequest>, req: HttpRequest) -> Result<impl Responder> {
-    let login_email_token: String = req
+    let login_password_token: String = req
         .headers()
-        .get("login_email_token")
+        .get("login_password_token")
         .unwrap()
         .to_str()
         .unwrap()
@@ -286,17 +286,17 @@ pub async fn post_totp(data: Json<LoginTotpRequest>, req: HttpRequest) -> Result
     let LoginTotpRequest { totp } = data.into_inner();
     let LoginTotpRequestSchema {
         totp,
-        login_email_token,
+        login_password_token,
     } = LoginTotpRequestSchema {
         totp,
-        login_email_token,
+        login_password_token,
     };
     let mut res_body: LoginTotpResponseSchema = LoginTotpResponseSchema::new();
 
     // Try to get TokenObject from redis
     let mut con = create_redis_client_connection();
     let (mut user, remember_me): (User, bool) =
-        match get_user_remember_me_from_token_in_redis(con, &login_email_token) {
+        match get_user_remember_me_from_token_in_redis(con, &login_password_token) {
             // if error return error
             Err(err) => {
                 let error: AccountError = AccountError {
@@ -354,7 +354,7 @@ pub async fn post_totp(data: Json<LoginTotpRequest>, req: HttpRequest) -> Result
 
     // delete old token from redis
     con = create_redis_client_connection();
-    let delete_redis_result = delete_key_in_redis(con, &login_email_token);
+    let delete_redis_result = delete_key_in_redis(con, &login_password_token);
 
     // if redis fails then return an error
     if delete_redis_result.await.is_err() {
@@ -381,7 +381,7 @@ pub async fn post_totp(data: Json<LoginTotpRequest>, req: HttpRequest) -> Result
 
     // delete old token
     con = create_redis_client_connection();
-    let delete_redis_result = delete_key_in_redis(con, &login_email_token);
+    let delete_redis_result = delete_key_in_redis(con, &login_password_token);
 
     // if redis fails then return an error
     if delete_redis_result.await.is_err() {

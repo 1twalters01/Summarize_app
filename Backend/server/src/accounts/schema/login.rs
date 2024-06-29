@@ -70,7 +70,7 @@ pub struct LoginTotpRequest {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct LoginTotpRequestSchema {
-    pub login_email_token: String,
+    pub login_password_token: String,
     pub totp: String,
 }
 
