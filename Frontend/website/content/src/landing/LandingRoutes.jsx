@@ -13,6 +13,7 @@ const Pricing = lazy(() => import('./pages/products/pricing'));
 const Releases = lazy(() => import('./pages/products/releases'));
 const Library = lazy(() => import('./pages/products/library'));
 const Sync = lazy(() => import('./pages/products/sync'));
+const Code = lazy(() => import('./pages/products/code'));
 const AboutUs = lazy(() => import('./pages/company/about_us'));
 const EmailUs = lazy(() => import('./pages/company/email_us'));
 const Security = lazy(() => import('./pages/company/security'));
@@ -37,6 +38,7 @@ const LandingRoutes = () => {
       <Route path="/releases" component={Releases} />
       <Route path="/library" component={Library} />
       <Route path="/sync" component={Sync} />
+      <Route path="/code" component={Code} />
       <Route path="/about-us" component={AboutUs} />
       <Route path="/email-us" component={EmailUs} />
       <Route path="/security" component={Security} />
