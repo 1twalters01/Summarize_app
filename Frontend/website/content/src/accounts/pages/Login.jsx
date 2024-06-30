@@ -1,9 +1,9 @@
 import { createSignal, Switch, Match, lazy } from 'solid-js';
-import Navbar from '../navbar';
+import Navbar from '../components/navbar';
 // const Navbar = lazy(() => import('../navbar'));
-const LoginEmailForm = lazy(() => import('./LoginEmailForm'));
-const LoginPasswordForm = lazy(() => import('./LoginPasswordForm'));
-const LoginTotpForm = lazy(() => import('./LoginTotpForm'));
+const LoginEmailForm = lazy(() => import('../fragments/login/LoginEmailForm'));
+const LoginPasswordForm = lazy(() => import('../fragments/login/LoginPasswordForm'));
+const LoginTotpForm = lazy(() => import('../fragments/login/LoginTotpForm'));
 
 /** 
   * @template T
@@ -53,8 +53,6 @@ const Login = () => {
     <>
       <Navbar />
 
-      <h1>Login</h1>
-      
       <Switch>
         <Match when={mode() == modeOptions.email}>
           <LoginEmailForm passwordMode={passwordMode} />

@@ -1,9 +1,9 @@
 import { createSignal, Switch, Match, lazy } from 'solid-js';
-import Navbar from '../navbar';
+import Navbar from '../components/navbar';
 // const Navbar = lazy(() => import ('../navbar'));
-const PasswordResetEmailForm = lazy(() => import('./PasswordResetEmailForm'));
-const PasswordResetVerificationForm = lazy(() => import('./PasswordResetVerificationForm'));
-const PasswordResetPasswordForm = lazy(() => import('./PasswordResetPasswordForm'));
+const RegisterEmailForm = lazy(() => import('../fragments/register/RegisterEmailForm'));
+const RegisterVerificationForm = lazy(() => import('../fragments/register/RegisterVerificationForm'));
+const RegisterDetailsForm = lazy(() => import('../fragments/register/RegisterDetailsForm'));
 
 /** 
   * @template T
@@ -20,19 +20,19 @@ const PasswordResetPasswordForm = lazy(() => import('./PasswordResetPasswordForm
   * @typedef { import('solid-js').Signal<Y> } Signal
 */
 
-
 /** Enum for mode values.
   * @readonly
   * @enum {number}
   */
+
 var modeOptions = {
   email: 0,
   verify: 1,
-  password: 2,
+  details: 2,
 };
 
 
-const PasswordReset = () => {
+const Register = () => {
   /** @type {Signal<modeOptions>} */
   const [mode, setMode] = createSignal(modeOptions.email);
   console.log(mode());
@@ -46,31 +46,28 @@ const PasswordReset = () => {
   };
 
   const detailsMode = () => {
-    setMode(modeOptions.password);
+    setMode(modeOptions.details);
   };
 
   return (
     <>
       <Navbar />
 
-      <h1>PasswordReset</h1>
+      <h1>Register</h1>
 
       <Switch>
         <Match when={modeOptions.email === mode()}>
-          <PasswordResetEmailForm verificationMode={verificationMode} />
+          <RegisterEmailForm verificationMode={verificationMode} />
         </Match>
         <Match when={modeOptions.verify === mode()}>
-          <PasswordResetVerificationForm passwordMode={detailsMode} />
+          <RegisterVerificationForm detailsMode={detailsMode} />
         </Match>
-        <Match when={modeOptions.password === mode()}>
-          <PasswordResetPasswordForm />
+        <Match when={modeOptions.details === mode()}>
+          <RegisterDetailsForm />
         </Match>
       </Switch>
     </>
   );
 };
 
-export default PasswordReset;
-
-
-
+export default Register;

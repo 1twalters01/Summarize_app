@@ -1,6 +1,6 @@
 import { createSignal } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
-import { getCookie, deleteCookie } from '../../utils/cookies';
+import { getCookie, deleteCookie } from '../../../utils/cookies';
 
 /** @template T
   * @typedef { import('solid-js').Accessor<T> } Accessor

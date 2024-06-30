@@ -1,10 +1,10 @@
 import { Route } from '@solidjs/router';
-import Register from './register/Register';
-import Login from './login/Login';
-import Logout from './Logout';
-import Activate from './register/Activate';
-import PasswordReset from './password_reset/PasswordReset';
-import PasswordResetToken from './password_reset/PasswordResetToken';
+import Register from './pages/Register';
+import Login from './pages/Login';
+import Logout from './pages/Logout';
+import Activate from './pages/Activate';
+import PasswordReset from './pages/PasswordReset';
+import PasswordResetToken from './pages/PasswordResetToken';
 
 // import { lazy } from 'solid-js';
 // const Login = lazy(() => import('./login/Login'));

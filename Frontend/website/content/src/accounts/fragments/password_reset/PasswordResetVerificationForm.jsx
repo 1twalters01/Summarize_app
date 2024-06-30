@@ -1,5 +1,5 @@
 import { createSignal } from 'solid-js';
-import { getCookie, setCookie, deleteCookie } from '../../utils/cookies';
+import { getCookie, setCookie, deleteCookie } from '../../../utils/cookies';
 
 /** @template T
   * @typedef { import('solid-js').Accessor<T> } Accessor
