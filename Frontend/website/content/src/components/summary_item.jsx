@@ -21,7 +21,7 @@ const SummaryItem = (summary_data) => {
   // Add loading state
   return (
     <div class="summary_item">
-      <a href={summary_data.summary_url} ><img src={summary_data.picture_url} /></a>
+      <a href={summary_data.summary_url} class="image"><img src={summary_data.picture_url} /></a>
       <a href={summary_data.book.title_url} class="book_title">{summary_data.book.title}</a>
       <a href={summary_data.book.author_url} class="book_author">{summary_data.book.author}</a>
       <a href={summary_data.summary_author_url} class="summary_author">{summary_data.author}</a>
