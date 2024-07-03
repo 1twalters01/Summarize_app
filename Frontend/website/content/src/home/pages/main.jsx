@@ -8,7 +8,6 @@ const Home = () => {
       <RecommendedForYou />
       <YourSummaries />
       <RecommendedShorts />
-      <YourSummaries />
       <Links />
       <Footer />
     </>
