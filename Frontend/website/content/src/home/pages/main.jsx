@@ -10,6 +10,7 @@ const Home = () => {
       <RecommendedShorts />
       <YourSummaries />
       <Links />
+      <Footer />
     </>
   )
 }
