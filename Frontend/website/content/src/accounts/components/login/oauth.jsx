@@ -1,17 +1,19 @@
 const Oauth2 = () => {
   return (
-    <div>
-      <button>
+    <div class="oauth-btns">
+      <button class="google">
         <img src="" />
         <p>Continue with Google</p>
       </button>
-      <button>
+
+      <button class="apple">
         <img src="" />
         <p>Continue with Apple</p>
       </button>
-      <button>
+
+      <button class="guest">
         <img src="" />
-        <p>Continue with X</p>
+        <p>Continue as Guest</p>
       </button>
     </div>
   )

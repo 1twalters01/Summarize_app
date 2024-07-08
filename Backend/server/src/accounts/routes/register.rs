@@ -68,7 +68,6 @@ pub async fn post_email(req_body: Json<RegisterEmailRequestSchema>) -> Result<im
                 .json(res_body));
         },
         Ok(user_option) if user_option.is_some() == true => {
-            res_body.is_email_stored = true;
             res_body.account_error = AccountError {
                 is_error: true,
                 error_message: Some(String::from("user already exists")),

@@ -1,5 +1,7 @@
-import { createSignal } from 'solid-js';
+import { useContext, createSignal } from 'solid-js';
+import { EmailContext } from '../../context/EmailContext';
 import { setCookie } from '../../../utils/cookies';
+
 // import { A } from '@solidjs/router';
 
 /** @template T
@@ -43,9 +45,11 @@ const postLogin = async(email, props) => {
   /** @type {Promise<number|void|Response>} */
   let response = postLoginEmail(email)
     .then((res) => {
+      console.log(res)
       let login_response_token = res.login_response_token;
       if (login_response_token != null) {
         setCookie("login_email_token", login_response_token, 5);
+        console.log("works");
         props.passwordMode();
       }
     }) 
@@ -55,9 +59,9 @@ const postLogin = async(email, props) => {
 
 
 /** @param {props} props */
-const LoginEmailForm = (props) => {
-  /** @type {Signal<String>} */
-  const [email, setEmail] = createSignal("");
+const LoginEmailFormFragment = (props) => {
+  const {email, setEmail} = useContext(EmailContext);
+  // const [email, setEmail] = createSignal("");
 
   /** @param {SubmitEvent} e */
   function PostLogin(e) {
@@ -67,11 +71,13 @@ const LoginEmailForm = (props) => {
 
   return (
     <>
+      {email()}
       <form onSubmit={PostLogin} >
         <input
           type="email"
           placeholder="email"
           onInput={e => setEmail(e.target.value)}
+          value={email()}
           required
         />
         <input type="submit" value="Login" />
@@ -80,4 +86,4 @@ const LoginEmailForm = (props) => {
   );
 };
 
-export default LoginEmailForm;
+export default LoginEmailFormFragment;

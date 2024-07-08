@@ -16,7 +16,6 @@ pub struct DualVerificationToken {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct RegisterEmailResponseSchema {
     pub account_error: AccountError,
-    pub is_email_stored: bool,
     pub register_response_token: Option<String>,
 }
 
@@ -24,7 +23,6 @@ impl RegisterEmailResponseSchema {
     pub fn new() -> RegisterEmailResponseSchema {
         RegisterEmailResponseSchema {
             account_error: AccountError::new(),
-            is_email_stored: false,
             register_response_token: None,
         }
     }
@@ -45,7 +43,6 @@ pub struct VerificationRequestSchema {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct VerificationResponseSchema {
     pub account_error: AccountError,
-    pub is_verification_token_correct: bool,
     pub register_response_token: Option<String>,
 }
 
@@ -53,7 +50,6 @@ impl VerificationResponseSchema {
     pub fn new() -> VerificationResponseSchema {
         VerificationResponseSchema {
             account_error: AccountError::new(),
-            is_verification_token_correct: false,
             register_response_token: None,
         }
     }

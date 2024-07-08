@@ -1,9 +1,17 @@
-import { createSignal, Switch, Match, lazy } from 'solid-js';
+import { createSignal, Switch, Match } from 'solid-js';
 import Navbar from '../components/navbar';
-// const Navbar = lazy(() => import('../navbar'));
-const LoginEmailForm = lazy(() => import('../fragments/login/LoginEmailForm'));
-const LoginPasswordForm = lazy(() => import('../fragments/login/LoginPasswordForm'));
-const LoginTotpForm = lazy(() => import('../fragments/login/LoginTotpForm'));
+import Headers from "../components/login/headers";
+import Oauth2 from "../components/login/oauth";
+
+import LoginEmailFormFragment from '../components/login/login_email_form_fragment';
+import LoginPasswordFormFragment from '../components/login/login_password_form_fragment';
+import LoginTotpFormFragment from '../components/login/login_totp_form_fragment';
+
+import Footer from "../components/login/footer";
+import { EmailContextProvider } from '../context/EmailContext';
+
+import { useContext } from 'solid-js';
+import { EmailContext } from '../context/EmailContext';
 
 /** 
   * @template T
@@ -21,25 +29,27 @@ const LoginTotpForm = lazy(() => import('../fragments/login/LoginTotpForm'));
 */
 
     
-/** Enum for mode values.
-  * @readonly
-  * @enum {number}
-  */
-var modeOptions = {
-  email: 0,
-  password: 1,
-  totp: 2,
-};
 
 
 const Login = () => {
+  /** Enum for mode values.
+    * @readonly
+    * @enum {number}
+  */
+  var modeOptions = {
+    email: 0,
+    password: 1,
+    totp: 2,
+  };
+
   /** @type {Signal<modeOptions>} */
   const [mode, setMode] = createSignal(modeOptions.email);
-  console.log(mode());
 
-  // const emailMode = () => {
-  //   setMode(modeOptions.email);
-  // };
+  const subheader = "Login to Summarize";
+
+  const emailMode = () => {
+    setMode(modeOptions.email);
+  };
 
   const passwordMode = () => {
     setMode(modeOptions.password);
@@ -50,21 +60,27 @@ const Login = () => {
   };
 
   return (
-    <>
+    <EmailContextProvider>
       <Navbar />
 
+      <Headers subheader={subheader} />
+
+      <Oauth2 />
+
       <Switch>
-        <Match when={mode() == modeOptions.email}>
-          <LoginEmailForm passwordMode={passwordMode} />
+        <Match when={mode() === modeOptions.email}>
+            <LoginEmailFormFragment passwordMode={passwordMode} />
         </Match>
         <Match when={mode() === modeOptions.password}>
-          <LoginPasswordForm totpMode={totpMode} />
+          <LoginPasswordFormFragment emailMode={emailMode} totpMode={totpMode} />
         </Match>
         <Match when={mode() === modeOptions.totp}>
-          <LoginTotpForm />
+          <LoginTotpFormFragment emailMode={emailMode} />
         </Match>
       </Switch>
-    </>
+
+      <Footer />
+    </EmailContextProvider>
   );
 };
 

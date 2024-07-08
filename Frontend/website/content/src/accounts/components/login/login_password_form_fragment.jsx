@@ -15,8 +15,11 @@ import { A } from '@solidjs/router';
 */
 
 /** @typedef {Object} props
+  * @property {Function} emailMode - go to the email screen
   * @property {Function} totpMode - go to next screen
 */
+
+
 
 /**
   * @param {Accessor<string>} password The user's password
@@ -79,7 +82,7 @@ const postLogin = async(password, rememberMe, props) => {
 /** @param {props} props */
 const LoginPasswordFormFragment = (props) => {
   /** @type {Signal<String>} */
-  const [password, setToken] = createSignal("");
+  const [password, setPassword] = createSignal("");
   const [rememberMe, setRememberMe] = createSignal(false);
 
   /** @param {SubmitEvent} e */
@@ -90,14 +93,18 @@ const LoginPasswordFormFragment = (props) => {
     let response = postLogin(password, rememberMe, props);
     response.then((response) => console.log("response: ", response));
   }
-
+  
   return (
     <>
+      <br />
+
+      <button class="return" onclick={() => props.emailMode()}>x</button>
+
       <form onSubmit={PostLogin} >
         <input
           type="password"
           placeholder="password"
-          onInput={e => setToken(e.target.value)}
+          onInput={e => setPassword(e.target.value)}
           required
         />
         <input

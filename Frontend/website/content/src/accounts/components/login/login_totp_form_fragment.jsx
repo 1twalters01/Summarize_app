@@ -1,6 +1,5 @@
 import { createSignal } from 'solid-js';
 import { getCookie, setCookie, deleteCookie } from '../../../utils/cookies';
-import { A } from '@solidjs/router';
 
 /** @template T
   * @typedef { import('solid-js').Accessor<T> } Accessor
@@ -15,28 +14,26 @@ import { A } from '@solidjs/router';
 */
 
 /** @typedef {Object} props
-  * @property {Function} totpMode - go to next screen
+  * @property {Function} emailMode - go to the first screen
 */
 
 /**
-  * @param {Accessor<string>} password The user's password
-  * @param {Accessor<boolean>} rememberMe The user's remember me status
+  * @param {Accessor<string>} totp The user's totp
   */
-const postLoginPassword = async(password, rememberMe) => {
-  let login_response_token = getCookie("login_email_token");
+const postLoginTotp = async(totp) => {
+  let login_response_token = getCookie("login_password_token");
   if (login_response_token == null) {
       login_response_token = "";
   }
-  const response = await fetch("http://127.0.0.1:8000/login/password", {
+  const response = await fetch("http://127.0.0.1:8000/login/totp", {
     method: "POST",
     mode: "cors",
     headers: {
       "Content-Type": "application/json",
-      "login_email_token": login_response_token,
+      "login_password_token": login_response_token,
     },
     body: JSON.stringify({
-      "password": password(),
-      "remember_me": rememberMe(),
+      "totp": totp(),
     })
   });
 
@@ -44,13 +41,11 @@ const postLoginPassword = async(password, rememberMe) => {
 }
 
 /**
-  * @param {Accessor<string>} password The user's password
-  * @param {Accessor<boolean>} rememberMe The user's remember me status
-  * @param {props} props
+  * @param {Accessor<string>} totp The user's totp
 */
-const postLogin = async(password, rememberMe, props) => {
+const postLogin = async(totp) => {
   /** @type {Promise<number|void|Response>} */
-  let response = postLoginPassword(password, rememberMe)
+  let response = postLoginTotp(totp)
     .then((res) => {
       console.log("response: \n");
       console.log(res);
@@ -58,10 +53,7 @@ const postLogin = async(password, rememberMe, props) => {
       if (res.account_error.is_error == false) {
         deleteCookie("login_email_token");
 
-        if (res.has_totp == true) {
-          setCookie("login_password_token", res.login_response_token, 1800);
-          props.totpMode();
-        } else {
+        if (res.is_error == false) {
           let bearer_token = "Bearer " + res.auth_tokens.access_token;
           setCookie("Authorization", bearer_token, 1800);
 
@@ -77,40 +69,35 @@ const postLogin = async(password, rememberMe, props) => {
 };
 
 /** @param {props} props */
-const LoginPasswordForm = (props) => {
+const LoginTotpFormFragment = (props) => {
   /** @type {Signal<String>} */
-  const [password, setToken] = createSignal("");
-  const [rememberMe, setRememberMe] = createSignal(false);
+  const [totp, setTotp] = createSignal("");
 
   /** @param {SubmitEvent} e */
   function PostLogin(e) {
     e.preventDefault();
-    console.log("password: ", password());
+    console.log("totp", totp());
 
-    let response = postLogin(password, rememberMe, props);
+    let response = postLogin(totp);
     response.then((response) => console.log("response: ", response));
   }
 
   return (
     <>
+      <br />
+
+      <button class="return" onclick={() => props.emailMode()}>x</button>
       <form onSubmit={PostLogin} >
         <input
-          type="password"
-          placeholder="password"
-          onInput={e => setToken(e.target.value)}
+          type="text"
+          placeholder="totp"
+          onInput={e => setTotp(e.target.value)}
           required
-        />
-        <input
-          type="checkbox"
-          checked={rememberMe()}
-          onChange={e => setRememberMe(e.target.checked)}
         />
         <input type="submit" value="Submit" />
       </form>
-
-      <A href="/password-reset">Forgot your password?</A>
     </>
   );
 };
 
-export default LoginPasswordForm;
+export default LoginTotpFormFragment;
