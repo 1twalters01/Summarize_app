@@ -1,17 +1,16 @@
 import { Route } from '@solidjs/router';
 
-import Register from './pages/Register';
-import Login from './pages/Login';
+// import Register from './pages/Register';
+// import Login from './pages/Login';
 import Logout from './pages/Logout';
 import Activate from './pages/Activate';
 import PasswordReset from './pages/PasswordReset';
 import PasswordResetToken from './pages/PasswordResetToken';
-import { EmailContextProvider } from './context/EmailContext';
 
-// import { lazy } from 'solid-js';
-// const Login = lazy(() => import('./pages/Login'));
+import { lazy } from 'solid-js';
+const Register = lazy(() => import('./pages/Register'));
+const Login = lazy(() => import('./pages/Login'));
 // const Logout = lazy(() => import('./Logout'));
-// const Register = lazy(() => import('./pages/Register'));
 // const Activate = lazy(() => import('./register/Activate'));
 // const PasswordReset = lazy(() => import('./password_reset/PasswordReset'));
 // const PasswordResetToken = lazy(() => import('./password_reset/PasswordResetToken'));

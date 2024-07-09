@@ -1,20 +1,10 @@
-import { useContext, createSignal } from 'solid-js';
-import { EmailContext } from '../../context/EmailContext';
+import { useEmailContext } from '../../context/EmailContext';
 import { setCookie } from '../../../utils/cookies';
 
-// import { A } from '@solidjs/router';
 
-/** @template T
-  * @typedef { import('solid-js').Accessor<T> } Accessor
-*/
-
-/** @template T
-  * @typedef { import('solid-js').Setter<T> } Setter
-*/
-
-/** @template Y
-  * @typedef { import('solid-js').Signal<Y> } Signal
-*/
+/** @template T @typedef { import('solid-js').Accessor<T> } Accessor */
+/** @template T @typedef { import('solid-js').Setter<T> } Setter */
+/** @template T @typedef { import('solid-js').Signal<T> } Signal */
 
 /** @typedef {Object} props
   * @property {Function} passwordMode - go to next screen
@@ -59,9 +49,8 @@ const postLogin = async(email, props) => {
 
 
 /** @param {props} props */
-const LoginEmailFormFragment = (props) => {
-  const {email, setEmail} = useContext(EmailContext);
-  // const [email, setEmail] = createSignal("");
+const LoginEmailForm = (props) => {
+  const {email, setEmail} = useEmailContext();
 
   /** @param {SubmitEvent} e */
   function PostLogin(e) {
@@ -71,7 +60,6 @@ const LoginEmailFormFragment = (props) => {
 
   return (
     <>
-      {email()}
       <form onSubmit={PostLogin} >
         <input
           type="email"
@@ -80,10 +68,11 @@ const LoginEmailFormFragment = (props) => {
           value={email()}
           required
         />
-        <input type="submit" value="Login" />
+        <input type="submit" value="Continue" />
       </form>
     </>
   );
 };
 
-export default LoginEmailFormFragment;
+export default LoginEmailForm;
+

@@ -1,17 +1,9 @@
 import { createSignal } from 'solid-js';
 import { getCookie, setCookie, deleteCookie } from '../../../utils/cookies';
 
-/** @template T
-  * @typedef { import('solid-js').Accessor<T> } Accessor
-*/
-
-/** @template T
-  * @typedef { import('solid-js').Setter<T> } Setter
-*/
-
-/** @template Y
-  * @typedef { import('solid-js').Signal<Y> } Signal
-*/
+/** @template T @typedef { import('solid-js').Accessor<T> } Accessor */
+/** @template T @typedef { import('solid-js').Setter<T> } Setter */
+/** @template T @typedef { import('solid-js').Signal<T> } Signal */
 
 /** @typedef {Object} props
   * @property {Function} emailMode - go to the first screen
@@ -53,6 +45,9 @@ const postLogin = async(totp) => {
       if (res.account_error.is_error == false) {
         deleteCookie("login_email_token");
 
+        let {setEmail} = useEmailContext();
+        setEmail("");
+
         if (res.is_error == false) {
           let bearer_token = "Bearer " + res.auth_tokens.access_token;
           setCookie("Authorization", bearer_token, 1800);
@@ -69,7 +64,7 @@ const postLogin = async(totp) => {
 };
 
 /** @param {props} props */
-const LoginTotpFormFragment = (props) => {
+const LoginTotpForm = (props) => {
   /** @type {Signal<String>} */
   const [totp, setTotp] = createSignal("");
 
@@ -87,6 +82,7 @@ const LoginTotpFormFragment = (props) => {
       <br />
 
       <button class="return" onclick={() => props.emailMode()}>x</button>
+
       <form onSubmit={PostLogin} >
         <input
           type="text"
@@ -100,4 +96,4 @@ const LoginTotpFormFragment = (props) => {
   );
 };
 
-export default LoginTotpFormFragment;
+export default LoginTotpForm;

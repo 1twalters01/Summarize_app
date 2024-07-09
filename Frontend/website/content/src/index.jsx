@@ -4,14 +4,17 @@ import { Router, Route } from "@solidjs/router";
 import LandingRoutes from './landing/LandingRoutes';
 import AccountRoutes from './accounts/AccountRoutes';
 import SettingsRoutes from './settings/SettingsRoutes';
+import { EmailContextProvider } from './accounts/context/EmailContext';
 
 const App = () => {
   return (
-    <Router>
-      <Route path="/*">{LandingRoutes}</Route>
-      <Route path="/*">{AccountRoutes}</Route>
-      <Route path="/settings/*">{SettingsRoutes}</Route>
-    </Router>
+    <EmailContextProvider>
+      <Router>
+        <Route path="/*">{LandingRoutes}</Route>
+        <Route path="/*">{AccountRoutes}</Route>
+        <Route path="/settings/*">{SettingsRoutes}</Route>
+      </Router>
+    </EmailContextProvider>
   )
 }
 

@@ -1,5 +1,5 @@
-import { createSignal } from 'solid-js';
 import { setCookie } from '../../../utils/cookies';
+import { useEmailContext } from '../../context/EmailContext';
 
 /** @template T
   * @typedef { import('solid-js').Accessor<T> } Accessor
@@ -55,8 +55,7 @@ const postPasswordReset = async(email, props) => {
 
 /** @param {props} props */
 const PasswordResetEmailForm = (props) => {
-  /** @type {Signal<String>} */
-  const [email, setEmail] = createSignal("");
+  const {email, setEmail} = useEmailContext();
 
   /** @param {SubmitEvent} e */
   function PostPasswordReset(e) {
@@ -64,16 +63,16 @@ const PasswordResetEmailForm = (props) => {
     postPasswordReset(email, props);
   }
 
-
   return (
-    <form onSubmit={PostPasswordReset} >
+    <form onSubmit={PostPasswordReset}>
       <input
         type="email"
         placeholder="email"
         onInput={e => setEmail(e.target.value)}
+        value={email()}
         required
       />
-      <input type="submit" value="Login" />
+      <input type="submit" value="Continue" />
     </form>
   )
 }

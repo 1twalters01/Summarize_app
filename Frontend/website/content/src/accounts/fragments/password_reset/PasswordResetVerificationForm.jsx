@@ -1,19 +1,12 @@
 import { createSignal } from 'solid-js';
 import { getCookie, setCookie, deleteCookie } from '../../../utils/cookies';
 
-/** @template T
-  * @typedef { import('solid-js').Accessor<T> } Accessor
-*/
-
-/** @template T
-  * @typedef { import('solid-js').Setter<T> } Setter
-*/
-
-/** @template Y
-  * @typedef { import('solid-js').Signal<Y> } Signal
-*/
+/** @template T @typedef { import('solid-js').Accessor<T> } Accessor */
+/** @template T @typedef { import('solid-js').Setter<T> } Setter */
+/** @template T @typedef { import('solid-js').Signal<T> } Signal */
 
 /** @typedef {Object} props
+  * @property {Function} emailMode - go to the first screen
   * @property {Function} passwordMode - go to next screen
 */
 
@@ -72,6 +65,9 @@ const PasswordResetVerificationForm = (props) => {
 
   return (
     <>
+      <br />
+
+      <button class="return" onclick={() => props.emailMode()}>x</button>
       <form onSubmit={PostPasswordReset} >
         <input
           type="text"

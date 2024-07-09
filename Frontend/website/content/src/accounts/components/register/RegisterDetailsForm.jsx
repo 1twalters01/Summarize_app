@@ -1,19 +1,15 @@
 import { createSignal } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
 import { getCookie, deleteCookie } from '../../../utils/cookies';
+import { useEmailContext } from '../../context/EmailContext';
 
-/** @template T
-  * @typedef { import('solid-js').Accessor<T> } Accessor
+/** @template T @typedef { import('solid-js').Accessor<T> } Accessor */
+/** @template T @typedef { import('solid-js').Setter<T> } Setter */
+/** @template Y @typedef { import('solid-js').Signal<Y> } Signal */
+
+/** @typedef {Object} props
+  * @property {Function} emailMode - go to the first screen
 */
-
-/** @template T
-  * @typedef { import('solid-js').Setter<T> } Setter
-*/
-
-/** @template Y
-  * @typedef { import('solid-js').Signal<Y> } Signal
-*/
-
 
 /**
   * @param {Accessor<string>} username The user's username
@@ -57,12 +53,17 @@ const postDetails = async(username, password, passwordConfirmation, firstName, l
   postRegisterDetails(username, password, passwordConfirmation, firstName, lastName)
     .then(() => {
       deleteCookie("register_verify_token");
+      
+      let {setEmail} = useEmailContext();
+      setEmail("");
+      
       const navigate = useNavigate();
       navigate("/login", { replace: true });
     })
 };
 
-const RegisterDetailsForm = () => {
+/** @param {props} props */
+const RegisterDetailsForm = (props) => {
   /** @type {Signal<String>} */
   const [username, setUsername] = createSignal("");
   const [password, setPassword] = createSignal("");
@@ -77,37 +78,43 @@ const RegisterDetailsForm = () => {
   }
 
   return (
-    <form onSubmit={PostRegister} >
-      <input
-        type="text"
-        placeholder="username"
-        onInput={e => setUsername(e.target.value)}
-        required
-      />
-      <input
-        type="password"
-        placeholder="password"
-        onInput={e => setPassword(e.target.value)}
-        required
-      />
-      <input
-        type="password"
-        placeholder="password confirmation"
-        onInput={e => setPasswordConfirmation(e.target.value)}
-        required
-      />
-      <input
-        type="text"
-        placeholder="first name"
-        onInput={e => setFirstName(e.target.value)}
-      />
-      <input
-        type="text"
-        placeholder="last name"
-        onInput={e => setLastName(e.target.value)}
-      />
-      <input type="submit" value="Login" />
-    </form>
+    <>
+      <br />
+
+      <button class="return" onclick={() => props.emailMode()}>x</button>
+
+      <form onSubmit={PostRegister} >
+        <input
+          type="text"
+          placeholder="username"
+          onInput={e => setUsername(e.target.value)}
+          required
+        />
+        <input
+          type="password"
+          placeholder="password"
+          onInput={e => setPassword(e.target.value)}
+          required
+        />
+        <input
+          type="password"
+          placeholder="password confirmation"
+          onInput={e => setPasswordConfirmation(e.target.value)}
+          required
+        />
+        <input
+          type="text"
+          placeholder="first name"
+          onInput={e => setFirstName(e.target.value)}
+        />
+        <input
+          type="text"
+          placeholder="last name"
+          onInput={e => setLastName(e.target.value)}
+        />
+        <input type="submit" value="Login" />
+      </form>
+    </>
   );
 };
 

@@ -1,17 +1,14 @@
 import { createSignal } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
 import { getCookie, deleteCookie } from '../../../utils/cookies';
+import { useEmailContext } from '../../context/EmailContext';
 
-/** @template T
-  * @typedef { import('solid-js').Accessor<T> } Accessor
-*/
+/** @template T @typedef { import('solid-js').Accessor<T> } Accessor */
+/** @template T @typedef { import('solid-js').Setter<T> } Setter */
+/** @template T @typedef { import('solid-js').Signal<T> } Signal */
 
-/** @template T
-  * @typedef { import('solid-js').Setter<T> } Setter
-*/
-
-/** @template Y
-  * @typedef { import('solid-js').Signal<Y> } Signal
+/** @typedef {Object} props
+  * @property {Function} emailMode - go to the first screen
 */
 
 
@@ -49,6 +46,10 @@ const postPassword = async(password, passwordConfirmation) => {
     .then((res) => {
       if (res.account_error.is_error == false) {
         deleteCookie("password_reset_verification_token");
+        
+        let {setEmail} = useEmailContext();
+        setEmail("");
+        
         const navigate = useNavigate();
         navigate("/login", { replace: true });
       }
@@ -56,7 +57,8 @@ const postPassword = async(password, passwordConfirmation) => {
     }) 
 };
 
-const PasswordResetPasswordForm = () => {
+/** @param {props} props */
+const PasswordResetPasswordForm = (props) => {
   /** @type {Signal<String>} */
   const [password, setPassword] = createSignal("");
   const [passwordConfirmation, setPasswordConfirmation] = createSignal("");
@@ -69,22 +71,29 @@ const PasswordResetPasswordForm = () => {
   }
   
   return (
-    <form onSubmit={PostPasswordReset} >
-      <input
-        type="password"
-        placeholder="password confirmation"
-        onInput={e => setPassword(e.target.value)}
-        required
-      />
-      <input
-        type="password"
-        placeholder="password confirmation"
-        onInput={e => setPasswordConfirmation(e.target.value)}
-        required
-      />
-      <input type="submit" value="Submit" />
-    </form>
+    <>
+      <br />
+
+      <button class="return" onclick={() => props.emailMode()}>x</button>
+
+      <form onSubmit={PostPasswordReset} >
+        <input
+          type="password"
+          placeholder="password confirmation"
+          onInput={e => setPassword(e.target.value)}
+          required
+        />
+        <input
+          type="password"
+          placeholder="password confirmation"
+          onInput={e => setPasswordConfirmation(e.target.value)}
+          required
+        />
+        <input type="submit" value="Submit" />
+      </form>
+    </>
   )
 }
 
 export default PasswordResetPasswordForm;
+

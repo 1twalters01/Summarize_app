@@ -1,18 +1,11 @@
 import { createSignal } from 'solid-js';
 import { getCookie, setCookie, deleteCookie } from '../../../utils/cookies';
 import { A } from '@solidjs/router';
+import { useEmailContext } from '../../context/EmailContext';
 
-/** @template T
-  * @typedef { import('solid-js').Accessor<T> } Accessor
-*/
-
-/** @template T
-  * @typedef { import('solid-js').Setter<T> } Setter
-*/
-
-/** @template Y
-  * @typedef { import('solid-js').Signal<Y> } Signal
-*/
+/** @template T @typedef { import('solid-js').Accessor<T> } Accessor */
+/** @template T @typedef { import('solid-js').Setter<T> } Setter */
+/** @template T @typedef { import('solid-js').Signal<T> } Signal */
 
 /** @typedef {Object} props
   * @property {Function} emailMode - go to the email screen
@@ -68,6 +61,9 @@ const postLogin = async(password, rememberMe, props) => {
           let bearer_token = "Bearer " + res.auth_tokens.access_token;
           setCookie("Authorization", bearer_token, 1800);
 
+          let {setEmail} = useEmailContext();
+          setEmail("");
+
           let refresh_token = res.auth_tokens.refresh_token;
           if (refresh_token != null) {
               setCookie("Refresh", refresh_token, 18000)
@@ -80,7 +76,7 @@ const postLogin = async(password, rememberMe, props) => {
 };
 
 /** @param {props} props */
-const LoginPasswordFormFragment = (props) => {
+const LoginPasswordForm = (props) => {
   /** @type {Signal<String>} */
   const [password, setPassword] = createSignal("");
   const [rememberMe, setRememberMe] = createSignal(false);
@@ -120,4 +116,4 @@ const LoginPasswordFormFragment = (props) => {
   );
 };
 
-export default LoginPasswordFormFragment;
+export default LoginPasswordForm;

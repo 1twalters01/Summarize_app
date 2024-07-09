@@ -1,20 +1,13 @@
 import { createSignal } from 'solid-js';
 import { getCookie, setCookie, deleteCookie } from '../../../utils/cookies';
 
-/** @template T
-  * @typedef { import('solid-js').Accessor<T> } Accessor
-*/
-
-/** @template T
-  * @typedef { import('solid-js').Setter<T> } Setter
-*/
-
-/** @template Y
-  * @typedef { import('solid-js').Signal<Y> } Signal
-*/
+/** @template T @typedef { import('solid-js').Accessor<T> } Accessor */
+/** @template T * @typedef { import('solid-js').Setter<T> } Setter */
+/** @template T @typedef { import('solid-js').Signal<T> } Signal */
 
 /** @typedef {Object} props
-  * @property {Function} detailsMode - go to next screen
+  * @property {Function} emailMode - go to first screen
+  * @property {Function} detailsMode - go to the next screen
 */
 
 /** @param {Accessor<string>} token The user's token */
@@ -72,6 +65,10 @@ const RegisterVerificationForm = (props) => {
 
   return (
     <>
+      <br />
+
+      <button class="return" onclick={() => props.emailMode()}>x</button>
+
       <form onSubmit={PostRegister} >
         <input
           type="text"
@@ -81,7 +78,6 @@ const RegisterVerificationForm = (props) => {
         />
         <input type="submit" value="Submit" />
       </form>
-
     </>
   );
 };

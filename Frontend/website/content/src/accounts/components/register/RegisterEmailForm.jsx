@@ -1,17 +1,9 @@
-import { createSignal } from 'solid-js';
+import { useEmailContext } from '../../context/EmailContext';
 import { setCookie } from '../../../utils/cookies';
 
-/** @template T
-  * @typedef { import('solid-js').Accessor<T> } Accessor
-*/
-
-/** @template T
-  * @typedef { import('solid-js').Setter<T> } Setter
-*/
-
-/** @template Y
-  * @typedef { import('solid-js').Signal<Y> } Signal
-*/
+/** @template T @typedef { import('solid-js').Accessor<T> } Accessor */
+/** @template T * @typedef { import('solid-js').Setter<T> } Setter */
+/** @template T @typedef { import('solid-js').Signal<T> } Signal */
 
 /** @typedef {Object} props
   * @property {Function} verificationMode - go to next screen
@@ -55,8 +47,7 @@ const postRegister = async(email, props) => {
 
 /** @param {props} props */
 const RegisterEmailForm = (props) => {
-  /** @type {Signal<String>} */
-  const [email, setEmail] = createSignal("");
+  const {email, setEmail} = useEmailContext();
 
   /** @param {SubmitEvent} e */
   function PostRegister(e) {
@@ -70,9 +61,10 @@ const RegisterEmailForm = (props) => {
         type="email"
         placeholder="email"
         onInput={e => setEmail(e.target.value)}
+        value={email()}
         required
       />
-      <input type="submit" value="Login" />
+      <input type="submit" value="Continue" />
     </form>
   );
 };
