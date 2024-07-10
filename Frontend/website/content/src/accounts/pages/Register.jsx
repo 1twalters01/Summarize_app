@@ -10,7 +10,6 @@ import Footer from "../components/footer";
 
 /** @template T @typedef { import('solid-js').Accessor<T> } Accessor */
 /** @template T @typedef { import('solid-js').Setter<T> } Setter */
-/** @template T @typedef { import('solid-js').Signal<T> } Signal */
 
 
 const Register = () => {

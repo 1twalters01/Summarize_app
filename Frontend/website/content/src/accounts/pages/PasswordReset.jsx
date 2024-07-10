@@ -3,9 +3,9 @@ import { createSignal, Switch, Match, lazy } from 'solid-js';
 import Navbar from '../components/navbar';
 import Headers from "../components/headers";
 import Oauth2 from "../components/oauth";
-import PasswordResetEmailForm from '../fragments/password_reset/PasswordResetEmailForm';
-import PasswordResetVerificationForm from '../fragments/password_reset/PasswordResetVerificationForm';
-import PasswordResetPasswordForm from '../fragments/password_reset/PasswordResetPasswordForm';
+import PasswordResetEmailForm from '../components/password_reset/PasswordResetEmailForm';
+import PasswordResetVerificationForm from '../components/password_reset/PasswordResetVerificationForm';
+import PasswordResetPasswordForm from '../components/password_reset/PasswordResetPasswordForm';
 import Footer from "../components/footer";
 
 
@@ -16,11 +16,8 @@ import Footer from "../components/footer";
 
 
 const PasswordReset = () => {
-  /** Enum for mode values.
-    * @readonly
-    * @enum {number}
-    */
-  var modeOptions = {
+  /** @enum {number} Enum for mode values */
+  const modeOptions = {
     email: 0,
     verify: 1,
     password: 2,

@@ -4,8 +4,6 @@ import { getCookie, deleteCookie } from '../../../utils/cookies';
 import { useEmailContext } from '../../context/EmailContext';
 
 /** @template T @typedef { import('solid-js').Accessor<T> } Accessor */
-/** @template T @typedef { import('solid-js').Setter<T> } Setter */
-/** @template Y @typedef { import('solid-js').Signal<Y> } Signal */
 
 /** @typedef {Object} props
   * @property {Function} emailMode - go to the first screen
@@ -64,7 +62,6 @@ const postDetails = async(username, password, passwordConfirmation, firstName, l
 
 /** @param {props} props */
 const RegisterDetailsForm = (props) => {
-  /** @type {Signal<String>} */
   const [username, setUsername] = createSignal("");
   const [password, setPassword] = createSignal("");
   const [passwordConfirmation, setPasswordConfirmation] = createSignal("");
