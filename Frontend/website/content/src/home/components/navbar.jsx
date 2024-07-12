@@ -2,7 +2,7 @@ const Navbar = () => {
   return (
     <nav>
       <div class="left">
-        <a href="/"><img href="" /></a>
+        <a href="/"><img src="" /></a>
       </div>
       <div class="center">
         <ThemeSlider />

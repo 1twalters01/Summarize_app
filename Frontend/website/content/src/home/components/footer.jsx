@@ -1,11 +1,13 @@
-/** @typedef {Object} book
-  * @property {string} url - The book's url
-  * @property {string} image_url - The book's image url
-  * @property {string} title - The book's title
+/** @template T @typedef { import('solid-js').Accessor<T> } Accessor */
+
+/** @typedef {Object} Summary
+  * @property {string} url - The summary's url
+  * @property {string} image_url - The summary's image url
+  * @property {string} title - The summary's title
 */
 
 /** @typedef {Object} props
-  * @property {book} book - the book in question
+  * @property {Summary} summary - the summary in question
 */
 
 /** @param {props} props */
@@ -24,10 +26,10 @@ const Footer = (props) => {
           <p class="">Libraries</p>
         </a>
       </div>
-      <div class="book">
-        <a href={props.book.url}>
-          <img src={props.book.image_url} />
-          <p class="">{props.book.title}</p>
+      <div class="summary">
+        <a href={props.summary.url}>
+          <img src={props.summary.image_url} />
+          <p class="">{props.summary.title}</p>
         </a>
       </div>
       <div class="search">

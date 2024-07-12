@@ -1,5 +1,13 @@
+import { For, createSignal } from "solid-js";
+import { createStore } from "solid-js/store";
+import SummaryArray from "../../components/summary_array";
+
 const NewSummaries = () => {
-  function filterByGenre(e) {
+  const [genres, setGenres] = createStore([]);
+  const [summaryDataArray, setSummaryDataArray] = createStore([]);
+
+  /** @param {string} genre - The selected genre */
+  function filterByGenre(genre) {
     // Do a post request to a new summaries api and then update summary_data_array
   }
   
@@ -11,16 +19,16 @@ const NewSummaries = () => {
         </div>
 
         <div class="right">
-          <For each={genres()}>{(genre) =>
-              <btn onClick={filterByGenre}>{genre}</btn>
+          <For each={genres}>{(genre) =>
+            <button onClick={() => filterByGenre(genre)}>{genre}</button>
           }</For>
         </div>
       </div>
 
       <div class="bottom">
-        <SummaryArray summary_data={summary_data_array} />
+        <SummaryArray summary_data={summaryDataArray} />
       </div>
-    <div />
+    </div>
   )
 };
 

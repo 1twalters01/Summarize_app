@@ -10,7 +10,7 @@ const YourLibraries = () => {
       <div class="bottom">
         <LibraryArray library_data={library_data_array}/>
       </div>
-    <div />
+    </div>
   )
 };
 

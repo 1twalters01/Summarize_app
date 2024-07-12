@@ -1,8 +1,71 @@
-const CurrentlyReading = (summary) = {
+import {createSignal} from "solid-js";
+
+/** @template T @typedef { import('solid-js').Accessor<T> } Accessor */
+
+/** @typedef {Object} Summary
+  * @property {string} summary_url - The url to the suummary
+  * @property {string} image_url - The url to the picture of the book
+  * @property {Book} book - The book the summary summarizes
+  * @property {Author} author - The user that wrote the summary
+  */
+
+/** @typedef {Object} Book
+  * @property {string} title - The title of the book
+  * @property {string} url - The book's url
+  * @property {Author} author - The author of the book
+  */
+
+/** @typedef {Object} Author
+  * @property {string} name - The author
+  * @property {string} url - The author's url
+  */
+
+/** @typedef {Object} Props
+  * @property {string} header - The section's header
+  * @property {Accessor<Summary>} summary - The summary for the book
+  */
+
+/** @param {Props} props */
+const CurrentlyReading = (props) => {
+  const [slider1State, setSlider1State] = createSignal(true); 
+  const [slider2State, setSlider2State] = createSignal(false); 
+  const [slider3State, setSlider3State] = createSignal(false); 
+  const [slider4State, setSlider4State] = createSignal(false); 
+  const [slider5State, setSlider5State] = createSignal(false); 
+  
+  /** @param {number} slider_number - the slider in question */
+  function setSliderState(slider_number) {
+      setSlider1State(false);
+      setSlider2State(false);
+      setSlider3State(false);
+      setSlider4State(false);
+      setSlider5State(false);
+
+      switch (slider_number) {
+        case 1:
+          setSlider1State(true);
+          break;
+        case 2:
+          setSlider2State(true);
+          break;
+        case 3:
+          setSlider3State(true);
+          break;
+        case 4:
+          setSlider4State(true);
+          break;
+        case 5:
+          setSlider1State(true);
+          break;
+        default:
+          break;
+      }
+  }
+
   return (
-    <div class="currently-reading">
+    <div class={props.header}>
       <div class="main-header">
-        <h1>Currently Reading</h1>
+        <h1>{props.header}</h1>
       </div>
 
       <div class="content">
@@ -10,38 +73,54 @@ const CurrentlyReading = (summary) = {
           <div class="top">
             <div class="subheader-1">
               <h2 class="book-title">
-                <a href={summary.book.url}>{summary.book.title}</a>
+                <a href={props.summary().book.url}>{props.summary().book.title}</a>
               </h2>
               <h3 class="author-name">
-                <a href={summary.book.author.url}>By {summary.book.author.name}</a>
+                <a href={props.summary().book.author.url}>By {props.summary().book.author.name}</a>
               </h3>
             </div>
 
             <div class="subheader-2">
               <h3 class="summary-by">Summary By</h3>
-              <h4 class="summary-author">{summary.author}</h3>
+              <h4 class="summary-author">{props.summary().author.name}</h4>
             </div>
           </div>
 
           <div class="bottom">
-            <btn class="Read Now">Read Now</btn>
+            <button class="Read Now">Read Now</button>
           </div>
         </div>
 
         <div class="right">
-          <img href={summary.book.img_url} />
+          <img src={props.summary().image_url} />
         </div>
       </div>
         
       <div class="slider">
-        <div class={is_slider1_active}></div>
-        <div class={is_slider2_active}></div>
-        <div class={is_slider3_active}></div>
-        <div class={is_slider4_active}></div>
-        <div class={is_slider5_active}></div>
+        <div
+          class={"slider-" + slider1State()}
+          onClick={() => setSliderState(1)}
+        ></div>
+        <div
+          class={"slider-" + slider2State()}
+          onClick={() => setSliderState(2)}
+        ></div>
+        <div
+          class={"slider-" + slider3State()}
+          onClick={() => setSliderState(3)}
+        ></div>
+        <div
+          class={"slider-" + slider4State()}
+          onClick={() => setSliderState(4)}
+        ></div>
+        <div
+          class={"slider-" + slider5State()}
+          onClick={() => setSliderState(5)}
+        ></div>
       </div>
     </div>
   )
 }
 
 export default CurrentlyReading;
+

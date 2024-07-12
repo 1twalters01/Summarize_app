@@ -1,8 +1,8 @@
 const Links = () => {
   return (
-    <div>
-      <a href="">Write a summary</a>
-      <a href="">Search for summaries <img href="" /></a>
+    <div class="main-links">
+      <a href="/editor">Write a summary</a>
+      <a href="/search">Search for summaries <img src="" /></a>
     </div>
   )
 }
