@@ -1,6 +1,7 @@
 import {createSignal} from "solid-js";
 
 /** @template T @typedef { import('solid-js').Accessor<T> } Accessor */
+/** @template T @typedef { import("solid-js/store").Store<T> } Store */
 
 /** @typedef {Object} Summary
   * @property {string} summary_url - The url to the suummary
@@ -22,7 +23,7 @@ import {createSignal} from "solid-js";
 
 /** @typedef {Object} Props
   * @property {string} header - The section's header
-  * @property {Accessor<Summary>} summary - The summary for the book
+  * @property {Store<Summary[]>} summaries - The summaries for the books
   */
 
 /** @param {Props} props */
@@ -73,16 +74,16 @@ const CurrentlyReading = (props) => {
           <div class="top">
             <div class="subheader-1">
               <h2 class="book-title">
-                <a href={props.summary().book.url}>{props.summary().book.title}</a>
+                <a href={props.summaries[0].book.url}>{props.summaries[0].book.title}</a>
               </h2>
               <h3 class="author-name">
-                <a href={props.summary().book.author.url}>By {props.summary().book.author.name}</a>
+                <a href={props.summaries[0].book.author.url}>By {props.summaries[0].book.author.name}</a>
               </h3>
             </div>
 
             <div class="subheader-2">
               <h3 class="summary-by">Summary By</h3>
-              <h4 class="summary-author">{props.summary().author.name}</h4>
+              <h4 class="summary-author">{props.summaries[0].author.name}</h4>
             </div>
           </div>
 
@@ -92,7 +93,7 @@ const CurrentlyReading = (props) => {
         </div>
 
         <div class="right">
-          <img src={props.summary().image_url} />
+          <img src={props.summaries[0].image_url} />
         </div>
       </div>
         

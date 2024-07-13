@@ -20,7 +20,7 @@ const RecommendedShorts = () => {
       <div class="bottom">
         <SummaryArray summary_data={summary_data_array} />
       </div>
-    <div />
+    </div>
   )
 };
 

@@ -43,7 +43,7 @@ const postLoginPassword = async(password, rememberMe) => {
   * @param {Accessor<string>} password The user's password
   * @param {Accessor<boolean>} rememberMe The user's remember me status
   * @param {props} props
-*/
+  */
 const postLogin = async(password, rememberMe, props) => {
   /** @type {Promise<number|void|Response>} */
   let response = postLoginPassword(password, rememberMe)

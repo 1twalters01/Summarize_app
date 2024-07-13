@@ -1,4 +1,4 @@
-const RecommendedForYou = () => {
+const RecommendedSummaries = () => {
   function filterByGenre(e) {
     // Do a post request to a new summaries api and then update summary_data_array
   }
@@ -20,8 +20,8 @@ const RecommendedForYou = () => {
       <div class="bottom">
         <SummaryArray summary_data={summary_data_array} />
       </div>
-    <div />
+    </div>
   )
 };
 
-export default RecommendedForYou;
+export default RecommendedSummaries;
