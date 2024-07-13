@@ -1,6 +1,8 @@
-import LibraryArray from "../components/";
+import LibraryArray from "../../components/LibraryArray";
 
 /** @template T @typedef { import("solid-js/store").Store<T> } Store */
+
+/** @typedef {object} Library */
 
 /** @typedef {object} Props
   * @property {Store<Library>} libraries
@@ -17,7 +19,7 @@ const YourLibraries = (props) => {
       </div>
 
       <div class="bottom">
-        <LibraryArray library_data={props.libraries}/>
+        <LibraryArray libraries={props.libraries}/>
       </div>
     </div>
   )

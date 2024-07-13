@@ -1,12 +1,12 @@
 import { Route } from '@solidjs/router';
 
-import Subscriptions from './pages/Subscriptions';
+import Main from './pages/Main';
 
 
 let SubscriptionsRoutes = () => {
   return (
     <>
-      <Route path="/subscriptions" component={Subscriptions} />
+      <Route path="/subscriptions" component={Main} />
     </>
   )
 };

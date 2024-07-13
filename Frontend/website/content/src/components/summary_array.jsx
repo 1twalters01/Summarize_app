@@ -1,15 +1,20 @@
-/** @param {Array.<SummaryDataArray>} summary_data_array - Array of summary data */
-const summary_array = (summary_data_array) => {
+import { For } from "solid-js";
+import SummaryItem from "./summary_item";
+
+/** @param {Array.<Props>} props */
+const SummaryArray = (props) => {
   // add check for if array is fully left or fully right
   return (
-    <div class="left-arrow"></div>
-    <div class="summary-array">
-      <For each={summary_data_array}>{(summary_data, i) =>
-        <SummaryItem summary_data={summary_data} />
-      }</For>
-    </div>
-    <div class="right-arrow"></div>
+    <>
+      <div class="left-arrow"></div>
+      <div class="summary-array">
+        <For each={props.summary_data_array}>{(summary_data, i) =>
+          <SummaryItem summary_data={summary_data} />
+        }</For>
+      </div>
+      <div class="right-arrow"></div>
+    </>
   )
-}
+};
 
-export default SummaryArray
+export default SummaryArray;

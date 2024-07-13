@@ -16,13 +16,45 @@ import { getCookie } from "../../utils/cookies";
 /** @template T @typedef { import("solid-js/store").Store<T> } Store */
 
 const Home = () => {
-  // Fetch:
-     // last 5 read summaries
-     // last 5 read libraries
-     // 15 New summaries
-     // 15 Recommendations
-     // First 6 Written summaries
-     // 15 Recommended shorts
+  /** @param {number} number_of_genres */
+  async function fetchFavouriteGenres(number_of_genres) {
+    let bearer_token = getCookie("Authorization")
+    if (bearer_token == null) { bearer_token = "" };
+
+    const response = await fetch("http://127.0.0.1:8000/summaries/genres", {
+      method: "POST",
+      mode: "cors",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": bearer_token,
+      },
+      body: JSON.stringify ({
+        "number_of_genres": number_of_genres, 
+      })
+    });
+
+  response.json().then((json) => setGenres(json));
+  }
+
+  /** @param {number} number_of_summaries */
+  async function fetchLastReadLibraries(number_of_summaries) {
+    let bearer_token = getCookie("Authorization")
+    if (bearer_token == null) { bearer_token = "" };
+
+    const response = await fetch("http://127.0.0.1:8000/summaries/last-read-libraries", {
+      method: "POST",
+      mode: "cors",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": bearer_token,
+      },
+      body: JSON.stringify ({
+        "number_of_summaries": number_of_summaries, 
+      })
+    });
+
+    response.json().then((json) => setYourLibraries(json));
+  }
 
   /** @param {number} number_of_summaries */
   async function fetchLastReadSummaries(number_of_summaries) {
@@ -158,6 +190,7 @@ const Home = () => {
       summary_url: ""
   };
 
+  const [genres, setGenres] = createStore([]);
   const [currentSummaries, setCurrentSummaries] = createStore([empty_summary]);
   const [newSummaries, setNewSummaries] = createStore([empty_summary]);
   const [recommendedSummaries, setRecommendedSummaries] = createStore([empty_summary]);
