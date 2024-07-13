@@ -2,7 +2,16 @@ import { For, createSignal } from "solid-js";
 import { createStore } from "solid-js/store";
 import SummaryArray from "../../components/summary_array";
 
-const NewSummaries = () => {
+/** @template T @typedef { import("solid-js/store").Store<T> } Store */
+
+/** @typedef {object} Summary */
+
+/** @typedef {object} Props
+  * @property {Store<Summary>} summaries
+  */
+
+/** @param {Props} props */
+const NewSummaries = (props) => {
   const [genres, setGenres] = createStore([]);
   const [summaryDataArray, setSummaryDataArray] = createStore([]);
 
@@ -26,7 +35,7 @@ const NewSummaries = () => {
       </div>
 
       <div class="bottom">
-        <SummaryArray summary_data={summaryDataArray} />
+        <SummaryArray summary_data={props.summaries} />
       </div>
     </div>
   )

@@ -169,11 +169,11 @@ const Home = () => {
     <>
       <Navbar />
       <CurrentlyReading header="Currently Reading" summaries={currentSummaries}/>
-      <YourLibraries libraries={YourLibraries} />
-      <NewSummaries summaries={yourSummaries} />
-      <RecommendedSummaries />
-      <YourSummaries summaries={YourSummaries} />
-      <RecommendedShorts />
+      <YourLibraries libraries={yourLibraries} />
+      <NewSummaries summaries={newSummaries} />
+      <RecommendedSummaries summaries={recommendedSummaries} />
+      <YourSummaries summaries={yourSummaries} />
+      <RecommendedShorts summaries={recommendedShorts} />
       <Links />
       <Footer summary={{
         url: currentSummaries[0].summary_url,

@@ -1,5 +1,13 @@
-// Placeholder things
-const YourSummaries = () => {
+/** @template T @typedef { import("solid-js/store").Store<T> } Store */
+
+/** @typedef {object} Summary */
+
+/** @typedef {object} Props
+  * @property {Store<Summary>} summaries
+  */
+
+/** @param {Props} props */
+const YourSummaries = (props) => {
   return (
     <div class="your-summaries">
       <div class="top">
