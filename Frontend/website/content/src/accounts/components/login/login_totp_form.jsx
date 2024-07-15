@@ -9,9 +9,7 @@ import { getCookie, setCookie, deleteCookie } from '../../../utils/cookies';
   * @property {Function} emailMode - go to the first screen
 */
 
-/**
-  * @param {Accessor<string>} totp The user's totp
-  */
+/** @param {Accessor<string>} totp The user's totp */
 const postLoginTotp = async(totp) => {
   let login_response_token = getCookie("login_password_token");
   if (login_response_token == null) {
@@ -32,9 +30,7 @@ const postLoginTotp = async(totp) => {
   return response.json();
 }
 
-/**
-  * @param {Accessor<string>} totp The user's totp
-*/
+/** @param {Accessor<string>} totp The user's totp */
 const postLogin = async(totp) => {
   /** @type {Promise<number|void|Response>} */
   let response = postLoginTotp(totp)
