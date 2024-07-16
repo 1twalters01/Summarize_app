@@ -20,7 +20,8 @@ pub async fn get_favourite_genres(data: Json<FavouriteGenresRequestStruct>) -> R
 
   let FavouriteGenresRequestSchema { number_of_genres } = data.into_inner();
   let mut res_body: FavouriteGenresResponseSchema = FavouriteGenresResponseSchema::new();
-  
+
+  // Error if number_of_genres > 15?
   let request_limit = 15;
   let upper_limit = cmp::min(request_limit, number_of_genres);
 
@@ -60,7 +61,7 @@ pub async fn get_favourite_genres(data: Json<FavouriteGenresRequestStruct>) -> R
 pub async fn get_favourite_genres_from_uuid(user_uuid: String, upper_limit: u8) {
 }
 
-pub async fn get_example_genres() -> Result<impl Responder> {
+pub async fn get_example_genres(data: Json<FavouriteGenresRequestStruct>) -> Result<impl Responder> {
   let FavouriteGenresRequestSchema { number_of_genres } = data.into_inner();
   let mut res_body: FavouriteGenresResponseSchema = FavouriteGenresResponseSchema::new();
   
