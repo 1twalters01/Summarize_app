@@ -1,4 +1,9 @@
 use actix_web::{web::Json, HttpRequest, HttpResponse, Responder, Result};
+use actix_protobuf::ProtoBuf;
+
+mod request {
+    include!(concat!(env!("OUT_DIR"), "/request.rs"));
+}
 
 use crate::{
     accounts::{
@@ -35,8 +40,10 @@ use crate::{
 };
 
 
-pub async fn post_email(data: Json<LoginEmailRequestSchema>) -> Result<impl Responder> {
-    let LoginEmailRequestSchema { email } = data.into_inner();
+pub async fn post_email(data: ProtoBuf<request::Request>) -> Result<impl Responder> {
+// pub async fn post_email(data: Json<LoginEmailRequestSchema>) -> Result<impl Responder> {
+//     let LoginEmailRequestSchema { email } = data.into_inner();
+    let request::Request { email } = data.to_owned();
     let mut res_body: LoginEmailResponseSchema = LoginEmailResponseSchema::new();
 
     // Validate the email from the request body
@@ -55,7 +62,7 @@ pub async fn post_email(data: Json<LoginEmailRequestSchema>) -> Result<impl Resp
     // try to get the user from postgres using the email
     let pool = create_pg_pool_connection().await;
     let user_result: Result<Option<User>, sqlx::Error> =
-        get_user_from_email_in_pg_users_table(&pool, email.as_str()).await;
+        get_user_from_email_in_pg_users_table(&pool, &email).await;
 
     // if user does not exist or is none then return an error
     let user: User = match user_result {

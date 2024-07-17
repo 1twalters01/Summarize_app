@@ -1,4 +1,4 @@
-use actix_web::{get, post, web, HttpResponse, Responder, Result};
+use actix_web::{web, HttpResponse, Responder, Result};
 use captcha::{filters::{Dots, Noise}, Captcha};
 
 use crate::{

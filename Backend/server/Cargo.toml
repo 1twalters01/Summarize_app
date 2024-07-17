@@ -2,11 +2,13 @@
 name = "server"
 version = "0.1.0"
 edition = "2021"
+build = "build.rs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 actix-cors = "0.7.0"
+actix-protobuf = "0.10.0"
 actix-web = "4.5.1"
 argon2 = "0.5.3"
 captcha = "0.0.9"
@@ -15,6 +17,8 @@ dotenv = "0.15.0"
 futures-util = "0.3.30"
 jsonwebtoken = "9.3.0"
 lettre = { version = "0.11.7", features = ["smtp-transport", "rustls-tls", "hostname", "builder"] }
+prost = { version = "0.12", features = ["prost-derive"] }
+prost-types = "0.12"
 rand = "0.8.5"
 redis = { version = "0.25.2", features = ["tokio-comp"] }
 reqwest = { version = "0.12.4", features = ["json"] }
@@ -24,3 +28,6 @@ sqlx = { version = "0.7.4", features = ["runtime-tokio", "postgres", "uuid"] }
 tokio = { version = "1.37.0", features = ["full"] }
 url = "2.5.0"
 uuid = { version = "1.8.0", features = ["v4", "fast-rng", "macro-diagnostics", "serde"] }
+
+[build-dependencies]
+prost-build = "0.12"

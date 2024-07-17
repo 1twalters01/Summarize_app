@@ -1,19 +1,3 @@
-use actix_web::{web::Json, HttpRequest, HttpResponse, Responder, Result};
-use std::cmp;
-
-pub struct FavouriteGenresRequestSchema {
-  pub number_of_genres: u8,
-}
-
-pub struct FavouriteGenresResponseSchema {
-}
-
-impl FavouriteGenresResponseSchema {
-  pub fn new() -> FavouriteGenresResponseSchema {
-    FavouriteGenresResponseSchema {
-    }
-  }
-
 pub async fn get_favourite_genres(data: Json<FavouriteGenresRequestStruct>) -> Result<impl Responder> {
   // postgres request for genres by userid, sorted by ascending rank order
   // limit by minimum of the number of genres or the upper limit of x.
@@ -39,7 +23,7 @@ pub async fn get_favourite_genres(data: Json<FavouriteGenresRequestStruct>) -> R
     };
 
     // Make a Genre struct instead of using String?
-    let genres_result: Result<Option<Vec<String>, sqlx::Error> = get_favourite_genres_from_uuid(user_uuid, upper_limit);
+    let genres_result: Result<Option<Vec<String>>, sqlx::Error> = get_favourite_genres_from_uuid(user_uuid, upper_limit);
     let genre_vec: Vec<String> = match genres_result {
       Err(_) => {
         res_body._error = Error {
@@ -58,28 +42,21 @@ pub async fn get_favourite_genres(data: Json<FavouriteGenresRequestStruct>) -> R
       .json(res_body));
 }
 
-pub async fn get_favourite_genres_from_uuid(user_uuid: String, upper_limit: u8) {
+pub async fn get_favourite_genres_from_uuid(pool: &Pool<Postgres>, user_uuid: String, upper_limit: u8) -> Result<Option<Vec<String>>, sqlx::Error> {
+    let genre_select_query = sqlx::query("Select * from genres WHERE uuid=($1) limit=($2)")
+        .bind(Uuid::from_string(user_uuid))
+        .bind(upper_limit)
+        .fetch_all(pool);
+
+    match genre {
+        Err(err) => return Err(err),
+        Ok(res) => {
+            if res.len() == 0 { return Ok(None) }
+
+            let genres: Vec<String> = res[0].get_all();
+            return Ok(Some(genres));
+        }
+    };
 }
 
-pub async fn get_example_genres(data: Json<FavouriteGenresRequestStruct>) -> Result<impl Responder> {
-  let FavouriteGenresRequestSchema { number_of_genres } = data.into_inner();
-  let mut res_body: FavouriteGenresResponseSchema = FavouriteGenresResponseSchema::new();
-  
-  let request_limit = 15;
-  let upper_limit = cmp::min(request_limit, number_of_genres);
 
-  let genre_arr: [&str; 15] =
-    ["Fantasy", "Science fiction", "Dystopian Fiction", "Horror", "Mystery",
-     "History", "Engineering", "Thriller", "Graphic novel", "Philosophy",
-     "Self-help", "Psychology", "Autobiographies", "Design", "Business"];
-  let genre_vec:Vec<String> = genre_arr[0..upper_limit].iter().map(|s| String::from(*s)).collect();
-
-  res_body.genres = genre_vec;
-  return Ok(HttpResponse::Ok()
-      .content_type("application/json; charset=utf-8")
-      .json(res_body));
-}
-
-pub async fn summaries(data: Json<>) -> Result<impl Responder> {
-  
-}

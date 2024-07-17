@@ -42,7 +42,7 @@ pub fn get_user_json_from_token_struct_in_redis(
     token_struct: &str,
 ) -> Result<String, String> {
     let redis_result: RedisResult<String> = con.get(token_struct);
-    let user_json: String = match redis_result {
+    match redis_result {
         Ok(user_json) => return Ok(user_json),
         Err(err) => return Err(err.to_string()),
     };

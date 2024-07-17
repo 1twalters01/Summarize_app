@@ -1,4 +1,3 @@
-use crate::accounts::datatypes::users::User;
 use crate::utils::email_handler::EmailMessage;
 
 
