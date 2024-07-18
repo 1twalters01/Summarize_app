@@ -2,7 +2,7 @@ use actix_web::{web::Json, HttpRequest, HttpResponse, Responder, Result};
 use actix_protobuf::ProtoBuf;
 
 mod request {
-    include!(concat!(env!("OUT_DIR"), "/request.rs"));
+    include!(concat!(env!("OUT_DIR"), "/accounts/login/email_request.rs"));
 }
 
 use crate::{
@@ -22,7 +22,7 @@ use crate::{
             auth::{AccessToken, AuthTokens},
             errors::AccountError,
             login::{
-                LoginEmailRequestSchema, LoginEmailResponseSchema, LoginPasswordRequest,
+                LoginEmailResponseSchema, LoginPasswordRequest,
                 LoginPasswordRequestSchema, LoginPasswordResponseSchema, LoginTotpRequest,
                 LoginTotpRequestSchema, LoginTotpResponseSchema,
             },
@@ -41,13 +41,8 @@ use crate::{
 
 
 pub async fn post_email(data: ProtoBuf<request::Request>) -> Result<impl Responder> {
-    println!("data: {:?}", data);
     let request::Request { email } = data.0;
-// pub async fn post_email(data: Json<LoginEmailRequestSchema>) -> Result<impl Responder> {
-//     let LoginEmailRequestSchema { email } = data.into_inner();
-
     let mut res_body: LoginEmailResponseSchema = LoginEmailResponseSchema::new();
-    println!("email: {}", email);
 
     // Validate the email from the request body
     let validated_email = validate_email(&email);
