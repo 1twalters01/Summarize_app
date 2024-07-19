@@ -1,9 +1,8 @@
 use actix_web::{web::Json, HttpRequest, HttpResponse, Responder, Result};
-use actix_protobuf::ProtoBuf;
+use actix_protobuf::{ProtoBuf, ProtoBufResponseBuilder};
 
-mod request {
-    include!(concat!(env!("OUT_DIR"), "/accounts/login/email_request.rs"));
-}
+mod request {include!(concat!(env!("OUT_DIR"), "/accounts/login/email_request.rs"));}
+mod response {include!(concat!(env!("OUT_DIR"), "/accounts/login/email_response.rs"));}
 
 use crate::{
     accounts::{
@@ -22,7 +21,7 @@ use crate::{
             auth::{AccessToken, AuthTokens},
             errors::AccountError,
             login::{
-                LoginEmailResponseSchema, LoginPasswordRequest,
+                LoginPasswordRequest,
                 LoginPasswordRequestSchema, LoginPasswordResponseSchema, LoginTotpRequest,
                 LoginTotpRequestSchema, LoginTotpResponseSchema,
             },
@@ -41,20 +40,20 @@ use crate::{
 
 
 pub async fn post_email(data: ProtoBuf<request::Request>) -> Result<impl Responder> {
+    // get request variable
     let request::Request { email } = data.0;
-    let mut res_body: LoginEmailResponseSchema = LoginEmailResponseSchema::new();
 
     // Validate the email from the request body
     let validated_email = validate_email(&email);
     if validated_email.is_err() {
-        res_body.account_error = AccountError {
-            is_error: true,
-            error_message: Some(validated_email.err().unwrap()),
+        let response: response::Response = response::Response {
+            error: Some(response::Error::InvalidEmail as i32),
+            token: None
         };
 
         return Ok(HttpResponse::UnprocessableEntity()
-            .content_type("application/json; charset=utf-8")
-            .json(res_body));
+            .content_type("application/x-protobuf; charset=utf-8")
+            .protobuf(response));
     }
 
     // try to get the user from postgres using the email
@@ -64,32 +63,31 @@ pub async fn post_email(data: ProtoBuf<request::Request>) -> Result<impl Respond
 
     // if user does not exist or is none then return an error
     let user: User = match user_result {
-        Err(error) => {
-            res_body.account_error = AccountError {
-                is_error: true,
-                error_message: Some(error.to_string()),
+        Err(err) => {
+            // log error
+            println!("error: {}", err);
+
+            let response: response::Response = response::Response {
+                error: Some(response::Error::ServerError as i32),
+                token: None
             };
-            return Ok(HttpResponse::NotFound()
-                .content_type("application/json; charset=utf-8")
-                .json(res_body));
+            return Ok(HttpResponse::InternalServerError()
+                .content_type("application/x-protobuf; charset=utf-8")
+                .protobuf(response));
         },
         Ok(user_option) => match user_option {
             None => {
-                res_body.account_error = AccountError {
-                    is_error: true,
-                    error_message: Some(String::from("user does not exist")),
+                let response: response::Response = response::Response {
+                    error: Some(response::Error::UnregisteredEmail as i32),
+                    token: None
                 };
                 return Ok(HttpResponse::NotFound()
-                    .content_type("application/json; charset=utf-8")
-                    .json(res_body));
+                    .content_type("application/x-protobuf; charset=utf-8")
+                    .protobuf(response));
             },
             Some(user) => user,
         },
     };
-
-    // set is_email_stored field to true
-    res_body.is_email_stored = true;
-    println!("email: {}", &email);
 
     // create a token
     let token: String = generate_opaque_token_of_length(25);
@@ -104,21 +102,22 @@ pub async fn post_email(data: ProtoBuf<request::Request>) -> Result<impl Respond
 
     // if redis fails then return an error
     if set_redis_result.is_err() {
-        res_body.account_error = AccountError {
-            is_error: true,
-            error_message: Some(String::from("Server error")),
+        let response: response::Response = response::Response {
+            error: Some(response::Error::ServerError as i32),
+            token: None
         };
-        return Ok(HttpResponse::FailedDependency()
-            .content_type("application/json; charset=utf-8")
-            .json(res_body));
+        return Ok(HttpResponse::InternalServerError()
+            .content_type("application/x-protobuf; charset=utf-8")
+            .protobuf(response));
     }
 
-    // return success
-    res_body.is_email_stored = true;
-    res_body.login_response_token = Some(token);
+    let response: response::Response = response::Response {
+        error: None,
+        token: Some(token)
+    };
     return Ok(HttpResponse::Ok()
-        .content_type("application/json; charset=utf-8")
-        .json(res_body));
+        .content_type("application/x-protobuf; charset=utf-8")
+        .protobuf(response));
 }
 
 

@@ -1,3 +1,4 @@
+import os
 from command_functions import run_command, run_commands
 
 def compile_protobuffers_for(file_pairs):
@@ -10,7 +11,10 @@ def compile_protobuffers_for(file_pairs):
         output_list = output_file_name.split("/")[2:-1]
         for folder in output_list:
             path += folder
-            run_command(f"mkdir {path}")
+
+            if os.path.exists(path) == False:
+                run_command(f"mkdir {path}")
+
             path += "/"
 
         js_command_pair = {
@@ -35,8 +39,13 @@ file_pair_1 = {
     "out": f"{frontend_protobuf_location}/accounts/login/email_request",
     "in": f"{backend_protobuf_location}/accounts/login/email/request.proto"
 }
+file_pair_2 = {
+    "out": f"{frontend_protobuf_location}/accounts/login/email_response",
+    "in": f"{backend_protobuf_location}/accounts/login/email/response.proto"
+}
 
 run_command(f"rm -r {frontend_protobuf_location}")
 run_command(f"mkdir {frontend_protobuf_location}")
 compile_protobuffers_for([file_pair_1])
+compile_protobuffers_for([file_pair_2])
 run_command("npx webpack build")

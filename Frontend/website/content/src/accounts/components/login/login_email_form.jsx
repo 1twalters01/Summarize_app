@@ -1,6 +1,7 @@
 import { useEmailContext } from '../../context/EmailContext';
 import { setCookie } from '../../../utils/cookies';
 import { encodeRequest } from '../../../protos/accounts/login/email_request';
+import { decodeResponse } from '../../../protos/accounts/login/email_response';
 
 /** @template T @typedef { import('solid-js').Accessor<T> } Accessor */
 /** @template T @typedef { import('solid-js').Setter<T> } Setter */
@@ -24,7 +25,7 @@ const postLoginEmail = async(email) => {
     body: Buffer 
   });
 
-  return response.json();
+  return response.arrayBuffer();
 }
 
 /**
@@ -34,12 +35,12 @@ const postLoginEmail = async(email) => {
 const postLogin = async(email, props) => {
   /** @type {Promise<number|void|Response>} */
   let response = postLoginEmail(email)
-    .then((res) => {
-      console.log(res)
-      let login_response_token = res.login_response_token;
-      if (login_response_token != null) {
-        setCookie("login_email_token", login_response_token, 5);
-        props.passwordMode();
+    .then((arrayBuffer) => {
+      let uint8Array = new Uint8Array(arrayBuffer);
+      let response = decodeResponse(uint8Array);
+      if ("token" in response) {
+          setCookie("login_email_token", response.token, 5);
+          props.passwordMode();
       }
     }) 
 

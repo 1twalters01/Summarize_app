@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package response;
+
+enum Error {
+    INVALID_EMAIL = 0;
+    UNREGISTERED_EMAIL = 1;
+    TOO_MANY_REQUESTS = 2;
+    SERVER_ERROR = 3;
+}
+
+message Response {
+  optional Error error = 1;
+  optional string token = 2;
+}
+
