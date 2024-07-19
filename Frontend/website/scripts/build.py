@@ -32,7 +32,7 @@ def webpack_build():
     run_command(command, "")
 
 
-backend_protobuf_location = "../../../Backend/protos"
+backend_protobuf_location = "../../Backend/protos"
 frontend_protobuf_location = "src/protos"
 
 file_pair_1 = {
@@ -43,9 +43,14 @@ file_pair_2 = {
     "out": f"{frontend_protobuf_location}/accounts/login/email_response",
     "in": f"{backend_protobuf_location}/accounts/login/email/response.proto"
 }
+file_pair_3 = {
+    "out": f"{frontend_protobuf_location}/accounts/login/password_request",
+    "in": f"{backend_protobuf_location}/accounts/login/password/request.proto"
+}
 
 run_command(f"rm -r {frontend_protobuf_location}")
 run_command(f"mkdir {frontend_protobuf_location}")
 compile_protobuffers_for([file_pair_1])
 compile_protobuffers_for([file_pair_2])
+compile_protobuffers_for([file_pair_3])
 run_command("npx webpack build")

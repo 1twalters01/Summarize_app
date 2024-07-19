@@ -1,7 +1,8 @@
 import { createSignal } from 'solid-js';
-import { getCookie, setCookie, deleteCookie } from '../../../utils/cookies';
 import { A } from '@solidjs/router';
+import { getCookie, setCookie, deleteCookie } from '../../../utils/cookies';
 import { useEmailContext } from '../../context/EmailContext';
+import { encodeRequest } from '../../../protos/accounts/login/password_request';
 
 /** @template T @typedef { import('solid-js').Accessor<T> } Accessor */
 /** @template T @typedef { import('solid-js').Setter<T> } Setter */
@@ -19,6 +20,8 @@ import { useEmailContext } from '../../context/EmailContext';
   * @param {Accessor<boolean>} rememberMe The user's remember me status
   */
 const postLoginPassword = async(password, rememberMe) => {
+  const Buffer = encodeRequest({password: password(), remember_me: rememberMe()})
+
   let login_response_token = getCookie("login_email_token");
   if (login_response_token == null) {
       login_response_token = "";
@@ -27,13 +30,10 @@ const postLoginPassword = async(password, rememberMe) => {
     method: "POST",
     mode: "cors",
     headers: {
-      "Content-Type": "application/json",
+      "Content-Type": "application/x-protobuf",
       "login_email_token": login_response_token,
     },
-    body: JSON.stringify({
-      "password": password(),
-      "remember_me": rememberMe(),
-    })
+    body: Buffer 
   });
 
   return response.json();
