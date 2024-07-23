@@ -1,0 +1,8 @@
+syntax = "proto3";
+
+package accounts.auth_tokens;
+
+message AuthTokens {
+    string access = 1;
+    optional string refresh = 2;
+}

@@ -4,6 +4,7 @@ use dotenv::dotenv;
 
 pub mod middleware;
 pub mod utils;
+pub mod generated;
 
 pub mod ping;
 pub mod accounts;

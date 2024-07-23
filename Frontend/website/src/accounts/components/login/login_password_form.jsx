@@ -2,7 +2,8 @@ import { createSignal } from 'solid-js';
 import { A } from '@solidjs/router';
 import { getCookie, setCookie, deleteCookie } from '../../../utils/cookies';
 import { useEmailContext } from '../../context/EmailContext';
-import { encodeRequest } from '../../../protos/accounts/login/password_request';
+import { encodeRequest } from '../../../protos/accounts/login/password/request';
+import { decodeResponse } from '../../../protos/accounts/login/password/response';
 
 /** @template T @typedef { import('solid-js').Accessor<T> } Accessor */
 /** @template T @typedef { import('solid-js').Setter<T> } Setter */
@@ -12,6 +13,9 @@ import { encodeRequest } from '../../../protos/accounts/login/password_request';
   * @property {Function} emailMode - go to the email screen
   * @property {Function} totpMode - go to next screen
 */
+
+/** @typedef { import ('../../../protos/accounts/login/password/response').Token } Token */
+/** @typedef { import ('../../../protos/accounts/auth_tokens').AuthTokens } AuthTokens */
 
 
 
@@ -36,7 +40,7 @@ const postLoginPassword = async(password, rememberMe) => {
     body: Buffer 
   });
 
-  return response.json();
+  return response.arrayBuffer();
 }
 
 /**
@@ -47,24 +51,28 @@ const postLoginPassword = async(password, rememberMe) => {
 const postLogin = async(password, rememberMe, props) => {
   /** @type {Promise<number|void|Response>} */
   let response = postLoginPassword(password, rememberMe)
-    .then((res) => {
-      console.log("response: \n");
-      console.log(res);
-      console.log(res.account_error.is_error);
-      if (res.account_error.is_error == false) {
+    .then((array_buffer) => {
+      let uint8array = new Uint8Array(array_buffer);
+      let response = decodeResponse(uint8array);
+      console.log("response: ", response);
+      if ("token" in response && "requires_totp" in response) {
         deleteCookie("login_email_token");
 
-        if (res.has_totp == true) {
-          setCookie("login_password_token", res.login_response_token, 1800);
+        let token = /** @type Token */ (response.token);
+        let requires_totp = response.requires_totp;
+
+        if (requires_totp == true) {
+          setCookie("login_password_token", /** @type String */ (token.response), 1800);
           props.totpMode();
         } else {
-          let bearer_token = "Bearer " + res.auth_tokens.access_token;
+          let tokens = /** @type AuthTokens*/ (token.tokens);
+          let bearer_token = "Bearer " + /** @type String */ (tokens.access);
           setCookie("Authorization", bearer_token, 1800);
 
           let {setEmail} = useEmailContext();
           setEmail("");
 
-          let refresh_token = res.auth_tokens.refresh_token;
+          let refresh_token = tokens.refresh;
           if (refresh_token != null) {
               setCookie("Refresh", refresh_token, 18000)
           }

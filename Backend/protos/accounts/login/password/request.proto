@@ -1,0 +1,8 @@
+syntax = "proto3";
+
+package request;
+
+message Request {
+  string password = 1;
+  bool remember_me = 2;
+}

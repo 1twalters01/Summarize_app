@@ -71,7 +71,12 @@ where
 
                 con = create_redis_client_connection();
                 let expiry_in_seconds = Some(60);
-                set_key_value_in_redis(con, &ip, &count.to_string(), &expiry_in_seconds);
+                match set_key_value_in_redis(con, &ip, &count.to_string(), &expiry_in_seconds) {
+                    Ok(_) => {},
+                    Err(_) => return Box::pin(async {
+                        return Ok(req.into_response(HttpResponse::InternalServerError().finish().map_into_right_body()))
+                    }),
+                };
 
                 let fut = self.service.call(req);
 
@@ -87,7 +92,12 @@ where
 
                 con = create_redis_client_connection();
                 let expiry_in_seconds = Some(60);
-                set_key_value_in_redis(con, &ip, &count.to_string(), &expiry_in_seconds);
+                match set_key_value_in_redis(con, &ip, &count.to_string(), &expiry_in_seconds) {
+                    Ok(_) => {},
+                    Err(_) => return Box::pin(async {
+                        return Ok(req.into_response(HttpResponse::InternalServerError().finish().map_into_right_body()))
+                    }),
+                };
 
                 let fut = self.service.call(req);
 

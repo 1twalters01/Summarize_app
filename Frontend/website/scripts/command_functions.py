@@ -15,8 +15,10 @@ def run_command(command, success_text=""):
 
 
 def run_commands(command_dicts):
+
     for command_dict in command_dicts:
         command = command_dict["command"]
+        print(f"command: {command}")
         try:
             success_text = command_dict["success_text"]
         except:

@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package accounts.login.password.response;
+
+import "accounts/auth_tokens.proto";
+
+enum Error {
+    INVALID_CREDENTIALS = 0;
+    INCORRECT_PASSWORD = 1;
+    INVALID_PASSWORD = 2;
+    TOO_MANY_REQUESTS = 3;
+    SERVER_ERROR = 4;
+}
+
+message Token {
+    oneof token_field {
+        string response = 1;
+        accounts.auth_tokens.AuthTokens tokens = 2;
+    }
+}
+
+message Response {
+  optional Error error = 1;
+  optional Token token = 2;
+  optional bool requires_totp = 3;
+}
+

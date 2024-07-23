@@ -1,7 +1,7 @@
 import { useEmailContext } from '../../context/EmailContext';
 import { setCookie } from '../../../utils/cookies';
-import { encodeRequest } from '../../../protos/accounts/login/email_request';
-import { decodeResponse } from '../../../protos/accounts/login/email_response';
+import { encodeRequest } from '../../../protos/accounts/login/email/request';
+import { decodeResponse } from '../../../protos/accounts/login/email/response';
 
 /** @template T @typedef { import('solid-js').Accessor<T> } Accessor */
 /** @template T @typedef { import('solid-js').Setter<T> } Setter */
@@ -39,7 +39,7 @@ const postLogin = async(email, props) => {
       let uint8Array = new Uint8Array(arrayBuffer);
       let response = decodeResponse(uint8Array);
       if ("token" in response) {
-          setCookie("login_email_token", response.token, 5);
+          setCookie("login_email_token", /** @type String */ (response.token), 5);
           props.passwordMode();
       }
     }) 

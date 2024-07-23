@@ -27,19 +27,19 @@ pub fn config(cfg: &mut ServiceConfig) {
             .wrap(middleware::authentication::not_authenticated::NotAuthenticated)
             .route(
                 "/email",
-                post().to(routes::login::post_email),
+                post().to(routes::login::email::post_email),
             )
             .route(
                 "/password",
-                post().to(routes::login::post_password),
+                post().to(routes::login::password::post_password),
             )
             .route(
                 "/totp",
-                post().to(routes::login::post_totp),
+                post().to(routes::login::totp::post_totp),
             )
             .route(
                 "/refresh-token",
-                post().to(routes::login::refresh_token),
+                post().to(routes::login::refresh::refresh_token),
             ),
     )
     .service(

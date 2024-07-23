@@ -165,9 +165,9 @@ impl User {
         return self.totp.fields.is_some();
     }
 
-    fn set_totp(&mut self, url: String) {
-        self.totp.set_url(url);
-    }
+    // fn set_totp(&mut self, url: String) {
+    //     self.totp.set_url(url);
+    // }
 
     pub fn check_totp(&mut self, totp: String) -> bool {
         if self.generate_totp_i64() == totp {
@@ -187,69 +187,69 @@ impl User {
         todo!();
     }
 
-    fn get_created_time(&self) -> SystemTime {
-        return self.created_at;
-    }
+    // fn get_created_time(&self) -> SystemTime {
+    //     return self.created_at;
+    // }
 
-    fn get_last_login_time(&self) -> SystemTime {
-        return self.last_login;
-    }
+    // fn get_last_login_time(&self) -> SystemTime {
+    //     return self.last_login;
+    // }
 
-    fn get_groups(&self) -> Vec<String> {
-        return self.groups.clone();
-    }
+    // fn get_groups(&self) -> Vec<String> {
+    //     return self.groups.clone();
+    // }
 
-    fn get_user_permissions(&self) -> Vec<String> {
-        return self.user_permissions.clone();
-    }
+    // fn get_user_permissions(&self) -> Vec<String> {
+    //     return self.user_permissions.clone();
+    // }
 
-    fn has_permission(&self, permission: String) -> bool {
-        if self.user_permissions.contains(&permission) {
-            return true;
-        }
-        return false;
-    }
+    // fn has_permission(&self, permission: String) -> bool {
+    //     if self.user_permissions.contains(&permission) {
+    //         return true;
+    //     }
+    //     return false;
+    // }
 
-    fn has_permissions(&self, permissions: Vec<String>) -> Vec<bool> {
-        return permissions
-            .into_iter()
-            .map(|permission| self.user_permissions.contains(&permission))
-            .collect();
-    }
+    // fn has_permissions(&self, permissions: Vec<String>) -> Vec<bool> {
+    //     return permissions
+    //         .into_iter()
+    //         .map(|permission| self.user_permissions.contains(&permission))
+    //         .collect();
+    // }
 
-    fn get_is_user_active(&self) -> bool {
-        return self.is_active;
-    }
+    // fn get_is_user_active(&self) -> bool {
+    //     return self.is_active;
+    // }
 
-    fn set_is_user_active(&mut self, is_active: bool) -> bool {
-        self.is_active = is_active;
-        if self.is_active == is_active {
-            return true;
-        }
-        return false;
-    }
+    // fn set_is_user_active(&mut self, is_active: bool) -> bool {
+    //     self.is_active = is_active;
+    //     if self.is_active == is_active {
+    //         return true;
+    //     }
+    //     return false;
+    // }
 
-    fn get_is_user_staff(&self) -> bool {
-        return self.is_staff;
-    }
+    // fn get_is_user_staff(&self) -> bool {
+    //     return self.is_staff;
+    // }
 
-    fn get_is_user_superuser(&self) -> bool {
-        return self.is_superuser;
-    }
+    // fn get_is_user_superuser(&self) -> bool {
+    //     return self.is_superuser;
+    // }
 
-    fn get_is_user_authenticated(&self) -> bool {
-        return self.is_authenticated;
-    }
+    // fn get_is_user_authenticated(&self) -> bool {
+    //     return self.is_authenticated;
+    // }
 
-    fn set_is_user_authenticated(&mut self, is_authenticated: bool) -> bool {
-        self.is_authenticated = is_authenticated;
-        if self.is_authenticated == is_authenticated {
-            return true;
-        }
-        return false;
-    }
+    // fn set_is_user_authenticated(&mut self, is_authenticated: bool) -> bool {
+    //     self.is_authenticated = is_authenticated;
+    //     if self.is_authenticated == is_authenticated {
+    //         return true;
+    //     }
+    //     return false;
+    // }
 
-    fn get_is_user_anonymous(&self) -> bool {
-        return self.is_anonymous;
-    }
+    // fn get_is_user_anonymous(&self) -> bool {
+    //     return self.is_anonymous;
+    // }
 }

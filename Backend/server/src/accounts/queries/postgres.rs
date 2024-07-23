@@ -53,6 +53,7 @@ pub async fn update_password_for_user_in_pg_users_table(
         .await;
 
     if let Err(err) = user_update_query {
+        println!("error: {:?}", err);
         return Err(err);
     } else {
         return Ok(());
