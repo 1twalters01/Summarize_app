@@ -1,24 +1,18 @@
 use actix_web::{HttpRequest, HttpResponse, Responder, Result};
 use actix_protobuf::{ProtoBuf, ProtoBufResponseBuilder};
 
-use crate::generated::protos::accounts::{auth_tokens, login::password::{request, response}};
-// mod request {include!(concat!(env!("OUT_DIR"), "/accounts/login/password/request.rs"));}
-// mod response {include!(concat!(env!("OUT_DIR"), "/accounts/login/password/response.rs"));}
-// mod auth_tokens {include!(concat!(env!("OUT_DIR"), "/accounts/auth_tokens.rs"));}
+use crate::generated::protos::accounts::{auth_tokens, login::password::{request, response::{self, response::ResponseField}}};
 
 use crate::{
     accounts::{
         datatypes::{token_object::UserRememberMe, users::User},
         queries::redis::get_user_from_token_in_redis,
-        schema::{
-            auth::AuthTokens,
-            // errors::AccountError,
-            // login::LoginPasswordResponseSchema,
-        },
+        schema::auth::AuthTokens,
     },
     utils::{
         database_connections::{
-            create_redis_client_connection, delete_key_in_redis,
+            create_redis_client_connection,
+            delete_key_in_redis,
             set_key_value_in_redis,
         },
         tokens::generate_opaque_token_of_length,
@@ -48,9 +42,7 @@ pub async fn post_password(
             println!("Error, {:?}", err);
 
             let response: response::Response = response::Response {
-                error: Some(response::Error::InvalidCredentials as i32),
-                token: None,
-                requires_totp: None
+                response_field: Some(ResponseField::Error(response::Error::InvalidCredentials as i32)),
             };
             return Ok(HttpResponse::UnprocessableEntity()
                 .content_type("application/x-protobuf; charset=utf-8")
@@ -63,9 +55,7 @@ pub async fn post_password(
     let validated_password = validate_password(&password);
     if validated_password.is_err() {
         let response: response::Response = response::Response {
-            error: Some(response::Error::InvalidPassword as i32),
-            token: None,
-            requires_totp: None
+                response_field: Some(ResponseField::Error(response::Error::InvalidPassword as i32)),
         };
         return Ok(HttpResponse::UnprocessableEntity()
             .content_type("application/x-protobuf; charset=utf-8")
@@ -77,9 +67,7 @@ pub async fn post_password(
     let check_password: Result<(), std::io::Error> = user.check_password(&password);
     if check_password.is_err() {
         let response: response::Response = response::Response {
-            error: Some(response::Error::IncorrectPassword as i32),
-            token: None,
-            requires_totp: None
+                response_field: Some(ResponseField::Error(response::Error::IncorrectPassword as i32)),
         };
         return Ok(HttpResponse::Unauthorized()
             .content_type("application/x-protobuf; charset=utf-8")
@@ -102,9 +90,7 @@ pub async fn post_password(
         // if redis fails then return an error
         if set_redis_result.is_err() {
             let response: response::Response = response::Response {
-                error: Some(response::Error::ServerError as i32),
-                token: None,
-                requires_totp: None
+                response_field: Some(ResponseField::Error(response::Error::ServerError as i32)),
             };
             return Ok(HttpResponse::FailedDependency()
                 .content_type("application/x-protobuf; charset=utf-8")
@@ -118,9 +104,7 @@ pub async fn post_password(
         // if redis fails then return an error
         if delete_redis_result.await.is_err() {
             let response: response::Response = response::Response {
-                error: Some(response::Error::ServerError as i32),
-                token: None,
-                requires_totp: None
+                response_field: Some(ResponseField::Error(response::Error::ServerError as i32)),
             };
             return Ok(HttpResponse::FailedDependency()
                 .content_type("application/x-protobuf; charset=utf-8")
@@ -129,9 +113,10 @@ pub async fn post_password(
 
         // return success
         let response: response::Response = response::Response {
-            error: None,
-            token: Some(response::Token{token_field: Some(response::token::TokenField::Response(token))}),
-            requires_totp: Some(true) 
+            response_field: Some(ResponseField::Success(response::Success{
+                token: Some(response::Token{token_field: Some(response::token::TokenField::Response(token))}),
+                requires_totp: true, 
+            })),
         };
         return Ok(HttpResponse::Ok()
             .content_type("application/x-protobuf; charset=utf-8")
@@ -149,9 +134,7 @@ pub async fn post_password(
         Err(err) => {
             println!("error: {:?}", err);
             let response: response::Response = response::Response {
-                error: Some(response::Error::ServerError as i32),
-                token: None,
-                requires_totp: None
+                response_field: Some(ResponseField::Error(response::Error::ServerError as i32)),
             };
             return Ok(HttpResponse::InternalServerError()
                 .content_type("application/x-protobuf; charset=utf-8")
@@ -167,20 +150,19 @@ pub async fn post_password(
     // if redis fails then return an error
     if delete_redis_result.await.is_err() {
         let response: response::Response = response::Response {
-            error: Some(response::Error::ServerError as i32),
-                token: None,
-                requires_totp: None
-            };
-            return Ok(HttpResponse::InternalServerError()
-                .content_type("application/x-protobuf; charset=utf-8")
-                .protobuf(response));
+            response_field: Some(ResponseField::Error(response::Error::ServerError as i32)),
+        };
+        return Ok(HttpResponse::InternalServerError()
+            .content_type("application/x-protobuf; charset=utf-8")
+            .protobuf(response));
     }
 
     // return success
     let response: response::Response = response::Response {
-        error: None,
-        token: Some(response::Token{token_field: Some(response::token::TokenField::Tokens(auth_tokens))}),
-        requires_totp: Some(false) 
+        response_field: Some(ResponseField::Success(response::Success{
+            token: Some(response::Token{token_field: Some(response::token::TokenField::Tokens(auth_tokens))}),
+            requires_totp: false, 
+        })),
     };
     return Ok(HttpResponse::Ok()
         .content_type("application/x-protobuf; charset=utf-8")

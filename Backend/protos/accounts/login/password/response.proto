@@ -19,9 +19,15 @@ message Token {
     }
 }
 
+message Success {
+    Token token = 1;
+    bool requires_totp = 2;
+}
+
 message Response {
-  optional Error error = 1;
-  optional Token token = 2;
-  optional bool requires_totp = 3;
+  oneof response_field {
+    Error error = 1;
+    Success success = 2;
+  }
 }
 
