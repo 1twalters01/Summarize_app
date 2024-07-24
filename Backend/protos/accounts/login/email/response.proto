@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package response;
+package accounts.login.email.response;
 
 enum Error {
     INVALID_EMAIL = 0;
@@ -10,7 +10,9 @@ enum Error {
 }
 
 message Response {
-  optional Error error = 1;
-  optional string token = 2;
+  oneof response_field {
+    Error error = 1;
+    string token = 2;
+  }
 }
 

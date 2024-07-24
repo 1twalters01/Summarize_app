@@ -10,8 +10,8 @@ const data = {
     path: join(__dirname, "dist/main/javascript"),
     filename: "bundle.js",
   },
-  // mode: "development",
-  mode: "production",
+  mode: "development",
+  // mode: "production",
   module: {
     rules: [
       {
@@ -26,6 +26,17 @@ const data = {
         test: /\.css$/,
         exclude: /node_modules/,
         use: ["style-loader"],
+      },
+
+      {
+        test:/\.m?js/,
+        type: "javascript/auto",
+      },
+      {
+        test: /\.m?js/,
+        resolve: {
+          fullySpecified: false,
+        },
       },
     ],
   },

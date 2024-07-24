@@ -2,8 +2,8 @@ import { createSignal } from 'solid-js';
 import { A } from '@solidjs/router';
 import { getCookie, setCookie, deleteCookie } from '../../../utils/cookies';
 import { useEmailContext } from '../../context/EmailContext';
-import { encodeRequest } from '../../../protos/accounts/login/password/request';
-import { decodeResponse } from '../../../protos/accounts/login/password/response';
+import { accounts as accountsRequest } from '../../../protos/accounts/login/password/request';
+import { accounts as accountsResponse } from '../../../protos/accounts/login/password/response';
 
 /** @template T @typedef { import('solid-js').Accessor<T> } Accessor */
 /** @template T @typedef { import('solid-js').Setter<T> } Setter */
@@ -14,17 +14,17 @@ import { decodeResponse } from '../../../protos/accounts/login/password/response
   * @property {Function} totpMode - go to next screen
 */
 
-/** @typedef { import ('../../../protos/accounts/login/password/response').Token } Token */
-/** @typedef { import ('../../../protos/accounts/auth_tokens').AuthTokens } AuthTokens */
 
-
+let Request = accountsRequest.login.password.request.Request;
+let Response = accountsResponse.login.password.response.Response;
 
 /**
   * @param {Accessor<string>} password The user's password
   * @param {Accessor<boolean>} rememberMe The user's remember me status
   */
 const postLoginPassword = async(password, rememberMe) => {
-  const Buffer = encodeRequest({password: password(), remember_me: rememberMe()})
+  const message = {password: password(), rememberMe: rememberMe()};
+  const Buffer = Request.encode(message).finish();
 
   let login_response_token = getCookie("login_email_token");
   if (login_response_token == null) {
@@ -53,19 +53,20 @@ const postLogin = async(password, rememberMe, props) => {
   let response = postLoginPassword(password, rememberMe)
     .then((array_buffer) => {
       let uint8array = new Uint8Array(array_buffer);
-      let response = decodeResponse(uint8array);
+      console.log("hi");
+      let response = Response.decode(uint8array);
       console.log("response: ", response);
       if ("token" in response && "requires_totp" in response) {
         deleteCookie("login_email_token");
 
-        let token = /** @type Token */ (response.token);
+        let token = (response.token);
         let requires_totp = response.requires_totp;
 
         if (requires_totp == true) {
           setCookie("login_password_token", /** @type String */ (token.response), 1800);
           props.totpMode();
         } else {
-          let tokens = /** @type AuthTokens*/ (token.tokens);
+          let tokens = token.tokens;
           let bearer_token = "Bearer " + /** @type String */ (tokens.access);
           setCookie("Authorization", bearer_token, 1800);
 

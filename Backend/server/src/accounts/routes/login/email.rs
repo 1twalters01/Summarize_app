@@ -1,6 +1,7 @@
 use actix_web::{HttpResponse, Responder, Result};
 use actix_protobuf::{ProtoBuf, ProtoBufResponseBuilder};
 
+use crate::generated::protos::accounts::login::email::response::response::ResponseField;
 use crate::generated::protos::accounts::login::email::{request, response};
 
 use crate::{
@@ -23,13 +24,13 @@ use crate::{
 pub async fn post_email(data: ProtoBuf<request::Request>) -> Result<impl Responder> {
     // get request variable
     let request::Request { email } = data.0;
+    println!("email: {}", email);
 
     // Validate the email from the request body
     let validated_email = validate_email(&email);
     if validated_email.is_err() {
         let response: response::Response = response::Response {
-            error: Some(response::Error::InvalidEmail as i32),
-            token: None
+                response_field: Some(ResponseField::Error(response::Error::InvalidEmail as i32)),
         };
 
         return Ok(HttpResponse::UnprocessableEntity()
@@ -48,8 +49,7 @@ pub async fn post_email(data: ProtoBuf<request::Request>) -> Result<impl Respond
             println!("error: {:?}", err);
 
             let response: response::Response = response::Response {
-                error: Some(response::Error::ServerError as i32),
-                token: None
+                response_field: Some(ResponseField::Error(response::Error::ServerError as i32)),
             };
             return Ok(HttpResponse::InternalServerError()
                 .content_type("application/x-protobuf; charset=utf-8")
@@ -58,8 +58,7 @@ pub async fn post_email(data: ProtoBuf<request::Request>) -> Result<impl Respond
         Ok(user_option) => match user_option {
             None => {
                 let response: response::Response = response::Response {
-                    error: Some(response::Error::UnregisteredEmail as i32),
-                    token: None
+                    response_field: Some(ResponseField::Error(response::Error::UnregisteredEmail as i32)),
                 };
                 return Ok(HttpResponse::NotFound()
                     .content_type("application/x-protobuf; charset=utf-8")
@@ -83,8 +82,7 @@ pub async fn post_email(data: ProtoBuf<request::Request>) -> Result<impl Respond
     // if redis fails then return an error
     if set_redis_result.is_err() {
         let response: response::Response = response::Response {
-            error: Some(response::Error::ServerError as i32),
-            token: None
+            response_field: Some(ResponseField::Error(response::Error::ServerError as i32)),
         };
         return Ok(HttpResponse::InternalServerError()
             .content_type("application/x-protobuf; charset=utf-8")
@@ -92,8 +90,7 @@ pub async fn post_email(data: ProtoBuf<request::Request>) -> Result<impl Respond
     }
 
     let response: response::Response = response::Response {
-        error: None,
-        token: Some(token)
+        response_field: Some(ResponseField::Token(token)),
     };
     return Ok(HttpResponse::Ok()
         .content_type("application/x-protobuf; charset=utf-8")

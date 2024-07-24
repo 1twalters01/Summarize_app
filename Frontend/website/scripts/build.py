@@ -21,10 +21,28 @@ def compile_protobuffers_for(file_pairs):
 
             path += "/"
 
-        js_command_pair = {
-            "command": f"pbjs -t static-module -w es6 -o {output_file_name}.js {input_file} {dependencies}",
-            "success_text": success_text
-        }
+        if dependencies == "":
+            js_command_pair = {
+                "command": f"pbjs -t static-module -w es6 -o {output_file_name}.js {input_file}",
+                "success_text": success_text
+            }
+        else:
+            js_command_pair = {
+                "command": f"pbjs -t static-module -w es6 -o {output_file_name}.js -p {backend_protobuf_location} {input_file} {dependencies}",
+                "success_text": success_text
+            }
+
+        # if dependencies == "":
+        #     js_command_pair = {
+        #         "command": f"pbjs --es6 -o {output_file_name}.js {input_file} {dependencies}",
+        #         "success_text": success_text
+        #     }
+        # else:
+        #     js_command_pair = {
+        #         "command": f"pbjs --es6 -o {output_file_name}.js -p {backend_protobuf_location} {input_file} {dependencies}",
+        #         "success_text": success_text
+        #     }
+
         # ts_command_pair = {
         #     "command": f"npx pbts -o {output_file_name}.d.ts {output_file_name}.js",
         #     "success_text": success_text

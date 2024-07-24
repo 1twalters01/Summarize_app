@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package request;
+package accounts.login.password.request;
 
 message Request {
   string password = 1;

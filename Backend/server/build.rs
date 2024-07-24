@@ -17,12 +17,12 @@ fn main() {
     prost_config.compile_protos(proto_files, proto_include_dirs).expect("Failed to compile protos");
 
     let mut custom_file_path = "accounts/login/email/request.rs";
-    let mut generated_file: PathBuf = Path::new(&out_dir).join("request.rs");
+    let mut generated_file: PathBuf = Path::new(&out_dir).join("accounts.login.email.request.rs");
     create_dirs(&out_dir, &custom_file_path.split("/").collect::<Vec<&str>>());
     rename_file(&out_dir, generated_file, custom_file_path);
 
     custom_file_path = "accounts/login/email/response.rs";
-    generated_file = Path::new(&out_dir).join("response.rs");
+    generated_file = Path::new(&out_dir).join("accounts.login.email.response.rs");
     rename_file(&out_dir, generated_file, custom_file_path);
     // panic!("email build done");
 
@@ -37,7 +37,7 @@ fn main() {
     prost_config.compile_protos(proto_files, proto_include_dirs).unwrap();
     
     custom_file_path = "accounts/login/password/request.rs";
-    generated_file = Path::new(&out_dir).join("request.rs");
+    generated_file = Path::new(&out_dir).join("accounts.login.password.request.rs");
     create_dirs(&out_dir, &custom_file_path.split("/").collect::<Vec<&str>>());
     rename_file(&out_dir, generated_file, custom_file_path);
     // panic!("password request made");
