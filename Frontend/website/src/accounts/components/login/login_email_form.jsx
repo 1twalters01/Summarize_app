@@ -45,15 +45,12 @@ const postLogin = async(email, props) => {
             token = response.getToken();
             error = response.getError();
         } catch (decodeError) {
-            console.log("oof");
             console.error("Error decoding response:", decodeError);
             throw decodeError;
         }
 
-      // let response = Response.decode(uint8Array);
-        // console.log(response);
       if (token.length == 25) {
-          setCookie("login_email_token", /** @type String */ (response.token), 5);
+          setCookie("login_email_token", /** @type String */ (token), 5);
           props.passwordMode();
       }
     }) 
