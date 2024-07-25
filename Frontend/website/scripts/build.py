@@ -12,8 +12,10 @@ def compile_protobuffers_for(file_pairs):
             dependencies = ""
 
         path = "src/protos/"
-        output_list = output_file_name.split("/")[2:-1]
+        proto_path = ""
+        output_list = output_file_name.split("/")[3:]
         for folder in output_list:
+            proto_path += folder + "/"
             path += folder
 
             if os.path.exists(path) == False:
@@ -22,8 +24,10 @@ def compile_protobuffers_for(file_pairs):
             path += "/"
 
         if dependencies == "":
+            print(f"input_file: {input_file}")
+            print(f"output_file: {output_file_name}")
             js_command_pair = {
-                "command": f"pbjs -t static-module -w es6 -o {output_file_name}.js {input_file}",
+                "command": f"protoc --proto_path={backend_protobuf_location}/{proto_path} --js_out=import_style=commonjs,binary:{output_file_name} {input_file}",
                 "success_text": success_text
             }
         else:
@@ -31,6 +35,17 @@ def compile_protobuffers_for(file_pairs):
                 "command": f"pbjs -t static-module -w es6 -o {output_file_name}.js -p {backend_protobuf_location} {input_file} {dependencies}",
                 "success_text": success_text
             }
+
+        # if dependencies == "":
+        #     js_command_pair = {
+        #         "command": f"pbjs -t static-module -w es6 -o {output_file_name}.js {input_file}",
+        #         "success_text": success_text
+        #     }
+        # else:
+        #     js_command_pair = {
+        #         "command": f"pbjs -t static-module -w es6 -o {output_file_name}.js -p {backend_protobuf_location} {input_file} {dependencies}",
+        #         "success_text": success_text
+        #     }
 
         # if dependencies == "":
         #     js_command_pair = {
@@ -60,30 +75,43 @@ def webpack_build():
 
 
 backend_protobuf_location = "../../Backend/protos"
-frontend_protobuf_location = "src/protos"
+frontend_protobuf_location = "./src/protos"
+
+# file_pair_1 = {
+#     "out": f"{frontend_protobuf_location}/accounts/login/email/request",
+#     "in": f"{backend_protobuf_location}/accounts/login/email/request.proto"
+# }
+# file_pair_2 = {
+#     "out": f"{frontend_protobuf_location}/accounts/login/email/response",
+#     "in": f"{backend_protobuf_location}/accounts/login/email/response.proto"
+# }
+# file_pair_3 = {
+#     "out": f"{frontend_protobuf_location}/accounts/login/password/request",
+#     "in": f"{backend_protobuf_location}/accounts/login/password/request.proto"
+# }
+# file_pair_4 = {
+#     "out": f"{frontend_protobuf_location}/accounts/login/password/response",
+#     "in": f"{backend_protobuf_location}/accounts/login/password/response.proto",
+#     "deps": [
+#         f"{backend_protobuf_location}/accounts/auth_tokens.proto",
+#     ]
+# }
+# file_pair_5 = {
+#     "out": f"{frontend_protobuf_location}/accounts/auth_tokens",
+#     "in": f"{backend_protobuf_location}/accounts/auth_tokens.proto"
+# }
 
 file_pair_1 = {
-    "out": f"{frontend_protobuf_location}/accounts/login/email/request",
+    "out": f"{frontend_protobuf_location}/accounts/login/email",
     "in": f"{backend_protobuf_location}/accounts/login/email/request.proto"
 }
 file_pair_2 = {
-    "out": f"{frontend_protobuf_location}/accounts/login/email/response",
+    "out": f"{frontend_protobuf_location}/accounts/login/email",
     "in": f"{backend_protobuf_location}/accounts/login/email/response.proto"
 }
 file_pair_3 = {
-    "out": f"{frontend_protobuf_location}/accounts/login/password/request",
+    "out": f"{frontend_protobuf_location}/accounts/login/password/",
     "in": f"{backend_protobuf_location}/accounts/login/password/request.proto"
-}
-file_pair_4 = {
-    "out": f"{frontend_protobuf_location}/accounts/login/password/response",
-    "in": f"{backend_protobuf_location}/accounts/login/password/response.proto",
-    "deps": [
-        f"{backend_protobuf_location}/accounts/auth_tokens.proto",
-    ]
-}
-file_pair_5 = {
-    "out": f"{frontend_protobuf_location}/accounts/auth_tokens",
-    "in": f"{backend_protobuf_location}/accounts/auth_tokens.proto"
 }
 
 run_command(f"rm -r {frontend_protobuf_location}")
@@ -91,6 +119,6 @@ run_command(f"mkdir {frontend_protobuf_location}")
 compile_protobuffers_for([file_pair_1])
 compile_protobuffers_for([file_pair_2])
 compile_protobuffers_for([file_pair_3])
-compile_protobuffers_for([file_pair_4])
-compile_protobuffers_for([file_pair_5])
+# compile_protobuffers_for([file_pair_4])
+# compile_protobuffers_for([file_pair_5])
 run_command("npx webpack build")

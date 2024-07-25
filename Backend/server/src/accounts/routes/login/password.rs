@@ -1,9 +1,9 @@
 use actix_web::{HttpRequest, HttpResponse, Responder, Result};
 use actix_protobuf::{ProtoBuf, ProtoBufResponseBuilder};
 
-use crate::generated::protos::accounts::{auth_tokens, login::password::{request, response::{self, response::ResponseField}}};
 
 use crate::{
+    generated::protos::accounts::{auth_tokens, login::password::{request, response::{self, response::ResponseField}}},
     accounts::{
         datatypes::{token_object::UserRememberMe, users::User},
         queries::redis::get_user_from_token_in_redis,

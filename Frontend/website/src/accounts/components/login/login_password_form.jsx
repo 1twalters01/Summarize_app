@@ -2,8 +2,8 @@ import { createSignal } from 'solid-js';
 import { A } from '@solidjs/router';
 import { getCookie, setCookie, deleteCookie } from '../../../utils/cookies';
 import { useEmailContext } from '../../context/EmailContext';
-import { accounts as accountsRequest } from '../../../protos/accounts/login/password/request';
-import { accounts as accountsResponse } from '../../../protos/accounts/login/password/response';
+const { Request } = require('../../../protos/accounts/login/password/request_pb');
+// import { accounts as accountsResponse } from '../../../protos/accounts/login/password/response';
 
 /** @template T @typedef { import('solid-js').Accessor<T> } Accessor */
 /** @template T @typedef { import('solid-js').Setter<T> } Setter */
@@ -15,8 +15,9 @@ import { accounts as accountsResponse } from '../../../protos/accounts/login/pas
 */
 
 
-let Request = accountsRequest.login.password.request.Request;
-let Response = accountsResponse.login.password.response.Response;
+// let Request = accountsRequest.login.password.request.Request;
+let Response = Request;
+// let Response = accountsResponse.login.password.response.Response;
 
 /**
   * @param {Accessor<string>} password The user's password
