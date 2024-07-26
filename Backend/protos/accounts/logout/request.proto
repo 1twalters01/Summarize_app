@@ -1,0 +1,6 @@
+syntax = "proto3";
+
+package accounts.logout.request;
+
+message Request {
+}

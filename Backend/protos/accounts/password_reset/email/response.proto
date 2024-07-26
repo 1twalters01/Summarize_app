@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package accounts.password_reset.email.response;
+
+enum Error {
+    INVALID_EMAIL = 0;
+    UNREGISTERED_EMAIL = 1;
+    TOO_MANY_REQUESTS = 2;
+    SERVER_ERROR = 3;
+}
+
+message Response {
+  oneof response_field {
+    Error error = 1;
+    string token = 2;
+  }
+}
+

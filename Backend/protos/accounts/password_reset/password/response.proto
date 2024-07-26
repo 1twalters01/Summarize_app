@@ -1,0 +1,7 @@
+syntax = "proto3";
+
+package accounts.password_reset.password.response;
+
+message Response {
+}
+

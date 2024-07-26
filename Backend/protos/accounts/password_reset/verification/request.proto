@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package accounts.register.verification.request;
+package accounts.password_reset.verification.request;
 
 message Request {
   string verification_code = 1;
