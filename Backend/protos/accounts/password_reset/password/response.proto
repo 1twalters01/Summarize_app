@@ -2,6 +2,14 @@ syntax = "proto3";
 
 package accounts.password_reset.password.response;
 
-message Response {
+enum Error {
+    INVALID_CREDENTIALS = 0;
+    INCORRECT_PASSWORD_CONFIRMATION = 1;
+    INVALID_PASSWORD = 2;
+    TOO_MANY_REQUESTS = 3;
+    SERVER_ERROR = 4;
 }
 
+message Response {
+  optional Error error = 1;
+}
