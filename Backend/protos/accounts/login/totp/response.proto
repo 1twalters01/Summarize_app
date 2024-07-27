@@ -2,6 +2,19 @@ syntax = "proto3";
 
 package accounts.login.totp.response;
 
-message Response {
+import "accounts/auth_tokens.proto";
+
+enum Error {
+    INVALID_CREDENTIALS = 0;
+    INCORRECT_TOTP = 1;
+    INVALID_TOTP = 2;
+    TOO_MANY_REQUESTS = 3;
+    SERVER_ERROR = 4;
 }
 
+message Response {
+  oneof response_field {
+    Error error = 1;
+    accounts.auth_tokens.AuthTokens tokens = 2;
+  }
+}
