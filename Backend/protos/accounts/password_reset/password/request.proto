@@ -3,5 +3,6 @@ syntax = "proto3";
 package accounts.password_reset.password.request;
 
 message Request {
+  string password = 1;
+  string password_confirmation = 2;
 }
-
