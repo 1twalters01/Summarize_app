@@ -2,6 +2,16 @@ syntax = "proto3";
 
 package accounts.register.verification.response;
 
-message Response {
+enum Error {
+    INVALID_CREDENTIALS = 0;
+    INCORRECT_VERIFICATION_CODE = 1;
+    TOO_MANY_REQUESTS = 2;
+    SERVER_ERROR = 3;
 }
 
+message Response {
+  oneof response_field {
+    Error error = 1;
+    string token = 2;
+  }
+}
