@@ -11,5 +11,8 @@ enum Error {
 }
 
 message Response {
-  optional Error error = 1;
+    oneof response_field {
+      optional Error error = 1;
+      bool is_updated = 2;
+    }
 }
