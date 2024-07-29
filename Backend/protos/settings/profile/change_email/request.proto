@@ -1,0 +1,8 @@
+syntax = "proto3";
+
+package settings.profile.name.request;
+
+message Request {
+  string password = 1;
+  string first_name = 2;
+}
