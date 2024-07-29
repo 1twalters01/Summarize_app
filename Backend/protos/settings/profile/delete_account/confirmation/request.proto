@@ -1,0 +1,7 @@
+syntax = "proto3";
+
+package settings.profile.delete_account.confirmation.request;
+
+message Request {
+  string confirmation_code = 1;
+}
