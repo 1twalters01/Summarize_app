@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package settings.profile.name.request;
+package settings.profile.email.request;
 
 message Request {
   string password = 1;
