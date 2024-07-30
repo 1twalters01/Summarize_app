@@ -2,56 +2,47 @@ use std::{fs, io::{self, ErrorKind}, path::{Path, PathBuf}};
 
 fn main() {
     let out_dir = "src/generated/protos";
-    delete_files_in_dir(out_dir).expect("error cleaning output directory");
+    delete_rust_files_in_dir(out_dir).expect("error cleaning output directory");
 
     let mut prost_config = prost_build::Config::new();
     prost_config.out_dir(out_dir);
 
-    // login email protobufs 
-    prost_config.protoc_arg("--experimental_allow_proto3_optional");
-    let proto_files = &[
+    let protobuf_base_dir = "../protos";
+    let protobuf_filename_vec: &Vec<&str> = &Vec::from([
         "../protos/accounts/login/email/request.proto",
         "../protos/accounts/login/email/response.proto",
-    ];
-    let proto_include_dirs = &["../protos/accounts/login/email"];
-    prost_config.compile_protos(proto_files, proto_include_dirs).expect("Failed to compile protos");
-
-    let mut custom_file_path = "accounts/login/email/request.rs";
-    let mut generated_file: PathBuf = Path::new(&out_dir).join("accounts.login.email.request.rs");
-    create_dirs(&out_dir, &custom_file_path.split("/").collect::<Vec<&str>>());
-    rename_file(&out_dir, generated_file, custom_file_path);
-
-    custom_file_path = "accounts/login/email/response.rs";
-    generated_file = Path::new(&out_dir).join("accounts.login.email.response.rs");
-    rename_file(&out_dir, generated_file, custom_file_path);
-    // panic!("email build done");
-
-
-    // login password protobufs
-    let proto_files = &[
         "../protos/accounts/login/password/request.proto",
         "../protos/accounts/login/password/response.proto",
+        "../protos/accounts/login/totp/request.proto",
+        "../protos/accounts/login/totp/response.proto",
         "../protos/accounts/auth_tokens.proto",
-    ];
-    let proto_include_dirs = &["../protos"];
-    prost_config.compile_protos(proto_files, proto_include_dirs).unwrap();
-    
-    custom_file_path = "accounts/login/password/request.rs";
-    generated_file = Path::new(&out_dir).join("accounts.login.password.request.rs");
-    create_dirs(&out_dir, &custom_file_path.split("/").collect::<Vec<&str>>());
-    rename_file(&out_dir, generated_file, custom_file_path);
-    // panic!("password request made");
+    ]);
 
-    custom_file_path = "accounts/login/password/response.rs";
-    generated_file = Path::new(&out_dir).join("accounts.login.password.response.rs");
-    rename_file(&out_dir, generated_file, custom_file_path);
-
-    custom_file_path = "accounts/auth_tokens.rs";
-    generated_file = Path::new(&out_dir).join("accounts.auth_tokens.rs");
-    rename_file(&out_dir, generated_file, custom_file_path);
+    generate_files_from_protobufs(prost_config, out_dir, protobuf_filename_vec, protobuf_base_dir);
 }
 
-fn delete_files_in_dir<P: AsRef<Path>>(root_dir: P) -> io::Result<()> {
+fn generate_files_from_protobufs(mut prost_config: prost_build::Config, out_dir: &str, protobuf_filename_vec: &Vec<&str>, protobuf_base_dir: &str) {
+    let proto_include_dirs: &[&str] = &[protobuf_base_dir];
+    let proto_files: &[&str] = protobuf_filename_vec;
+    prost_config.compile_protos(proto_files, proto_include_dirs).expect("Failed to compile protos");
+
+    let file_paths: Vec<String> = proto_files.into_iter().map(|file_path| {
+        file_path.strip_prefix(&format!("{}{}", protobuf_base_dir, "/"))
+            .unwrap()
+            .replace(".proto", ".rs")
+    }).collect();
+
+    let generated_file_paths: Vec<PathBuf> = file_paths
+        .iter()
+        .map(|file_path| Path::new(out_dir).join(file_path.replace("/", ".").replace(".proto", ".rs")))
+        .collect();
+
+    for i in 0..file_paths.len() {
+        rename_file(&out_dir, generated_file_paths[i].clone(), &file_paths[i]);
+    }
+}
+
+fn delete_rust_files_in_dir<P: AsRef<Path>>(root_dir: P) -> io::Result<()> {
     fn visit_dirs(dir: &Path) -> io::Result<()> {
         if dir.is_dir() {
             for entry in fs::read_dir(dir).unwrap() {
@@ -89,6 +80,7 @@ fn create_dirs(path_root: &str, custom_vec: &Vec<&str>) {
 }
 
 fn rename_file(dir: &str, generated_file: PathBuf, custom_file_path: &str) {
+    create_dirs(dir, &custom_file_path.split("/").collect::<Vec<&str>>());
     let custom_file: PathBuf = Path::new(dir).join(custom_file_path);
     fs::rename(generated_file, custom_file).expect("failed to rename generated file");
 }

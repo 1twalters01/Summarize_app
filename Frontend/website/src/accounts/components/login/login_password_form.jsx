@@ -1,5 +1,5 @@
 import { createSignal } from 'solid-js';
-import { A } from '@solidjs/router';
+import { A, useNavigate } from '@solidjs/router';
 import { getCookie, setCookie, deleteCookie } from '../../../utils/cookies';
 import { useEmailContext } from '../../context/EmailContext';
 const { Request: loginRequest } = require('../../../protos/accounts/login/password/request_pb');
@@ -68,14 +68,6 @@ const postLogin = async(password, rememberMe, setEmail, props) => {
             console.error("Error decoding response:", decodeError);
             throw decodeError;
         }
-        console.log("response:", response);
-        console.log("error code:", error);
-        console.log("error name:", loginError[error]);
-        console.log("invalid credentials:",loginError.INVALID_CREDENTIALS);
-        console.log("response token:", response_token);
-        console.log("access token:", access_token);
-        console.log("refresh token:", refresh_token);
-        console.log("requires totp:", requires_totp);
 
       if (response.hasSuccess()) {
         deleteCookie("login_email_token");
@@ -90,10 +82,11 @@ const postLogin = async(password, rememberMe, setEmail, props) => {
 
           if (refresh_token !== "") {
               setCookie("Refresh", refresh_token, 18000);
-          } else {
-              console.log("yooo");
           }
         }
+
+        const navigate = useNavigate();
+        navigate("/home/", { replace: true});
       }
     }) 
 
