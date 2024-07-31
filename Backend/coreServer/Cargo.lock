@@ -575,6 +575,34 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "06ea2b9bc92be3c2baa9334a323ebca2d6f074ff852cd1d7b11064035cd3868f"
 
 [[package]]
+name = "coreServer"
+version = "0.1.0"
+dependencies = [
+ "actix-cors",
+ "actix-protobuf",
+ "actix-web",
+ "argon2",
+ "captcha",
+ "chrono",
+ "dotenv",
+ "futures-util",
+ "jsonwebtoken",
+ "lettre",
+ "prost",
+ "prost-build",
+ "prost-types",
+ "rand",
+ "redis",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "tokio",
+ "url",
+ "uuid",
+]
+
+[[package]]
 name = "cpufeatures"
 version = "0.2.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2390,34 +2418,6 @@ dependencies = [
  "itoa",
  "ryu",
  "serde",
-]
-
-[[package]]
-name = "server"
-version = "0.1.0"
-dependencies = [
- "actix-cors",
- "actix-protobuf",
- "actix-web",
- "argon2",
- "captcha",
- "chrono",
- "dotenv",
- "futures-util",
- "jsonwebtoken",
- "lettre",
- "prost",
- "prost-build",
- "prost-types",
- "rand",
- "redis",
- "reqwest",
- "serde",
- "serde_json",
- "sqlx",
- "tokio",
- "url",
- "uuid",
 ]
 
 [[package]]
