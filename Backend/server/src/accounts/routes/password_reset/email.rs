@@ -2,15 +2,15 @@ use actix_web::{HttpResponse, Responder, Result};
 use actix_protobuf::{ProtoBuf, ProtoBufResponseBuilder};
 
 use crate::{
-    generated::protos::accounts::register::email::{
+    generated::protos::accounts::password_reset::email::{
         response::{self, response::ResponseField},
         request,
     },
     accounts::{
         datatypes::users::User,
         queries::postgres::get_user_from_email_in_pg_users_table,
-        emails::compose_register_email_message,
-        schema::register::DualVerificationToken,
+        emails::compose_password_reset_email_message,
+        schema::password_reset::DualVerificationToken,
     },
     utils::{
         database_connections::{
@@ -23,10 +23,10 @@ use crate::{
     },
 };
 
+
 pub async fn post_email(data: ProtoBuf<request::Request>) -> Result<impl Responder> {
     let request::Request { email } = data.0;
 
-    // Validate the email from the request body
     let validated_email = validate_email(&email);
     if validated_email.is_err() {
         let response: response::Response = response::Response {
@@ -37,14 +37,16 @@ pub async fn post_email(data: ProtoBuf<request::Request>) -> Result<impl Respond
             .content_type("application/x-protobuf; charset=utf-8")
             .protobuf(response));
     }
+    println!("email: {:?}", email);
 
-    // try to get the user from postgres using the email
+    // Check if email is in postgres database
     let pool = create_pg_pool_connection().await;
     let user_result: Result<Option<User>, sqlx::Error> =
-        get_user_from_email_in_pg_users_table(&pool, &email).await;
+        get_user_from_email_in_pg_users_table(&pool, email.as_str()).await;
 
 
-    match user_result {
+    // extract user or error
+    let user: User = match user_result {
         Err(err) => {
             println!("error: {:?}", err);
 
@@ -55,16 +57,22 @@ pub async fn post_email(data: ProtoBuf<request::Request>) -> Result<impl Respond
                 .content_type("application/x-protobuf; charset=utf-8")
                 .protobuf(response));
         },
-        Ok(user_option) if user_option.is_some() == true => {
-            let response: response::Response = response::Response {
-                response_field: Some(ResponseField::Error(response::Error::RegisteredEmail as i32)),
-             };
-            return Ok(HttpResponse::Conflict()
-                .content_type("application/x-protobuf; charset=utf-8")
-                .protobuf(response));
+        Ok(user_option) => match user_option {
+            None => {
+                let response: response::Response = response::Response {
+                    response_field: Some(ResponseField::Error(response::Error::UnregisteredEmail as i32)),
+                };
+                return Ok(HttpResponse::NotFound()
+                    .content_type("application/x-protobuf; charset=utf-8")
+                    .protobuf(response));
+            },
+            Some(user) => user,
         },
-        _ => {},
     };
+    println!("user: {:#?}", user);
+
+    // get and serialize user
+    let user_json: String = serde_json::to_string(&user).unwrap();
 
     // create a verify token, a register email token, and a register_email_token_struct
     let verification_token = generate_opaque_token_of_length(8);
@@ -76,7 +84,7 @@ pub async fn post_email(data: ProtoBuf<request::Request>) -> Result<impl Respond
     let token_struct_json: String = serde_json::to_string(&token_struct).unwrap();
 
     // try to email the account a message containing the token
-    let message = compose_register_email_message(&verification_token, &header_token);
+    let message = compose_password_reset_email_message(&verification_token, &header_token);
     let message_result = send_email(message, &email);
 
     // if unable to email then return an error
@@ -89,21 +97,27 @@ pub async fn post_email(data: ProtoBuf<request::Request>) -> Result<impl Respond
             .protobuf(response));
     }
 
-    // save {key: token, value: email} to redis cache for 300 seconds
-    let expiry_in_seconds: Option<i64> = Some(300);
+    // add {key: token, value: UUID} to redis
     let con = create_redis_client_connection();
-    let set_redis_result =
-        set_key_value_in_redis(con, &token_struct_json, &email, &expiry_in_seconds);
+    let expiry_in_seconds: Option<i64> = Some(300);
+
+    let set_redis_result = set_key_value_in_redis(
+        con,
+        &token_struct_json,
+        &user_json,
+        &expiry_in_seconds,
+    );
 
     // if redis fails then return an error
     if set_redis_result.is_err() {
-         let response: response::Response = response::Response {
+        let response: response::Response = response::Response {
             response_field: Some(ResponseField::Error(response::Error::ServerError as i32)),
         };
         return Ok(HttpResponse::InternalServerError()
             .content_type("application/x-protobuf; charset=utf-8")
             .protobuf(response));
     }
+    println!("complete");
 
     // return ok
     let response: response::Response = response::Response {
@@ -112,26 +126,5 @@ pub async fn post_email(data: ProtoBuf<request::Request>) -> Result<impl Respond
     return Ok(HttpResponse::Ok()
         .content_type("application/x-protobuf; charset=utf-8")
         .protobuf(response));
-}
-
-#[cfg(test)]
-mod tests {
-    use actix_web::{test, web, App};
-    use dotenv::dotenv;
-    use serde_json::json;
-
-    #[actix_web::test]
-    async fn test_post_email_while_being_authenticated_without_email() {
-    }
-    #[actix_web::test]
-    async fn test_post_email_while_being_authenticated_with_email() {
-    }
-
-    #[actix_web::test]
-    async fn test_post_email_while_not_being_authenticated_without_email() {
-    }
-    #[actix_web::test]
-    async fn test_post_email_while_not_being_authenticated_with_email() {
-    }
 }
 

@@ -5,8 +5,9 @@ package accounts.password_reset.email.response;
 enum Error {
     INVALID_EMAIL = 0;
     UNREGISTERED_EMAIL = 1;
-    TOO_MANY_REQUESTS = 2;
-    SERVER_ERROR = 3;
+    EMAIL_FAILED_TO_SEND = 2;
+    TOO_MANY_REQUESTS = 3;
+    SERVER_ERROR = 4;
 }
 
 message Response {

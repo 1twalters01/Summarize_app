@@ -5,7 +5,7 @@ package accounts.register.email.response;
 enum Error {
     INVALID_EMAIL = 0;
     REGISTERED_EMAIL = 1;
-    EMAIL_FAILED = 2;
+    EMAIL_FAILED_TO_SEND = 2;
     TOO_MANY_REQUESTS = 3;
     SERVER_ERROR = 4;
 }
