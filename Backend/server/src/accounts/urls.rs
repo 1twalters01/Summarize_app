@@ -47,19 +47,19 @@ pub fn config(cfg: &mut ServiceConfig) {
             .wrap(middleware::authentication::not_authenticated::NotAuthenticated)
             .route(
                 "/email",
-                post().to(routes::password_reset::post_email),
+                post().to(routes::password_reset::email::post_email),
             )
             .route(
                 "/verify",
-                post().to(routes::password_reset::post_verify),
+                post().to(routes::password_reset::verification::post_verify),
             )
             .route(
-                "/verify/{uidb64}/{token}",
-                post().to(routes::password_reset::link_verify),
+                "/verify/{uidb64}/{verification_code}",
+                post().to(routes::password_reset::verification::link_verify),
             )
             .route(
                 "/password",
-                post().to(routes::password_reset::post_password_reset),
+                post().to(routes::password_reset::password::post_password_reset),
             ),
     )
     .service(
