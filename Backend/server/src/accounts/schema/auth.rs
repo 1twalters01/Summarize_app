@@ -6,13 +6,11 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     accounts::{
-        datatypes::users::User,
-        queries::postgres::save_refresh_token_user_in_postgres_auth_table,
-        schema::errors::AccountError
+        datatypes::users::User, queries::postgres::save_refresh_token_user_in_postgres_auth_table,
+        schema::errors::AccountError,
     },
     utils::{
-        tokens::generate_opaque_token_of_length,
-        database_connections::create_pg_pool_connection
+        database_connections::create_pg_pool_connection, tokens::generate_opaque_token_of_length,
     },
 };
 
@@ -29,10 +27,7 @@ pub struct AuthTokens {
 }
 
 impl AuthTokens {
-    pub async fn new(
-        user: User,
-        remember_me: bool,
-    ) -> Result<AuthTokens, AccountError> {
+    pub async fn new(user: User, remember_me: bool) -> Result<AuthTokens, AccountError> {
         let access_token = AccessToken::new(&user);
 
         let refresh_token;
@@ -47,7 +42,7 @@ impl AuthTokens {
                 &refresh_token.clone().unwrap(),
                 &user,
             )
-                .await
+            .await
             {
                 let error: AccountError = AccountError {
                     is_error: true,
@@ -59,8 +54,6 @@ impl AuthTokens {
             refresh_token = None;
         }
 
-
-
         let tokens = AuthTokens {
             access_token,
             refresh_token,
@@ -69,7 +62,6 @@ impl AuthTokens {
         return Ok(tokens);
     }
 }
-
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct AccessToken {
@@ -95,12 +87,11 @@ impl AccessToken {
             &claims,
             &EncodingKey::from_secret(secret.as_ref()),
         )
-            .unwrap();
-        return AccessToken{access_token};
+        .unwrap();
+        return AccessToken { access_token };
     }
 
     pub fn to_string(self) -> String {
         return self.access_token;
     }
 }
-

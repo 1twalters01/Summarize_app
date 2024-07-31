@@ -1,5 +1,5 @@
 use crate::accounts::datatypes::users::User;
-use sqlx::{Row, Pool, Postgres};
+use sqlx::{Pool, Postgres, Row};
 use uuid::Uuid;
 
 pub async fn create_new_user_in_pg_users_table(
@@ -72,7 +72,9 @@ pub async fn get_user_from_email_in_pg_users_table(
     match user_select_query {
         Err(err) => return Err(err),
         Ok(res) => {
-            if res.len() == 0 { return Ok(None) }
+            if res.len() == 0 {
+                return Ok(None);
+            }
 
             let id: Option<Uuid> = res[0].get("uuid");
             let username: String = res[0].get("username");
@@ -80,14 +82,16 @@ pub async fn get_user_from_email_in_pg_users_table(
             let password: String = res[0].get("password");
             let first_name: Option<String> = res[0].get("first_name");
             let last_name: Option<String> = res[0].get("last_name");
-            
+
             let user = match id {
                 None => None,
-                Some(id) => Some(User::from_all(id, username, email, password, first_name, last_name).unwrap()),
+                Some(id) => Some(
+                    User::from_all(id, username, email, password, first_name, last_name).unwrap(),
+                ),
             };
 
             return Ok(user);
-        },
+        }
     }
 }
 
@@ -103,7 +107,9 @@ pub async fn get_user_from_username_in_pg_users_table(
     match user_select_query {
         Err(err) => return Err(err),
         Ok(res) => {
-            if res.len() == 0 { return Ok(None) }
+            if res.len() == 0 {
+                return Ok(None);
+            }
 
             let id: Uuid = res[0].get("uuid");
             let username: String = res[0].get("username");
@@ -111,11 +117,12 @@ pub async fn get_user_from_username_in_pg_users_table(
             let password: String = res[0].get("password");
             let first_name: Option<String> = res[0].get("first_name");
             let last_name: Option<String> = res[0].get("last_name");
-            
-            let user: User = User::from_all(id, username, email, password, first_name, last_name).unwrap();
+
+            let user: User =
+                User::from_all(id, username, email, password, first_name, last_name).unwrap();
             println!("user: {:#?}", user);
             return Ok(Some(user));
-        },
+        }
     }
 }
 
@@ -127,11 +134,13 @@ pub async fn get_user_from_uuid_in_pg_users_table(
         .bind(uuid)
         .fetch_all(pool)
         .await;
-    
+
     match user_select_query {
         Err(err) => return Err(err),
         Ok(res) => {
-            if res.len() == 0 { return Ok(None) }
+            if res.len() == 0 {
+                return Ok(None);
+            }
 
             let id: Uuid = res[0].get("uuid");
             let username: String = res[0].get("username");
@@ -139,11 +148,12 @@ pub async fn get_user_from_uuid_in_pg_users_table(
             let password: String = res[0].get("password");
             let first_name: Option<String> = res[0].get("first_name");
             let last_name: Option<String> = res[0].get("last_name");
-            
-            let user: User = User::from_all(id, username, email, password, first_name, last_name).unwrap();
+
+            let user: User =
+                User::from_all(id, username, email, password, first_name, last_name).unwrap();
             println!("user: {:#?}", user);
             return Ok(Some(user));
-        },
+        }
     }
 }
 
@@ -178,7 +188,9 @@ pub async fn get_user_from_refresh_token_in_postgres_auth_table(
     match user_select_query {
         Err(err) => return Err(err),
         Ok(res) => {
-            if res.len() == 0 { return Ok(None) }
+            if res.len() == 0 {
+                return Ok(None);
+            }
 
             let id: Uuid = res[0].get("uuid");
             let username: String = res[0].get("username");
@@ -186,10 +198,11 @@ pub async fn get_user_from_refresh_token_in_postgres_auth_table(
             let password: String = res[0].get("password");
             let first_name: Option<String> = res[0].get("first_name");
             let last_name: Option<String> = res[0].get("last_name");
-            
-            let user: User = User::from_all(id, username, email, password, first_name, last_name).unwrap();
+
+            let user: User =
+                User::from_all(id, username, email, password, first_name, last_name).unwrap();
             println!("user: {:#?}", user);
             return Ok(Some(user));
-        },
+        }
     }
 }

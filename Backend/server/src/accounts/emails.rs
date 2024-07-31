@@ -1,6 +1,5 @@
 use crate::utils::email_handler::EmailMessage;
 
-
 pub fn compose_register_email_message(
     verify_token: &str,
     register_email_token: &str,

@@ -1,26 +1,20 @@
-use actix_web::{HttpResponse, Responder, Result};
 use actix_protobuf::{ProtoBuf, ProtoBufResponseBuilder};
+use actix_web::{HttpResponse, Responder, Result};
 
 use crate::{
+    accounts::{datatypes::users::User, queries::postgres::get_user_from_email_in_pg_users_table},
     generated::protos::accounts::login::email::{
-        response::{self, response::ResponseField},
         request,
-    },
-    accounts::{
-        datatypes::users::User,
-        queries::postgres::get_user_from_email_in_pg_users_table,
+        response::{self, response::ResponseField},
     },
     utils::{
         database_connections::{
-            create_pg_pool_connection,
-            create_redis_client_connection,
-            set_key_value_in_redis,
+            create_pg_pool_connection, create_redis_client_connection, set_key_value_in_redis,
         },
         tokens::generate_opaque_token_of_length,
         validations::validate_email,
     },
 };
-
 
 pub async fn post_email(data: ProtoBuf<request::Request>) -> Result<impl Responder> {
     // get request variable
@@ -30,7 +24,7 @@ pub async fn post_email(data: ProtoBuf<request::Request>) -> Result<impl Respond
     let validated_email = validate_email(&email);
     if validated_email.is_err() {
         let response: response::Response = response::Response {
-                response_field: Some(ResponseField::Error(response::Error::InvalidEmail as i32)),
+            response_field: Some(ResponseField::Error(response::Error::InvalidEmail as i32)),
         };
 
         return Ok(HttpResponse::UnprocessableEntity()
@@ -54,16 +48,18 @@ pub async fn post_email(data: ProtoBuf<request::Request>) -> Result<impl Respond
             return Ok(HttpResponse::InternalServerError()
                 .content_type("application/x-protobuf; charset=utf-8")
                 .protobuf(response));
-        },
+        }
         Ok(user_option) => match user_option {
             None => {
                 let response: response::Response = response::Response {
-                    response_field: Some(ResponseField::Error(response::Error::UnregisteredEmail as i32)),
+                    response_field: Some(ResponseField::Error(
+                        response::Error::UnregisteredEmail as i32,
+                    )),
                 };
                 return Ok(HttpResponse::NotFound()
                     .content_type("application/x-protobuf; charset=utf-8")
                     .protobuf(response));
-            },
+            }
             Some(user) => user,
         },
     };

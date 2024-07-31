@@ -1,11 +1,15 @@
 use actix_web::{web, HttpResponse, Responder, Result};
-use captcha::{filters::{Dots, Noise}, Captcha};
+use captcha::{
+    filters::{Dots, Noise},
+    Captcha,
+};
 
 use crate::{
     accounts::{
         queries::redis::get_code_from_token_in_redis,
         schema::{
-            captcha::{CaptchaResponse, CaptchaResponseSchema, GetCaptchaResponseSchema}, errors::AccountError
+            captcha::{CaptchaResponse, CaptchaResponseSchema, GetCaptchaResponseSchema},
+            errors::AccountError,
         },
     },
     utils::{
@@ -19,7 +23,8 @@ pub async fn get_captcha() -> Result<impl Responder> {
 
     // generate captcha
     let mut captcha = Captcha::new();
-    captcha.add_chars(6)
+    captcha
+        .add_chars(6)
         .apply_filter(Noise::new(0.4))
         .apply_filter(Dots::new(10));
 
@@ -72,7 +77,6 @@ pub async fn get_captcha() -> Result<impl Responder> {
         .content_type("application/json; charset=utf-8")
         .json(body));
 }
-
 
 pub async fn verify_captcha(data: web::Json<CaptchaResponse>) -> Result<impl Responder> {
     let CaptchaResponse { token, response } = data.into_inner();

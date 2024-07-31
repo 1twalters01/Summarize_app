@@ -1,21 +1,19 @@
-use actix_web::{HttpResponse, Responder, Result};
 use actix_protobuf::{ProtoBuf, ProtoBufResponseBuilder};
+use actix_web::{HttpResponse, Responder, Result};
 
 use crate::{
-    generated::protos::accounts::register::email::{
-        response::{self, response::ResponseField},
-        request,
-    },
     accounts::{
-        datatypes::users::User,
+        datatypes::users::User, emails::compose_register_email_message,
         queries::postgres::get_user_from_email_in_pg_users_table,
-        emails::compose_register_email_message,
         schema::register::DualVerificationToken,
+    },
+    generated::protos::accounts::register::email::{
+        request,
+        response::{self, response::ResponseField},
     },
     utils::{
         database_connections::{
-            create_pg_pool_connection, create_redis_client_connection,
-            set_key_value_in_redis,
+            create_pg_pool_connection, create_redis_client_connection, set_key_value_in_redis,
         },
         email_handler::send_email,
         tokens::generate_opaque_token_of_length,
@@ -30,7 +28,7 @@ pub async fn post_email(data: ProtoBuf<request::Request>) -> Result<impl Respond
     let validated_email = validate_email(&email);
     if validated_email.is_err() {
         let response: response::Response = response::Response {
-                response_field: Some(ResponseField::Error(response::Error::InvalidEmail as i32)),
+            response_field: Some(ResponseField::Error(response::Error::InvalidEmail as i32)),
         };
 
         return Ok(HttpResponse::UnprocessableEntity()
@@ -43,7 +41,6 @@ pub async fn post_email(data: ProtoBuf<request::Request>) -> Result<impl Respond
     let user_result: Result<Option<User>, sqlx::Error> =
         get_user_from_email_in_pg_users_table(&pool, &email).await;
 
-
     match user_result {
         Err(err) => {
             println!("error: {:?}", err);
@@ -54,16 +51,18 @@ pub async fn post_email(data: ProtoBuf<request::Request>) -> Result<impl Respond
             return Ok(HttpResponse::InternalServerError()
                 .content_type("application/x-protobuf; charset=utf-8")
                 .protobuf(response));
-        },
+        }
         Ok(user_option) if user_option.is_some() == true => {
             let response: response::Response = response::Response {
-                response_field: Some(ResponseField::Error(response::Error::RegisteredEmail as i32)),
-             };
+                response_field: Some(ResponseField::Error(
+                    response::Error::RegisteredEmail as i32,
+                )),
+            };
             return Ok(HttpResponse::Conflict()
                 .content_type("application/x-protobuf; charset=utf-8")
                 .protobuf(response));
-        },
-        _ => {},
+        }
+        _ => {}
     };
 
     // create a verify token, a register email token, and a register_email_token_struct
@@ -82,7 +81,9 @@ pub async fn post_email(data: ProtoBuf<request::Request>) -> Result<impl Respond
     // if unable to email then return an error
     if message_result.is_err() {
         let response: response::Response = response::Response {
-            response_field: Some(ResponseField::Error(response::Error::EmailFailedToSend as i32)),
+            response_field: Some(ResponseField::Error(
+                response::Error::EmailFailedToSend as i32,
+            )),
         };
         return Ok(HttpResponse::InternalServerError()
             .content_type("application/x-protobuf; charset=utf-8")
@@ -97,7 +98,7 @@ pub async fn post_email(data: ProtoBuf<request::Request>) -> Result<impl Respond
 
     // if redis fails then return an error
     if set_redis_result.is_err() {
-         let response: response::Response = response::Response {
+        let response: response::Response = response::Response {
             response_field: Some(ResponseField::Error(response::Error::ServerError as i32)),
         };
         return Ok(HttpResponse::InternalServerError()
@@ -121,17 +122,12 @@ mod tests {
     use serde_json::json;
 
     #[actix_web::test]
-    async fn test_post_email_while_being_authenticated_without_email() {
-    }
+    async fn test_post_email_while_being_authenticated_without_email() {}
     #[actix_web::test]
-    async fn test_post_email_while_being_authenticated_with_email() {
-    }
+    async fn test_post_email_while_being_authenticated_with_email() {}
 
     #[actix_web::test]
-    async fn test_post_email_while_not_being_authenticated_without_email() {
-    }
+    async fn test_post_email_while_not_being_authenticated_without_email() {}
     #[actix_web::test]
-    async fn test_post_email_while_not_being_authenticated_with_email() {
-    }
+    async fn test_post_email_while_not_being_authenticated_with_email() {}
 }
-

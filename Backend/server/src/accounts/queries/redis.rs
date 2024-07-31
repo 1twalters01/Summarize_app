@@ -1,7 +1,6 @@
 use crate::accounts::datatypes::{token_object::UserRememberMe, users::User};
 use redis::{Commands, Connection, RedisResult};
 
-
 pub fn get_user_from_token_in_redis(mut con: Connection, token: &str) -> Result<User, String> {
     let redis_result: RedisResult<String> = con.get(token);
     let user_json: String = match redis_result {
@@ -48,10 +47,7 @@ pub fn get_user_json_from_token_struct_in_redis(
     };
 }
 
-pub fn get_code_from_token_in_redis(
-    mut con: Connection,
-    token: &str,
-) -> Result<String, String> {
+pub fn get_code_from_token_in_redis(mut con: Connection, token: &str) -> Result<String, String> {
     let redis_result: RedisResult<String> = con.get(token);
     let code: String = match redis_result {
         Ok(code) => code,
@@ -59,4 +55,3 @@ pub fn get_code_from_token_in_redis(
     };
     return Ok(code);
 }
-

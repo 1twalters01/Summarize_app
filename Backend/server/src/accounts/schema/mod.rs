@@ -1,6 +1,6 @@
 pub mod auth;
-pub mod errors;
 pub mod captcha;
+pub mod errors;
 pub mod logout;
 pub mod oauth2;
 pub mod password_reset;

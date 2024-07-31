@@ -1,29 +1,27 @@
-use actix_web::{HttpRequest, HttpResponse, Responder, Result};
 use actix_protobuf::{ProtoBuf, ProtoBufResponseBuilder};
+use actix_web::{HttpRequest, HttpResponse, Responder, Result};
 
 use crate::{
-    generated::protos::accounts::password_reset::verification::{
-        response::{self, response::ResponseField},
-        request,
-    },
     accounts::{
         queries::redis::get_user_json_from_token_struct_in_redis,
-        schema::password_reset::{
-                DualVerificationToken,
-                VerificationRequestSchema,
-        },
+        schema::password_reset::{DualVerificationToken, VerificationRequestSchema},
+    },
+    generated::protos::accounts::password_reset::verification::{
+        request,
+        response::{self, response::ResponseField},
     },
     utils::{
         database_connections::{
-            create_redis_client_connection, delete_key_in_redis,
-            set_key_value_in_redis,
+            create_redis_client_connection, delete_key_in_redis, set_key_value_in_redis,
         },
         tokens::generate_opaque_token_of_length,
     },
 };
 
-
-pub async fn post_verify(data: ProtoBuf<request::Request>, req: HttpRequest) -> Result<impl Responder> {
+pub async fn post_verify(
+    data: ProtoBuf<request::Request>,
+    req: HttpRequest,
+) -> Result<impl Responder> {
     let request::Request { verification_code } = data.0;
     let password_reset_email_token: String = req
         .headers()
@@ -35,7 +33,9 @@ pub async fn post_verify(data: ProtoBuf<request::Request>, req: HttpRequest) -> 
     password_reset_verification_functionality(password_reset_email_token, verification_code).await
 }
 
-pub async fn link_verify(path: actix_web::web::Path<VerificationRequestSchema>) -> Result<impl Responder> {
+pub async fn link_verify(
+    path: actix_web::web::Path<VerificationRequestSchema>,
+) -> Result<impl Responder> {
     let VerificationRequestSchema {
         header_token,
         verification_code,
@@ -57,12 +57,15 @@ async fn password_reset_verification_functionality(
 
     // Get email from token using redis
     let mut con = create_redis_client_connection();
-    let user_json: String = match get_user_json_from_token_struct_in_redis(con, &token_struct_json) {
+    let user_json: String = match get_user_json_from_token_struct_in_redis(con, &token_struct_json)
+    {
         // if error return error
         Err(err) => {
             println!("error: {:#?}", err);
             let response: response::Response = response::Response {
-                response_field: Some(ResponseField::Error(response::Error::InvalidCredentials as i32)),
+                response_field: Some(ResponseField::Error(
+                    response::Error::InvalidCredentials as i32,
+                )),
             };
             return Ok(HttpResponse::UnprocessableEntity()
                 .content_type("application/x-protobuf; charset=utf-8")
@@ -109,4 +112,3 @@ async fn password_reset_verification_functionality(
         .content_type("application/x-protobuf; charset=utf-8")
         .protobuf(response));
 }
-

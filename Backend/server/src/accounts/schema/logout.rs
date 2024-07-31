@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use crate::accounts::schema::errors::AccountError;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Logout {
@@ -20,4 +20,3 @@ impl LogoutResponse {
         }
     }
 }
-

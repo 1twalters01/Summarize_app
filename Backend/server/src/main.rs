@@ -2,12 +2,12 @@ use actix_cors::Cors;
 use actix_web::{App, HttpServer};
 use dotenv::dotenv;
 
+pub mod generated;
 pub mod middleware;
 pub mod utils;
-pub mod generated;
 
-pub mod ping;
 pub mod accounts;
+pub mod ping;
 // pub mod settings;
 // pub mod subscriptions;
 
@@ -26,8 +26,8 @@ async fn main() -> std::io::Result<()> {
             .wrap(cors)
             .configure(ping::urls::config)
             .configure(accounts::urls::config)
-            // .configure(settings::urls::config)
-            // .configure(subscriptions::urls::config)
+        // .configure(settings::urls::config)
+        // .configure(subscriptions::urls::config)
     })
     .bind("127.0.0.1:8000")?
     .run()

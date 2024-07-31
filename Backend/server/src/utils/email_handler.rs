@@ -40,4 +40,3 @@ pub fn send_email(
         Err(err) => return Err(err),
     }
 }
-

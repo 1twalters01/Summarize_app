@@ -48,7 +48,6 @@ pub async fn refresh_token(data: Json<AuthTokens>) -> Result<impl Responder> {
                         .content_type("application/json; charset=utf-8")
                         .json(res_body));
                 }
-
             },
             Err(err) => {
                 let error: AccountError = AccountError {
@@ -73,4 +72,3 @@ pub async fn refresh_token(data: Json<AuthTokens>) -> Result<impl Responder> {
         .content_type("application/json; charset=utf-8")
         .json(auth_tokens))
 }
-

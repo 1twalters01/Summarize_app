@@ -1,11 +1,7 @@
-use actix_web::{HttpRequest, HttpResponse, Responder, Result};
 use actix_protobuf::{ProtoBuf, ProtoBufResponseBuilder};
+use actix_web::{HttpRequest, HttpResponse, Responder, Result};
 
 use crate::{
-    generated::protos::accounts::register::details::{
-        response::{self, response::ResponseField},
-        request,
-    },
     accounts::{
         datatypes::users::User,
         queries::{
@@ -13,13 +9,16 @@ use crate::{
             redis::get_email_from_token_struct_in_redis,
         },
     },
+    generated::protos::accounts::register::details::{
+        request,
+        response::{self, response::ResponseField},
+    },
     utils::{
         database_connections::{
             create_pg_pool_connection, create_redis_client_connection, delete_key_in_redis,
         },
         validations::{
-            validate_first_name, validate_last_name, validate_password,
-            validate_username,
+            validate_first_name, validate_last_name, validate_password, validate_username,
         },
     },
 };
@@ -52,31 +51,36 @@ pub async fn post_details(
             Err(err) => {
                 println!("error: {:#?}", err);
                 let response: response::Response = response::Response {
-                response_field: Some(ResponseField::Error(response::Error::InvalidCredentials as i32)),
-         };
+                    response_field: Some(ResponseField::Error(
+                        response::Error::InvalidCredentials as i32,
+                    )),
+                };
 
-            return Ok(HttpResponse::UnprocessableEntity()
-                .content_type("application/x-protobuf; charset=utf-8")
-                .protobuf(response));
-
+                return Ok(HttpResponse::UnprocessableEntity()
+                    .content_type("application/x-protobuf; charset=utf-8")
+                    .protobuf(response));
             }
             Ok(email) => email,
         };
 
     if password != password_confirmation {
         let response: response::Response = response::Response {
-            response_field: Some(ResponseField::Error(response::Error::IncorrectPasswordConfirmation as i32)),
+            response_field: Some(ResponseField::Error(
+                response::Error::IncorrectPasswordConfirmation as i32,
+            )),
         };
         return Ok(HttpResponse::UnprocessableEntity()
             .content_type("application/x-protobuf; charset=utf-8")
             .protobuf(response));
     }
-    
+
     // check if the username is already found in the database. If it is then return error
     let validated_username = validate_username(&username);
     if validated_username.is_err() {
         let response: response::Response = response::Response {
-            response_field: Some(ResponseField::Error(response::Error::InvalidUsername as i32)),
+            response_field: Some(ResponseField::Error(
+                response::Error::InvalidUsername as i32,
+            )),
         };
         return Ok(HttpResponse::UnprocessableEntity()
             .content_type("application/x-protobuf; charset=utf-8")
@@ -86,7 +90,9 @@ pub async fn post_details(
     let validated_password = validate_password(&password);
     if validated_password.is_err() {
         let response: response::Response = response::Response {
-            response_field: Some(ResponseField::Error(response::Error::InvalidPassword as i32)),
+            response_field: Some(ResponseField::Error(
+                response::Error::InvalidPassword as i32,
+            )),
         };
         return Ok(HttpResponse::UnprocessableEntity()
             .content_type("application/x-protobuf; charset=utf-8")
@@ -96,28 +102,33 @@ pub async fn post_details(
     if first_name.is_some() {
         let validated_first_name = validate_first_name(first_name.clone().unwrap());
         if validated_first_name.is_err() {
-        let response: response::Response = response::Response {
-            response_field: Some(ResponseField::Error(response::Error::InvalidFirstName as i32)),
-        };
-        return Ok(HttpResponse::UnprocessableEntity()
-            .content_type("application/x-protobuf; charset=utf-8")
-            .protobuf(response));
+            let response: response::Response = response::Response {
+                response_field: Some(ResponseField::Error(
+                    response::Error::InvalidFirstName as i32,
+                )),
+            };
+            return Ok(HttpResponse::UnprocessableEntity()
+                .content_type("application/x-protobuf; charset=utf-8")
+                .protobuf(response));
         }
     }
 
     if last_name.is_some() {
         let validated_last_name = validate_last_name(last_name.clone().unwrap());
         if validated_last_name.is_err() {
-        let response: response::Response = response::Response {
-            response_field: Some(ResponseField::Error(response::Error::InvalidLastName as i32)),
-        };
-        return Ok(HttpResponse::UnprocessableEntity()
-            .content_type("application/x-protobuf; charset=utf-8")
-            .protobuf(response));
+            let response: response::Response = response::Response {
+                response_field: Some(ResponseField::Error(
+                    response::Error::InvalidLastName as i32,
+                )),
+            };
+            return Ok(HttpResponse::UnprocessableEntity()
+                .content_type("application/x-protobuf; charset=utf-8")
+                .protobuf(response));
         }
     }
 
-    let create_user: Result<User, std::io::Error> = User::new(username, email, password, first_name, last_name);
+    let create_user: Result<User, std::io::Error> =
+        User::new(username, email, password, first_name, last_name);
     if create_user.is_err() {
         let response: response::Response = response::Response {
             response_field: Some(ResponseField::Error(response::Error::ServerError as i32)),
@@ -160,12 +171,12 @@ pub async fn post_details(
 
     // return Ok
     // create an auth token with remember me set to false and send it over as well?
-        let response: response::Response = response::Response {
-            response_field: Some(ResponseField::Success(response::Success{})),
-        };
-        return Ok(HttpResponse::Ok()
-            .content_type("application/x-protobuf; charset=utf-8")
-            .protobuf(response));
+    let response: response::Response = response::Response {
+        response_field: Some(ResponseField::Success(response::Success {})),
+    };
+    return Ok(HttpResponse::Ok()
+        .content_type("application/x-protobuf; charset=utf-8")
+        .protobuf(response));
 }
 
 #[cfg(test)]
@@ -175,51 +186,62 @@ mod tests {
     use serde_json::json;
 
     #[actix_web::test]
-    async fn test_post_details_while_being_authenticated_with_header_token_username_password_confirmation_first_last() {
-    }
-    
-    #[actix_web::test]
-    async fn test_post_details_while_being_authenticated_with_header_token_without_username_password_confirmation_first_last() {
-    }
-    
-    #[actix_web::test]
-    async fn test_post_details_while_being_authenticated_token_with_header_token_username_password_without_confirmation_first_last() {
-    }
-    
-    #[actix_web::test]
-    async fn test_post_details_while_being_authenticated_with_header_token_username_password_confirmation_without_first_last() {
-    }
-    
-    #[actix_web::test]
-    async fn test_post_details_while_being_authenticated_with_header_token_username_password_confirmation_first_without_last() {
-    }
-    
-    #[actix_web::test]
-    async fn test_post_details_while_being_authenticated_without_header_token_username_password_confirmation_with_first_last() {
+    async fn test_post_details_while_being_authenticated_with_header_token_username_password_confirmation_first_last(
+    ) {
     }
 
+    #[actix_web::test]
+    async fn test_post_details_while_being_authenticated_with_header_token_without_username_password_confirmation_first_last(
+    ) {
+    }
 
     #[actix_web::test]
-    async fn test_post_details_while_not_being_authenticated_with_header_token_username_password_confirmation_first_last() {
+    async fn test_post_details_while_being_authenticated_token_with_header_token_username_password_without_confirmation_first_last(
+    ) {
     }
-    
+
     #[actix_web::test]
-    async fn test_post_details_while_not_being_authenticated_with_header_token_without_username_password_confirmation_first_last() {
+    async fn test_post_details_while_being_authenticated_with_header_token_username_password_confirmation_without_first_last(
+    ) {
     }
-    
+
     #[actix_web::test]
-    async fn test_post_details_while_not_being_authenticated_token_with_header_token_username_password_without_confirmation_first_last() {
+    async fn test_post_details_while_being_authenticated_with_header_token_username_password_confirmation_first_without_last(
+    ) {
     }
-    
+
     #[actix_web::test]
-    async fn test_post_details_while_not_being_authenticated_with_header_token_username_password_confirmation_without_first_last() {
+    async fn test_post_details_while_being_authenticated_without_header_token_username_password_confirmation_with_first_last(
+    ) {
     }
-    
+
     #[actix_web::test]
-    async fn test_post_details_while_not_being_authenticated_with_header_token_username_password_confirmation_first_without_last() {
+    async fn test_post_details_while_not_being_authenticated_with_header_token_username_password_confirmation_first_last(
+    ) {
     }
-    
+
     #[actix_web::test]
-    async fn test_post_details_while_not_being_authenticated_without_header_token_username_password_confirmation_with_first_last() {
+    async fn test_post_details_while_not_being_authenticated_with_header_token_without_username_password_confirmation_first_last(
+    ) {
+    }
+
+    #[actix_web::test]
+    async fn test_post_details_while_not_being_authenticated_token_with_header_token_username_password_without_confirmation_first_last(
+    ) {
+    }
+
+    #[actix_web::test]
+    async fn test_post_details_while_not_being_authenticated_with_header_token_username_password_confirmation_without_first_last(
+    ) {
+    }
+
+    #[actix_web::test]
+    async fn test_post_details_while_not_being_authenticated_with_header_token_username_password_confirmation_first_without_last(
+    ) {
+    }
+
+    #[actix_web::test]
+    async fn test_post_details_while_not_being_authenticated_without_header_token_username_password_confirmation_with_first_last(
+    ) {
     }
 }

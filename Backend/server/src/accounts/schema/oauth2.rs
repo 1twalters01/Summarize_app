@@ -138,7 +138,6 @@ pub struct TokenRequest {
     grant_type: String,
 }
 
-
 #[derive(Deserialize)]
 pub struct CallbackQuery {
     pub code: String,

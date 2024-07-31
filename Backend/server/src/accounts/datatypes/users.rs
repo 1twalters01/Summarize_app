@@ -38,7 +38,13 @@ pub struct User {
 }
 
 impl User {
-    pub fn new(username: String, email: String, password: String, first_name: Option<String>, last_name: Option<String>) -> Result<Self, Error> {
+    pub fn new(
+        username: String,
+        email: String,
+        password: String,
+        first_name: Option<String>,
+        last_name: Option<String>,
+    ) -> Result<Self, Error> {
         match Password::new(password) {
             Ok(password) => {
                 let user = Self {
@@ -66,7 +72,14 @@ impl User {
         }
     }
 
-    pub fn from_all(id: Uuid, username: String, email: String, password_hash: String, first_name: Option<String>, last_name: Option<String>) -> Result<Self, Error> {
+    pub fn from_all(
+        id: Uuid,
+        username: String,
+        email: String,
+        password_hash: String,
+        first_name: Option<String>,
+        last_name: Option<String>,
+    ) -> Result<Self, Error> {
         let password = match Password::from_hash(password_hash) {
             Ok(password) => password,
             Err(err) => return Err(err),
@@ -91,8 +104,6 @@ impl User {
             is_anonymous: false,
         });
     }
-            
-
 
     pub async fn from_uuid_str(uuid: &str) -> Result<Option<Self>, sqlx::Error> {
         let pool = create_pg_pool_connection().await;

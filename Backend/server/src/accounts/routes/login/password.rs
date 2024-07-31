@@ -1,25 +1,22 @@
-use actix_web::{HttpRequest, HttpResponse, Responder, Result};
 use actix_protobuf::{ProtoBuf, ProtoBufResponseBuilder};
-
+use actix_web::{HttpRequest, HttpResponse, Responder, Result};
 
 use crate::{
-    generated::protos::accounts::{
-        auth_tokens,
-        login::password::{
-            request,
-            response::{self, response::ResponseField}
-        },
-    },
     accounts::{
         datatypes::{token_object::UserRememberMe, users::User},
         queries::redis::get_user_from_token_in_redis,
         schema::auth::AuthTokens,
     },
+    generated::protos::accounts::{
+        auth_tokens,
+        login::password::{
+            request,
+            response::{self, response::ResponseField},
+        },
+    },
     utils::{
         database_connections::{
-            create_redis_client_connection,
-            delete_key_in_redis,
-            set_key_value_in_redis,
+            create_redis_client_connection, delete_key_in_redis, set_key_value_in_redis,
         },
         tokens::generate_opaque_token_of_length,
         validations::validate_password,
@@ -38,7 +35,10 @@ pub async fn post_password(
         .unwrap()
         .to_string();
 
-    let request::Request{ password, remember_me} = data.0;
+    let request::Request {
+        password,
+        remember_me,
+    } = data.0;
 
     // try to get user from token in redis
     let mut con = create_redis_client_connection();
@@ -48,7 +48,9 @@ pub async fn post_password(
             println!("Error, {:?}", err);
 
             let response: response::Response = response::Response {
-                response_field: Some(ResponseField::Error(response::Error::InvalidCredentials as i32)),
+                response_field: Some(ResponseField::Error(
+                    response::Error::InvalidCredentials as i32,
+                )),
             };
             return Ok(HttpResponse::UnprocessableEntity()
                 .content_type("application/x-protobuf; charset=utf-8")
@@ -61,7 +63,9 @@ pub async fn post_password(
     let validated_password = validate_password(&password);
     if validated_password.is_err() {
         let response: response::Response = response::Response {
-                response_field: Some(ResponseField::Error(response::Error::InvalidPassword as i32)),
+            response_field: Some(ResponseField::Error(
+                response::Error::InvalidPassword as i32,
+            )),
         };
         return Ok(HttpResponse::UnprocessableEntity()
             .content_type("application/x-protobuf; charset=utf-8")
@@ -73,7 +77,9 @@ pub async fn post_password(
     let check_password: Result<(), std::io::Error> = user.check_password(&password);
     if check_password.is_err() {
         let response: response::Response = response::Response {
-                response_field: Some(ResponseField::Error(response::Error::IncorrectPassword as i32)),
+            response_field: Some(ResponseField::Error(
+                response::Error::IncorrectPassword as i32,
+            )),
         };
         return Ok(HttpResponse::Unauthorized()
             .content_type("application/x-protobuf; charset=utf-8")
@@ -119,9 +125,11 @@ pub async fn post_password(
 
         // return success
         let response: response::Response = response::Response {
-            response_field: Some(ResponseField::Success(response::Success{
-                token: Some(response::Token{token_field: Some(response::token::TokenField::Response(token))}),
-                requires_totp: true, 
+            response_field: Some(ResponseField::Success(response::Success {
+                token: Some(response::Token {
+                    token_field: Some(response::token::TokenField::Response(token)),
+                }),
+                requires_totp: true,
             })),
         };
         return Ok(HttpResponse::Ok()
@@ -135,7 +143,7 @@ pub async fn post_password(
     let auth_tokens: auth_tokens::AuthTokens = match AuthTokens::new(user, remember_me).await {
         Ok(tokens) => auth_tokens::AuthTokens {
             refresh: tokens.refresh_token,
-            access: tokens.access_token.to_string()
+            access: tokens.access_token.to_string(),
         },
         Err(err) => {
             println!("error: {:#?}", err);
@@ -165,13 +173,14 @@ pub async fn post_password(
 
     // return success
     let response: response::Response = response::Response {
-        response_field: Some(ResponseField::Success(response::Success{
-            token: Some(response::Token{token_field: Some(response::token::TokenField::Tokens(auth_tokens))}),
-            requires_totp: false, 
+        response_field: Some(ResponseField::Success(response::Success {
+            token: Some(response::Token {
+                token_field: Some(response::token::TokenField::Tokens(auth_tokens)),
+            }),
+            requires_totp: false,
         })),
     };
     return Ok(HttpResponse::Ok()
         .content_type("application/x-protobuf; charset=utf-8")
         .protobuf(response));
 }
-

@@ -5,10 +5,7 @@ pub fn config(cfg: &mut ServiceConfig) {
     cfg.service(
         scope("/register")
             .wrap(middleware::authentication::not_authenticated::NotAuthenticated)
-            .route(
-                "/email",
-                post().to(routes::register::email::post_email),
-            )
+            .route("/email", post().to(routes::register::email::post_email))
             .route(
                 "/verify",
                 post().to(routes::register::verification::post_verify),
@@ -25,22 +22,13 @@ pub fn config(cfg: &mut ServiceConfig) {
     .service(
         scope("/login")
             .wrap(middleware::authentication::not_authenticated::NotAuthenticated)
-            .route(
-                "/email",
-                post().to(routes::login::email::post_email),
-            )
+            .route("/email", post().to(routes::login::email::post_email))
             .route(
                 "/password",
                 post().to(routes::login::password::post_password),
             )
-            .route(
-                "/totp",
-                post().to(routes::login::totp::post_totp),
-            )
-            .route(
-                "/refresh-token",
-                post().to(routes::refresh::refresh_token),
-            ),
+            .route("/totp", post().to(routes::login::totp::post_totp))
+            .route("/refresh-token", post().to(routes::refresh::refresh_token)),
     )
     .service(
         scope("/password-reset")
@@ -64,30 +52,15 @@ pub fn config(cfg: &mut ServiceConfig) {
     )
     .service(
         scope("/captcha")
-            .route(
-                "/get",
-                get().to(routes::captcha::get_captcha),
-            )
-            .route(
-                "/verify",
-                post().to(routes::captcha::verify_captcha),
-            ),
+            .route("/get", get().to(routes::captcha::get_captcha))
+            .route("/verify", post().to(routes::captcha::verify_captcha)),
     )
     .service(
         scope("/oauth2")
             .wrap(middleware::authentication::not_authenticated::NotAuthenticated)
             // make google oauth account be the same as logging in regularly if using a gmail
-            .route(
-                "/authorise",
-                post().to(routes::oauth2::authorise),
-            )
-            .route(
-                "/callback",
-                post().to(routes::oauth2::callback),
-            )
-            .route(
-                "/refresh-token",
-                post().to(routes::oauth2::refresh_token),
-            ),
+            .route("/authorise", post().to(routes::oauth2::authorise))
+            .route("/callback", post().to(routes::oauth2::callback))
+            .route("/refresh-token", post().to(routes::oauth2::refresh_token)),
     );
 }

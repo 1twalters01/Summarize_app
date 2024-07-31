@@ -1,25 +1,20 @@
-use actix_web::{HttpRequest, HttpResponse, Responder, Result};
 use actix_protobuf::{ProtoBuf, ProtoBufResponseBuilder};
-
+use actix_web::{HttpRequest, HttpResponse, Responder, Result};
 
 use crate::{
+    accounts::{
+        datatypes::users::User, queries::redis::get_user_remember_me_from_token_in_redis,
+        schema::auth::AuthTokens,
+    },
     generated::protos::accounts::{
         auth_tokens,
         login::totp::{
             request,
-            response::{self, response::ResponseField}
+            response::{self, response::ResponseField},
         },
-    },
-    accounts::{
-        datatypes::users::User,
-        queries::redis::get_user_remember_me_from_token_in_redis,
-        schema::auth::AuthTokens,
     },
     utils::{
-        database_connections::{
-            create_redis_client_connection,
-            delete_key_in_redis,
-        },
+        database_connections::{create_redis_client_connection, delete_key_in_redis},
         validations::validate_totp,
     },
 };
@@ -27,7 +22,7 @@ use crate::{
 pub async fn post_totp(
     // data: Json<LoginTotpRequest>,
     data: ProtoBuf<request::Request>,
-    req: HttpRequest
+    req: HttpRequest,
 ) -> Result<impl Responder> {
     let login_password_token: String = req
         .headers()
@@ -37,8 +32,14 @@ pub async fn post_totp(
         .unwrap()
         .to_string();
 
-    let request::Request{ digit1, digit2, digit3, digit4, digit5, digit6 } = data.0;
-
+    let request::Request {
+        digit1,
+        digit2,
+        digit3,
+        digit4,
+        digit5,
+        digit6,
+    } = data.0;
 
     // Try to get TokenObject from redis
     let mut con = create_redis_client_connection();
@@ -48,7 +49,9 @@ pub async fn post_totp(
             Err(err) => {
                 println!("err: {:#?}", err);
                 let response: response::Response = response::Response {
-                    response_field: Some(ResponseField::Error(response::Error::InvalidCredentials as i32)),
+                    response_field: Some(ResponseField::Error(
+                        response::Error::InvalidCredentials as i32,
+                    )),
                 };
 
                 return Ok(HttpResponse::UnprocessableEntity()
@@ -67,7 +70,7 @@ pub async fn post_totp(
 
         return Ok(HttpResponse::Unauthorized()
             .content_type("application/x-protobuf; charset=utf-8")
-             .protobuf(response));
+            .protobuf(response));
     }
 
     // check if the entered totp is a valid totp
@@ -81,7 +84,8 @@ pub async fn post_totp(
             .content_type("application/x-protobuf; charset=utf-8")
             .protobuf(response));
     }
-    let totp = digit1 + digit2*10 + digit3*100 + digit4*1000 + digit5*10000 + digit6*100000;
+    let totp =
+        digit1 + digit2 * 10 + digit3 * 100 + digit4 * 1000 + digit5 * 10000 + digit6 * 100000;
     println!("totp: {:#?}", totp);
 
     // check totp
@@ -115,7 +119,7 @@ pub async fn post_totp(
     let auth_tokens: auth_tokens::AuthTokens = match AuthTokens::new(user, remember_me).await {
         Ok(tokens) => auth_tokens::AuthTokens {
             refresh: tokens.refresh_token,
-            access: tokens.access_token.to_string()
+            access: tokens.access_token.to_string(),
         },
         Err(err) => {
             println!("err: {:#?}", err);
@@ -147,12 +151,9 @@ pub async fn post_totp(
 
     // return success
     let response: response::Response = response::Response {
-        response_field: Some(ResponseField::Tokens(
-            auth_tokens,
-        )),
+        response_field: Some(ResponseField::Tokens(auth_tokens)),
     };
     return Ok(HttpResponse::Ok()
         .content_type("application/x-protobuf; charset=utf-8")
         .protobuf(response));
 }
-

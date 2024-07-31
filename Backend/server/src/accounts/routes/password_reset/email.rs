@@ -1,21 +1,19 @@
-use actix_web::{HttpResponse, Responder, Result};
 use actix_protobuf::{ProtoBuf, ProtoBufResponseBuilder};
+use actix_web::{HttpResponse, Responder, Result};
 
 use crate::{
-    generated::protos::accounts::password_reset::email::{
-        response::{self, response::ResponseField},
-        request,
-    },
     accounts::{
-        datatypes::users::User,
+        datatypes::users::User, emails::compose_password_reset_email_message,
         queries::postgres::get_user_from_email_in_pg_users_table,
-        emails::compose_password_reset_email_message,
         schema::password_reset::DualVerificationToken,
+    },
+    generated::protos::accounts::password_reset::email::{
+        request,
+        response::{self, response::ResponseField},
     },
     utils::{
         database_connections::{
-            create_pg_pool_connection, create_redis_client_connection,
-            set_key_value_in_redis,
+            create_pg_pool_connection, create_redis_client_connection, set_key_value_in_redis,
         },
         email_handler::send_email,
         tokens::generate_opaque_token_of_length,
@@ -23,14 +21,13 @@ use crate::{
     },
 };
 
-
 pub async fn post_email(data: ProtoBuf<request::Request>) -> Result<impl Responder> {
     let request::Request { email } = data.0;
 
     let validated_email = validate_email(&email);
     if validated_email.is_err() {
         let response: response::Response = response::Response {
-                response_field: Some(ResponseField::Error(response::Error::InvalidEmail as i32)),
+            response_field: Some(ResponseField::Error(response::Error::InvalidEmail as i32)),
         };
 
         return Ok(HttpResponse::UnprocessableEntity()
@@ -44,7 +41,6 @@ pub async fn post_email(data: ProtoBuf<request::Request>) -> Result<impl Respond
     let user_result: Result<Option<User>, sqlx::Error> =
         get_user_from_email_in_pg_users_table(&pool, email.as_str()).await;
 
-
     // extract user or error
     let user: User = match user_result {
         Err(err) => {
@@ -56,16 +52,18 @@ pub async fn post_email(data: ProtoBuf<request::Request>) -> Result<impl Respond
             return Ok(HttpResponse::InternalServerError()
                 .content_type("application/x-protobuf; charset=utf-8")
                 .protobuf(response));
-        },
+        }
         Ok(user_option) => match user_option {
             None => {
                 let response: response::Response = response::Response {
-                    response_field: Some(ResponseField::Error(response::Error::UnregisteredEmail as i32)),
+                    response_field: Some(ResponseField::Error(
+                        response::Error::UnregisteredEmail as i32,
+                    )),
                 };
                 return Ok(HttpResponse::NotFound()
                     .content_type("application/x-protobuf; charset=utf-8")
                     .protobuf(response));
-            },
+            }
             Some(user) => user,
         },
     };
@@ -90,7 +88,9 @@ pub async fn post_email(data: ProtoBuf<request::Request>) -> Result<impl Respond
     // if unable to email then return an error
     if message_result.is_err() {
         let response: response::Response = response::Response {
-            response_field: Some(ResponseField::Error(response::Error::EmailFailedToSend as i32)),
+            response_field: Some(ResponseField::Error(
+                response::Error::EmailFailedToSend as i32,
+            )),
         };
         return Ok(HttpResponse::InternalServerError()
             .content_type("application/x-protobuf; charset=utf-8")
@@ -101,12 +101,8 @@ pub async fn post_email(data: ProtoBuf<request::Request>) -> Result<impl Respond
     let con = create_redis_client_connection();
     let expiry_in_seconds: Option<i64> = Some(300);
 
-    let set_redis_result = set_key_value_in_redis(
-        con,
-        &token_struct_json,
-        &user_json,
-        &expiry_in_seconds,
-    );
+    let set_redis_result =
+        set_key_value_in_redis(con, &token_struct_json, &user_json, &expiry_in_seconds);
 
     // if redis fails then return an error
     if set_redis_result.is_err() {
@@ -127,4 +123,3 @@ pub async fn post_email(data: ProtoBuf<request::Request>) -> Result<impl Respond
         .content_type("application/x-protobuf; charset=utf-8")
         .protobuf(response));
 }
-

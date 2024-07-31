@@ -37,7 +37,7 @@ mod tests {
     use serde_json::json;
 
     use crate::{
-        accounts::{schema::auth::AccessToken, datatypes::users::User},
+        accounts::{datatypes::users::User, schema::auth::AccessToken},
         ping::routes::optional_authentication::*,
     };
 

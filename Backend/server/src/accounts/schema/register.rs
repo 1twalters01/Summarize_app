@@ -1,7 +1,7 @@
-use serde::{Serialize, Deserialize};
 use crate::accounts::schema::errors::AccountError;
+use serde::{Deserialize, Serialize};
 
-// Register Email Structs 
+// Register Email Structs
 #[derive(Debug, Serialize, Deserialize)]
 pub struct RegisterEmailRequestSchema {
     pub email: String,
@@ -36,7 +36,7 @@ pub struct VerificationRequest {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct VerificationRequestSchema {
-    pub header_token: String,       // opaque token in place of the email
+    pub header_token: String,      // opaque token in place of the email
     pub verification_code: String, // thing they enter on the site
 }
 
@@ -89,5 +89,3 @@ impl RegisterDetailsResponseSchema {
         }
     }
 }
-
-

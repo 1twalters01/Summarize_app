@@ -17,7 +17,6 @@ impl GetCaptchaResponseSchema {
     }
 }
 
-
 #[derive(Deserialize)]
 pub struct CaptchaResponse {
     pub token: String,
@@ -38,4 +37,3 @@ impl CaptchaResponseSchema {
         }
     }
 }
-

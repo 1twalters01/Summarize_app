@@ -1,11 +1,18 @@
-use actix_web::{body::{BoxBody, EitherBody}, dev::{Service, ServiceRequest, ServiceResponse, Transform}, Error, HttpResponse};
+use actix_web::{
+    body::{BoxBody, EitherBody},
+    dev::{Service, ServiceRequest, ServiceResponse, Transform},
+    Error, HttpResponse,
+};
 use futures_util::future::{ok, LocalBoxFuture, Ready};
-use std::{rc::Rc, task::{Context, Poll}};
 use std::time::Duration;
+use std::{
+    rc::Rc,
+    task::{Context, Poll},
+};
 use tokio::time::sleep;
 
 use crate::utils::database_connections::{create_redis_client_connection, set_key_value_in_redis};
-use redis::{Commands, Connection, RedisResult, ErrorKind};
+use redis::{Commands, Connection, ErrorKind, RedisResult};
 
 struct RateLimiter;
 
@@ -49,7 +56,11 @@ where
 
     fn call(&self, req: ServiceRequest) -> Self::Future {
         // get ip
-        let ip = req.connection_info().realip_remote_addr().unwrap_or("unknown").to_string();
+        let ip = req
+            .connection_info()
+            .realip_remote_addr()
+            .unwrap_or("unknown")
+            .to_string();
 
         // query if ip is in cache
         let mut con = create_redis_client_connection();
@@ -58,10 +69,14 @@ where
         // if ip_result is error then return fail
         if ip_result.is_err() {
             return Box::pin(async {
-                return Ok(req.into_response(HttpResponse::InternalServerError().finish().map_into_right_body()));
+                return Ok(req.into_response(
+                    HttpResponse::InternalServerError()
+                        .finish()
+                        .map_into_right_body(),
+                ));
             });
         }
-        
+
         let limit = 5;
 
         match ip_result.ok().unwrap() {
@@ -72,10 +87,16 @@ where
                 con = create_redis_client_connection();
                 let expiry_in_seconds = Some(60);
                 match set_key_value_in_redis(con, &ip, &count.to_string(), &expiry_in_seconds) {
-                    Ok(_) => {},
-                    Err(_) => return Box::pin(async {
-                        return Ok(req.into_response(HttpResponse::InternalServerError().finish().map_into_right_body()))
-                    }),
+                    Ok(_) => {}
+                    Err(_) => {
+                        return Box::pin(async {
+                            return Ok(req.into_response(
+                                HttpResponse::InternalServerError()
+                                    .finish()
+                                    .map_into_right_body(),
+                            ));
+                        })
+                    }
                 };
 
                 let fut = self.service.call(req);
@@ -84,7 +105,7 @@ where
                     let res = fut.await?;
                     return Ok(res.map_into_left_body());
                 });
-            },
+            }
 
             // if ip less than limit then increase count by 1, save and then continue
             Some(mut count) if count < limit => {
@@ -93,10 +114,16 @@ where
                 con = create_redis_client_connection();
                 let expiry_in_seconds = Some(60);
                 match set_key_value_in_redis(con, &ip, &count.to_string(), &expiry_in_seconds) {
-                    Ok(_) => {},
-                    Err(_) => return Box::pin(async {
-                        return Ok(req.into_response(HttpResponse::InternalServerError().finish().map_into_right_body()))
-                    }),
+                    Ok(_) => {}
+                    Err(_) => {
+                        return Box::pin(async {
+                            return Ok(req.into_response(
+                                HttpResponse::InternalServerError()
+                                    .finish()
+                                    .map_into_right_body(),
+                            ));
+                        })
+                    }
                 };
 
                 let fut = self.service.call(req);
@@ -107,30 +134,28 @@ where
                     return Ok(res.map_into_left_body());
                     // return Ok(res);
                 });
-                
-            },
+            }
 
             Some(_) => {
                 return Box::pin(async {
-                    sleep(Duration::from_secs(180)).await;  // Optional delay before responding with error
-                    return Ok(req.into_response(HttpResponse::TooManyRequests().finish().map_into_right_body()))
+                    sleep(Duration::from_secs(180)).await; // Optional delay before responding with error
+                    return Ok(req.into_response(
+                        HttpResponse::TooManyRequests()
+                            .finish()
+                            .map_into_right_body(),
+                    ));
                 });
-            },
+            }
         }
     }
 }
 
-pub fn get_count_from_ip_in_redis(
-    mut con: Connection,
-    ip: &str,
-) -> Result<Option<i64>, String> {
+pub fn get_count_from_ip_in_redis(mut con: Connection, ip: &str) -> Result<Option<i64>, String> {
     let redis_result: RedisResult<String> = con.get(ip);
     match redis_result {
-        Ok(res) => {
-            match res.parse::<i64>() {
-                Ok(res) => return Ok(Some(res)),
-                Err(err) => return Err(err.to_string()),
-            }
+        Ok(res) => match res.parse::<i64>() {
+            Ok(res) => return Ok(Some(res)),
+            Err(err) => return Err(err.to_string()),
         },
         Err(err) => {
             match err.kind() {
@@ -138,7 +163,6 @@ pub fn get_count_from_ip_in_redis(
                 ErrorKind::ResponseError => return Ok(None),
                 _ => return Err(err.to_string()),
             }
-        },
+        }
     };
 }
-
