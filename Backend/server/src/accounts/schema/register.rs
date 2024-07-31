@@ -37,7 +37,7 @@ pub struct VerificationRequest {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct VerificationRequestSchema {
     pub header_token: String,       // opaque token in place of the email
-    pub verification_token: String, // thing they enter on the site
+    pub verification_code: String, // thing they enter on the site
 }
 
 #[derive(Debug, Serialize, Deserialize)]

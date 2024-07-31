@@ -7,19 +7,19 @@ pub fn config(cfg: &mut ServiceConfig) {
             .wrap(middleware::authentication::not_authenticated::NotAuthenticated)
             .route(
                 "/email",
-                post().to(routes::register::post_email),
+                post().to(routes::register::email::post_email),
             )
             .route(
                 "/verify",
-                post().to(routes::register::post_verify),
+                post().to(routes::register::verification::post_verify),
             )
             .route(
-                "/verify/{register_email_token}/{verification_token}",
-                post().to(routes::register::link_verify),
+                "/verify/{register_email_token}/{verification_code}",
+                post().to(routes::register::verification::link_verify),
             )
             .route(
                 "/details",
-                post().to(routes::register::post_details),
+                post().to(routes::register::details::post_details),
             ),
     )
     .service(

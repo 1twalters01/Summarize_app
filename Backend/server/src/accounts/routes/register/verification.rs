@@ -1,43 +1,30 @@
-use actix_web::{HttpRequest, HttpResponse, Responder, Result};
+use actix_web::{HttpRequest, HttpResponse, Responder, Result, web::Path};
 use actix_protobuf::{ProtoBuf, ProtoBufResponseBuilder};
 
 use crate::{
+    generated::protos::accounts::register::verification::{
+        response::{self, response::ResponseField},
+        request,
+    },
     accounts::{
-        datatypes::users::User,
-        queries::{
-            postgres::{
-                create_new_user_in_pg_users_table,
-                get_user_from_email_in_pg_users_table,
-            },
-            redis::get_email_from_token_struct_in_redis,
-        },
-        emails::compose_register_email_message,
-        schema::{
-            register::{
-                DualVerificationToken, RegisterDetailsRequest,
-                RegisterDetailsResponseSchema, RegisterEmailRequestSchema, RegisterEmailResponseSchema,
-                VerificationRequest, VerificationRequestSchema, VerificationResponseSchema,
-            },
-            errors::AccountError,
+        queries::redis::get_email_from_token_struct_in_redis,
+        schema::register::{
+            DualVerificationToken,
+            VerificationRequestSchema,
         },
     },
     utils::{
         database_connections::{
-            create_pg_pool_connection, create_redis_client_connection, delete_key_in_redis,
+            create_redis_client_connection, delete_key_in_redis,
             set_key_value_in_redis,
         },
-        email_handler::send_email,
         tokens::generate_opaque_token_of_length,
-        validations::{
-            validate_email, validate_first_name, validate_last_name, validate_password,
-            validate_username,
-        },
     },
 };
 
 
-pub async fn post_verify(req_body: Json<VerificationRequest>, req: HttpRequest) -> Result<impl Responder> {
-    let VerificationRequest { verification_token } = req_body.into_inner();
+pub async fn post_verify(data: ProtoBuf<request::Request>, req: HttpRequest) -> Result<impl Responder> {
+    let request::Request { verification_code } = data.0;
     let register_email_token: String = req
         .headers()
         .get("register_email_token")
@@ -45,26 +32,22 @@ pub async fn post_verify(req_body: Json<VerificationRequest>, req: HttpRequest) 
         .to_str()
         .unwrap()
         .to_string();
-    register_verification_functionality(register_email_token, verification_token).await
+    register_verification_functionality(register_email_token, verification_code).await
 }
 
-pub async fn link_verify(path: actix_web::web::Path<VerificationRequestSchema>) -> Result<impl Responder> {
+pub async fn link_verify(path: Path<VerificationRequestSchema>) -> Result<impl Responder> {
     let VerificationRequestSchema {
         header_token,
-        verification_token,
+        verification_code,
     } = path.into_inner();
 
-    register_verification_functionality(header_token, verification_token).await
+    register_verification_functionality(header_token, verification_code).await
 }
 
 async fn register_verification_functionality(
     header_token: String,
     verification_token: String,
 ) -> Result<impl Responder> {
-    let mut res_body: VerificationResponseSchema = VerificationResponseSchema::new();
-
-    // Validate tokens
-
     // Form RegisterToken struct
     let token_struct: DualVerificationToken = DualVerificationToken {
         verification_token,
@@ -78,14 +61,13 @@ async fn register_verification_functionality(
     let email: String = match get_email_from_token_struct_in_redis(con, &token_struct_json) {
         // if error return error
         Err(err) => {
-            let error: AccountError = AccountError {
-                is_error: true,
-                error_message: Some(err),
+            println!("error: {:#?}", err);
+            let response: response::Response = response::Response {
+                response_field: Some(ResponseField::Error(response::Error::IncorrectVerificationCode as i32)),
             };
-            res_body.account_error = error;
             return Ok(HttpResponse::UnprocessableEntity()
-                .content_type("application/json; charset=utf-8")
-                .json(res_body));
+                .content_type("application/x-protobuf; charset=utf-8")
+                .protobuf(response));
         }
         Ok(email) => email,
     };
@@ -112,20 +94,20 @@ async fn register_verification_functionality(
 
     // if redis fails then return an error
     if delete_redis_result.await.is_err() {
-        res_body.account_error = AccountError {
-            is_error: true,
-            error_message: Some(String::from("Server error")),
+        let response: response::Response = response::Response {
+            response_field: Some(ResponseField::Error(response::Error::IncorrectVerificationCode as i32)),
         };
-        return Ok(HttpResponse::FailedDependency()
-            .content_type("application/json; charset=utf-8")
-            .json(res_body));
+        return Ok(HttpResponse::InternalServerError()
+            .content_type("application/x-protobuf; charset=utf-8")
+            .protobuf(response));
     }
 
     // return ok
-    res_body.register_response_token = Some(register_verification_token);
-    return Ok(HttpResponse::Ok()
-        .content_type("application/json; charset=utf-8")
-        .json(res_body));
+    let response: response::Response = response::Response {
+        response_field: Some(ResponseField::Token(register_verification_token)),
+    };
+    return Ok(HttpResponse::InternalServerError()
+        .content_type("application/x-protobuf; charset=utf-8")
+        .protobuf(response));
 }
-
 
