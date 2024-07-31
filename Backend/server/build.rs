@@ -7,7 +7,7 @@ fn main() {
     let mut prost_config = prost_build::Config::new();
     prost_config.out_dir(out_dir);
 
-    let protobuf_base_dir = "../protos";
+    let base_dir = "../protos";
     let protobuf_filename_vec: &Vec<&str> = &Vec::from([
         "../protos/accounts/login/email/request.proto",
         "../protos/accounts/login/email/response.proto",
@@ -18,7 +18,7 @@ fn main() {
         "../protos/accounts/auth_tokens.proto",
     ]);
 
-    generate_files_from_protobufs(prost_config, out_dir, protobuf_filename_vec, protobuf_base_dir);
+    generate_files_from_protobufs(prost_config, out_dir, protobuf_filename_vec, base_dir);
 }
 
 fn generate_files_from_protobufs(mut prost_config: prost_build::Config, out_dir: &str, protobuf_filename_vec: &Vec<&str>, protobuf_base_dir: &str) {

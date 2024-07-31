@@ -3,7 +3,13 @@ use actix_protobuf::{ProtoBuf, ProtoBufResponseBuilder};
 
 
 use crate::{
-    generated::protos::accounts::{auth_tokens, login::password::{request, response::{self, response::ResponseField}}},
+    generated::protos::accounts::{
+        auth_tokens,
+        login::password::{
+            request,
+            response::{self, response::ResponseField}
+        },
+    },
     accounts::{
         datatypes::{token_object::UserRememberMe, users::User},
         queries::redis::get_user_from_token_in_redis,
@@ -132,7 +138,7 @@ pub async fn post_password(
             access: tokens.access_token.to_string()
         },
         Err(err) => {
-            println!("error: {:?}", err);
+            println!("error: {:#?}", err);
             let response: response::Response = response::Response {
                 response_field: Some(ResponseField::Error(response::Error::ServerError as i32)),
             };

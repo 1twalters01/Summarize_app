@@ -39,7 +39,7 @@ pub fn config(cfg: &mut ServiceConfig) {
             )
             .route(
                 "/refresh-token",
-                post().to(routes::login::refresh::refresh_token),
+                post().to(routes::refresh::refresh_token),
             ),
     )
     .service(

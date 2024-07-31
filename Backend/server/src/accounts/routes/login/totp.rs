@@ -1,36 +1,34 @@
-use actix_web::{web::Json, HttpRequest, HttpResponse, Responder, Result};
-// use actix_protobuf::{ProtoBuf, ProtoBufResponseBuilder};
+use actix_web::{HttpRequest, HttpResponse, Responder, Result};
+use actix_protobuf::{ProtoBuf, ProtoBufResponseBuilder};
 
-// mod request {include!(concat!(env!("OUT_DIR"), "/accounts/login/email/request.rs"));}
-// mod response {include!(concat!(env!("OUT_DIR"), "/accounts/login/email/response.rs"));}
 
 use crate::{
+    generated::protos::accounts::{
+        auth_tokens,
+        login::totp::{
+            request,
+            response::{self, response::ResponseField}
+        },
+    },
     accounts::{
         datatypes::users::User,
-        queries::{
-            postgres::get_user_from_refresh_token_in_postgres_auth_table,
-            redis::get_user_remember_me_from_token_in_redis,
-        },
-        schema::{
-            auth::{AccessToken, AuthTokens},
-            errors::AccountError,
-            login::{
-                LoginTotpRequest,
-                LoginTotpRequestSchema,
-                LoginTotpResponseSchema,
-            },
-            refresh_token::RefreshTokenResponseSchema,
-        },
+        queries::redis::get_user_remember_me_from_token_in_redis,
+        schema::auth::AuthTokens,
     },
     utils::{
         database_connections::{
-            create_pg_pool_connection, create_redis_client_connection, delete_key_in_redis,
+            create_redis_client_connection,
+            delete_key_in_redis,
         },
         validations::validate_totp,
     },
 };
 
-pub async fn post_totp(data: Json<LoginTotpRequest>, req: HttpRequest) -> Result<impl Responder> {
+pub async fn post_totp(
+    // data: Json<LoginTotpRequest>,
+    data: ProtoBuf<request::Request>,
+    req: HttpRequest
+) -> Result<impl Responder> {
     let login_password_token: String = req
         .headers()
         .get("login_password_token")
@@ -38,15 +36,9 @@ pub async fn post_totp(data: Json<LoginTotpRequest>, req: HttpRequest) -> Result
         .to_str()
         .unwrap()
         .to_string();
-    let LoginTotpRequest { totp } = data.into_inner();
-    let LoginTotpRequestSchema {
-        totp,
-        login_password_token,
-    } = LoginTotpRequestSchema {
-        totp,
-        login_password_token,
-    };
-    let mut res_body: LoginTotpResponseSchema = LoginTotpResponseSchema::new();
+
+    let request::Request{ digit1, digit2, digit3, digit4, digit5, digit6 } = data.0;
+
 
     // Try to get TokenObject from redis
     let mut con = create_redis_client_connection();
@@ -54,57 +46,53 @@ pub async fn post_totp(data: Json<LoginTotpRequest>, req: HttpRequest) -> Result
         match get_user_remember_me_from_token_in_redis(con, &login_password_token) {
             // if error return error
             Err(err) => {
-                let error: AccountError = AccountError {
-                    is_error: true,
-                    error_message: Some(err),
+                println!("err: {:#?}", err);
+                let response: response::Response = response::Response {
+                    response_field: Some(ResponseField::Error(response::Error::InvalidCredentials as i32)),
                 };
-                res_body.account_error = error;
+
                 return Ok(HttpResponse::UnprocessableEntity()
-                    .content_type("application/json; charset=utf-8")
-                    .json(res_body));
+                    .content_type("application/x-protobuf; charset=utf-8")
+                    .protobuf(response));
             }
             Ok(user_remember_me) => (user_remember_me.user, user_remember_me.remember_me),
         };
 
-    // check if the entered totp is a valid totp
-    let validated_totp = validate_totp(&totp);
-    if validated_totp.is_err() {
-        let error: AccountError = AccountError {
-            is_error: true,
-            error_message: Some(validated_totp.err().unwrap()),
-        };
-        res_body.account_error = error;
-
-        return Ok(HttpResponse::UnprocessableEntity()
-            .content_type("application/json; charset=utf-8")
-            .json(res_body));
-    }
-    println!("totp: {:#?}", totp);
-
     // see if account has a totp
     let has_totp = user.is_totp_activated();
     if has_totp == false {
-        let error: AccountError = AccountError {
-            is_error: true,
-            error_message: Some(String::from("User does not have totp activated")),
+        let response: response::Response = response::Response {
+            response_field: Some(ResponseField::Error(response::Error::InvalidTotp as i32)),
         };
-        res_body.account_error = error;
+
         return Ok(HttpResponse::Unauthorized()
-            .content_type("application/json; charset=utf-8")
-            .json(res_body));
+            .content_type("application/x-protobuf; charset=utf-8")
+             .protobuf(response));
     }
 
-    // check totp
-    let is_totp_correct = user.check_totp(totp);
-    if is_totp_correct == false {
-        res_body.account_error = AccountError {
-            is_error: true,
-            error_message: Some(String::from("Incorrect totp")),
+    // check if the entered totp is a valid totp
+    let validated_totp = validate_totp(digit1, digit2, digit3, digit4, digit5, digit6);
+    if validated_totp.is_err() {
+        let response: response::Response = response::Response {
+            response_field: Some(ResponseField::Error(response::Error::InvalidTotp as i32)),
         };
 
         return Ok(HttpResponse::Unauthorized()
-            .content_type("application/json; charset=utf-8")
-            .json(res_body));
+            .content_type("application/x-protobuf; charset=utf-8")
+            .protobuf(response));
+    }
+    let totp = digit1 + digit2*10 + digit3*100 + digit4*1000 + digit5*10000 + digit6*100000;
+    println!("totp: {:#?}", totp);
+
+    // check totp
+    if user.check_totp(totp) == false {
+        let response: response::Response = response::Response {
+            response_field: Some(ResponseField::Error(response::Error::IncorrectTotp as i32)),
+        };
+
+        return Ok(HttpResponse::Unauthorized()
+            .content_type("application/x-protobuf; charset=utf-8")
+            .protobuf(response));
     }
 
     // delete old token from redis
@@ -113,26 +101,34 @@ pub async fn post_totp(data: Json<LoginTotpRequest>, req: HttpRequest) -> Result
 
     // if redis fails then return an error
     if delete_redis_result.await.is_err() {
-        res_body.account_error = AccountError {
-            is_error: true,
-            error_message: Some(String::from("Server error")),
+        let response: response::Response = response::Response {
+            response_field: Some(ResponseField::Error(response::Error::ServerError as i32)),
         };
+
         return Ok(HttpResponse::FailedDependency()
-            .content_type("application/json; charset=utf-8")
-            .json(res_body));
+            .content_type("application/x-protobuf; charset=utf-8")
+            .protobuf(response));
     }
 
     // update last login time
     // create auth tokens
-    let auth_tokens: AuthTokens = match AuthTokens::new(user, remember_me).await {
-        Ok(tokens) => tokens,
-        Err(error) => {
-            res_body.account_error = error;
+    let auth_tokens: auth_tokens::AuthTokens = match AuthTokens::new(user, remember_me).await {
+        Ok(tokens) => auth_tokens::AuthTokens {
+            refresh: tokens.refresh_token,
+            access: tokens.access_token.to_string()
+        },
+        Err(err) => {
+            println!("err: {:#?}", err);
+            let response: response::Response = response::Response {
+                response_field: Some(ResponseField::Error(response::Error::ServerError as i32)),
+            };
+
             return Ok(HttpResponse::FailedDependency()
-                .content_type("application/json; charset=utf-8")
-                .json(res_body));
+                .content_type("application/x-protobuf; charset=utf-8")
+                .protobuf(response));
         }
     };
+    println!("auth tokens: {:#?}", auth_tokens);
 
     // delete old token
     con = create_redis_client_connection();
@@ -140,77 +136,23 @@ pub async fn post_totp(data: Json<LoginTotpRequest>, req: HttpRequest) -> Result
 
     // if redis fails then return an error
     if delete_redis_result.await.is_err() {
-        res_body.account_error = AccountError {
-            is_error: true,
-            error_message: Some(String::from("Server error")),
+        let response: response::Response = response::Response {
+            response_field: Some(ResponseField::Error(response::Error::ServerError as i32)),
         };
+
         return Ok(HttpResponse::FailedDependency()
-            .content_type("application/json; charset=utf-8")
-            .json(res_body));
+            .content_type("application/x-protobuf; charset=utf-8")
+            .protobuf(response));
     }
 
     // return success
-    res_body.is_totp_correct = true;
-    res_body.auth_tokens = Some(auth_tokens);
-    Ok(HttpResponse::Ok()
-        .content_type("application/json; charset=utf-8")
-        .json(res_body))
-}
-
-pub async fn refresh_token(data: Json<AuthTokens>) -> Result<impl Responder> {
-    let mut res_body: RefreshTokenResponseSchema = RefreshTokenResponseSchema::new();
-    let refresh_token: String = match &data.refresh_token {
-        None => {
-            let error: AccountError = AccountError {
-                is_error: true,
-                error_message: Some(String::from("Internal server error")),
-            };
-            res_body.account_error = error;
-            return Ok(HttpResponse::Unauthorized()
-                .content_type("application/json; charset=utf-8")
-                .json(res_body));
-        }
-        Some(refresh_token) => refresh_token.to_string(),
+    let response: response::Response = response::Response {
+        response_field: Some(ResponseField::Tokens(
+            auth_tokens,
+        )),
     };
-
-    let pool = create_pg_pool_connection().await;
-    let user: User =
-        match get_user_from_refresh_token_in_postgres_auth_table(&pool, &refresh_token).await {
-            Ok(user) => match user {
-                Some(user) => user,
-                None => {
-                    let error: AccountError = AccountError {
-                        is_error: true,
-                        error_message: Some("invalid refresh token".to_string()),
-                    };
-                    res_body.account_error = error;
-                    return Ok(HttpResponse::UnprocessableEntity()
-                        .content_type("application/json; charset=utf-8")
-                        .json(res_body));
-                }
-
-            },
-            Err(err) => {
-                let error: AccountError = AccountError {
-                    is_error: true,
-                    error_message: Some(err.to_string()),
-                };
-                res_body.account_error = error;
-                return Ok(HttpResponse::UnprocessableEntity()
-                    .content_type("application/json; charset=utf-8")
-                    .json(res_body));
-            }
-        };
-
-    let access_token = AccessToken::new(&user);
-
-    let auth_tokens: AuthTokens = AuthTokens {
-        refresh_token: Some(refresh_token),
-        access_token,
-    };
-
-    Ok(HttpResponse::Ok()
-        .content_type("application/json; charset=utf-8")
-        .json(auth_tokens))
+    return Ok(HttpResponse::Ok()
+        .content_type("application/x-protobuf; charset=utf-8")
+        .protobuf(response));
 }
 
