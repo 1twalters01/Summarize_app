@@ -10,9 +10,14 @@ enum Error {
     SERVER_ERROR = 4;
 }
 
-message Response {
-    oneof response_field {
-      optional Error error = 1;
-      bool is_updated = 2;
-    }
+message Success {
+    string message = 1;
 }
+
+message Response {
+  oneof response_field {
+    Success success = 1;
+    Error error = 2;
+  }
+}
+

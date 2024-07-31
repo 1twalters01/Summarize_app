@@ -4,9 +4,10 @@ package accounts.register.email.response;
 
 enum Error {
     INVALID_EMAIL = 0;
-    UNREGISTERED_EMAIL = 1;
-    TOO_MANY_REQUESTS = 2;
-    SERVER_ERROR = 3;
+    REGISTERED_EMAIL = 1;
+    EMAIL_FAILED = 2;
+    TOO_MANY_REQUESTS = 3;
+    SERVER_ERROR = 4;
 }
 
 message Response {

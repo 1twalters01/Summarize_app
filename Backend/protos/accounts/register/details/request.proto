@@ -3,9 +3,9 @@ syntax = "proto3";
 package accounts.register.details.request;
 
 message Request {
-    string username
-    string password
-    string password_confirmation
-    optional string first_name
-    optional string last_name
+    string username = 1;
+    string password = 2;
+    string password_confirmation = 3;
+    optional string first_name = 4;
+    optional string last_name = 5;
 }
