@@ -38,7 +38,7 @@ const postLoginTotp = async(digit1, digit2, digit3, digit4, digit5, digit6) => {
     method: "POST",
     mode: "cors",
     headers: {
-      "Content-Type": "application/json",
+      "Content-Type": "application/x-protobuf",
       "login_password_token": login_response_token,
     },
     body: Buffer

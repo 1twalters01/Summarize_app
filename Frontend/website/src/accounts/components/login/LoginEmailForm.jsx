@@ -43,7 +43,7 @@ const postLogin = async(email, props) => {
         try {
             response = loginResponse.deserializeBinary(uint8Array);
             error = response.getError();
-            if (response.hasToken()) {
+            if (response.hasSuccess()) {
                 token = response.getToken();
             }
         } catch (decodeError) {

@@ -2,6 +2,8 @@ import { createSignal } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
 import { getCookie, deleteCookie } from '../../../utils/cookies';
 import { useEmailContext } from '../../context/EmailContext';
+const { Request: registerRequest } = require('../../../protos/accounts/register/verification/request_pb');
+const { Response: registerResponse } = require('../../../protos/accounts/register/verification/response_pb');
 
 /** @template T @typedef { import('solid-js').Accessor<T> } Accessor */
 
@@ -17,6 +19,14 @@ import { useEmailContext } from '../../context/EmailContext';
   * @param {Accessor<string>} lastName The user's last name (optional)
 */
 const postRegisterDetails = async(username, password, passwordConfirmation, firstName, lastName) => {
+  const request = new registerRequest();
+  request.setUsername(username());
+  request.setPassword(password());
+  request.setPasswordConfirmation(passwordConfirmation());
+  request.setFirstName(firstName());
+  request.setLastName(lastName());
+  const Buffer = request.serializeBinary();
+
   let register_response_token = getCookie("register_verification_token");
   if (register_response_token == null) {
       register_response_token = "";
@@ -28,16 +38,10 @@ const postRegisterDetails = async(username, password, passwordConfirmation, firs
       "Content-Type": "application/json",
       "register_verification_token": register_response_token,
     },
-    body: JSON.stringify({
-      "username": username(),
-      "password": password(),
-      "password_confirmation": passwordConfirmation(),
-      "first_name": firstName(),
-      "last_name": lastName(),
-    })
+    body: Buffer
   });
 
-  return response.json();
+  return response.arrayBuffer();
 }
 
 /**
@@ -46,17 +50,32 @@ const postRegisterDetails = async(username, password, passwordConfirmation, firs
   * @param {Accessor<string>} passwordConfirmation Confirmation of the user's password
   * @param {Accessor<string>} firstName The user's first name (optional)
   * @param {Accessor<string>} lastName The user's last name (optional)
+  * @param {Function} setEmail Function to change the email
 */
-const postDetails = async(username, password, passwordConfirmation, firstName, lastName) => {
+const postDetails = async(username, password, passwordConfirmation, firstName, lastName, setEmail) => {
   postRegisterDetails(username, password, passwordConfirmation, firstName, lastName)
-    .then(() => {
-      deleteCookie("register_verify_token");
-      
-      let {setEmail} = useEmailContext();
-      setEmail("");
-      
-      const navigate = useNavigate();
-      navigate("/login", { replace: true });
+    .then((arrayBuffer) => {
+        let uint8Array = new Uint8Array(arrayBuffer);
+        
+        let response, success, error;
+        try {
+            response = registerResponse.deserializeBinary(uint8Array);
+            error = response.getError();
+            if (response.hasSuccess()) {
+                success = response.getSuccess();
+            }
+        } catch (decodeError) {
+            console.error("Error decoding response:", decodeError);
+            throw decodeError;
+        }
+
+        if (response.hasSuccess()) {
+            deleteCookie("register_verify_token");
+            setEmail("");
+
+            const navigate = useNavigate();
+            navigate("/login", { replace: true });
+        }
     })
 };
 
@@ -67,11 +86,12 @@ const RegisterDetailsForm = (props) => {
   const [passwordConfirmation, setPasswordConfirmation] = createSignal("");
   const [firstName, setFirstName] = createSignal("");
   const [lastName, setLastName] = createSignal("");
+  const {setEmail} = useEmailContext();
 
   /** @param {SubmitEvent} e */
   function PostRegister(e) {
     e.preventDefault();
-    postDetails(username, password, passwordConfirmation, firstName, lastName);
+    postDetails(username, password, passwordConfirmation, firstName, lastName, setEmail);
   }
 
   return (

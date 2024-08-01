@@ -1,8 +1,10 @@
 import { createSignal } from 'solid-js';
 import { getCookie, setCookie, deleteCookie } from '../../../utils/cookies';
+const { Request: registerRequest } = require('../../../protos/accounts/register/verification/request_pb');
+const { Response: registerResponse } = require('../../../protos/accounts/register/verification/response_pb');
 
 /** @template T @typedef { import('solid-js').Accessor<T> } Accessor */
-/** @template T * @typedef { import('solid-js').Setter<T> } Setter */
+/** @template T @typedef { import('solid-js').Setter<T> } Setter */
 /** @template T @typedef { import('solid-js').Signal<T> } Signal */
 
 /** @typedef {Object} props
@@ -12,6 +14,10 @@ import { getCookie, setCookie, deleteCookie } from '../../../utils/cookies';
 
 /** @param {Accessor<string>} token The user's token */
 const postRegisterVerification = async(token) => {
+  const request = new registerRequest();
+  request.setVerificationCode(token());
+  const Buffer = request.serializeBinary();
+
   let register_response_token = getCookie("register_email_token");
   if (register_response_token == null) {
       register_response_token = "";
@@ -23,12 +29,10 @@ const postRegisterVerification = async(token) => {
       "Content-Type": "application/json",
       "register_email_token": register_response_token,
     },
-    body: JSON.stringify({
-      "verification_token": token(),
-    })
+    body: Buffer,
   });
 
-  return response.json();
+  return response.arrayBuffer();
 }
 
 /**
@@ -38,12 +42,26 @@ const postRegisterVerification = async(token) => {
 const postRegister = async(token, props) => {
   /** @type {Promise<number|void|Response>} */
   let response = postRegisterVerification(token)
-    .then((res) => {
-      if (res.register_response_token != null) {
-        setCookie("register_verification_token", res.register_response_token, 1800);
-        deleteCookie("register_email_token"); 
-        props.detailsMode();
-      }
+    .then((arrayBuffer) => {
+        let uint8Array = new Uint8Array(arrayBuffer);
+        
+        let response, token, error;
+        try {
+            response = registerResponse.deserializeBinary(uint8Array);
+            error = response.getError();
+            if (response.hasToken()) {
+                token = response.getToken();
+            }
+        } catch (decodeError) {
+            console.error("Error decoding response:", decodeError);
+            throw decodeError;
+        }
+
+        if (token.length == 25) {
+            setCookie("register_verification_token", token, 1800);
+            deleteCookie("register_email_token"); 
+            props.detailsMode();
+        }
     }) 
 
   return response;

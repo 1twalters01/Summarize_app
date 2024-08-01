@@ -3,9 +3,9 @@ import { createSignal, Switch, Match } from 'solid-js';
 import Navbar from '../components/navbar';
 import Headers from "../components/headers";
 import Oauth2 from "../components/oauth";
-import LoginEmailForm from '../components/login/login_email_form';
-import LoginPasswordForm from '../components/login/login_password_form';
-import LoginTotpForm from '../components/login/login_totp_form';
+import LoginEmailForm from '../components/login/LoginEmailForm';
+import LoginPasswordForm from '../components/login/LoginPasswordForm';
+import LoginTotpForm from '../components/login/LoginTotpForm';
 import Footer from "../components/footer";
 
 /** @template T @typedef { import('solid-js').Accessor<T> } Accessor */
