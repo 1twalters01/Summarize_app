@@ -4,7 +4,6 @@ import { getCookie, setCookie, deleteCookie } from '../../../utils/cookies';
 import { useEmailContext } from '../../context/EmailContext';
 const { Request: loginRequest } = require('../../../protos/accounts/login/password/request_pb');
 const { Response: loginResponse, Error: loginError } = require('../../../protos/accounts/login/password/response_pb');
-// import { accounts as accountsResponse } from '../../../protos/accounts/login/password/response';
 
 /** @template T @typedef { import('solid-js').Accessor<T> } Accessor */
 /** @template T @typedef { import('solid-js').Setter<T> } Setter */
@@ -54,20 +53,20 @@ const postLogin = async(password, rememberMe, setEmail, props) => {
   let response = postLoginPassword(password, rememberMe)
     .then((array_buffer) => {
       let uint8Array = new Uint8Array(array_buffer);
-        let response, error, response_token, access_token, refresh_token, requires_totp;
-        try {
-            response = loginResponse.deserializeBinary(uint8Array);
-            error = response.getError();
-            if (response.hasSuccess()) {
-              response_token = response.getSuccess().getToken().getResponse();
-              access_token = response.getSuccess().getToken().getTokens().getAccess();
-              refresh_token = response.getSuccess().getToken().getTokens().getRefresh();
-              requires_totp = response.getSuccess().getRequiresTotp();
-            }
-        } catch (decodeError) {
-            console.error("Error decoding response:", decodeError);
-            throw decodeError;
+      let response, error, response_token, access_token, refresh_token, requires_totp;
+      try {
+        response = loginResponse.deserializeBinary(uint8Array);
+        error = response.getError();
+        if (response.hasSuccess()) {
+          response_token = response.getSuccess().getToken().getResponse();
+          access_token = response.getSuccess().getToken().getTokens().getAccess();
+          refresh_token = response.getSuccess().getToken().getTokens().getRefresh();
+          requires_totp = response.getSuccess().getRequiresTotp();
         }
+      } catch (decodeError) {
+        console.error("Error decoding response:", decodeError);
+        throw decodeError;
+      }
 
       if (response.hasSuccess()) {
         deleteCookie("login_email_token");

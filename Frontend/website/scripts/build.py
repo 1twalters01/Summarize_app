@@ -49,48 +49,83 @@ def webpack_build():
 backend_protobuf_location = "../../Backend/protos"
 frontend_protobuf_location = "./src/protos"
 
-# file_pair_1 = {
-#     "out": f"{frontend_protobuf_location}/accounts/login/email/request",
-#     "in": f"{backend_protobuf_location}/accounts/login/email/request.proto"
-# }
-# file_pair_2 = {
-#     "out": f"{frontend_protobuf_location}/accounts/login/email/response",
-#     "in": f"{backend_protobuf_location}/accounts/login/email/response.proto"
-# }
-# file_pair_3 = {
-#     "out": f"{frontend_protobuf_location}/accounts/login/password/request",
-#     "in": f"{backend_protobuf_location}/accounts/login/password/request.proto"
-# }
-# file_pair_4 = {
-#     "out": f"{frontend_protobuf_location}/accounts/login/password/response",
-#     "in": f"{backend_protobuf_location}/accounts/login/password/response.proto",
-#     "deps": [
-#         f"{backend_protobuf_location}/accounts/auth_tokens.proto",
-#     ]
-# }
-# file_pair_5 = {
-#     "out": f"{frontend_protobuf_location}/accounts/auth_tokens",
-#     "in": f"{backend_protobuf_location}/accounts/auth_tokens.proto"
-# }
-
 file_pair_1 = {
     "out": f"{frontend_protobuf_location}",
-    "in": f"{backend_protobuf_location}/accounts/login/email/request.proto"
+    "in": f"{backend_protobuf_location}/accounts/auth_tokens.proto"
 }
 file_pair_2 = {
     "out": f"{frontend_protobuf_location}",
-    "in": f"{backend_protobuf_location}/accounts/login/email/response.proto"
+    "in": f"{backend_protobuf_location}/accounts/login/email/request.proto"
 }
 file_pair_3 = {
     "out": f"{frontend_protobuf_location}",
-    "in": f"{backend_protobuf_location}/accounts/login/password/request.proto"
+    "in": f"{backend_protobuf_location}/accounts/login/email/response.proto"
 }
 file_pair_4 = {
     "out": f"{frontend_protobuf_location}",
+    "in": f"{backend_protobuf_location}/accounts/login/password/request.proto"
+}
+file_pair_5 = {
+    "out": f"{frontend_protobuf_location}",
     "in": f"{backend_protobuf_location}/accounts/login/password/response.proto",
-    "deps": [
-        f"{backend_protobuf_location}/accounts/auth_tokens.proto",
-    ]
+    "deps": [f"{backend_protobuf_location}/accounts/auth_tokens.proto",]
+}
+file_pair_6 = {
+    "out": f"{frontend_protobuf_location}",
+    "in": f"{backend_protobuf_location}/accounts/login/totp/request.proto"
+}
+file_pair_7 = {
+    "out": f"{frontend_protobuf_location}",
+    "in": f"{backend_protobuf_location}/accounts/login/totp/response.proto",
+    "deps": [f"{backend_protobuf_location}/accounts/auth_tokens.proto",]
+}
+file_pair_8 = {
+    "out": f"{frontend_protobuf_location}",
+    "in": f"{backend_protobuf_location}/accounts/register/email/request.proto"
+}
+file_pair_9 = {
+    "out": f"{frontend_protobuf_location}",
+    "in": f"{backend_protobuf_location}/accounts/register/email/response.proto"
+}
+file_pair_10 = {
+    "out": f"{frontend_protobuf_location}",
+   "in": f"{backend_protobuf_location}/accounts/register/verification/request.proto"
+}
+file_pair_11 = {
+    "out": f"{frontend_protobuf_location}",
+    "in": f"{backend_protobuf_location}/accounts/register/verification/response.proto"
+}
+file_pair_12 = {
+    "out": f"{frontend_protobuf_location}",
+    "in": f"{backend_protobuf_location}/accounts/register/details/request.proto"
+}
+file_pair_13 = {
+    "out": f"{frontend_protobuf_location}",
+    "in": f"{backend_protobuf_location}/accounts/register/details/response.proto"
+}
+file_pair_14 = {
+    "out": f"{frontend_protobuf_location}",
+    "in": f"{backend_protobuf_location}/accounts/password_reset/email/request.proto"
+}
+file_pair_15 = {
+    "out": f"{frontend_protobuf_location}",
+    "in": f"{backend_protobuf_location}/accounts/password_reset/email/response.proto"
+}
+file_pair_16 = {
+    "out": f"{frontend_protobuf_location}",
+    "in": f"{backend_protobuf_location}/accounts/password_reset/verification/request.proto"
+}
+file_pair_17 = {
+    "out": f"{frontend_protobuf_location}",
+    "in": f"{backend_protobuf_location}/accounts/password_reset/verification/response.proto"
+}
+file_pair_18 = {
+    "out": f"{frontend_protobuf_location}",
+    "in": f"{backend_protobuf_location}/accounts/password_reset/password/request.proto"
+}
+file_pair_19 = {
+    "out": f"{frontend_protobuf_location}",
+    "in": f"{backend_protobuf_location}/accounts/password_reset/password/response.proto"
 }
 
 run_command(f"rm -r {frontend_protobuf_location}")
@@ -99,5 +134,18 @@ compile_protobuffers_for([file_pair_1])
 compile_protobuffers_for([file_pair_2])
 compile_protobuffers_for([file_pair_3])
 compile_protobuffers_for([file_pair_4])
-# compile_protobuffers_for([file_pair_5])
+compile_protobuffers_for([file_pair_5])
+compile_protobuffers_for([file_pair_6])
+compile_protobuffers_for([file_pair_7])
+compile_protobuffers_for([file_pair_8])
+compile_protobuffers_for([file_pair_9])
+compile_protobuffers_for([file_pair_10])
+compile_protobuffers_for([file_pair_11])
+compile_protobuffers_for([file_pair_12])
+compile_protobuffers_for([file_pair_13])
+compile_protobuffers_for([file_pair_14])
+compile_protobuffers_for([file_pair_15])
+compile_protobuffers_for([file_pair_16])
+compile_protobuffers_for([file_pair_18])
+compile_protobuffers_for([file_pair_19])
 run_command("npx webpack build")
