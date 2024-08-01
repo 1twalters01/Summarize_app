@@ -1,5 +1,7 @@
 import { setCookie } from '../../../utils/cookies';
 import { useEmailContext } from '../../context/EmailContext';
+const { Request: registerRequest } = require('../../../protos/accounts/password_reset/email/request_pb');
+const { Response: registerResponse } = require('../../../protos/accounts/password_reset/email/response_pb');
 
 /** @template T
   * @typedef { import('solid-js').Accessor<T> } Accessor
@@ -21,18 +23,20 @@ import { useEmailContext } from '../../context/EmailContext';
 
 /** @param {Accessor<string>} email The user's email address */
 const postPasswordResetEmail = async(email) => {
+  const request = new registerRequest();
+  request.setEmail(email());
+  const Buffer = request.serializeBinary();
+
   const response = await fetch("http://127.0.0.1:8000/password-reset/email", {
     method: "POST",
     mode: "cors",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      "email": email(),
-    })
+    body: Buffer
   });
 
-  return response.json();
+  return response.arrayBuffer();
 }
 
 /**
@@ -42,10 +46,24 @@ const postPasswordResetEmail = async(email) => {
 const postPasswordReset = async(email, props) => {
   /** @type {Promise<number|void|Response>} */
   let response = postPasswordResetEmail(email)
-    .then((res) => {
-      if (res.password_reset_response_token != null) {
-        setCookie("password_reset_email_token", res.password_reset_response_token, 5);
-        props.verificationMode();
+    .then((arrayBuffer) => {
+        let uint8Array = new Uint8Array(arrayBuffer);
+
+        let response, token, error;
+        try {
+            response = registerResponse.deserializeBinary(uint8Array);
+            error = response.getError();
+            if (response.hasSuccess()) {
+                token = response.getToken();
+            }
+        } catch (decodeError) {
+            console.error("Error decoding response:", decodeError);
+            throw decodeError;
+        }
+        
+      if (token.length == 25) {
+          setCookie("password_reset_email_token", token, 5);
+          props.verificationMode();
       }
     }) 
 

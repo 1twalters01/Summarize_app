@@ -1,5 +1,7 @@
 import { createSignal } from 'solid-js';
 import { getCookie, setCookie, deleteCookie } from '../../../utils/cookies';
+const { Request: passwordResetRequest } = require('../../../protos/accounts/password_reset/verification/request_pb');
+const { Response: passwordResetResponse } = require('../../../protos/accounts/password_reset/verification/response_pb');
 
 /** @template T @typedef { import('solid-js').Accessor<T> } Accessor */
 /** @template T @typedef { import('solid-js').Setter<T> } Setter */
@@ -12,6 +14,10 @@ import { getCookie, setCookie, deleteCookie } from '../../../utils/cookies';
 
 /** @param {Accessor<string>} token The user's token */
 const postPasswordResetVerification = async(token) => {
+  const request = new passwordResetRequest();
+  request.setVerificationCode(token());
+  const Buffer = request.serializeBinary();
+
   let password_reset_response_token = getCookie("password_reset_email_token");
   if (password_reset_response_token == null) {
       password_reset_response_token = "";
@@ -23,12 +29,10 @@ const postPasswordResetVerification = async(token) => {
       "Content-Type": "application/json",
       "password_reset_email_token": password_reset_response_token,
     },
-    body: JSON.stringify({
-      "verification_token": token(),
-    })
+    body: Buffer
   });
 
-  return response.json();
+  return response.arrayBuffer();
 }
 
 /**
@@ -38,11 +42,25 @@ const postPasswordResetVerification = async(token) => {
 const postPasswordReset = async(token, props) => {
   /** @type {Promise<number|void|Response>} */
   let response = postPasswordResetVerification(token)
-    .then((res) => {
-      if (res.password_reset_response_token != null) {
-        setCookie("password_reset_verification_token", res.password_reset_response_token, 1800);
-        deleteCookie("password_reset_email_token"); 
-        props.passwordMode();
+    .then((arrayBuffer) => {
+        let uint8Array = new Uint8Array(arrayBuffer);
+
+        let response, token, error;
+        try {
+            response = passwordResetResponse.deserializeBinary(uint8Array);
+            error = response.getError();
+            if (response.hasToken()) {
+                token = response.getToken();
+            }
+        } catch (decodeError) {
+            console.error("Error decoding response:", decodeError);
+            throw decodeError;
+        }
+        
+      if (token.length == 25) {
+          setCookie("password_reset_verification_token", token, 1800);
+          deleteCookie("password_reset_email_token"); 
+          props.passwordMode();
       }
     }) 
 

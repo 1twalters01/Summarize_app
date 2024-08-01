@@ -2,6 +2,8 @@ import { createSignal } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
 import { getCookie, deleteCookie } from '../../../utils/cookies';
 import { useEmailContext } from '../../context/EmailContext';
+const { Request: passwordResetRequest } = require('../../../protos/accounts/login/email/request_pb');
+const { Response: passwordResetResponse } = require('../../../protos/accounts/login/email/response_pb');
 
 /** @template T @typedef { import('solid-js').Accessor<T> } Accessor */
 /** @template T @typedef { import('solid-js').Setter<T> } Setter */
@@ -17,6 +19,11 @@ import { useEmailContext } from '../../context/EmailContext';
   * @param {Accessor<string>} passwordConfirmation Confirmation of the user's password
 */
 const postPasswordResetPassword = async(password, passwordConfirmation) => {
+  const request = new passwordResetRequest();
+  request.setPassword(password());
+  request.setPasswordConfirmation(passwordConfirmation());
+  const Buffer = request.serializeBinary();
+
   let password_reset_response_token = getCookie("password_reset_verification_token");
   if (password_reset_response_token == null) {
       password_reset_response_token = "";
@@ -28,26 +35,36 @@ const postPasswordResetPassword = async(password, passwordConfirmation) => {
       "Content-Type": "application/json",
       "password_reset_verification_token": password_reset_response_token,
     },
-    body: JSON.stringify({
-      "password": password(),
-      "password_confirmation": passwordConfirmation(),
-    })
+    body: Buffer
   });
 
-  return response.json();
+  return response.arrayBuffer();
 }
 
 /**
   * @param {Accessor<string>} password The user's new password
   * @param {Accessor<string>} passwordConfirmation Confirmation of the user's new password
+  * @param {Function} setEmail Function to change the email
 */
-const postPassword = async(password, passwordConfirmation) => {
+const postPassword = async(password, passwordConfirmation, setEmail) => {
   postPasswordResetPassword(password, passwordConfirmation)
-    .then((res) => {
-      if (res.account_error.is_error == false) {
+    .then((arrayBuffer) => {
+        let uint8Array = new Uint8Array(arrayBuffer);
+
+        let response, success, error;
+        try {
+            response = passwordResetResponse.deserializeBinary(uint8Array);
+            error = response.getError();
+            if (response.hasSuccess()) {
+                success = response.getSuccess();
+            }
+        } catch (decodeError) {
+            console.error("Error decoding response:", decodeError);
+            throw decodeError;
+        }
+
+      if (response.hasSuccess) {
         deleteCookie("password_reset_verification_token");
-        
-        let {setEmail} = useEmailContext();
         setEmail("");
         
         const navigate = useNavigate();
@@ -62,11 +79,12 @@ const PasswordResetPasswordForm = (props) => {
   /** @type {Signal<String>} */
   const [password, setPassword] = createSignal("");
   const [passwordConfirmation, setPasswordConfirmation] = createSignal("");
+  let {setEmail} = useEmailContext();
 
   /** @param {SubmitEvent} e */
   function PostPasswordReset(e) {
     e.preventDefault();
-    let response = postPassword(password, passwordConfirmation);
+    let response = postPassword(password, passwordConfirmation, setEmail);
     response.then((response) => console.log("response: ", response));
   }
   
