@@ -26,7 +26,7 @@ pub async fn post_totp(
 ) -> Result<impl Responder> {
     let login_password_token: String = req
         .headers()
-        .get("login_password_token")
+        .get("Login-Password-Token")
         .unwrap()
         .to_str()
         .unwrap()

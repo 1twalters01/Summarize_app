@@ -26,8 +26,8 @@ const postPasswordResetVerification = async(token) => {
     method: "POST",
     mode: "cors",
     headers: {
-      "Content-Type": "application/json",
-      "password_reset_email_token": password_reset_response_token,
+      "Content-Type": "application/x-protobuf",
+      "Password-Reset-Email-Token": password_reset_response_token,
     },
     body: Buffer
   });
@@ -51,17 +51,14 @@ const postPasswordReset = async(token, props) => {
             error = response.getError();
             if (response.hasToken()) {
                 token = response.getToken();
+                setCookie("password_reset_verification_token", token, 1800);
+                deleteCookie("password_reset_email_token"); 
+                props.passwordMode();
             }
         } catch (decodeError) {
             console.error("Error decoding response:", decodeError);
             throw decodeError;
         }
-        
-      if (token.length == 25) {
-          setCookie("password_reset_verification_token", token, 1800);
-          deleteCookie("password_reset_email_token"); 
-          props.passwordMode();
-      }
     }) 
 
   return response;

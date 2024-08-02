@@ -29,7 +29,7 @@ pub async fn post_password(
 ) -> Result<impl Responder> {
     let login_email_token: String = req
         .headers()
-        .get("login_email_token")
+        .get("Login-Email-Token")
         .unwrap()
         .to_str()
         .unwrap()

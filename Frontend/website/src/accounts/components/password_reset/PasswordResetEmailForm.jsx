@@ -1,29 +1,19 @@
 import { setCookie } from '../../../utils/cookies';
 import { useEmailContext } from '../../context/EmailContext';
-const { Request: registerRequest } = require('../../../protos/accounts/password_reset/email/request_pb');
-const { Response: registerResponse } = require('../../../protos/accounts/password_reset/email/response_pb');
+const { Request: passwordResetRequest } = require('../../../protos/accounts/password_reset/email/request_pb');
+const { Response: passwordResetResponse } = require('../../../protos/accounts/password_reset/email/response_pb');
 
-/** @template T
-  * @typedef { import('solid-js').Accessor<T> } Accessor
-*/
-
-/** @template T
-  * @typedef { import('solid-js').Setter<T> } Setter
-*/
-
-/** @template Y
-  * @typedef { import('solid-js').Signal<Y> } Signal
-*/
+/** @template T @typedef { import('solid-js').Accessor<T> } Accessor */
+/** @template T @typedef { import('solid-js').Setter<T> } Setter */
+/** @template T @typedef { import('solid-js').Signal<T> } Signal */
 
 /** @typedef {Object} props
   * @property {Function} verificationMode - go to next screen
 */
 
-
-
 /** @param {Accessor<string>} email The user's email address */
 const postPasswordResetEmail = async(email) => {
-  const request = new registerRequest();
+  const request = new passwordResetRequest();
   request.setEmail(email());
   const Buffer = request.serializeBinary();
 
@@ -31,7 +21,7 @@ const postPasswordResetEmail = async(email) => {
     method: "POST",
     mode: "cors",
     headers: {
-      "Content-Type": "application/json",
+      "Content-Type": "application/x-protobuf",
     },
     body: Buffer
   });
@@ -51,20 +41,17 @@ const postPasswordReset = async(email, props) => {
 
         let response, token, error;
         try {
-            response = registerResponse.deserializeBinary(uint8Array);
+            response = passwordResetResponse.deserializeBinary(uint8Array);
             error = response.getError();
-            if (response.hasSuccess()) {
+            if (response.hasToken()) {
                 token = response.getToken();
+                setCookie("password_reset_email_token", token, 5);
+                props.verificationMode();
             }
         } catch (decodeError) {
             console.error("Error decoding response:", decodeError);
             throw decodeError;
         }
-        
-      if (token.length == 25) {
-          setCookie("password_reset_email_token", token, 5);
-          props.verificationMode();
-      }
     }) 
 
   return response;

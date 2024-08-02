@@ -34,7 +34,7 @@ const postLoginPassword = async(password, rememberMe) => {
     mode: "cors",
     headers: {
       "Content-Type": "application/x-protobuf",
-      "login_email_token": login_response_token,
+      "Login-Email-Token": login_response_token,
     },
     body: Buffer 
   });
@@ -46,9 +46,10 @@ const postLoginPassword = async(password, rememberMe) => {
   * @param {Accessor<string>} password The user's password
   * @param {Accessor<boolean>} rememberMe The user's remember me status
   * @param {Function} setEmail Function to change the email
+  * @param {any} navigate navigate function
   * @param {props} props
   */
-const postLogin = async(password, rememberMe, setEmail, props) => {
+const postLogin = async(password, rememberMe, setEmail, navigate, props) => {
   /** @type {Promise<number|void|Response>} */
   let response = postLoginPassword(password, rememberMe)
     .then((array_buffer) => {
@@ -84,7 +85,6 @@ const postLogin = async(password, rememberMe, setEmail, props) => {
           }
         }
 
-        const navigate = useNavigate();
         navigate("/home/", { replace: true});
       }
     }) 
@@ -98,13 +98,14 @@ const LoginPasswordForm = (props) => {
   const [password, setPassword] = createSignal("");
   const [rememberMe, setRememberMe] = createSignal(false);
   const {setEmail} = useEmailContext();
+  const navigate = useNavigate();
 
   /** @param {SubmitEvent} e */
   function PostLogin(e) {
     e.preventDefault();
     console.log("password: ", password());
 
-    let response = postLogin(password, rememberMe, setEmail, props);
+    let response = postLogin(password, rememberMe, setEmail, navigate,  props);
     response.then((response) => console.log("response: ", response));
   }
   

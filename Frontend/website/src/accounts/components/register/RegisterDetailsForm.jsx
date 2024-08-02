@@ -2,8 +2,8 @@ import { createSignal } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
 import { getCookie, deleteCookie } from '../../../utils/cookies';
 import { useEmailContext } from '../../context/EmailContext';
-const { Request: registerRequest } = require('../../../protos/accounts/register/verification/request_pb');
-const { Response: registerResponse } = require('../../../protos/accounts/register/verification/response_pb');
+const { Request: registerRequest } = require('../../../protos/accounts/register/details/request_pb');
+const { Response: registerResponse } = require('../../../protos/accounts/register/details/response_pb');
 
 /** @template T @typedef { import('solid-js').Accessor<T> } Accessor */
 
@@ -35,8 +35,8 @@ const postRegisterDetails = async(username, password, passwordConfirmation, firs
     method: "POST",
     mode: "cors",
     headers: {
-      "Content-Type": "application/json",
-      "register_verification_token": register_response_token,
+      "Content-Type": "application/x-protobuf",
+      "Register-Verification-Token": register_response_token,
     },
     body: Buffer
   });

@@ -43,18 +43,15 @@ const postRegister = async(email, props) => {
         try {
             response = registerResponse.deserializeBinary(uint8Array);
             error = response.getError();
-            if (response.hasSuccess()) {
+            if (response.hasToken()) {
                 token = response.getToken();
+                setCookie("register_email_token", token, 5);
+                props.verificationMode();
             }
         } catch (decodeError) {
             console.error("Error decoding response:", decodeError);
             throw decodeError;
         }
-        
-      if (token.length == 25) {
-          setCookie("register_email_token", token, 5);
-          props.verificationMode();
-      }
     }) 
 
   return response;

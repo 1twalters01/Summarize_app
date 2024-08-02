@@ -198,21 +198,22 @@ const Home = () => {
   const [yourLibraries, setYourLibraries] = createStore([empty_summary]);
   const [yourSummaries, setYourSummaries] = createStore([empty_summary]);
 
+    // <Navbar />
+    //     <CurrentlyReading header="Currently Reading" summaries={currentSummaries}/>
+    //     <YourLibraries libraries={yourLibraries} />
+    //     <NewSummaries summaries={newSummaries} />
+    //     <RecommendedSummaries summaries={recommendedSummaries} />
+    //     <YourSummaries summaries={yourSummaries} />
+    //     <RecommendedShorts summaries={recommendedShorts} />
+    //     <Links />
+    //     <Footer summary={{
+    //         url: currentSummaries[0].summary_url,
+    //             title: currentSummaries[0].book.title,
+    //             image_url: currentSummaries[0].image_url
+    //     }} />
   return (
     <>
-      <Navbar />
-      <CurrentlyReading header="Currently Reading" summaries={currentSummaries}/>
-      <YourLibraries libraries={yourLibraries} />
-      <NewSummaries summaries={newSummaries} />
-      <RecommendedSummaries summaries={recommendedSummaries} />
-      <YourSummaries summaries={yourSummaries} />
-      <RecommendedShorts summaries={recommendedShorts} />
-      <Links />
-      <Footer summary={{
-        url: currentSummaries[0].summary_url,
-        title: currentSummaries[0].book.title,
-        image_url: currentSummaries[0].image_url
-      }} />
+      <h1> Home </h1>
     </>
   )
 }

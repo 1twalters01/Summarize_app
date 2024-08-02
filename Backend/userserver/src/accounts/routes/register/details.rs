@@ -37,7 +37,7 @@ pub async fn post_details(
 
     let verification_confirmation_token: String = req
         .headers()
-        .get("register_verification_token")
+        .get("Register-Verification-Token")
         .unwrap()
         .to_str()
         .unwrap()

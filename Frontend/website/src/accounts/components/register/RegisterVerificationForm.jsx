@@ -22,12 +22,13 @@ const postRegisterVerification = async(token) => {
   if (register_response_token == null) {
       register_response_token = "";
   }
+    console.log("register email token", register_response_token);
   const response = await fetch("http://127.0.0.1:8000/register/verify", {
     method: "POST",
     mode: "cors",
     headers: {
-      "Content-Type": "application/json",
-      "register_email_token": register_response_token,
+      "Content-Type": "application/x-protobuf",
+      "Register-Email-Token": register_response_token,
     },
     body: Buffer,
   });
@@ -49,18 +50,17 @@ const postRegister = async(token, props) => {
         try {
             response = registerResponse.deserializeBinary(uint8Array);
             error = response.getError();
+            console.log(response);
+            console.log("token:", response.getToken());
             if (response.hasToken()) {
                 token = response.getToken();
+                setCookie("register_verification_token", token, 1800);
+                deleteCookie("register_email_token"); 
+                props.detailsMode();
             }
         } catch (decodeError) {
             console.error("Error decoding response:", decodeError);
             throw decodeError;
-        }
-
-        if (token.length == 25) {
-            setCookie("register_verification_token", token, 1800);
-            deleteCookie("register_email_token"); 
-            props.detailsMode();
         }
     }) 
 

@@ -1,9 +1,8 @@
 import { createSignal } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
 import { getCookie, deleteCookie } from '../../../utils/cookies';
-import { useEmailContext } from '../../context/EmailContext';
-const { Request: passwordResetRequest } = require('../../../protos/accounts/login/email/request_pb');
-const { Response: passwordResetResponse } = require('../../../protos/accounts/login/email/response_pb');
+const { Request: passwordResetRequest } = require('../../../protos/accounts/password_reset/password/request_pb');
+const { Response: passwordResetResponse } = require('../../../protos/accounts/password_reset/password/response_pb');
 
 /** @template T @typedef { import('solid-js').Accessor<T> } Accessor */
 /** @template T @typedef { import('solid-js').Setter<T> } Setter */
@@ -32,8 +31,8 @@ const postPasswordResetPassword = async(password, passwordConfirmation) => {
     method: "POST",
     mode: "cors",
     headers: {
-      "Content-Type": "application/json",
-      "password_reset_verification_token": password_reset_response_token,
+      "Content-Type": "application/x-protobuf",
+      "password-Reset-Verification-Token": password_reset_response_token,
     },
     body: Buffer
   });
@@ -44,9 +43,9 @@ const postPasswordResetPassword = async(password, passwordConfirmation) => {
 /**
   * @param {Accessor<string>} password The user's new password
   * @param {Accessor<string>} passwordConfirmation Confirmation of the user's new password
-  * @param {Function} setEmail Function to change the email
+  * @param {any} navigate
 */
-const postPassword = async(password, passwordConfirmation, setEmail) => {
+const postPassword = async(password, passwordConfirmation, navigate) => {
   postPasswordResetPassword(password, passwordConfirmation)
     .then((arrayBuffer) => {
         let uint8Array = new Uint8Array(arrayBuffer);
@@ -57,20 +56,13 @@ const postPassword = async(password, passwordConfirmation, setEmail) => {
             error = response.getError();
             if (response.hasSuccess()) {
                 success = response.getSuccess();
+                deleteCookie("password_reset_verification_token");
+                navigate("/login/", { replace: true });
             }
         } catch (decodeError) {
             console.error("Error decoding response:", decodeError);
             throw decodeError;
         }
-
-      if (response.hasSuccess) {
-        deleteCookie("password_reset_verification_token");
-        setEmail("");
-        
-        const navigate = useNavigate();
-        navigate("/login", { replace: true });
-      }
-
     }) 
 };
 
@@ -79,12 +71,12 @@ const PasswordResetPasswordForm = (props) => {
   /** @type {Signal<String>} */
   const [password, setPassword] = createSignal("");
   const [passwordConfirmation, setPasswordConfirmation] = createSignal("");
-  let {setEmail} = useEmailContext();
+  const navigate = useNavigate();
 
   /** @param {SubmitEvent} e */
   function PostPasswordReset(e) {
     e.preventDefault();
-    let response = postPassword(password, passwordConfirmation, setEmail);
+    let response = postPassword(password, passwordConfirmation, navigate);
     response.then((response) => console.log("response: ", response));
   }
   

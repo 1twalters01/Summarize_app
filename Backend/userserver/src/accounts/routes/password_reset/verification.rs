@@ -1,12 +1,12 @@
 use actix_protobuf::{ProtoBuf, ProtoBufResponseBuilder};
-use actix_web::{web::Path, HttpRequest, HttpResponse, Responder, Result};
+use actix_web::{HttpRequest, HttpResponse, Responder, Result};
 
 use crate::{
     accounts::{
-        queries::redis::get_email_from_token_struct_in_redis,
-        schema::register::{DualVerificationToken, VerificationRequestSchema},
+        queries::redis::get_user_json_from_token_struct_in_redis,
+        schema::password_reset::{DualVerificationToken, VerificationRequestSchema},
     },
-    generated::protos::accounts::register::verification::{
+    generated::protos::accounts::password_reset::verification::{
         request,
         response::{self, response::ResponseField},
     },
@@ -23,26 +23,28 @@ pub async fn post_verify(
     req: HttpRequest,
 ) -> Result<impl Responder> {
     let request::Request { verification_code } = data.0;
-    let register_email_token: String = req
+    let password_reset_email_token: String = req
         .headers()
-        .get("register_email_token")
+        .get("Password-Reset-Email-Token")
         .unwrap()
         .to_str()
         .unwrap()
         .to_string();
-    register_verification_functionality(register_email_token, verification_code).await
+    password_reset_verification_functionality(password_reset_email_token, verification_code).await
 }
 
-pub async fn link_verify(path: Path<VerificationRequestSchema>) -> Result<impl Responder> {
+pub async fn link_verify(
+    path: actix_web::web::Path<VerificationRequestSchema>,
+) -> Result<impl Responder> {
     let VerificationRequestSchema {
         header_token,
         verification_code,
     } = path.into_inner();
 
-    register_verification_functionality(header_token, verification_code).await
+    password_reset_verification_functionality(header_token, verification_code).await
 }
 
-async fn register_verification_functionality(
+async fn password_reset_verification_functionality(
     header_token: String,
     verification_token: String,
 ) -> Result<impl Responder> {
@@ -52,36 +54,36 @@ async fn register_verification_functionality(
         header_token,
     };
     let token_struct_json = serde_json::to_string(&token_struct).unwrap();
-    println!("schema: {:#?}", token_struct_json);
 
     // Get email from token using redis
     let mut con = create_redis_client_connection();
-    let email: String = match get_email_from_token_struct_in_redis(con, &token_struct_json) {
+    let user_json: String = match get_user_json_from_token_struct_in_redis(con, &token_struct_json)
+    {
         // if error return error
         Err(err) => {
             println!("error: {:#?}", err);
             let response: response::Response = response::Response {
                 response_field: Some(ResponseField::Error(
-                    response::Error::IncorrectVerificationCode as i32,
+                    response::Error::InvalidCredentials as i32,
                 )),
             };
             return Ok(HttpResponse::UnprocessableEntity()
                 .content_type("application/x-protobuf; charset=utf-8")
                 .protobuf(response));
         }
-        Ok(email) => email,
+        Ok(user_json) => user_json,
     };
 
     // create a new token
-    let register_verification_token = generate_opaque_token_of_length(64);
+    let password_reset_verification_token = generate_opaque_token_of_length(64);
 
     // add {key: token, value: email} to redis
     con = create_redis_client_connection();
     let expiry_in_seconds: Option<i64> = Some(1800);
     let set_redis_result = set_key_value_in_redis(
         con,
-        &register_verification_token,
-        &email,
+        &password_reset_verification_token,
+        &user_json,
         &expiry_in_seconds,
     );
     if set_redis_result.is_err() {
@@ -95,9 +97,7 @@ async fn register_verification_functionality(
     // if redis fails then return an error
     if delete_redis_result.await.is_err() {
         let response: response::Response = response::Response {
-            response_field: Some(ResponseField::Error(
-                response::Error::IncorrectVerificationCode as i32,
-            )),
+            response_field: Some(ResponseField::Error(response::Error::ServerError as i32)),
         };
         return Ok(HttpResponse::InternalServerError()
             .content_type("application/x-protobuf; charset=utf-8")
@@ -106,56 +106,9 @@ async fn register_verification_functionality(
 
     // return ok
     let response: response::Response = response::Response {
-        response_field: Some(ResponseField::Token(register_verification_token)),
+        response_field: Some(ResponseField::Token(password_reset_verification_token)),
     };
-    return Ok(HttpResponse::InternalServerError()
+    return Ok(HttpResponse::Ok()
         .content_type("application/x-protobuf; charset=utf-8")
         .protobuf(response));
-}
-
-#[cfg(test)]
-mod tests {
-    use actix_web::{test, web, App};
-    use dotenv::dotenv;
-    use serde_json::json;
-
-    #[actix_web::test]
-    async fn test_post_verification_while_being_authenticated_without_verification_token_without_header_token(
-    ) {
-    }
-
-    #[actix_web::test]
-    async fn test_post_verification_while_being_authenticated_without_verification_token_with_header_token(
-    ) {
-    }
-
-    #[actix_web::test]
-    async fn test_post_verification_while_being_authenticated_with_verification_token_without_header_token(
-    ) {
-    }
-
-    #[actix_web::test]
-    async fn test_post_verification_while_being_authenticated_with_verification_token_with_header_token(
-    ) {
-    }
-
-    #[actix_web::test]
-    async fn test_post_verification_while_not_being_authenticated_without_verification_token_without_header_token(
-    ) {
-    }
-
-    #[actix_web::test]
-    async fn test_post_verification_while_not_being_authenticated_without_verification_token_with_header_token(
-    ) {
-    }
-
-    #[actix_web::test]
-    async fn test_post_verification_while_not_being_authenticated_with_verification_token_without_header_token(
-    ) {
-    }
-
-    #[actix_web::test]
-    async fn test_post_verification_while_not_being_authenticated_with_verification_token_with_header_token(
-    ) {
-    }
 }

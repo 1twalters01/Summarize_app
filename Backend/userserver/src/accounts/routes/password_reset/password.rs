@@ -27,7 +27,7 @@ pub async fn post_password_reset(
 ) -> Result<impl Responder> {
     let verification_confirmation_token: String = req
         .headers()
-        .get("password_reset_verification_token")
+        .get("Password-Reset-Verification-Token")
         .unwrap()
         .to_str()
         .unwrap()

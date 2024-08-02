@@ -38,23 +38,22 @@ const postLogin = async(email, props) => {
   let response = postLoginEmail(email)
     .then((arrayBuffer) => {
         let uint8Array = new Uint8Array(arrayBuffer);
-        
         let response, token, error;
+
         try {
             response = loginResponse.deserializeBinary(uint8Array);
             error = response.getError();
-            if (response.hasSuccess()) {
+            if (response.hasToken()) {
                 token = response.getToken();
+                if (token.length == 25) {
+                    setCookie("login_email_token", /** @type String */ (token), 5);
+                    props.passwordMode();
+                }
             }
         } catch (decodeError) {
             console.error("Error decoding response:", decodeError);
             throw decodeError;
         }
-
-      if (token.length == 25) {
-          setCookie("login_email_token", /** @type String */ (token), 5);
-          props.passwordMode();
-      }
     }) 
 
   return response;
