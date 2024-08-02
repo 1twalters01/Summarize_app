@@ -1,6 +1,6 @@
 use actix_web::{web::{get, route, Bytes}, App, HttpResponse, HttpServer};
 use actix_files as files;
-use std::{fs, path::PathBuf};
+use std::{env, fs, path::PathBuf};
 use dotenv::dotenv;
 mod utils;
 
@@ -9,15 +9,17 @@ async fn main() -> std::io::Result<()> {
     dotenv().ok();
 
     HttpServer::new(|| {
+        let website_dir: String = env::var("WEBSITE_DIR").unwrap();
         App::new()
             .route("/favicon.ico", get().to(utils::routes::favicon_ico))
             .route("/main.js", get().to(utils::routes::main_js))
             .route("/", get().to(utils::routes::main_html))
             .route("{param:.*[^.bundle.js]}", get().to(utils::routes::main_html))
-            .service(files::Files::new("", "../../Frontend/website/dist/main/javascript"))
+            .service(files::Files::new("", format!("{}/dist/main/javascript", website_dir)))
             .default_service(
                 route().to(|| async {
-                    let path: PathBuf = "../content/dist/main/index.html".into();
+                    let website_dir: String = env::var("WEBSITE_DIR").unwrap();
+                    let path: PathBuf = format!("{}/dist/main/index.html", website_dir).into();
                     let data = Bytes::from(fs::read(&path).unwrap());
 
                     HttpResponse::Ok()
