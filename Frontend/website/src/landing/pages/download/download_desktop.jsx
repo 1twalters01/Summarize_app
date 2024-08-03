@@ -1,4 +1,4 @@
-import Navbar from "../../components/navbar";
+import Navbar from '../../components/navbar';
 
 const DownloadDesktop = () => {
   return (
@@ -11,7 +11,7 @@ const DownloadDesktop = () => {
       <p>Mac</p>
       <p>Linux</p>
     </>
-  )
-}
+  );
+};
 
 export default DownloadDesktop;

@@ -1,4 +1,4 @@
-import { useParams } from "@solidjs/router";
+import { useParams } from '@solidjs/router';
 
 const PasswordResetToken = () => {
   const { uidb64, token } = useParams();
@@ -15,4 +15,3 @@ const PasswordResetToken = () => {
 };
 
 export default PasswordResetToken;
-

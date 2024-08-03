@@ -6,18 +6,19 @@
     "checkJs": true,
     "jsx": "preserve",
     "jsxImportSource": "solid-js",
-  }
+    "allowImportingTsExtensions": true
+  },
   "source": {
     "includePattern": ".+\\.js(doc|x)?$",
-    "excludePattern": "(^|\\/|\\\\)_",
+    "excludePattern": "(^|\\/|\\\\)_"
   },
   "sourceType": "module",
   "tags": {
     "allowUnkownTags": true,
-    "dictionaries": ["jsdoc", "closure"],
+    "dictionaries": ["jsdoc", "closure"]
   },
   "templates": {
     "cleverLinks": false,
-    "monospaceLinks": false,
+    "monospaceLinks": false
   }
 }

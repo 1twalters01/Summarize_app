@@ -1,4 +1,4 @@
-import { useParams } from "@solidjs/router";
+import { useParams } from '@solidjs/router';
 
 const Activate = () => {
   const { uidb64, token } = useParams();

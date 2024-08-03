@@ -17,17 +17,16 @@ let AccountRoutes = () => {
     <>
       <Route path="settings/profile" component={Profile} />
     </>
-  )
-        // <Route path="settings/reading-preference/" component={ReadingPreference} />
-        // <Route path="settings/notifications/" component={Notifications} />
-        // <Route path="settings/personalisation/" component={Personalisation} />
-        // <Route path="settings/connectivity/" component={Connectivity} />
-        // <Route path="settings/app-settings/" component={AppSettings} />
-        // <Route path="settings/subscriptions/" component={Subscriptions} />
-        // <Route path="settings/support-and-feedback/" component={SupportAndFeedback} />
-        // <Route path="settings/advanced/" component={Advanced} />
-        // <Route path="settings/miscellaneous/" component={Miscellaneous} />
+  );
+  // <Route path="settings/reading-preference/" component={ReadingPreference} />
+  // <Route path="settings/notifications/" component={Notifications} />
+  // <Route path="settings/personalisation/" component={Personalisation} />
+  // <Route path="settings/connectivity/" component={Connectivity} />
+  // <Route path="settings/app-settings/" component={AppSettings} />
+  // <Route path="settings/subscriptions/" component={Subscriptions} />
+  // <Route path="settings/support-and-feedback/" component={SupportAndFeedback} />
+  // <Route path="settings/advanced/" component={Advanced} />
+  // <Route path="settings/miscellaneous/" component={Miscellaneous} />
 };
 
 export default AccountRoutes;
-

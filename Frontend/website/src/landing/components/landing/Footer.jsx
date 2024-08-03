@@ -7,17 +7,22 @@ const Footer = () => {
         </a>
 
         <div id="out-links">
-          <a href=""><i class="fa-brands fa-instagram"></i></a>
-          <a href=""><i class="fa-brands fa-facebook"></i></a>
-          <a href=""><i class="fa-brands fa-twitter"></i></a>
-          <a href=""><i class="fa-brands fa-youtube"></i></a>
+          <a href="">
+            <i class="fa-brands fa-instagram"></i>
+          </a>
+          <a href="">
+            <i class="fa-brands fa-facebook"></i>
+          </a>
+          <a href="">
+            <i class="fa-brands fa-twitter"></i>
+          </a>
+          <a href="">
+            <i class="fa-brands fa-youtube"></i>
+          </a>
         </div>
       </div>
 
-      <div>
-      Languages
-      </div>
-
+      <div>Languages</div>
 
       <div class="in-links">
         <div class="downloads">
@@ -64,7 +69,7 @@ const Footer = () => {
         <p>&#169; Summarize, 2024</p>
       </div>
     </footer>
-  )
+  );
 };
 
 export default Footer;

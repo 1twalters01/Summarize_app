@@ -1,4 +1,4 @@
-import Navbar from "../../components/navbar";
+import Navbar from '../../components/navbar';
 
 const Pricing = () => {
   return (
@@ -9,7 +9,7 @@ const Pricing = () => {
         <h1>Pricing</h1>
       </div>
     </>
-  )
+  );
 };
 
 export default Pricing;

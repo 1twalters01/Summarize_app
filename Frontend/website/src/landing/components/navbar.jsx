@@ -17,7 +17,7 @@ const Navbar = () => {
         <a href="/register/">Sign up</a>
       </div>
     </nav>
-  )
-}
+  );
+};
 
 export default Navbar;

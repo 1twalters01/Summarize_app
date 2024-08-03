@@ -1,4 +1,4 @@
-import Navbar from "../../components/navbar";
+import Navbar from '../../components/navbar';
 
 const Webinars = () => {
   return (
@@ -7,7 +7,7 @@ const Webinars = () => {
 
       <h1>Webinars</h1>
     </>
-  )
+  );
 };
 
 export default Webinars;

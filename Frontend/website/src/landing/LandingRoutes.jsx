@@ -4,7 +4,9 @@ import { Route } from '@solidjs/router';
 const Landing = lazy(() => import('./pages/landing'));
 const DownloadMobile = lazy(() => import('./pages/download/download_mobile'));
 const DownloadDesktop = lazy(() => import('./pages/download/download_desktop'));
-const DownloadWebClipper = lazy(() => import('./pages/download/download_web_clipper'));
+const DownloadWebClipper = lazy(
+  () => import('./pages/download/download_web_clipper')
+);
 const Blog = lazy(() => import('./pages/community/blog'));
 const Community = lazy(() => import('./pages/community/community'));
 const Webinars = lazy(() => import('./pages/community/webinar'));
@@ -20,7 +22,6 @@ const Security = lazy(() => import('./pages/company/security'));
 const CookieSettings = lazy(() => import('./pages/company/cookie_settings'));
 const Terms = lazy(() => import('./pages/company/terms'));
 const Privacy = lazy(() => import('./pages/company/privacy'));
-
 
 /** @returns {import("solid-js/types/jsx").JSX.Element} */
 const LandingRoutes = () => {
@@ -46,8 +47,7 @@ const LandingRoutes = () => {
       <Route path="/terms" component={Terms} />
       <Route path="/privacy" component={Privacy} />
     </>
-  )
+  );
 };
 
 export default LandingRoutes;
-

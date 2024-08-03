@@ -1,8 +1,5 @@
 const ContentsPage = () => {
-  return (
-    <>
-    </>
-  )
-}
+  return <></>;
+};
 
 export default ContentsPage;

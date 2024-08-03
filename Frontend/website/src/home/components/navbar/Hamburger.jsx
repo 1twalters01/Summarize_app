@@ -1,8 +1,5 @@
 const Hamburger = () => {
-    return (
-        <>
-        </>
-    )
+  return <></>;
 };
 
 export default Hamburger;

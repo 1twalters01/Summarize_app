@@ -1,9 +1,9 @@
 const ThemeSlider = () => {
-    return (
-        <>
-            <button />
-        </>
-    )
-}
+  return (
+    <>
+      <button />
+    </>
+  );
+};
 
 export default ThemeSlider;

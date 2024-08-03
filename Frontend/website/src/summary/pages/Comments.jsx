@@ -1,8 +1,5 @@
 const ContentsComments = () => {
-  return (
-    <>
-    </>
-  )
+  return <></>;
 };
 
 export default ContentsComments;

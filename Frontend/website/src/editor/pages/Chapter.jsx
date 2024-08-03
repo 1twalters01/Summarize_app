@@ -1,9 +1,5 @@
 const Chapter = () => {
-  return (
-    <>
-    </>
-  )
+  return <></>;
 };
 
 export default Chapter;
-

@@ -1,4 +1,4 @@
-import Navbar from "../../components/navbar";
+import Navbar from '../../components/navbar';
 
 const DownloadWebClipper = () => {
   return (
@@ -10,8 +10,7 @@ const DownloadWebClipper = () => {
       <p>Chrome</p>
       <p>Firefox</p>
     </>
-  )
-}
+  );
+};
 
 export default DownloadWebClipper;
-

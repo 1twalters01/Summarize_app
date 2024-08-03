@@ -1,4 +1,4 @@
-import Navbar from "../../components/navbar";
+import Navbar from '../../components/navbar';
 
 const Community = () => {
   return (
@@ -7,7 +7,7 @@ const Community = () => {
 
       <h1>Community</h1>
     </>
-  )
+  );
 };
 
 export default Community;

@@ -1,13 +1,13 @@
-import Navbar from "../../components/navbar";
+import Navbar from '../../components/navbar';
 
-const Sync= () => {
+const Sync = () => {
   return (
     <>
       <Navbar />
 
       <h1>Sync</h1>
     </>
-  )
+  );
 };
 
 export default Sync;

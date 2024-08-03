@@ -1,8 +1,8 @@
 /** @typedef {Object} props
-  * @property {string} googleText - google button text
-  * @property {string} appleText - apple button text
-  * @property {string} guestText - guest button text
-*/
+ * @property {string} googleText - google button text
+ * @property {string} appleText - apple button text
+ * @property {string} guestText - guest button text
+ */
 
 /** @param {props} props */
 const Oauth2 = (props) => {
@@ -23,7 +23,7 @@ const Oauth2 = (props) => {
         <p>{props.guestText}</p>
       </button>
     </div>
-  )
+  );
 };
 
 export default Oauth2;

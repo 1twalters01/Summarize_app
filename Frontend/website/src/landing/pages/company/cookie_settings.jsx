@@ -1,4 +1,4 @@
-import Navbar from "../../components/navbar";
+import Navbar from '../../components/navbar';
 
 const CookieSettings = () => {
   return (
@@ -7,7 +7,7 @@ const CookieSettings = () => {
 
       <h1>Cookie Settings</h1>
     </>
-  )
+  );
 };
 
 export default CookieSettings;

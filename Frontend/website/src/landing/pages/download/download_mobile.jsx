@@ -1,4 +1,4 @@
-import Navbar from "../../components/navbar";
+import Navbar from '../../components/navbar';
 
 const DownloadDesktop = () => {
   return (
@@ -10,7 +10,7 @@ const DownloadDesktop = () => {
       <p>ios</p>
       <p>android</p>
     </>
-  )
-}
+  );
+};
 
 export default DownloadDesktop;

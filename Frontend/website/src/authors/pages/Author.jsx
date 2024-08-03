@@ -1,8 +1,5 @@
 const Author = () => {
-  return (
-    <>
-    </>
-  )
+  return <></>;
 };
 
 export default Author;

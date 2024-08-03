@@ -11,8 +11,7 @@ let EditorRoutes = () => {
       <Route path="/editor/contents" component={Contents} />
       <Route path="/editor/chapter" component={Chapter} />
     </>
-  )
+  );
 };
 
 export default EditorRoutes;
-

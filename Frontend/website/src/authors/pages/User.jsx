@@ -1,9 +1,5 @@
 const User = () => {
-  return (
-    <>
-    </>
-  )
+  return <></>;
 };
 
 export default User;
-

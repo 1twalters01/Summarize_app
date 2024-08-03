@@ -3,15 +3,12 @@
 /** @typedef {object} Library */
 
 /** @typedef {object} Props
-  * @property {Store<Library>} libraries
-  */
+ * @property {Store<Library>} libraries
+ */
 
 /** @param {Props} props */
 const LibraryArray = (props) => {
-  return (
-    <>
-    </>
-  )
+  return <></>;
 };
 
 export default LibraryArray;

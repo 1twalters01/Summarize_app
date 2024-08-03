@@ -7,4 +7,3 @@ const CloseAccount = () => {
 };
 
 export default CloseAccount;
-

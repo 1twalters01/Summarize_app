@@ -1,66 +1,48 @@
 import { useEmailContext } from '../../context/EmailContext';
 import { setCookie } from '../../../utils/cookies';
-const { Request: registerRequest } = require('../../../protos/accounts/register/email/request_pb');
-const { Response: registerResponse } = require('../../../protos/accounts/register/email/response_pb');
+import { postEmail } from '../../functions/register/post.js';
+const {
+  Response: registerResponse
+} = require('../../../protos/accounts/register/email/response.ts');
 
 /** @template T @typedef { import('solid-js').Accessor<T> } Accessor */
 /** @template T @typedef { import('solid-js').Setter<T> } Setter */
 /** @template T @typedef { import('solid-js').Signal<T> } Signal */
 
 /** @typedef {Object} props
-  * @property {Function} verificationMode - go to next screen
-*/
-
-/** @param {Accessor<string>} email The user's email address */
-const postRegisterEmail = async(email) => {
-  const request = new registerRequest();
-  request.setEmail(email());
-  const Buffer = request.serializeBinary();
-
-  const response = await fetch("http://127.0.0.1:8000/register/email", {
-    method: "POST",
-    mode: "cors",
-    headers: {
-      "Content-Type": "application/x-protobuf",
-    },
-    body: Buffer 
-  });
-
-  return response.arrayBuffer();
-}
+ * @property {Function} verificationMode - go to next screen
+ */
 
 /**
-  * @param {Accessor<string>} email The user's email address
-  * @param {props} props
-*/
-const postRegister = async(email, props) => {
+ * @param {Accessor<string>} email The user's email address
+ * @param {props} props
+ */
+const postRegister = async (email, props) => {
   /** @type {Promise<number|void|Response>} */
-  let response = postRegisterEmail(email)
-    .then((arrayBuffer) => {
-        let uint8Array = new Uint8Array(arrayBuffer);
+  let response = postEmail(email()).then((arrayBuffer) => {
+    let uint8Array = new Uint8Array(arrayBuffer);
 
-        let response, token, error;
-        try {
-            response = registerResponse.deserializeBinary(uint8Array);
-            error = response.getError();
-            if (response.hasToken()) {
-                token = response.getToken();
-                setCookie("register_email_token", token, 5);
-                props.verificationMode();
-            }
-        } catch (decodeError) {
-            console.error("Error decoding response:", decodeError);
-            throw decodeError;
-        }
-    }) 
+    let response, token, error;
+    try {
+      response = registerResponse.deserializeBinary(uint8Array);
+      error = response.getError();
+      if (response.hasToken()) {
+        token = response.getToken();
+        setCookie('register_email_token', token, 5);
+        props.verificationMode();
+      }
+    } catch (decodeError) {
+      console.error('Error decoding response:', decodeError);
+      throw decodeError;
+    }
+  });
 
   return response;
 };
 
-
 /** @param {props} props */
 const RegisterEmailForm = (props) => {
-  const {email, setEmail} = useEmailContext();
+  const { email, setEmail } = useEmailContext();
 
   /** @param {SubmitEvent} e */
   function PostRegister(e) {
@@ -70,20 +52,18 @@ const RegisterEmailForm = (props) => {
 
   return (
     <>
-      <form onSubmit={PostRegister} >
-      <input
-      type="email"
-      placeholder="email"
-      onInput={e => setEmail(e.target.value)}
-      value={email()}
-      required
-      />
-      <input type="submit" value="Continue" />
+      <form onSubmit={PostRegister}>
+        <input
+          type="email"
+          placeholder="email"
+          onInput={(e) => setEmail(e.target.value)}
+          value={email()}
+          required
+        />
+        <input type="submit" value="Continue" />
       </form>
     </>
   );
 };
 
 export default RegisterEmailForm;
-
-

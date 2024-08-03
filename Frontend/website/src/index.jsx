@@ -1,5 +1,5 @@
 import { render } from 'solid-js/web';
-import { Router, Route } from "@solidjs/router";
+import { Router, Route } from '@solidjs/router';
 
 import LandingRoutes from './landing/LandingRoutes';
 import AccountRoutes from './accounts/AccountRoutes';
@@ -19,8 +19,11 @@ const App = () => {
         <Route path="/settings/*">{SettingsRoutes}</Route>
       </Router>
     </EmailContextProvider>
-  )
-}
+  );
+};
 
 /** @typedef { import('solid-js/web').MountableElement } MountableElement */
-render(() => <App />, (/** @type MountableElement */ (document.getElementById('root'))) );
+render(
+  () => <App />,
+  /** @type MountableElement */ (document.getElementById('root'))
+);

@@ -1,11 +1,7 @@
-import { createSignal } from "solid-js";
-
+import { createSignal } from 'solid-js';
 
 const Overview = () => {
-  return (
-    <>
-    </>
-  )
-}
+  return <></>;
+};
 
 export default Overview;

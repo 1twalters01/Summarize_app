@@ -5,7 +5,6 @@ import Content from './pages/Content';
 import Contents from './pages/Contents';
 import Overview from './pages/Overview';
 
-
 let AuthorsRoutes = () => {
   return (
     <>
@@ -14,8 +13,7 @@ let AuthorsRoutes = () => {
       <Route path="user/:id" component={Contents} />
       <Route path="user/:id" component={Overview} />
     </>
-  )
+  );
 };
 
 export default AuthorsRoutes;
-

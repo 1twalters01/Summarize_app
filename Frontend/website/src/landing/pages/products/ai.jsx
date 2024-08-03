@@ -1,4 +1,4 @@
-import Navbar from "../../components/navbar";
+import Navbar from '../../components/navbar';
 
 const AI = () => {
   return (
@@ -7,7 +7,7 @@ const AI = () => {
 
       <h1>AI</h1>
     </>
-  )
+  );
 };
 
 export default AI;

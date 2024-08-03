@@ -1,8 +1,5 @@
 const CookiePopup = () => {
-  return (
-    <>
-    </>
-  )
+  return <></>;
 };
 
 export default CookiePopup;

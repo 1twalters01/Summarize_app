@@ -15,8 +15,6 @@ const Login = lazy(() => import('./pages/Login'));
 // const PasswordReset = lazy(() => import('./password_reset/PasswordReset'));
 // const PasswordResetToken = lazy(() => import('./password_reset/PasswordResetToken'));
 
-
-
 let AccountRoutes = () => {
   return (
     <>
@@ -24,10 +22,13 @@ let AccountRoutes = () => {
       <Route path="login/" component={Login} />
       <Route path="password-reset/" component={PasswordReset} />
       <Route path="activate/:uidb64/:token/" component={Activate} />
-      <Route path="password-reset/:uidb64/:token/" component={PasswordResetToken} />
+      <Route
+        path="password-reset/:uidb64/:token/"
+        component={PasswordResetToken}
+      />
       <Route path="logout/" component={Logout} />
     </>
-  )
+  );
 };
 
 export default AccountRoutes;

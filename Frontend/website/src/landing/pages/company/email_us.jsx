@@ -1,4 +1,4 @@
-import Navbar from "../../components/navbar";
+import Navbar from '../../components/navbar';
 
 const EmailUs = () => {
   return (
@@ -7,7 +7,7 @@ const EmailUs = () => {
 
       <h1>EmailUs</h1>
     </>
-  )
+  );
 };
 
 export default EmailUs;

@@ -1,5 +1,6 @@
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
+import Dotenv from 'dotenv-webpack';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -12,34 +13,41 @@ const data = {
   },
   mode: "development",
   // mode: "production",
+  resolve: {
+    extensions: ['.ts', '.tsx', '.js', '.jsx'],
+    fallback: {
+      "os": false,
+      "path": false,
+      "crypto": false,
+    }
+  },
   module: {
     rules: [
       {
-        test: /\.(js|jsx)?$/,
-          exclude: /node_modules/,
-          resolve: {
-            extensions: [".js", ".jsx"],
-          },
+        test: /\.m?(js|jsx)?$/,
+        type: "javascript/auto",
+        exclude: /node_modules/,
+        resolve: {
+          extensions: [".js", ".jsx"],
+          fullySpecified: false,
+        },
         use: ["babel-loader"],
       },
+        {
+            test: /\.(ts|tsx)?$/,
+            use: 'ts-loader',
+            exclude: /node_modules/,
+        },
       {
         test: /\.css$/,
         exclude: /node_modules/,
         use: ["style-loader"],
       },
-
-      {
-        test:/\.m?js/,
-        type: "javascript/auto",
-      },
-      {
-        test: /\.m?js/,
-        resolve: {
-          fullySpecified: false,
-        },
-      },
     ],
   },
+  plugins: [
+    new Dotenv(),
+  ],
 };
 
 export default data;

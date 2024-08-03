@@ -4,7 +4,7 @@ const Section3 = () => {
     <>
       <h1>Section3</h1>
     </>
-  )
+  );
 };
 
 export default Section3;

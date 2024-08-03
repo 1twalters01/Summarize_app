@@ -1,14 +1,14 @@
 /** @template T @typedef { import('solid-js').Accessor<T> } Accessor */
 
 /** @typedef {Object} Summary
-  * @property {string} url - The summary's url
-  * @property {string} image_url - The summary's image url
-  * @property {string} title - The summary's title
-*/
+ * @property {string} url - The summary's url
+ * @property {string} image_url - The summary's image url
+ * @property {string} title - The summary's title
+ */
 
 /** @typedef {Object} props
-  * @property {Summary} summary - the summary in question
-*/
+ * @property {Summary} summary - the summary in question
+ */
 
 /** @param {props} props */
 const Footer = (props) => {
@@ -45,7 +45,7 @@ const Footer = (props) => {
         </a>
       </div>
     </footer>
-  )
-}
+  );
+};
 
 export default Footer;

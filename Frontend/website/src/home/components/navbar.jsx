@@ -6,7 +6,9 @@ const Navbar = () => {
   return (
     <nav>
       <div class="left">
-        <a href="/"><img src="/favicon.ico" /></a>
+        <a href="/">
+          <img src="/favicon.ico" />
+        </a>
       </div>
       <div class="center-left">
         <ThemeSlider />
@@ -18,7 +20,7 @@ const Navbar = () => {
         <Hamburger />
       </div>
     </nav>
-  )
+  );
 };
 
 export default Navbar;

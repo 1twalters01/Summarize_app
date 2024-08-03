@@ -1,4 +1,4 @@
-import Navbar from "../../components/navbar";
+import Navbar from '../../components/navbar';
 
 const AboutUs = () => {
   return (
@@ -7,7 +7,7 @@ const AboutUs = () => {
 
       <h1>About Us</h1>
     </>
-  )
+  );
 };
 
 export default AboutUs;

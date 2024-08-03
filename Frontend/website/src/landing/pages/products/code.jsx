@@ -1,4 +1,4 @@
-import Navbar from "../../components/navbar";
+import Navbar from '../../components/navbar';
 
 const Code = () => {
   return (
@@ -7,8 +7,7 @@ const Code = () => {
 
       <h1>Code</h1>
     </>
-  )
+  );
 };
 
 export default Code;
-
