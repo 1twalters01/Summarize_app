@@ -5,7 +5,7 @@ import { accounts as emailAccounts } from '../../../protos/accounts/login/email/
 import { accounts as passwordAccounts } from '../../../protos/accounts/login/password/response.ts';
 import { accounts as totpAccounts } from '../../../protos/accounts/login/totp/response.ts';
 
-/** @typedef { import('../types/Props').LoginProps } Props */
+/** @typedef { import('../../types/Props').LoginProps } Props */
 
 /**
  * @param {SubmitEvent} e
@@ -24,14 +24,14 @@ export async function handlePostEmail(e, email, props) {
     let token = response.token;
     setCookie('login_email_token', token, 5);
     props.passwordMode?.();
-  }
-
-  if (response.has_error) {
-    console.error(
-      getKeyByValue(emailAccounts.login.email.response.Error, response.error)
-    );
   } else {
-    console.error('Client Error');
+    if (response.has_error) {
+      console.error(
+        getKeyByValue(emailAccounts.login.email.response.Error, response.error)
+      );
+    } else {
+      console.error('Client Error');
+    }
   }
 }
 

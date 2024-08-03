@@ -33,11 +33,11 @@ const data = {
         },
         use: ["babel-loader"],
       },
-        {
-            test: /\.(ts|tsx)?$/,
-            use: 'ts-loader',
-            exclude: /node_modules/,
-        },
+      {
+        test: /\.(ts|tsx)?$/,
+        use: 'ts-loader',
+        exclude: /node_modules/,
+      },
       {
         test: /\.css$/,
         exclude: /node_modules/,

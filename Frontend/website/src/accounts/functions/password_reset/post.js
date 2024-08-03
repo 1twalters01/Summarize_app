@@ -8,7 +8,7 @@ const base_url = process.env.ACCOUNTS_URL;
 /** @param {string} email The user's email address */
 export const postEmail = async (email) => {
   const request = new emailAccounts.password_reset.email.request.Request({
-      email: email
+    email: email
   });
   const buffer = request.serializeBinary();
 
@@ -64,9 +64,8 @@ export const postPasswords = async (password, passwordConfirmation) => {
     mode: 'cors',
     headers: {
       'Content-Type': 'application/x-protobuf',
-      'password-Reset-Verification-Token': getCookie(
-        'password_reset_verification_token'
-      ) ?? ''
+      'password-Reset-Verification-Token':
+        getCookie('password_reset_verification_token') ?? ''
     },
     body: buffer
   });
