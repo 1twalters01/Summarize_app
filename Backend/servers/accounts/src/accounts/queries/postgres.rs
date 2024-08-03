@@ -163,7 +163,7 @@ pub async fn save_refresh_token_user_in_postgres_auth_table(
     user: &User,
 ) -> Result<(), sqlx::Error> {
     let save_refresh_token_query =
-        sqlx::query("INSERT INTO auth WHERE refresh_token=($1), user=($2)ame=($6)")
+        sqlx::query("INSERT INTO auth WHERE refresh_token=($1), username=($2)")
             .bind(refresh_token)
             .bind(user.get_uuid().to_string())
             .execute(pool)
