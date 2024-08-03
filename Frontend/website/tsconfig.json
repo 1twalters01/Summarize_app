@@ -10,7 +10,7 @@
         "esModuleInterop": true,
         "skipLibCheck": true,
         "forceConsistentCasingInFileNames": true,
-        "checkJs": true,
+        "checkJs": true
     },
     "include": [
         "src/**/*",

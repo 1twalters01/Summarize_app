@@ -2,6 +2,8 @@ use actix_web::{App, HttpServer};
 use actix_cors::Cors;
 use dotenv::dotenv;
 
+pub mod user_data;
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     dotenv().ok();
@@ -15,6 +17,7 @@ async fn main() -> std::io::Result<()> {
 
         App::new()
             .wrap(cors)
+            .configure(user_data::urls::config)
     })
     .bind("127.0.0.1:8001")?
     .run()
