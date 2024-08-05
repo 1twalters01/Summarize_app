@@ -14,7 +14,7 @@ const ChangeName = () => {
           required
         />
         <input
-          type="checkbox"
+          type="text"
           placeholder="last name"
           onInput={(e) => setLastName(e.target.checked)}
         />
