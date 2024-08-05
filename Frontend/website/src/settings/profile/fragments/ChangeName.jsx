@@ -11,7 +11,6 @@ const ChangeName = () => {
           type="text"
           placeholder="first name"
           onInput={(e) => setFirstName(e.target.value)}
-          required
         />
         <input
           type="text"
