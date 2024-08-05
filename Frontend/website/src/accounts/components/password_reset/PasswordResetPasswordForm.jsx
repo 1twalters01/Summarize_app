@@ -21,7 +21,7 @@ const PasswordResetPasswordForm = (props) => {
       <form onSubmit={(e) => handlePostPasswords(e, password(), passwordConfirmation(), navigate)}>
         <input
           type="password"
-          placeholder="password confirmation"
+          placeholder="password"
           onInput={(e) => setPassword(e.target.value)}
           required
         />
