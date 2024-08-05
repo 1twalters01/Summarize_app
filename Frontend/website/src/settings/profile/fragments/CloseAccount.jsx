@@ -1,3 +1,5 @@
+import { createSignal } from 'solid-js';
+
 const CloseAccount = () => {
   return (
     <>
