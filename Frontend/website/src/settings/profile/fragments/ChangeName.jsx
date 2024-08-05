@@ -1,3 +1,5 @@
+import { createSignal } from 'solid-js';
+
 const ChangeName = () => {
   const [firstName, setFirstName] = createSignal('');
   const [lastName, setLastName] = createSignal('');
