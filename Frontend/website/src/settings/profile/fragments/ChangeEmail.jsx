@@ -1,3 +1,5 @@
+import { createSignal } from 'solid-js';
+
 const ChangeEmail = () => {
   const [email, setEmail] = createSignal('');
   
