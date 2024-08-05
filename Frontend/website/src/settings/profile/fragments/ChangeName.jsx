@@ -6,7 +6,7 @@ const ChangeName = () => {
     <>
       <h1>Change Name</h1>
 
-      <form onSubmit={ (e) => handlePostName(e, password(), rememberMe(), setEmail) }>
+      <form onSubmit={ (e) => handlePostName(e, firstName(), lastName()) }>
         <input
           type="text"
           placeholder="first name"
