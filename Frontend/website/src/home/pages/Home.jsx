@@ -47,51 +47,53 @@ import Navbar from '../components/navbar';
 const Home = () => {
   /** @param {number} number_of_genres */
   async function fetchFavouriteGenres(number_of_genres) {
-    let bearer_token = getCookie("Authorization") ?? "";
+    let bearer_token = getCookie('Authorization') ?? '';
 
-    const response = await fetch("http://127.0.0.1:8001/data/genres/example", {
-      method: "POST",
-      mode: "cors",
+    const response = await fetch('http://127.0.0.1:8001/data/genres/example', {
+      method: 'POST',
+      mode: 'cors',
       headers: {
-        "Content-Type": "application/json",
-        "Authorization": bearer_token,
+        'Content-Type': 'application/json',
+        Authorization: bearer_token
       },
-      body: JSON.stringify ({
-        "number_of_genres": number_of_genres,
+      body: JSON.stringify({
+        number_of_genres: number_of_genres
       })
     });
 
     let json = await response.json();
-    console.log(genres)
-    console.log(genres[0])
+    console.log(genres);
+    console.log(genres[0]);
     console.log(json.genres);
     setGenres(json.genres);
-    console.log(genres)
-    console.log(genres[0])
-}
+    console.log(genres);
+    console.log(genres[0]);
+  }
 
-/** @param {number} number_of_libraries */
-async function fetchLastReadLibraries(number_of_libraries) {
-    let bearer_token = getCookie("Authorization") ?? "";
+  /** @param {number} number_of_libraries */
+  async function fetchLastReadLibraries(number_of_libraries) {
+    let bearer_token = getCookie('Authorization') ?? '';
 
-    const response = await fetch("http://127.0.0.1:8001/data/libraries/example", {
-        method: "POST",
-        mode: "cors",
+    const response = await fetch(
+      'http://127.0.0.1:8001/data/libraries/example',
+      {
+        method: 'POST',
+        mode: 'cors',
         headers: {
-            "Content-Type": "application/json",
-            "Authorization": bearer_token,
+          'Content-Type': 'application/json',
+          Authorization: bearer_token
         },
-        body: JSON.stringify ({
-            "number_of_libraries": number_of_libraries,
+        body: JSON.stringify({
+          number_of_libraries: number_of_libraries
         })
-    });
+      }
+    );
 
     let json = await response.json();
     setYourLibraries(json.libraries);
-    console.log(yourLibraries[0]["name"])
-    console.log(yourLibraries[0]["number_of_books"])
-}
-
+    console.log(yourLibraries[0]['name']);
+    console.log(yourLibraries[0]['number_of_books']);
+  }
 
   // /** @param {number} number_of_summaries */
   // async function fetchLastReadLibraries(number_of_summaries) {
@@ -207,8 +209,8 @@ async function fetchLastReadLibraries(number_of_libraries) {
   };
 
   const empty_library = {
-      name: '',
-      number_of_books: 0
+    name: '',
+    number_of_books: 0
   };
 
   // const [currentSummaries, setCurrentSummaries] = createStore([empty_summary]);
@@ -220,8 +222,8 @@ async function fetchLastReadLibraries(number_of_libraries) {
   // const [yourSummaries, setYourSummaries] = createStore([empty_summary]);
 
   // fetchLastReadSummaries(5, setCurrentSummaries);
-  fetchFavouriteGenres(5)
-  fetchLastReadLibraries(8)
+  fetchFavouriteGenres(5);
+  fetchLastReadLibraries(8);
 
   //     <CurrentlyReading
   //       header="Currently Reading"

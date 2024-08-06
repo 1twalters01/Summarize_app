@@ -3,12 +3,16 @@ import { createSignal } from 'solid-js';
 const ChangePassword = () => {
   const [password, setPassword] = createSignal('');
   const [passwordConfirmation, setPasswordConfirmation] = createSignal('');
-  
+
   return (
     <>
       <h1>Change Password</h1>
 
-      <form onSubmit={(e) => handlePostPasswords(e, password(), passwordConfirmation(), navigate)}>
+      <form
+        onSubmit={(e) =>
+          handlePostPasswords(e, password(), passwordConfirmation(), navigate)
+        }
+      >
         <input
           type="password"
           placeholder="password"

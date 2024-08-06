@@ -18,7 +18,11 @@ const PasswordResetPasswordForm = (props) => {
         x
       </button>
 
-      <form onSubmit={(e) => handlePostPasswords(e, password(), passwordConfirmation(), navigate)}>
+      <form
+        onSubmit={(e) =>
+          handlePostPasswords(e, password(), passwordConfirmation(), navigate)
+        }
+      >
         <input
           type="password"
           placeholder="password"

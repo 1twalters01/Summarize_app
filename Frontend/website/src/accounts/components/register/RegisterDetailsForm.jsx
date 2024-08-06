@@ -23,7 +23,20 @@ const RegisterDetailsForm = (props) => {
         x
       </button>
 
-      <form onSubmit={(e) => handlePostDetails(e, username(), password(), passwordConfirmation(), firstName(), lastName(), setEmail, navigate)}>
+      <form
+        onSubmit={(e) =>
+          handlePostDetails(
+            e,
+            username(),
+            password(),
+            passwordConfirmation(),
+            firstName(),
+            lastName(),
+            setEmail,
+            navigate
+          )
+        }
+      >
         <input
           type="text"
           placeholder="username"
@@ -59,4 +72,3 @@ const RegisterDetailsForm = (props) => {
 };
 
 export default RegisterDetailsForm;
-

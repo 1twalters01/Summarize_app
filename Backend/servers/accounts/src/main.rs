@@ -8,7 +8,7 @@ pub mod utils;
 
 pub mod accounts;
 pub mod ping;
-// pub mod settings;
+pub mod settings;
 // pub mod subscriptions;
 
 #[actix_web::main]
@@ -26,7 +26,7 @@ async fn main() -> std::io::Result<()> {
             .wrap(cors)
             .configure(ping::urls::config)
             .configure(accounts::urls::config)
-        // .configure(settings::urls::config)
+            .configure(settings::urls::config)
         // .configure(subscriptions::urls::config)
     })
     .bind("127.0.0.1:8000")?

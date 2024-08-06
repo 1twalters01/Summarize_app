@@ -2,7 +2,7 @@ import { createSignal } from 'solid-js';
 
 const ChangeEmail = () => {
   const [email, setEmail] = createSignal('');
-  
+
   return (
     <>
       <h1>Change Email</h1>

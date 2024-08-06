@@ -3,7 +3,6 @@ import { handlePostEmail } from '../../functions/register/handlers.js';
 
 /** @typedef { import ('../../types/Props').RegisterProps } Props */
 
-
 /** @param {Props} props */
 const RegisterEmailForm = (props) => {
   const { email, setEmail } = useEmailContext();

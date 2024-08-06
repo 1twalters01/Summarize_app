@@ -2,7 +2,7 @@ import { createSignal } from 'solid-js';
 
 const ChangeUsername = () => {
   const [username, setUsername] = createSignal('');
-  
+
   return (
     <>
       <h1>Change Username</h1>

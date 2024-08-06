@@ -3,12 +3,12 @@ import { createSignal } from 'solid-js';
 const ChangeName = () => {
   const [firstName, setFirstName] = createSignal('');
   const [lastName, setLastName] = createSignal('');
-  
+
   return (
     <>
       <h1>Change Name</h1>
 
-      <form onSubmit={ (e) => handlePostName(e, firstName(), lastName()) }>
+      <form onSubmit={(e) => handlePostName(e, firstName(), lastName())}>
         <input
           type="text"
           placeholder="first name"

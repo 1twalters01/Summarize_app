@@ -43,6 +43,7 @@ pub async fn get_libraries(data: Json<ExampleLibrariesRequest>) -> Result<impl R
   let upper_limit = cmp::min(request_limit, number_of_libraries);
 
   let library_arr: [Library; 15] = [
+      Library::from("Reference books".to_string(), 12),
       Library::from("Robert Greene".to_string(), 8),
       Library::from("Computer Science".to_string(), 12),
       Library::from("Human Nature".to_string(), 3),
@@ -52,7 +53,6 @@ pub async fn get_libraries(data: Json<ExampleLibrariesRequest>) -> Result<impl R
       Library::from("Fiction".to_string(), 9),
       Library::from("First Aid".to_string(), 7),
       Library::from("Nutrition".to_string(), 5),
-      Library::from("Horror".to_string(), 3),
       Library::from("Marketing".to_string(), 17),
       Library::from("Sales".to_string(), 24),
       Library::from("Statistics".to_string(), 2),
