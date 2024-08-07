@@ -60,27 +60,6 @@ impl ChangeNameResponseStruct {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct ChangeEmailRequestStruct {
-    pub email: String,
-    pub password: String,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct ChangeEmailResponseStruct {
-    pub settings_error: SettingsError,
-    pub success: bool,
-}
-
-impl ChangeEmailResponseStruct {
-    pub fn new() -> ChangeEmailResponseStruct {
-        ChangeEmailResponseStruct {
-            settings_error: SettingsError::new(),
-            success: false,
-        }
-    }
-}
-
-#[derive(Debug, Serialize, Deserialize)]
 pub struct ChangePasswordRequestStruct {
     pub password: String,
     pub new_password: String,

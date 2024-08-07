@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package settings.profile.email.response;
+
+enum Error {
+    INVALID_CREDENTIALS = 0;
+    REGISTERED_EMAIL = 1;
+    TOO_MANY_REQUESTS = 2;
+    INVALID_EMAIL = 3;
+    SERVER_ERROR = 4;
+}
+
+message Response {
+    oneof response_field {
+        Error error = 1;
+        bool requires_password = 2;
+    }
+}
+
+

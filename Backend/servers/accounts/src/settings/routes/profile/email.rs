@@ -1,76 +1,92 @@
 use crate::{
-    accounts::{
-        schema::auth::Claims,
-        datatypes::users::User,
-        queries::postgres::get_user_from_email_in_pg_users_table
+    generated::protos::settings::profile::{
+        confirmation::{
+            response as confirmation_response,
+            Request as PasswordRequest,
+            Response as PasswordResponse,
+            Error as PasswordError,
+            Success as PasswordSuccess,
+        },
+        email::{
+            request::Request as MainRequest,
+            response::{
+                response,
+                Response as MainResponse,
+                Error as MainError
+            },
+        },
     },
-    settings::schema::{ChangeEmailRequestStruct, ChangeEmailResponseStruct, SettingsError},
+    accounts::{
+        datatypes::users::User,
+        queries::postgres::get_user_from_email_in_pg_users_table,
+        schema::auth::Claims,
+    },
     utils::{
-        database_connections::create_pg_pool_connection,
-        validations::{validate_email, validate_password},
+        database_connections::{create_pg_pool_connection, create_redis_client_connection, set_key_value_in_redis}, tokens::generate_opaque_token_of_length, validations::{validate_email, validate_password}
     },
 };
 
+use actix_protobuf::{ProtoBuf, ProtoBufResponseBuilder};
 use actix_web::HttpMessage;
-use actix_web::{post, web::Json, HttpRequest, HttpResponse, Responder, Result};
+use actix_web::{post, HttpRequest, HttpResponse, Responder, Result};
+use serde::{Deserialize, Serialize};
 use sqlx::{Pool, Postgres};
 
+#[derive(Serialize, Deserialize)]
+struct EmailTokenObject {
+    user_uuid: String,
+    email: String
+}
+
 #[post("change-email")]
-async fn change_email(
-    req_body: Json<ChangeEmailRequestStruct>,
+async fn post_email(
+    req_body: ProtoBuf<MainRequest>,
     req: HttpRequest,
 ) -> Result<impl Responder> {
-    let ChangeEmailRequestStruct { email } = req_body.into_inner();
-    let mut res_body: ChangeEmailResponseStruct = ChangeEmailResponseStruct::new();
+    let MainRequest { email } = req_body.0;
 
     // validate email
     let validated_email = validate_email(&email);
     if validated_email.is_err() {
-        let error: SettingsError = SettingsError {
-            is_error: true,
-            error_message: Some(validated_email.err().unwrap()),
+        let response: MainResponse = MainResponse {
+            response_field: Some(response::ResponseField::Error(MainError::InvalidCredentials as i32)),
         };
-        res_body.settings_error = error;
-
         return Ok(HttpResponse::UnprocessableEntity()
             .content_type("application/json; charset=utf-8")
-            .json(res_body));
+            .protobuf(response));
     }
     
     // Validate user
     let user_uuid: String = match req.extensions().get::<Claims>() {
         Some(claims) => claims.sub.clone(),
         None => {
-            res_body.settings_error = SettingsError {
-                is_error: true,
-                error_message: Some(String::from("error")),
+            let response: MainResponse = MainResponse {
+                response_field: Some(response::ResponseField::Error(MainError::InvalidCredentials as i32)),
             };
             return Ok(HttpResponse::InternalServerError()
                 .content_type("application/json; charset=utf-8")
-                .json(res_body));
+                .protobuf(response));
         }
     };
     let user_result: Result<Option<User>, sqlx::Error> = User::from_uuid_str(&user_uuid).await;
     _ = match user_result {
         Err(_) => {
-            res_body.settings_error = SettingsError {
-                is_error: true,
-                error_message: Some(String::from("error")),
+            let response: MainResponse = MainResponse {
+                response_field: Some(response::ResponseField::Error(MainError::ServerError as i32)),
             };
             return Ok(HttpResponse::InternalServerError()
                 .content_type("application/json; charset=utf-8")
-                .json(res_body));
+                .protobuf(response));
         }
         Ok(user) => match user {
             Some(user) => user,
             None => {
-                res_body.settings_error = SettingsError {
-                    is_error: true,
-                    error_message: Some(String::from("error")),
+                let response: MainResponse = MainResponse {
+                    response_field: Some(response::ResponseField::Error(MainError::InvalidCredentials as i32)),
                 };
                 return Ok(HttpResponse::InternalServerError()
                     .content_type("application/json; charset=utf-8")
-                    .json(res_body));
+                    .protobuf(response));
             },
         },
     };
@@ -81,31 +97,29 @@ async fn change_email(
 
     let is_email_stored = (&user_result).as_ref().ok().is_some();
     if is_email_stored == true {
-        res_body.success = false;
-        res_body.settings_error = SettingsError {
-            is_error: true,
-            error_message: Some(String::from("username already exists")),
+        let response: MainResponse = MainResponse {
+            response_field: Some(response::ResponseField::Error(MainError::RegisteredEmail as i32)),
         };
 
         return Ok(HttpResponse::Conflict()
             .content_type("application/json; charset=utf-8")
-            .json(res_body));
+            .protobuf(response));
     }
 
     // Generate token
     let token: String = generate_opaque_token_of_length(25);
-    let token_object: Object = Object{useruuid, email};
+    let token_object: EmailTokenObject = EmailTokenObject{user_uuid, email};
     let token_object_json = serde_json::to_string(&token_object).unwrap();
 
     // Save key: token, value: {jwt, email} to redis
     let expiry_in_seconds: Option<i64> = Some(300);
-    let mut con = create_redis_client_connection();
+    let con = create_redis_client_connection();
     let set_redis_result = set_key_value_in_redis(con, &token, &token_object_json, &expiry_in_seconds);
 
     // err handling
     if set_redis_result.is_err() {
-        let response: response::Response = response::Response {
-            response_field: Some(ResponseField::Error(response::Error::ServerError as i32)),
+        let response: MainResponse = MainResponse {
+            response_field: Some(response::ResponseField::Error(MainError::ServerError as i32)),
         };
         return Ok(HttpResponse::FailedDependency()
             .content_type("application/x-protobuf; charset=utf-8")
@@ -113,19 +127,20 @@ async fn change_email(
     }
 
     // return token
+    let response: MainResponse = MainResponse {
+        response_field: Some(response::ResponseField::RequiresPassword(true)),
+    };
     return Ok(HttpResponse::Ok()
-        .content_type("application/json; charset=utf-8")
-        .json(res_body));
+        .content_type("application/x-protobuf; charset=utf-8")
+        .protobuf(response));
 }
 
-
-
 #[post("change-email")]
-async fn change_email(
-    req_body: Json<ChangeEmailRequestStruct>,
+async fn post_confirmation(
+    req_body: ProtoBuf<PasswordRequest>,
     req: HttpRequest,
 ) -> Result<impl Responder> {
-    let ChangeEmailRequestConfirmationStruct { password } = req_body.into_inner();
+    let PasswordRequest { password } = req_body.0;
     let login_email_token: String = req
         .headers()
         .get("Change-Email-Token")
@@ -133,88 +148,93 @@ async fn change_email(
         .to_str()
         .unwrap()
         .to_string();
-    let mut res_body: ChangeEmailResponseStruct = ChangeEmailResponseStruct::new();
 
     // validate password
     let validated_password = validate_password(&password);
     if validated_password.is_err() {
-        let error: SettingsError = SettingsError {
-            is_error: true,
-            error_message: Some(validated_password.err().unwrap()),
+        let response: PasswordResponse = PasswordResponse {
+            response_field: Some(confirmation_response::ResponseField::Error(PasswordError::InvalidCredentials as i32)),
         };
-        res_body.settings_error = error;
-
         return Ok(HttpResponse::UnprocessableEntity()
             .content_type("application/json; charset=utf-8")
-            .json(res_body));
+            .protobuf(response));
     }
     
     // Validate user
     let user_uuid: String = match req.extensions().get::<Claims>() {
         Some(claims) => claims.sub.clone(),
         None => {
-            res_body.settings_error = SettingsError {
-                is_error: true,
-                error_message: Some(String::from("error")),
+            let response: PasswordResponse = PasswordResponse {
+                response_field: Some(confirmation_response::ResponseField::Error(PasswordError::InvalidCredentials as i32)),
             };
             return Ok(HttpResponse::InternalServerError()
                 .content_type("application/json; charset=utf-8")
-                .json(res_body));
+                .protobuf(response));
         }
     };
     let user_result: Result<Option<User>, sqlx::Error> = User::from_uuid_str(&user_uuid).await;
     let user: User = match user_result {
         Err(_) => {
-            res_body.settings_error = SettingsError {
-                is_error: true,
-                error_message: Some(String::from("error")),
+            let response: PasswordResponse = PasswordResponse {
+                response_field: Some(confirmation_response::ResponseField::Error(PasswordError::ServerError as i32)),
             };
             return Ok(HttpResponse::InternalServerError()
                 .content_type("application/json; charset=utf-8")
-                .json(res_body));
+                .protobuf(response));
         }
         Ok(user) => match user {
             Some(user) => user,
             None => {
-                res_body.settings_error = SettingsError {
-                    is_error: true,
-                    error_message: Some(String::from("error")),
-                };
-                return Ok(HttpResponse::InternalServerError()
-                    .content_type("application/json; charset=utf-8")
-                    .json(res_body));
+            let response: PasswordResponse = PasswordResponse {
+                response_field: Some(confirmation_response::ResponseField::Error(PasswordError::InvalidCredentials as i32)),
+            };
+            return Ok(HttpResponse::InternalServerError()
+                .content_type("application/json; charset=utf-8")
+                .protobuf(response));
             },
         },
     };
     
     // authenticate password
     if user.check_password(&password).is_err() {
-        res_body.success = false;
-        res_body.settings_error = SettingsError {
-            is_error: true,
-            error_message: Some(String::from("incorrect password")),
+        let response: PasswordResponse = PasswordResponse {
+            response_field: Some(confirmation_response::ResponseField::Error(PasswordError::IncorrectPassword as i32)),
         };
         return Ok(HttpResponse::Unauthorized()
             .content_type("application/json; charset=utf-8")
-            .json(res_body));
-    }
+            .protobuf(response));
+    };
+
     // Get email from redis
-    con = create_redis_client_connection();
-    let email: String = get_object_from_token_in_reddis(con, &login_password_token) {
+    let con = create_redis_client_connection();
+    let email: String = match get_object_from_token_in_redis(con, &login_email_token) {
             // if error return error
             Err(err) => {
                 println!("err: {:#?}", err);
-                let response: response::Response = response::Response {
-                    response_field: Some(ResponseField::Error(
-                        response::Error::InvalidCredentials as i32,
+                let response: PasswordResponse = PasswordResponse {
+                    response_field: Some(confirmation_response::ResponseField::Error(
+                        PasswordError::InvalidCredentials as i32,
                     )),
                 };
 
                 return Ok(HttpResponse::UnprocessableEntity()
-                    .content_type("application/x-protobuf; charset=utf-8")
+                    .content_type("application/json; charset=utf-8")
                     .protobuf(response));
-            }
-            Ok(object) => if object.user_uuid = user_uuid {object.email},
+            },
+            Ok(object) => match object.user_uuid == user_uuid {
+                true => {object.email},
+                false => {
+                    let response: PasswordResponse = PasswordResponse {
+                        response_field: Some(confirmation_response::ResponseField::Error(
+                            PasswordError::ServerError as i32,
+                        )),
+                    };
+
+                    return Ok(HttpResponse::UnprocessableEntity()
+                        .content_type("application/json; charset=utf-8")
+                        .protobuf(response));
+                }
+            },
         };
 
     // change email
@@ -224,14 +244,33 @@ async fn change_email(
 
     // if sql update error then return an error
     if update_result.is_err() {
-        res_body.settings_error = SettingsError {
-            is_error: true,
-            error_message: Some(String::from("internal error")),
+        let response: PasswordResponse = PasswordResponse {
+            response_field: Some(confirmation_response::ResponseField::Error(PasswordError::ServerError as i32)),
         };
         return Ok(HttpResponse::FailedDependency()
-            .content_type("application/json; charset=utf-8")
-            .json(res_body));
+            .content_type("application/x-protobuf; charset=utf-8")
+            .protobuf(response));
     }
+
+    // return ok
+    let response: PasswordResponse = PasswordResponse {
+        response_field: Some(confirmation_response::ResponseField::Success(PasswordSuccess {  })),
+    };
+    return Ok(HttpResponse::Ok()
+        .content_type("application/x-protobuf; charset=utf-8")
+        .protobuf(response));
+
+}
+
+use redis::{Commands, Connection, RedisResult};
+fn get_object_from_token_in_redis(mut con: Connection, token: &str) -> Result<EmailTokenObject, String> {
+    let redis_result: RedisResult<String> = con.get(token);
+    let object_json: String = match redis_result {
+        Ok(object_json) => object_json,
+        Err(err) => return Err(err.to_string()),
+    };
+    let object: EmailTokenObject = serde_json::from_str(&object_json).unwrap();
+    return Ok(object);
 }
 
 

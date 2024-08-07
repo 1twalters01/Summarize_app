@@ -34,6 +34,15 @@ fn main() {
         "../../protos/accounts/password_reset/password/response.proto",
     ]);
     generate_files_from_protobufs(prost_config, out_dir, protobuf_filename_vec, base_dir);
+
+    let mut prost_config = prost_build::Config::new();
+    prost_config.out_dir(out_dir);
+    let protobuf_filename_vec: &Vec<&str> = &Vec::from([
+        "../../protos/settings/profile/confirmation.proto",
+        "../../protos/settings/profile/email/request.proto",
+        "../../protos/settings/profile/email/response.proto",
+    ]);
+    generate_files_from_protobufs(prost_config, out_dir, protobuf_filename_vec, base_dir);
 }
 
 fn generate_files_from_protobufs(
