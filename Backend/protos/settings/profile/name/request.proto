@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package settings.profile.name.request;
+
+message BothNames {
+  string first_name = 2;
+  string last_name = 3;
+}
+
+message Request {
+  oneof request_field {
+    String first_name = 1;
+    String last_name = 2;
+    BothNames both_names = 3;
+  }
+}
