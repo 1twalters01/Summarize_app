@@ -95,6 +95,7 @@ async fn post_email(
             },
         },
     };
+
     // error if email is already taken
     let pool = create_pg_pool_connection().await;
     let user_result: Result<Option<User>, sqlx::Error> =
