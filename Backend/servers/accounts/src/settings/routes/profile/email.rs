@@ -22,13 +22,18 @@ use crate::{
         schema::auth::Claims,
     },
     utils::{
-        database_connections::{create_pg_pool_connection, create_redis_client_connection, set_key_value_in_redis}, tokens::generate_opaque_token_of_length, validations::{validate_email, validate_password}
+        database_connections::{
+            create_pg_pool_connection,
+            create_redis_client_connection,
+            set_key_value_in_redis
+        },
+        tokens::generate_opaque_token_of_length,
+        validations::{validate_email, validate_password}
     },
 };
 
 use actix_protobuf::{ProtoBuf, ProtoBufResponseBuilder};
-use actix_web::HttpMessage;
-use actix_web::{post, HttpRequest, HttpResponse, Responder, Result};
+use actix_web::{post, HttpMessage, HttpRequest, HttpResponse, Responder, Result};
 use serde::{Deserialize, Serialize};
 use sqlx::{Pool, Postgres};
 
