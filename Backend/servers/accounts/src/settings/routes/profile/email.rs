@@ -57,7 +57,7 @@ async fn post_email(
             response_field: Some(response::ResponseField::Error(MainError::InvalidCredentials as i32)),
         };
         return Ok(HttpResponse::UnprocessableEntity()
-            .content_type("application/json; charset=utf-8")
+            .content_type("application/x-protobuf; charset=utf-8")
             .protobuf(response));
     }
     
@@ -69,7 +69,7 @@ async fn post_email(
                 response_field: Some(response::ResponseField::Error(MainError::InvalidCredentials as i32)),
             };
             return Ok(HttpResponse::InternalServerError()
-                .content_type("application/json; charset=utf-8")
+                .content_type("application/x-protobuf; charset=utf-8")
                 .protobuf(response));
         }
     };
@@ -80,7 +80,7 @@ async fn post_email(
                 response_field: Some(response::ResponseField::Error(MainError::ServerError as i32)),
             };
             return Ok(HttpResponse::InternalServerError()
-                .content_type("application/json; charset=utf-8")
+                .content_type("application/x-protobuf; charset=utf-8")
                 .protobuf(response));
         }
         Ok(user) => match user {
@@ -90,7 +90,7 @@ async fn post_email(
                     response_field: Some(response::ResponseField::Error(MainError::InvalidCredentials as i32)),
                 };
                 return Ok(HttpResponse::InternalServerError()
-                    .content_type("application/json; charset=utf-8")
+                    .content_type("application/x-protobuf; charset=utf-8")
                     .protobuf(response));
             },
         },
@@ -107,7 +107,7 @@ async fn post_email(
         };
 
         return Ok(HttpResponse::Conflict()
-            .content_type("application/json; charset=utf-8")
+            .content_type("application/x-protobuf; charset=utf-8")
             .protobuf(response));
     }
 
@@ -161,7 +161,7 @@ async fn post_confirmation(
             response_field: Some(confirmation_response::ResponseField::Error(PasswordError::InvalidCredentials as i32)),
         };
         return Ok(HttpResponse::UnprocessableEntity()
-            .content_type("application/json; charset=utf-8")
+            .content_type("application/x-protobuf; charset=utf-8")
             .protobuf(response));
     }
     
@@ -173,7 +173,7 @@ async fn post_confirmation(
                 response_field: Some(confirmation_response::ResponseField::Error(PasswordError::InvalidCredentials as i32)),
             };
             return Ok(HttpResponse::InternalServerError()
-                .content_type("application/json; charset=utf-8")
+                .content_type("application/x-protobuf; charset=utf-8")
                 .protobuf(response));
         }
     };
@@ -184,7 +184,7 @@ async fn post_confirmation(
                 response_field: Some(confirmation_response::ResponseField::Error(PasswordError::ServerError as i32)),
             };
             return Ok(HttpResponse::InternalServerError()
-                .content_type("application/json; charset=utf-8")
+                .content_type("application/x-protobuf; charset=utf-8")
                 .protobuf(response));
         }
         Ok(user) => match user {
@@ -194,7 +194,7 @@ async fn post_confirmation(
                 response_field: Some(confirmation_response::ResponseField::Error(PasswordError::InvalidCredentials as i32)),
             };
             return Ok(HttpResponse::InternalServerError()
-                .content_type("application/json; charset=utf-8")
+                .content_type("application/x-protobuf; charset=utf-8")
                 .protobuf(response));
             },
         },
@@ -206,7 +206,7 @@ async fn post_confirmation(
             response_field: Some(confirmation_response::ResponseField::Error(PasswordError::IncorrectPassword as i32)),
         };
         return Ok(HttpResponse::Unauthorized()
-            .content_type("application/json; charset=utf-8")
+            .content_type("application/x-protobuf; charset=utf-8")
             .protobuf(response));
     };
 
@@ -223,7 +223,7 @@ async fn post_confirmation(
                 };
 
                 return Ok(HttpResponse::UnprocessableEntity()
-                    .content_type("application/json; charset=utf-8")
+                    .content_type("application/x-protobuf; charset=utf-8")
                     .protobuf(response));
             },
             Ok(object) => match object.user_uuid == user_uuid {
@@ -236,7 +236,7 @@ async fn post_confirmation(
                     };
 
                     return Ok(HttpResponse::UnprocessableEntity()
-                        .content_type("application/json; charset=utf-8")
+                        .content_type("application/x-protobuf; charset=utf-8")
                         .protobuf(response));
                 }
             },
