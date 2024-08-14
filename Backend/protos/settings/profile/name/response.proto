@@ -1,13 +1,12 @@
 syntax = "proto3";
 
-package settings.profile.username.response;
+package settings.profile.name.response;
 
 enum Error {
     INVALID_CREDENTIALS = 0;
-    REGISTERED_USERNAME = 1;
-    TOO_MANY_REQUESTS = 2;
-    INVALID_USERNAME = 3;
-    SERVER_ERROR = 4;
+    TOO_MANY_REQUESTS = 1;
+    INVALID_NAME = 2;
+    SERVER_ERROR = 3;
 }
 
 message Response {
@@ -16,3 +15,4 @@ message Response {
         bool requires_password = 2;
     }
 }
+

@@ -60,6 +60,28 @@ pub async fn update_password_for_user_in_pg_users_table(
     }
 }
 
+pub async fn get_previous_password_hashes_for_user_in_pg_users_table(
+    pool: &Pool<Postgres>,
+    user: &User,
+) -> Result<Vec<String>, sqlx::Error> {
+    let password_array_select_query = sqlx::query("")
+        .bind(user.get_uuid())
+        .fetch_all(pool)
+        .await;
+
+    match password_array_select_query {
+        Err(err) => return Err(err),
+        Ok(res) => {
+            if res.len() == 0 {
+                return Ok(Vec::new());
+            }
+
+            let password_hash_vec: Vec<String> = res[0].get("previous_password_hashes");
+            return Ok(password_hash_vec);
+        }
+    }
+}
+
 pub async fn get_user_from_email_in_pg_users_table(
     pool: &Pool<Postgres>,
     email: &str,

@@ -1,55 +1,47 @@
 use crate::{
-    generated::protos::settings::profile::{
+    accounts::{
+        datatypes::{passwords::Password, users::User},
+        queries::postgres::get_previous_password_hashes_for_user_in_pg_users_table,
+        schema::auth::Claims,
+    }, generated::protos::settings::profile::{
         confirmation::{
-            response as confirmation_response,
-            Request as PasswordRequest,
-            Response as PasswordResponse,
-            Error as PasswordError,
-            Success as PasswordSuccess,
+            response as confirmation_response, Error as PasswordError, Request as PasswordRequest, Response as PasswordResponse, Success as PasswordSuccess
         },
         password::{
             request::Request as MainRequest,
             response::{
-                response,
-                Response as MainResponse,
-                Error as MainError
+                response, Error as MainError, Response as MainResponse
             },
         },
-    },
-    accounts::{
-        datatypes::users::User,
-        queries::postgres::get_user_from_email_in_pg_users_table,
-        schema::auth::Claims,
-    },
-    utils::{
+    }, utils::{
         database_connections::{
             create_pg_pool_connection,
             create_redis_client_connection,
             set_key_value_in_redis
         },
         tokens::generate_opaque_token_of_length,
-        validations::{validate_email, validate_password}
-    },
+        validations::validate_password,
+    }
 };
-use actix_web::HttpMessage;
-use actix_web::{post, web::Json, HttpRequest, HttpResponse, Responder, Result};
+use actix_protobuf::{ProtoBuf, ProtoBufResponseBuilder};
+use actix_web::{HttpMessage, HttpRequest, HttpResponse, Responder, Result};
+use serde::{Deserialize, Serialize};
 use sqlx::{Pool, Postgres};
 
 #[derive(Serialize, Deserialize)]
-struct EmailTokenObject {
+struct PasswordTokenObject {
     user_uuid: String,
-    password: String
+    password_hash: String
 }
 
-#[post("change-password")]
-async fn change_password(
+pub async fn post_password(
     req_body: ProtoBuf<MainRequest>,
     req: HttpRequest,
 ) -> Result<impl Responder> {
-    let MainRequest { new_password, new_password_confirmation} = req_body.0;
+    let MainRequest { password, password_confirmation} = req_body.0;
 
-    // error if new_password != new_password_confirmation
-    if new_password != new_password_confirmation {
+    // error if password != password_confirmation
+    if password != password_confirmation {
         let response: MainResponse = MainResponse {
             response_field: Some(response::ResponseField::Error(MainError::PasswordsDoNotMatch as i32)),
         };
@@ -82,7 +74,7 @@ async fn change_password(
         }
     };
     let user_result: Result<Option<User>, sqlx::Error> = User::from_uuid_str(&user_uuid).await;
-    _ = match user_result {
+    let user: User = match user_result {
         Err(_) => {
             let response: MainResponse = MainResponse {
                 response_field: Some(response::ResponseField::Error(MainError::ServerError as i32)),
@@ -106,25 +98,40 @@ async fn change_password(
 
     // error if password has already been used
     let pool = create_pg_pool_connection().await;
-    let user_result: Result<Option<User>, sqlx::Error> =
-        get_user_from_email_in_pg_users_table(&pool, &email).await;
+    let hash_vec_result: Result<Vec<String>, sqlx::Error> =
+        get_previous_password_hashes_for_user_in_pg_users_table(&pool, &user).await;
+    let hash_vec: Vec<String> = match hash_vec_result {
+        Err(err) => {
+            println!("Error: {}", err);
+            let response: MainResponse = MainResponse {
+                response_field: Some(response::ResponseField::Error(MainError::ServerError as i32)),
+            };
+            return Ok(HttpResponse::InternalServerError()
+                .content_type("application/x-protobuf; charset=utf-8")
+                .protobuf(response));
+        },
+        Ok(ref hash_vec) => hash_vec.to_vec(),
+    };
+    for hash in hash_vec {
+        let password_struct = Password::from_hash(hash).unwrap();
+        if password_struct.check_password(&password).is_ok() {
+            let response: MainResponse = MainResponse {
+                response_field: Some(response::ResponseField::Error(MainError::PreviouslyUsedPassword as i32)),
+            };
+            return Ok(HttpResponse::Conflict()
+                .content_type("application/x-protobuf; charset=utf-8")
+                .protobuf(response));
 
-    let is_password_stored = (&user_result).as_ref().ok().is_some();
-    if is_password_stored == true {
-        let response: MainResponse = MainResponse {
-            response_field: Some(response::ResponseField::Error(MainError::PreviouslyUsedPassword as i32)),
-        };
+        }
 
-        return Ok(HttpResponse::Conflict()
-            .content_type("application/x-protobuf; charset=utf-8")
-            .protobuf(response));
     }
 
     // hash password
+    let password_hash = Password::new(password).unwrap().get_password_string();
         
     // Generate token
     let token: String = generate_opaque_token_of_length(25);
-    let token_object: PasswordTokenObject = PasswordTokenObject{user_uuid, password};
+    let token_object: PasswordTokenObject = PasswordTokenObject{user_uuid, password_hash};
     let token_object_json = serde_json::to_string(&token_object).unwrap();
 
     // Save key: token, value: {jwt, email} to redis
@@ -151,13 +158,12 @@ async fn change_password(
         .protobuf(response));
 }
 
-#[post("change-email")]
-async fn post_confirmation(
+pub async fn post_confirmation(
     req_body: ProtoBuf<PasswordRequest>,
     req: HttpRequest,
 ) -> Result<impl Responder> {
     let PasswordRequest { password } = req_body.0;
-    let login_email_token: String = req
+    let login_password_token: String = req
         .headers()
         .get("Change-Password-Token")
         .unwrap()
@@ -238,7 +244,7 @@ async fn post_confirmation(
                     .protobuf(response));
             },
             Ok(object) => match object.user_uuid == user_uuid {
-                true => {object.email},
+                true => {object.password_hash},
                 false => {
                     let response: PasswordResponse = PasswordResponse {
                         response_field: Some(confirmation_response::ResponseField::Error(
@@ -253,10 +259,10 @@ async fn post_confirmation(
             },
         };
 
-    // change email
+    // change password 
     let pool = create_pg_pool_connection().await;
     let update_result: Result<(), sqlx::Error> =
-        update_password_for_user_in_pg_users_table(&pool, &email).await;
+        update_password_for_user_in_pg_users_table(&pool, &password_hash).await;
 
     // if sql update error then return an error
     if update_result.is_err() {
@@ -277,3 +283,28 @@ async fn post_confirmation(
         .protobuf(response));
 
 }
+
+use redis::{Commands, Connection, RedisResult};
+fn get_object_from_token_in_redis(mut con: Connection, token: &str) -> Result<PasswordTokenObject, String> {
+    let redis_result: RedisResult<String> = con.get(token);
+    let object_json: String = match redis_result {
+        Ok(object_json) => object_json,
+        Err(err) => return Err(err.to_string()),
+    };
+    let object: PasswordTokenObject = serde_json::from_str(&object_json).unwrap();
+    return Ok(object);
+}
+
+pub async fn update_password_for_user_in_pg_users_table(
+    pool:&Pool<Postgres>,
+    password_hash: &str,
+) -> Result<(), sqlx::Error> {
+    let user_update_query = sqlx::query("").bind(password_hash).execute(pool).await;
+
+    if let Err(err) = user_update_query {
+        return Err(err);
+    } else {
+        return Ok(());
+    }
+}
+

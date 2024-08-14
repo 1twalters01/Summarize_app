@@ -41,6 +41,12 @@ fn main() {
         "../../protos/settings/profile/confirmation.proto",
         "../../protos/settings/profile/email/request.proto",
         "../../protos/settings/profile/email/response.proto",
+        "../../protos/settings/profile/username/request.proto",
+        "../../protos/settings/profile/username/response.proto",
+        "../../protos/settings/profile/name/request.proto",
+        "../../protos/settings/profile/name/response.proto",
+        "../../protos/settings/profile/password/request.proto",
+        "../../protos/settings/profile/password/response.proto",
     ]);
     generate_files_from_protobufs(prost_config, out_dir, protobuf_filename_vec, base_dir);
 }

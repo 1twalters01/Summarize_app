@@ -8,13 +8,18 @@ use crate::{
             Success as PasswordSuccess,
         },
         name::{
-            request::Request as MainRequest,
+            request::{
+                Request as MainRequest,
+                request::RequestField,
+                BothNames
+            },
             response::{
                 response,
                 Response as MainResponse,
                 Error as MainError
             },
         },
+    },
     accounts::{
         datatypes::users::User,
         schema::auth::Claims,
@@ -25,50 +30,59 @@ use crate::{
             create_redis_client_connection,
             set_key_value_in_redis,
         },
-        tokens::generate_opaque_token_of_length
+        tokens::generate_opaque_token_of_length,
         validations::{validate_name, validate_password},
     },
 };
 
 use actix_protobuf::{ProtoBuf, ProtoBufResponseBuilder};
-use actix_web::{post, HttpMessage, HttpRequest, HttpResponse, Responder, Result};
+use actix_web::{HttpMessage, HttpRequest, HttpResponse, Responder, Result};
 use serde::{Deserialize, Serialize};
 use sqlx::{Pool, Postgres};
 
 #[derive(Serialize, Deserialize)]
 struct NameTokenObject {
     user_uuid: String,
-    first_name: String,
-    last_name: String,
+    first_name: Option<String>,
+    last_name: Option<String>,
 }
 
-pub async fn change_name(
+pub async fn post_name(
     req_body: ProtoBuf<MainRequest>,
     req: HttpRequest,
 ) -> Result<impl Responder> {
-    // defo not how to extract the names but we go on anyways
-    let MainRequest { first_name, last_name } = req_body.0;
+    let MainRequest { request_field  } = req_body.0;
+
+    let (first_name, last_name): (Option<String>, Option<String>) = match request_field.unwrap() {
+        RequestField::FirstName(first_name) => (Some(first_name), None),
+        RequestField::LastName(last_name) => (None, Some(last_name)),
+        RequestField::BothNames(BothNames {first_name, last_name}) => (Some(first_name), Some(last_name)),
+    };
 
     // validate firstname
-    let validated_firstname = validate_name(&first_name);
-    if validated_firstname.is_err() {
-        let response: MainResponse = MainResponse {
-            response_field: Some(response::ResponseField::Error(MainError::InvalidCredentials as i32)),
-        };
-        return Ok(HttpResponse::UnprocessableEntity()
-            .content_type("application/x-protobuf; charset=utf-8")
-            .protobuf(response));
+    if let Some(ref name) = first_name {
+        let validated_firstname = validate_name(&name);
+        if validated_firstname.is_err() {
+            let response: MainResponse = MainResponse {
+                response_field: Some(response::ResponseField::Error(MainError::InvalidCredentials as i32)),
+            };
+            return Ok(HttpResponse::UnprocessableEntity()
+                .content_type("application/x-protobuf; charset=utf-8")
+                .protobuf(response));
+        }
     }
 
     // validate lastname
-    let validated_lastname = validate_name(&last_name);
-    if validated_lastname.is_err() {
-        let response: MainResponse = MainResponse {
-            response_field: Some(response::ResponseField::Error(MainError::InvalidCredentials as i32)),
-        };
-        return Ok(HttpResponse::UnprocessableEntity()
-            .content_type("application/x-protobuf; charset=utf-8")
-            .protobuf(response));
+    if let Some(ref name) = last_name {
+        let validated_lastname = validate_name(&name);
+        if validated_lastname.is_err() {
+            let response: MainResponse = MainResponse {
+                response_field: Some(response::ResponseField::Error(MainError::InvalidCredentials as i32)),
+            };
+            return Ok(HttpResponse::UnprocessableEntity()
+                .content_type("application/x-protobuf; charset=utf-8")
+                .protobuf(response));
+        }
     }
 
     // Validate user
@@ -135,12 +149,12 @@ pub async fn change_name(
         .protobuf(response));
 }
 
-async fn post_confirmation(
+pub async fn post_confirmation(
     req_body: ProtoBuf<PasswordRequest>,
     req: HttpRequest,
 ) -> Result<impl Responder> {
     let PasswordRequest { password } = req_body.0;
-    let login_email_token: String = req
+    let login_name_token: String = req
         .headers()
         .get("Change-Name-Token")
         .unwrap()
@@ -206,7 +220,7 @@ async fn post_confirmation(
 
     // Get name from redis
     let con = create_redis_client_connection();
-    let first_name, last_name: (String, String) = match get_object_from_token_in_redis(con, &login_name_token) {
+    let (first_name, last_name): (Option<String>, Option<String>) = match get_object_from_token_in_redis(con, &login_name_token) {
         // if error return error
         Err(err) => {
             println!("err: {:#?}", err);
@@ -239,7 +253,7 @@ async fn post_confirmation(
     // change name
     let pool = create_pg_pool_connection().await;
     let update_result: Result<(), sqlx::Error> =
-        update_name_for_user_in_pg_users_table(&pool, &name).await;
+        update_name_for_user_in_pg_users_table(&pool, first_name.as_ref(), last_name.as_ref()).await;
 
     // if sql update error then return an error
     if update_result.is_err() {
@@ -260,11 +274,21 @@ async fn post_confirmation(
         .protobuf(response));
 }
 
+use redis::{Commands, Connection, RedisResult};
+fn get_object_from_token_in_redis(mut con: Connection, token: &str) -> Result<NameTokenObject, String> {
+    let redis_result: RedisResult<String> = con.get(token);
+    let object_json: String = match redis_result {
+        Ok(object_json) => object_json,
+        Err(err) => return Err(err.to_string()),
+    };
+    let object: NameTokenObject = serde_json::from_str(&object_json).unwrap();
+    return Ok(object);
+}
 
-pub async fn update_first_name_and_last_name_for_user_in_pg_users_table(
+pub async fn update_name_for_user_in_pg_users_table(
     pool: &Pool<Postgres>,
-    first_name: &str,
-    last_name: &str,
+    first_name: Option<&String>,
+    last_name: Option<&String>,
 ) -> Result<(), sqlx::Error> {
     let user_update_query = sqlx::query("")
         .bind(first_name)

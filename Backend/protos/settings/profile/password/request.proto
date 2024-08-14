@@ -1,0 +1,8 @@
+syntax = "proto3";
+
+package settings.profile.password.request;
+
+message Request {
+  string password = 1;
+  string password_confirmation = 2;
+}

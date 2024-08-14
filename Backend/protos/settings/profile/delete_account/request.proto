@@ -1,7 +1,0 @@
-syntax = "proto3";
-
-package settings.profile.delete_account.request;
-
-message Request {
-  string password = 1;
-}

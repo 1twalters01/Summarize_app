@@ -33,7 +33,7 @@ use crate::{
 };
 
 use actix_protobuf::{ProtoBuf, ProtoBufResponseBuilder};
-use actix_web::{post, HttpMessage, HttpRequest, HttpResponse, Responder, Result};
+use actix_web::{HttpMessage, HttpRequest, HttpResponse, Responder, Result};
 use serde::{Deserialize, Serialize};
 use sqlx::{Pool, Postgres};
 
@@ -43,8 +43,7 @@ struct EmailTokenObject {
     email: String
 }
 
-#[post("change-email")]
-async fn post_email(
+pub async fn post_email(
     req_body: ProtoBuf<MainRequest>,
     req: HttpRequest,
 ) -> Result<impl Responder> {
@@ -141,8 +140,7 @@ async fn post_email(
         .protobuf(response));
 }
 
-#[post("change-email")]
-async fn post_confirmation(
+pub async fn post_confirmation(
     req_body: ProtoBuf<PasswordRequest>,
     req: HttpRequest,
 ) -> Result<impl Responder> {
@@ -278,8 +276,6 @@ fn get_object_from_token_in_redis(mut con: Connection, token: &str) -> Result<Em
     let object: EmailTokenObject = serde_json::from_str(&object_json).unwrap();
     return Ok(object);
 }
-
-
 
 pub async fn update_email_for_user_in_pg_users_table(
     pool: &Pool<Postgres>,

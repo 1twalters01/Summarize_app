@@ -17,37 +17,23 @@ use crate::{
         },
     },
     accounts::{
-        schema::auth::Claims,
         datatypes::users::User,
-        queries::{
-            postgres::{
-                delete_user_from_uuid_in_pg_users_table,
-                get_user_from_email_in_pg_users_table,
-                get_user_from_username_in_pg_users_table,
-                update_password_for_user_in_pg_users_table,
-            },
-            redis::get_code_from_token_in_redis,
-        },
-    },
-    settings::schema::{
-        ChangeUsernameRequestStruct, ChangeUsernameResponseStruct,
-        SettingsError,
+        schema::auth::Claims,
+        queries::postgres::get_user_from_username_in_pg_users_table,
     },
     utils::{
         database_connections::{
+            create_pg_pool_connection,
             create_redis_client_connection,
             set_key_value_in_redis,
         },
         tokens::generate_opaque_token_of_length,
-        database_connections::create_pg_pool_connection,
-        validations::{
-            validate_email, validate_name, validate_password, validate_username,
-        },
+        validations::{validate_password, validate_username},
     },
 };
 
 use actix_protobuf::{ProtoBuf, ProtoBufResponseBuilder}; 
-use actix_web::{post, HttpMessage, HttpRequest, HttpResponse, Responder, Result};
+use actix_web::{HttpMessage, HttpRequest, HttpResponse, Responder, Result};
 use serde::{Deserialize, Serialize};
 use sqlx::{Pool, Postgres};
 
@@ -57,7 +43,7 @@ struct UsernameTokenObject {
     username: String,
 }
 
-async fn post_username(
+pub async fn post_username(
     req_body: ProtoBuf<MainRequest>,
     req: HttpRequest,
 ) -> Result<impl Responder> {
@@ -122,12 +108,12 @@ async fn post_username(
         
         return Ok(HttpResponse::Conflict()
             .content_type("application/x-protobuf; charset=utf-8")
-            .protobuf(res_body));
+            .protobuf(response));
     }
 
     // Generate token
     let token: String = generate_opaque_token_of_length(25);
-    let token_object: EmailTokenObject = UsernameTokenObject{user_uuid, username};
+    let token_object: UsernameTokenObject = UsernameTokenObject{user_uuid, username};
     let token_object_json = serde_json::to_string(&token_object).unwrap();
 
     // Save key: token, value: {jwt, email} to redis
@@ -154,13 +140,13 @@ async fn post_username(
         .protobuf(response));
 }
 
-async fn post_confirmation(req_body: ProtoBuf<PasswordRequest>,
+pub async fn post_confirmation(req_body: ProtoBuf<PasswordRequest>,
     req: HttpRequest,
 ) -> Result<impl Responder> {
     let PasswordRequest { password } = req_body.0;
-    let login_email_token: String = req
+    let login_username_token: String = req
         .headers()
-        .get("Change-Email-Token")
+        .get("Change-Username-Token")
         .unwrap()
         .to_str()
         .unwrap()
@@ -222,9 +208,9 @@ async fn post_confirmation(req_body: ProtoBuf<PasswordRequest>,
             .protobuf(response));
     };
 
-    // Get email from redis
+    // Get username from redis
     let con = create_redis_client_connection();
-    let email: String = match get_object_from_token_in_redis(con, &login_email_token) {
+    let username: String = match get_object_from_token_in_redis(con, &login_username_token) {
             // if error return error
             Err(err) => {
                 println!("err: {:#?}", err);
@@ -239,7 +225,7 @@ async fn post_confirmation(req_body: ProtoBuf<PasswordRequest>,
                     .protobuf(response));
             },
             Ok(object) => match object.user_uuid == user_uuid {
-                true => {object.email},
+                true => {object.username},
                 false => {
                     let response: PasswordResponse = PasswordResponse {
                         response_field: Some(confirmation_response::ResponseField::Error(
@@ -254,10 +240,10 @@ async fn post_confirmation(req_body: ProtoBuf<PasswordRequest>,
             },
         };
 
-    // change email
+    // change username
     let pool = create_pg_pool_connection().await;
     let update_result: Result<(), sqlx::Error> =
-        update_email_for_user_in_pg_users_table(&pool, &email).await;
+        update_username_for_user_in_pg_users_table(&pool, &username).await;
 
     // if sql update error then return an error
     if update_result.is_err() {
@@ -278,6 +264,16 @@ async fn post_confirmation(req_body: ProtoBuf<PasswordRequest>,
         .protobuf(response));
 }
     
+use redis::{Commands, Connection, RedisResult};
+fn get_object_from_token_in_redis(mut con: Connection, token: &str) -> Result<UsernameTokenObject, String> {
+    let redis_result: RedisResult<String> = con.get(token);
+    let object_json: String = match redis_result {
+        Ok(object_json) => object_json,
+        Err(err) => return Err(err.to_string()),
+    };
+    let object: UsernameTokenObject = serde_json::from_str(&object_json).unwrap();
+    return Ok(object);
+}
 
 pub async fn update_username_for_user_in_pg_users_table(
     pool: &Pool<Postgres>,
