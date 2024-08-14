@@ -1,6 +1,5 @@
 use serde::{Deserialize, Serialize};
 
-
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SettingsError {
     pub is_error: bool,
@@ -12,112 +11,6 @@ impl SettingsError {
         SettingsError {
             is_error: false,
             error_message: None,
-        }
-    }
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct ChangeUsernameRequestStruct {
-    pub username: String,
-    pub password: String,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct ChangeUsernameResponseStruct {
-    pub settings_error: SettingsError,
-    pub success: bool,
-}
-
-impl ChangeUsernameResponseStruct {
-    pub fn new() -> ChangeUsernameResponseStruct {
-        ChangeUsernameResponseStruct {
-            settings_error: SettingsError::new(),
-            success: false,
-        }
-    }
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct ChangeNameRequestStruct {
-    pub first_name: String,
-    pub last_name: String,
-    pub password: String,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct ChangeNameResponseStruct {
-    pub settings_error: SettingsError,
-    pub success: bool,
-}
-
-impl ChangeNameResponseStruct {
-    pub fn new() -> ChangeNameResponseStruct {
-        ChangeNameResponseStruct {
-            settings_error: SettingsError::new(),
-            success: false,
-        }
-    }
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct ChangePasswordRequestStruct {
-    pub password: String,
-    pub new_password: String,
-    pub new_password_confirmation: String,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct ChangePasswordResponseStruct {
-    pub settings_error: SettingsError,
-    pub success: bool,
-}
-
-impl ChangePasswordResponseStruct {
-    pub fn new() -> ChangePasswordResponseStruct {
-        ChangePasswordResponseStruct {
-            settings_error: SettingsError::new(),
-            success: false,
-        }
-    }
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct DeleteAccountRequestStruct {
-    pub password: String,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct DeleteAccountResponseStruct {
-    pub settings_error: SettingsError,
-    pub success: bool,
-}
-
-impl DeleteAccountResponseStruct {
-    pub fn new() -> DeleteAccountResponseStruct {
-        DeleteAccountResponseStruct {
-            settings_error: SettingsError::new(),
-            success: false,
-        }
-    }
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct DeleteAccountConfirmationRequestStruct {
-    pub confirmation_code: String,
-    pub token: String,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct DeleteAccountConfirmationResponseStruct {
-    pub settings_error: SettingsError,
-    pub success: bool,
-}
-
-impl DeleteAccountConfirmationResponseStruct {
-    pub fn new() -> DeleteAccountConfirmationResponseStruct {
-        DeleteAccountConfirmationResponseStruct {
-            settings_error: SettingsError::new(),
-            success: false,
         }
     }
 }

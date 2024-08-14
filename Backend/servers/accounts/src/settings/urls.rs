@@ -3,7 +3,7 @@ use actix_web::web::{post, scope, ServiceConfig};
 
 pub fn config(cfg: &mut ServiceConfig) {
     cfg.service(
-        scope("/profile")
+        scope("/settings/profile")
             .wrap(middleware::authentication::is_authenticated::IsAuthenticated)
             .route("/change-email", post().to(routes::profile::email::post_email))
             .route("/change-email/confirm", post().to(routes::profile::email::post_confirmation))

@@ -14,39 +14,37 @@ fn main() {
 
     let protobuf_filename_vec: &Vec<&str> = &Vec::from([
         "../../protos/accounts/auth_tokens.proto",
+
         "../../protos/accounts/login/email/request.proto",
         "../../protos/accounts/login/email/response.proto",
         "../../protos/accounts/login/password/request.proto",
         "../../protos/accounts/login/password/response.proto",
         "../../protos/accounts/login/totp/request.proto",
         "../../protos/accounts/login/totp/response.proto",
+        
         "../../protos/accounts/register/email/request.proto",
         "../../protos/accounts/register/email/response.proto",
         "../../protos/accounts/register/verification/request.proto",
         "../../protos/accounts/register/verification/response.proto",
         "../../protos/accounts/register/details/request.proto",
         "../../protos/accounts/register/details/response.proto",
+        
         "../../protos/accounts/password_reset/email/request.proto",
         "../../protos/accounts/password_reset/email/response.proto",
         "../../protos/accounts/password_reset/verification/request.proto",
         "../../protos/accounts/password_reset/verification/response.proto",
         "../../protos/accounts/password_reset/password/request.proto",
         "../../protos/accounts/password_reset/password/response.proto",
-    ]);
-    generate_files_from_protobufs(prost_config, out_dir, protobuf_filename_vec, base_dir);
 
-    let mut prost_config = prost_build::Config::new();
-    prost_config.out_dir(out_dir);
-    let protobuf_filename_vec: &Vec<&str> = &Vec::from([
         "../../protos/settings/profile/confirmation.proto",
         "../../protos/settings/profile/email/request.proto",
         "../../protos/settings/profile/email/response.proto",
-        "../../protos/settings/profile/username/request.proto",
-        "../../protos/settings/profile/username/response.proto",
         "../../protos/settings/profile/name/request.proto",
         "../../protos/settings/profile/name/response.proto",
         "../../protos/settings/profile/password/request.proto",
         "../../protos/settings/profile/password/response.proto",
+        "../../protos/settings/profile/username/request.proto",
+        "../../protos/settings/profile/username/response.proto",
     ]);
     generate_files_from_protobufs(prost_config, out_dir, protobuf_filename_vec, base_dir);
 }
