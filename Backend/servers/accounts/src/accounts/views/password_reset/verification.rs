@@ -1,13 +1,11 @@
 use actix_protobuf::{ProtoBuf, ProtoBufResponseBuilder};
 use actix_web::{HttpRequest, HttpResponse, Responder, Result};
+use serde::Deserialize;
 
 use crate::{
-    accounts::{
-        queries::redis::get_user_json_from_token_struct_in_redis,
-        schema::password_reset::{DualVerificationToken, VerificationRequestSchema},
-    },
+    accounts::queries::redis::get_user_json_from_token_struct_in_redis,
     generated::protos::accounts::password_reset::verification::{
-        request,
+        request::Request,
         response::{self, response::ResponseField},
     },
     utils::{
@@ -18,11 +16,17 @@ use crate::{
     },
 };
 
+#[derive(Debug, Deserialize)]
+pub struct VerificationRequestSchema {
+    pub header_token: String,
+    pub verification_code: String,
+}
+
 pub async fn post_verify(
-    data: ProtoBuf<request::Request>,
+    data: ProtoBuf<Request>,
     req: HttpRequest,
 ) -> Result<impl Responder> {
-    let request::Request { verification_code } = data.0;
+    let Request { verification_code } = data.0;
     let password_reset_email_token: String = req
         .headers()
         .get("Password-Reset-Email-Token")
@@ -48,14 +52,9 @@ async fn password_reset_verification_functionality(
     header_token: String,
     verification_token: String,
 ) -> Result<impl Responder> {
-    // Form RegisterToken struct
-    let token_struct: DualVerificationToken = DualVerificationToken {
-        verification_token,
-        header_token,
-    };
-    let token_struct_json = serde_json::to_string(&token_struct).unwrap();
-
     // Get email from token using redis
+    let token_struct: (String, String) = (header_token, verification_token);
+    let token_struct_json = serde_json::to_string(&token_struct).unwrap();
     let mut con = create_redis_client_connection();
     let user_json: String = match get_user_json_from_token_struct_in_redis(con, &token_struct_json)
     {

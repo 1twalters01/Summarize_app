@@ -1,11 +1,9 @@
 use actix_protobuf::{ProtoBuf, ProtoBufResponseBuilder};
 use actix_web::{web::Path, HttpRequest, HttpResponse, Responder, Result};
+use serde::Deserialize;
 
 use crate::{
-    accounts::{
-        queries::redis::get_email_from_token_struct_in_redis,
-        schema::register::{DualVerificationToken, VerificationRequestSchema},
-    },
+    accounts::queries::redis::get_email_from_token_struct_in_redis,
     generated::protos::accounts::register::verification::{
         request,
         response::{self, response::ResponseField},
@@ -17,6 +15,12 @@ use crate::{
         tokens::generate_opaque_token_of_length,
     },
 };
+
+#[derive(Debug, Deserialize)]
+pub struct VerificationRequestSchema {
+    pub header_token: String,
+    pub verification_code: String,
+}
 
 pub async fn post_verify(
     data: ProtoBuf<request::Request>,
@@ -47,10 +51,7 @@ async fn register_verification_functionality(
     verification_token: String,
 ) -> Result<impl Responder> {
     // Form RegisterToken struct
-    let token_struct: DualVerificationToken = DualVerificationToken {
-        verification_token,
-        header_token,
-    };
+    let token_struct: (String, String) = (header_token.clone(), verification_token.clone());
     let token_struct_json = serde_json::to_string(&token_struct).unwrap();
     println!("schema: {:#?}", token_struct_json);
 

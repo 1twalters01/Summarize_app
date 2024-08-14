@@ -5,7 +5,6 @@ use crate::{
     accounts::{
         datatypes::users::User, emails::compose_password_reset_email_message,
         queries::postgres::get_user_from_email_in_pg_users_table,
-        schema::password_reset::DualVerificationToken,
     },
     generated::protos::accounts::password_reset::email::{
         request,
@@ -75,10 +74,7 @@ pub async fn post_email(data: ProtoBuf<request::Request>) -> Result<impl Respond
     // create a verify token, a register email token, and a register_email_token_struct
     let verification_token = generate_opaque_token_of_length(8);
     let header_token = generate_opaque_token_of_length(64);
-    let token_struct: DualVerificationToken = DualVerificationToken {
-        header_token: header_token.clone(),
-        verification_token: verification_token.clone(),
-    };
+    let token_struct: (String, String) = (header_token.clone(), verification_token.clone());
     let token_struct_json: String = serde_json::to_string(&token_struct).unwrap();
 
     // try to email the account a message containing the token
