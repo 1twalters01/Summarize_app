@@ -15,7 +15,7 @@ pub struct Password {
 }
 
 impl Password {
-    pub fn new(password: String) -> Result<Self, Error> {
+    pub fn from_password(password: String) -> Result<Self, Error> {
         match validate_password(&password) {
             Ok(_) => return Ok(hash_password(password)),
             Err(err) => return Err(err),

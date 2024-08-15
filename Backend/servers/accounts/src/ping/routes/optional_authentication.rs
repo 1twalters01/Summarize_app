@@ -74,7 +74,14 @@ mod tests {
         let email = String::from("test123@gmail.com");
         let password = String::from("i23oj3rfw");
 
-        let user: User = User::new(username, email, password).unwrap();
+        let user: User = User::new(
+            username,
+            email,
+            password,
+            Some("First".to_string()),
+            Some("Lastname".to_string()),
+        )
+        .unwrap();
         let token: String = AccessToken::new(&user).to_string();
         let auth_token = String::from("Bearer ") + &token;
 
@@ -143,8 +150,10 @@ mod tests {
         let username = String::from("test123");
         let email = String::from("test123@gmail.com");
         let password = String::from("i23oj3rfw");
+        let first_name = Some("First".to_string());
+        let last_name = Some("Lastname".to_string());
 
-        let user: User = User::new(username, email, password).unwrap();
+        let user: User = User::new(username, email, password, first_name, last_name).unwrap();
         let token = AccessToken::new(&user).to_string();
         let auth_token = String::from("Bearer ") + &token;
 

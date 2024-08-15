@@ -64,10 +64,7 @@ pub async fn get_previous_password_hashes_for_user_in_pg_users_table(
     pool: &Pool<Postgres>,
     user: &User,
 ) -> Result<Vec<String>, sqlx::Error> {
-    let password_array_select_query = sqlx::query("")
-        .bind(user.get_uuid())
-        .fetch_all(pool)
-        .await;
+    let password_array_select_query = sqlx::query("").bind(user.get_uuid()).fetch_all(pool).await;
 
     match password_array_select_query {
         Err(err) => return Err(err),

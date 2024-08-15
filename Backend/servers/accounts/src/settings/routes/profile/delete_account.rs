@@ -1,20 +1,13 @@
 use crate::{
-    generated::protos::settings::profile::confirmation::{
-            response as confirmation_response,
-            Request as PasswordRequest,
-            Response as PasswordResponse,
-            Error as PasswordError,
-            Success as PasswordSuccess,
-        },
     accounts::{
+        datatypes::users::User, queries::postgres::delete_user_from_uuid_in_pg_users_table,
         schema::auth::Claims,
-        datatypes::users::User,
-        queries::postgres::delete_user_from_uuid_in_pg_users_table,
     },
-    utils::{
-        database_connections::create_pg_pool_connection,
-        validations::validate_password,
-    }
+    generated::protos::settings::profile::confirmation::{
+        response as confirmation_response, Error as PasswordError, Request as PasswordRequest,
+        Response as PasswordResponse, Success as PasswordSuccess,
+    },
+    utils::{database_connections::create_pg_pool_connection, validations::validate_password},
 };
 use actix_protobuf::{ProtoBuf, ProtoBufResponseBuilder};
 use actix_web::{HttpMessage, HttpRequest, HttpResponse, Responder, Result};
@@ -25,11 +18,13 @@ pub async fn post_delete(
 ) -> Result<impl Responder> {
     let PasswordRequest { password } = req_body.0;
 
-     // validate password
+    // validate password
     let validated_password = validate_password(&password);
     if validated_password.is_err() {
         let response: PasswordResponse = PasswordResponse {
-            response_field: Some(confirmation_response::ResponseField::Error(PasswordError::InvalidCredentials as i32)),
+            response_field: Some(confirmation_response::ResponseField::Error(
+                PasswordError::InvalidCredentials as i32,
+            )),
         };
         return Ok(HttpResponse::UnprocessableEntity()
             .content_type("application/x-protobuf; charset=utf-8")
@@ -41,7 +36,9 @@ pub async fn post_delete(
         Some(claims) => claims.sub.clone(),
         None => {
             let response: PasswordResponse = PasswordResponse {
-                response_field: Some(confirmation_response::ResponseField::Error(PasswordError::InvalidCredentials as i32)),
+                response_field: Some(confirmation_response::ResponseField::Error(
+                    PasswordError::InvalidCredentials as i32,
+                )),
             };
             return Ok(HttpResponse::InternalServerError()
                 .content_type("application/x-protobuf; charset=utf-8")
@@ -52,7 +49,9 @@ pub async fn post_delete(
     let user: User = match user_result {
         Err(_) => {
             let response: PasswordResponse = PasswordResponse {
-                response_field: Some(confirmation_response::ResponseField::Error(PasswordError::ServerError as i32)),
+                response_field: Some(confirmation_response::ResponseField::Error(
+                    PasswordError::ServerError as i32,
+                )),
             };
             return Ok(HttpResponse::InternalServerError()
                 .content_type("application/x-protobuf; charset=utf-8")
@@ -61,20 +60,24 @@ pub async fn post_delete(
         Ok(user) => match user {
             Some(user) => user,
             None => {
-            let response: PasswordResponse = PasswordResponse {
-                response_field: Some(confirmation_response::ResponseField::Error(PasswordError::InvalidCredentials as i32)),
-            };
-            return Ok(HttpResponse::InternalServerError()
-                .content_type("application/x-protobuf; charset=utf-8")
-                .protobuf(response));
-            },
+                let response: PasswordResponse = PasswordResponse {
+                    response_field: Some(confirmation_response::ResponseField::Error(
+                        PasswordError::InvalidCredentials as i32,
+                    )),
+                };
+                return Ok(HttpResponse::InternalServerError()
+                    .content_type("application/x-protobuf; charset=utf-8")
+                    .protobuf(response));
+            }
         },
     };
 
     // authenticate password
     if user.check_password(&password).is_err() {
         let response: PasswordResponse = PasswordResponse {
-            response_field: Some(confirmation_response::ResponseField::Error(PasswordError::IncorrectPassword as i32)),
+            response_field: Some(confirmation_response::ResponseField::Error(
+                PasswordError::IncorrectPassword as i32,
+            )),
         };
         return Ok(HttpResponse::Unauthorized()
             .content_type("application/x-protobuf; charset=utf-8")
@@ -85,11 +88,13 @@ pub async fn post_delete(
     let pool = create_pg_pool_connection().await;
     let delete_result: Result<(), sqlx::Error> =
         delete_user_from_uuid_in_pg_users_table(&pool, &user_uuid).await;
-    
+
     // if sql delete error then return an error
     if delete_result.is_err() {
         let response: PasswordResponse = PasswordResponse {
-            response_field: Some(confirmation_response::ResponseField::Error(PasswordError::ServerError as i32)),
+            response_field: Some(confirmation_response::ResponseField::Error(
+                PasswordError::ServerError as i32,
+            )),
         };
         return Ok(HttpResponse::FailedDependency()
             .content_type("application/x-protobuf; charset=utf-8")
@@ -98,10 +103,11 @@ pub async fn post_delete(
 
     // return ok
     let response: PasswordResponse = PasswordResponse {
-        response_field: Some(confirmation_response::ResponseField::Success(PasswordSuccess { })),
+        response_field: Some(confirmation_response::ResponseField::Success(
+            PasswordSuccess {},
+        )),
     };
     return Ok(HttpResponse::Ok()
         .content_type("application/x-protobuf; charset=utf-8")
         .protobuf(response));
 }
-

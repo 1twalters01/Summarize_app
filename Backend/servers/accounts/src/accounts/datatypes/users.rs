@@ -45,7 +45,7 @@ impl User {
         first_name: Option<String>,
         last_name: Option<String>,
     ) -> Result<Self, Error> {
-        match Password::new(password) {
+        match Password::from_password(password) {
             Ok(password) => {
                 let user = Self {
                     uuid: Uuid::new_v4(),

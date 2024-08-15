@@ -35,7 +35,7 @@ mod tests {
     use serde_json::json;
 
     use crate::{
-        accounts::{auth::generate_access_token, datatypes::users::User},
+        accounts::{datatypes::users::User, schema::auth::AccessToken},
         middleware,
         ping::routes::no_authentication::*,
     };
@@ -78,9 +78,11 @@ mod tests {
         let username = String::from("test123");
         let email = String::from("test123@gmail.com");
         let password = String::from("i23oj3rfw");
+        let first_name = Some("First".to_string());
+        let last_name = Some("Lastname".to_string());
 
-        let user: User = User::new(username, email, password).unwrap();
-        let token = generate_access_token(&user);
+        let user: User = User::new(username, email, password, first_name, last_name).unwrap();
+        let token: String = AccessToken::new(&user).to_string();
         let auth_token = String::from("Bearer ") + &token;
 
         let request = test::TestRequest::get()
@@ -144,9 +146,11 @@ mod tests {
         let username = String::from("test123");
         let email = String::from("test123@gmail.com");
         let password = String::from("i23oj3rfw");
+        let first_name = Some("First".to_string());
+        let last_name = Some("Lastname".to_string());
 
-        let user: User = User::new(username, email, password).unwrap();
-        let token = generate_access_token(&user);
+        let user: User = User::new(username, email, password, first_name, last_name).unwrap();
+        let token: String = AccessToken::new(&user).to_string();
         let auth_token = String::from("Bearer ") + &token;
 
         let data_text: String = String::from("Ping from test");

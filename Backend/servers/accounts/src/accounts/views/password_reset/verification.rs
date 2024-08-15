@@ -22,10 +22,7 @@ pub struct VerificationRequestSchema {
     pub verification_code: String,
 }
 
-pub async fn post_verify(
-    data: ProtoBuf<Request>,
-    req: HttpRequest,
-) -> Result<impl Responder> {
+pub async fn post_verify(data: ProtoBuf<Request>, req: HttpRequest) -> Result<impl Responder> {
     let Request { verification_code } = data.0;
     let password_reset_email_token: String = req
         .headers()
