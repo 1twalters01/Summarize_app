@@ -5,7 +5,7 @@ use crate::{
     accounts::{datatypes::users::User, queries::postgres::get_user_from_email_in_pg_users_table},
     generated::protos::accounts::login::email::{
         request::Request,
-        response::{Error, Response, response::ResponseField},
+        response::{response::ResponseField, Error, Response},
     },
     utils::{
         database_connections::{
@@ -52,9 +52,7 @@ pub async fn post_email(data: ProtoBuf<Request>) -> Result<impl Responder> {
         Ok(user_option) => match user_option {
             None => {
                 let response: Response = Response {
-                    response_field: Some(ResponseField::Error(
-                        Error::UnregisteredEmail as i32,
-                    )),
+                    response_field: Some(ResponseField::Error(Error::UnregisteredEmail as i32)),
                 };
                 return Ok(HttpResponse::NotFound()
                     .content_type("application/x-protobuf; charset=utf-8")
@@ -95,15 +93,18 @@ pub async fn post_email(data: ProtoBuf<Request>) -> Result<impl Responder> {
 
 #[cfg(test)]
 mod tests {
-    use std::env;
     use actix_web::{test, web, App};
+    use bytes::Bytes;
     use dotenv::dotenv;
     use prost::Message;
-    use bytes::Bytes;
+    use std::env;
 
-    use super::{post_email, Error, Request, Response, ResponseField};
     use crate::{
-        accounts::{datatypes::users::User, schema::auth::AccessToken},
+        accounts::{
+            datatypes::users::User,
+            schema::auth::AccessToken,
+            views::login::email::{post_email, Error, Request, Response, ResponseField},
+        },
         middleware,
     };
 
@@ -114,8 +115,8 @@ mod tests {
         let mut app = test::init_service(
             App::new().service(
                 web::scope("/login")
-                .wrap(middleware::authentication::not_authenticated::NotAuthenticated)
-                .route("/email", web::post().to(post_email)),
+                    .wrap(middleware::authentication::not_authenticated::NotAuthenticated)
+                    .route("/email", web::post().to(post_email)),
             ),
         )
         .await;
@@ -144,7 +145,7 @@ mod tests {
                 panic!("Should be a token but instead is an error");
             }
         } else if decoded.response_field == None {
-                panic!("Should be a token but is instead None")
+            panic!("Should be a token but is instead None")
         } else {
             panic!("Error generating token");
         }
@@ -155,8 +156,8 @@ mod tests {
         let mut app = test::init_service(
             App::new().service(
                 web::scope("/login")
-                .wrap(middleware::authentication::not_authenticated::NotAuthenticated)
-                .route("/email", web::post().to(post_email)),
+                    .wrap(middleware::authentication::not_authenticated::NotAuthenticated)
+                    .route("/email", web::post().to(post_email)),
             ),
         )
         .await;
@@ -186,7 +187,7 @@ mod tests {
                 assert!(error == Error::UnregisteredEmail as i32);
             }
         } else if decoded.response_field == None {
-                panic!("Should be an error but is instead None")
+            panic!("Should be an error but is instead None")
         } else {
             panic!("Error generating token");
         }
@@ -197,8 +198,8 @@ mod tests {
         let mut app = test::init_service(
             App::new().service(
                 web::scope("/login")
-                .wrap(middleware::authentication::not_authenticated::NotAuthenticated)
-                .route("/email", web::post().to(post_email)),
+                    .wrap(middleware::authentication::not_authenticated::NotAuthenticated)
+                    .route("/email", web::post().to(post_email)),
             ),
         )
         .await;
@@ -228,7 +229,7 @@ mod tests {
                 assert!(error == Error::InvalidEmail as i32);
             }
         } else if decoded.response_field == None {
-                panic!("Should be an error but is instead None")
+            panic!("Should be an error but is instead None")
         } else {
             panic!("Error generating token");
         }
@@ -241,15 +242,22 @@ mod tests {
         let mut app = test::init_service(
             App::new().service(
                 web::scope("/login")
-                .wrap(middleware::authentication::not_authenticated::NotAuthenticated)
-                .route("/email", web::post().to(post_email)),
+                    .wrap(middleware::authentication::not_authenticated::NotAuthenticated)
+                    .route("/email", web::post().to(post_email)),
             ),
         )
         .await;
 
         let email = env::var("TEST_EMAIL").unwrap();
 
-        let user: User = User::new("username".to_string(), email.clone(), "password123".to_string(), Some("First".to_string()), Some("Lastname".to_string())).unwrap();
+        let user: User = User::new(
+            "username".to_string(),
+            email.clone(),
+            "password123".to_string(),
+            Some("First".to_string()),
+            Some("Lastname".to_string()),
+        )
+        .unwrap();
         let token: String = AccessToken::new(&user).to_string();
         let auth_token = String::from("Bearer ") + &token;
 
@@ -290,15 +298,22 @@ mod tests {
         let mut app = test::init_service(
             App::new().service(
                 web::scope("/login")
-                .wrap(middleware::authentication::not_authenticated::NotAuthenticated)
-                .route("/email", web::post().to(post_email)),
+                    .wrap(middleware::authentication::not_authenticated::NotAuthenticated)
+                    .route("/email", web::post().to(post_email)),
             ),
         )
         .await;
 
         let email = String::from("fakeEmail@fake.com");
 
-        let user: User = User::new("username".to_string(), email.clone(), "password123".to_string(), Some("First".to_string()), Some("Lastname".to_string())).unwrap();
+        let user: User = User::new(
+            "username".to_string(),
+            email.clone(),
+            "password123".to_string(),
+            Some("First".to_string()),
+            Some("Lastname".to_string()),
+        )
+        .unwrap();
         let token: String = AccessToken::new(&user).to_string();
         let auth_token = String::from("Bearer ") + &token;
 
@@ -339,15 +354,22 @@ mod tests {
         let mut app = test::init_service(
             App::new().service(
                 web::scope("/login")
-                .wrap(middleware::authentication::not_authenticated::NotAuthenticated)
-                .route("/email", web::post().to(post_email)),
+                    .wrap(middleware::authentication::not_authenticated::NotAuthenticated)
+                    .route("/email", web::post().to(post_email)),
             ),
         )
         .await;
 
         let email = String::from("invalid");
 
-        let user: User = User::new("username".to_string(), email.clone(), "password123".to_string(), Some("First".to_string()), Some("Lastname".to_string())).unwrap();
+        let user: User = User::new(
+            "username".to_string(),
+            email.clone(),
+            "password123".to_string(),
+            Some("First".to_string()),
+            Some("Lastname".to_string()),
+        )
+        .unwrap();
         let token: String = AccessToken::new(&user).to_string();
         let auth_token = String::from("Bearer ") + &token;
 

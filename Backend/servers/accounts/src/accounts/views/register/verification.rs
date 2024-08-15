@@ -117,9 +117,8 @@ async fn register_verification_functionality(
 
 #[cfg(test)]
 mod tests {
-    use actix_web::{test, web, App};
-    use dotenv::dotenv;
-    use serde_json::json;
+    // use actix_web::{test, web, App};
+    // use dotenv::dotenv;
 
     #[actix_web::test]
     async fn test_post_verification_while_being_authenticated_without_verification_token_without_header_token(

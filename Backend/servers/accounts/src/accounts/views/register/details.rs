@@ -181,8 +181,8 @@ pub async fn post_details(
 
 #[cfg(test)]
 mod tests {
-    use actix_web::{test, web, App};
-    use dotenv::dotenv;
+    // use actix_web::{test, web, App};
+    // use dotenv::dotenv;
 
     #[actix_web::test]
     async fn test_post_details_while_being_authenticated_with_header_token_username_password_confirmation_first_last(

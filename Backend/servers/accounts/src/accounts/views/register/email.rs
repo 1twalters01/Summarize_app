@@ -113,9 +113,8 @@ pub async fn post_email(data: ProtoBuf<request::Request>) -> Result<impl Respond
 
 #[cfg(test)]
 mod tests {
-    use actix_web::{test, web, App};
-    use dotenv::dotenv;
-    use serde_json::json;
+    // use actix_web::{test, web, App};
+    // use dotenv::dotenv;
 
     #[actix_web::test]
     async fn test_post_email_while_being_authenticated_without_email() {}
