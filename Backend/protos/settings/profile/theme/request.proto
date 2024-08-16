@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package settings.profile.theme.request;
+
+message Colour {
+    uint32 red = 1;
+    uint32 green = 2;
+    uint32 blue = 3;
+    uint32 alpha = 4;
+}
+
+message Colours {
+    Colour colour_1 = 1;
+    Colour colour_2 = 2;
+    Colour colour_3 = 3;
+    Colour colour_4 = 4;
+    Colour colour_5 = 5;
+    Colour colour_6 = 6;
+}
+
+message Custom {
+    Colours primary = 1;
+    Colours secondary = 2;
+}
+
+message None {
+}
+
+message Request {
+    oneof request_field {
+        None dark = 1;
+        None light = 2;
+        Custom custom= 3;
+    }
+}
