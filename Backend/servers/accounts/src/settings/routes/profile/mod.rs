@@ -3,3 +3,5 @@ pub mod email;
 pub mod name;
 pub mod password;
 pub mod username;
+pub mod language;
+pub mod theme;
