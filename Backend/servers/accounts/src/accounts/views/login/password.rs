@@ -323,35 +323,940 @@ mod tests {
     }
 
     #[actix_web::test]
-    async fn test_post_correct_password_with_totp_while_not_authenticated() {}
+    async fn test_post_correct_password_with_totp_while_not_authenticated() {
+        dotenv().ok();
+
+        let mut app = test::init_service(
+            App::new().service(
+                web::scope("/login")
+                    .wrap(middleware::authentication::not_authenticated::NotAuthenticated)
+                    .route("/email", web::post().to(post_email))
+                    .route("/password", web::post().to(post_password)),
+            ),
+        )
+        .await;
+
+        // Get token from email
+        let email = env::var("TEST_EMAIL_WITH_TOTP").unwrap();
+        let req_message = EmailRequest { email };
+
+        let mut request_buffer: Vec<u8> = Vec::new();
+        req_message.encode(&mut request_buffer).unwrap();
+
+        let mut request = test::TestRequest::post()
+            .uri("/login/email")
+            .append_header(("Content-Type", "application/protobuf"))
+            .set_payload(Bytes::from(request_buffer))
+            .to_request();
+
+        let resp = test::call_service(&mut app, request).await;
+        let response_buffer: Vec<u8> = test::read_body(resp).await.to_vec();
+        let decoded: EmailResponse = Message::decode(&response_buffer[..]).unwrap();
+
+        let token = match decoded.response_field {
+            None => panic!("Should be token but is none"),
+            Some(response_field) => match response_field {
+                EmailResponseField::Error(_) => panic!("Should be token but is error"),
+                EmailResponseField::Token(token) => token,
+            },
+        };
+
+        // post password
+        let password = env::var("TEST_PASSWORD_WITH_TOTP").unwrap();
+        let remember_me = false;
+        let req_message = Request {
+            password,
+            remember_me,
+        };
+        request_buffer = Vec::new();
+        req_message.encode(&mut request_buffer).unwrap();
+
+        request = test::TestRequest::post()
+            .uri("/login/password")
+            .append_header(("Content-Type", "application/protobuf"))
+            .append_header(("Login-Email-Token", token))
+            .set_payload(Bytes::from(request_buffer))
+            .to_request();
+
+        let resp = test::call_service(&mut app, request).await;
+        let response_buffer: Vec<u8> = test::read_body(resp).await.to_vec();
+        let decoded: Response = Message::decode(&response_buffer[..]).unwrap();
+        println!("{:#?}", decoded);
+
+        if let Some(response_field) = decoded.response_field {
+            if let ResponseField::Success(Success {
+                token,
+                requires_totp,
+            }) = response_field
+            {
+                if let Some(Token { token_field }) = token {
+                    match token_field.unwrap() {
+                        TokenField::Response(token) => {
+                            println!("requires totp: {}", requires_totp);
+                            println!("response token: {}", token);
+                            panic!("Should be access token but is instead response token")
+                        }
+                        TokenField::Tokens(AuthTokens { access, refresh }) => {
+                            if refresh == None {
+                                println!("requires totp: {}", requires_totp);
+                                println!("access token: {}", access);
+                                println!("refresh token: {:?}", refresh_token);
+                                panic!("Refresh token should be Some(String)")
+                            }
+
+                            // check that uuid is the expected one
+                            let secret = env::var("JWT_SECRET").unwrap();
+                            let validation = jsonwebtoken::Validation::default();
+                            let decoding_key =
+                                jsonwebtoken::DecodingKey::from_secret(secret.as_ref());
+                            let decoded = jsonwebtoken::decode::<
+                                crate::accounts::schema::auth::Claims,
+                            >(
+                                &access, &decoding_key, &validation
+                            );
+                            let user_uuid = env::var("TEST_UUID_WITH_TOTP").unwrap();
+                            if let Ok(token_data) = decoded {
+                                assert!(user_uuid == token_data.claims.sub);
+                            } else {
+                                println!("{:#?}", decoded);
+                                panic!("noo");
+                            }
+
+                            // Check that the refresh token is stored
+
+
+
+
+
+                            
+                        }
+                    }
+                }
+            } else if let ResponseField::Error(error) = response_field {
+                println!("error: {}", error);
+                panic!("Should be a token but instead is an error");
+            }
+        } else if decoded.response_field == None {
+            panic!("Should be a token but is instead None");
+        } else {
+            panic!("Error generating token");
+        }
+    }
 
     #[actix_web::test]
-    async fn test_post_wrong_password_no_totp_while_not_authenticated() {}
+    async fn test_post_wrong_password_no_totp_while_not_authenticated() {
+        dotenv().ok();
+
+        let mut app = test::init_service(
+            App::new().service(
+                web::scope("/login")
+                    .wrap(middleware::authentication::not_authenticated::NotAuthenticated)
+                    .route("/email", web::post().to(post_email))
+                    .route("/password", web::post().to(post_password)),
+            ),
+        )
+        .await;
+
+        // Get token from email
+        let email = env::var("TEST_EMAIL").unwrap();
+        let req_message = EmailRequest { email };
+
+        let mut request_buffer: Vec<u8> = Vec::new();
+        req_message.encode(&mut request_buffer).unwrap();
+
+        let mut request = test::TestRequest::post()
+            .uri("/login/email")
+            .append_header(("Content-Type", "application/protobuf"))
+            .set_payload(Bytes::from(request_buffer))
+            .to_request();
+
+        let resp = test::call_service(&mut app, request).await;
+        let response_buffer: Vec<u8> = test::read_body(resp).await.to_vec();
+        let decoded: EmailResponse = Message::decode(&response_buffer[..]).unwrap();
+
+        let token = match decoded.response_field {
+            None => panic!("Should be token but is none"),
+            Some(response_field) => match response_field {
+                EmailResponseField::Error(_) => panic!("Should be token but is error"),
+                EmailResponseField::Token(token) => token,
+            },
+        };
+
+        // post password
+        let password = String::from("WrongPassword123");
+        let remember_me = false;
+        let req_message = Request {
+            password,
+            remember_me,
+        };
+        request_buffer = Vec::new();
+        req_message.encode(&mut request_buffer).unwrap();
+
+        request = test::TestRequest::post()
+            .uri("/login/password")
+            .append_header(("Content-Type", "application/protobuf"))
+            .append_header(("Login-Email-Token", token))
+            .set_payload(Bytes::from(request_buffer))
+            .to_request();
+
+        let resp = test::call_service(&mut app, request).await;
+        let response_buffer: Vec<u8> = test::read_body(resp).await.to_vec();
+        let decoded: Response = Message::decode(&response_buffer[..]).unwrap();
+        println!("{:#?}", decoded);
+
+        if let Some(response_field) = decoded.response_field {
+            if let ResponseField::Success(Success {
+                token,
+                requires_totp,
+            }) = response_field
+            {
+                println!("Should be an error but instead is a token");
+            } else if let ResponseField::Error(error) = response_field {
+                assert!(error == Error::IncorrectPassword as i32);
+            }
+        } else if decoded.response_field == None {
+            panic!("Should be a token but is instead None");
+        } else {
+            panic!("Error generating token");
+        }
+    }
 
     #[actix_web::test]
-    async fn test_post_wrong_password_with_totp_while_not_authenticated() {}
+    async fn test_post_wrong_password_with_totp_while_not_authenticated() {
+        dotenv().ok();
+
+        let mut app = test::init_service(
+            App::new().service(
+                web::scope("/login")
+                    .wrap(middleware::authentication::not_authenticated::NotAuthenticated)
+                    .route("/email", web::post().to(post_email))
+                    .route("/password", web::post().to(post_password)),
+            ),
+        )
+        .await;
+
+        // Get token from email
+        let email = env::var("TEST_EMAIL_WITH_TOTP").unwrap();
+        let req_message = EmailRequest { email };
+
+        let mut request_buffer: Vec<u8> = Vec::new();
+        req_message.encode(&mut request_buffer).unwrap();
+
+        let mut request = test::TestRequest::post()
+            .uri("/login/email")
+            .append_header(("Content-Type", "application/protobuf"))
+            .set_payload(Bytes::from(request_buffer))
+            .to_request();
+
+        let resp = test::call_service(&mut app, request).await;
+        let response_buffer: Vec<u8> = test::read_body(resp).await.to_vec();
+        let decoded: EmailResponse = Message::decode(&response_buffer[..]).unwrap();
+
+        let token = match decoded.response_field {
+            None => panic!("Should be token but is none"),
+            Some(response_field) => match response_field {
+                EmailResponseField::Error(_) => panic!("Should be token but is error"),
+                EmailResponseField::Token(token) => token,
+            },
+        };
+
+        // post password
+        let password = String::from("WrongPassword123");
+        let remember_me = false;
+        let req_message = Request {
+            password,
+            remember_me,
+        };
+        request_buffer = Vec::new();
+        req_message.encode(&mut request_buffer).unwrap();
+
+        request = test::TestRequest::post()
+            .uri("/login/password")
+            .append_header(("Content-Type", "application/protobuf"))
+            .append_header(("Login-Email-Token", token))
+            .set_payload(Bytes::from(request_buffer))
+            .to_request();
+
+        let resp = test::call_service(&mut app, request).await;
+        let response_buffer: Vec<u8> = test::read_body(resp).await.to_vec();
+        let decoded: Response = Message::decode(&response_buffer[..]).unwrap();
+        println!("{:#?}", decoded);
+
+        if let Some(response_field) = decoded.response_field {
+            if let ResponseField::Success(Success {
+                token,
+                requires_totp,
+            }) = response_field
+            {
+                println!("Should be an error but instead is a token");
+            } else if let ResponseField::Error(error) = response_field {
+                assert!(error == Error::IncorrectPassword as i32);
+            }
+        } else if decoded.response_field == None {
+            panic!("Should be a token but is instead None");
+        } else {
+            panic!("Error generating token");
+        }
+    }
+
 
     #[actix_web::test]
-    async fn test_post_invalid_password_no_totp_while_not_authenticated() {}
+    async fn test_post_invalid_password_no_totp_while_not_authenticated() {
+        dotenv().ok();
+
+        let mut app = test::init_service(
+            App::new().service(
+                web::scope("/login")
+                    .wrap(middleware::authentication::not_authenticated::NotAuthenticated)
+                    .route("/email", web::post().to(post_email))
+                    .route("/password", web::post().to(post_password)),
+            ),
+        )
+        .await;
+
+        // Get token from email
+        let email = env::var("TEST_EMAIL").unwrap();
+        let req_message = EmailRequest { email };
+
+        let mut request_buffer: Vec<u8> = Vec::new();
+        req_message.encode(&mut request_buffer).unwrap();
+
+        let mut request = test::TestRequest::post()
+            .uri("/login/email")
+            .append_header(("Content-Type", "application/protobuf"))
+            .set_payload(Bytes::from(request_buffer))
+            .to_request();
+
+        let resp = test::call_service(&mut app, request).await;
+        let response_buffer: Vec<u8> = test::read_body(resp).await.to_vec();
+        let decoded: EmailResponse = Message::decode(&response_buffer[..]).unwrap();
+
+        let token = match decoded.response_field {
+            None => panic!("Should be token but is none"),
+            Some(response_field) => match response_field {
+                EmailResponseField::Error(_) => panic!("Should be token but is error"),
+                EmailResponseField::Token(token) => token,
+            },
+        };
+
+        // post password
+        let password = String::from("a");
+        let remember_me = false;
+        let req_message = Request {
+            password,
+            remember_me,
+        };
+        request_buffer = Vec::new();
+        req_message.encode(&mut request_buffer).unwrap();
+
+        request = test::TestRequest::post()
+            .uri("/login/password")
+            .append_header(("Content-Type", "application/protobuf"))
+            .append_header(("Login-Email-Token", token))
+            .set_payload(Bytes::from(request_buffer))
+            .to_request();
+
+        let resp = test::call_service(&mut app, request).await;
+        let response_buffer: Vec<u8> = test::read_body(resp).await.to_vec();
+        let decoded: Response = Message::decode(&response_buffer[..]).unwrap();
+        println!("{:#?}", decoded);
+
+        if let Some(response_field) = decoded.response_field {
+            if let ResponseField::Success(Success {
+                token,
+                requires_totp,
+            }) = response_field
+            {
+                println!("Should be an error but instead is a token");
+            } else if let ResponseField::Error(error) = response_field {
+                assert!(error == Error::InvalidPassword as i32);
+            }
+        } else if decoded.response_field == None {
+            panic!("Should be a token but is instead None");
+        } else {
+            panic!("Error generating token");
+        }
+    }
 
     #[actix_web::test]
-    async fn test_post_invalid_password_with_totp_while_not_authenticated() {}
+    async fn test_post_invalid_password_with_totp_while_not_authenticated() {
+        dotenv().ok();
+
+        let mut app = test::init_service(
+            App::new().service(
+                web::scope("/login")
+                    .wrap(middleware::authentication::not_authenticated::NotAuthenticated)
+                    .route("/email", web::post().to(post_email))
+                    .route("/password", web::post().to(post_password)),
+            ),
+        )
+        .await;
+
+        // Get token from email
+        let email = env::var("TEST_EMAIL_WITH_TOTP").unwrap();
+        let req_message = EmailRequest { email };
+
+        let mut request_buffer: Vec<u8> = Vec::new();
+        req_message.encode(&mut request_buffer).unwrap();
+
+        let mut request = test::TestRequest::post()
+            .uri("/login/email")
+            .append_header(("Content-Type", "application/protobuf"))
+            .set_payload(Bytes::from(request_buffer))
+            .to_request();
+
+        let resp = test::call_service(&mut app, request).await;
+        let response_buffer: Vec<u8> = test::read_body(resp).await.to_vec();
+        let decoded: EmailResponse = Message::decode(&response_buffer[..]).unwrap();
+
+        let token = match decoded.response_field {
+            None => panic!("Should be token but is none"),
+            Some(response_field) => match response_field {
+                EmailResponseField::Error(_) => panic!("Should be token but is error"),
+                EmailResponseField::Token(token) => token,
+            },
+        };
+
+        // post password
+        let password = String::from("a");
+        let remember_me = false;
+        let req_message = Request {
+            password,
+            remember_me,
+        };
+        request_buffer = Vec::new();
+        req_message.encode(&mut request_buffer).unwrap();
+
+        request = test::TestRequest::post()
+            .uri("/login/password")
+            .append_header(("Content-Type", "application/protobuf"))
+            .append_header(("Login-Email-Token", token))
+            .set_payload(Bytes::from(request_buffer))
+            .to_request();
+
+        let resp = test::call_service(&mut app, request).await;
+        let response_buffer: Vec<u8> = test::read_body(resp).await.to_vec();
+        let decoded: Response = Message::decode(&response_buffer[..]).unwrap();
+        println!("{:#?}", decoded);
+
+        if let Some(response_field) = decoded.response_field {
+            if let ResponseField::Success(Success {
+                token,
+                requires_totp,
+            }) = response_field
+            {
+                println!("Should be an error but instead is a token");
+            } else if let ResponseField::Error(error) = response_field {
+                assert!(error == Error::InvalidPassword as i32);
+            }
+        } else if decoded.response_field == None {
+            panic!("Should be a token but is instead None");
+        } else {
+            panic!("Error generating token");
+        }
+    }
 
     #[actix_web::test]
-    async fn test_post_correct_password_no_totp_while_authenticated() {}
+    async fn test_post_correct_password_no_totp_while_authenticated() {
+        dotenv().ok();
+
+        let mut app = test::init_service(
+            App::new().service(
+                web::scope("/login")
+                    .wrap(middleware::authentication::not_authenticated::NotAuthenticated)
+                    .route("/email", web::post().to(post_email))
+                    .route("/password", web::post().to(post_password)),
+            ),
+        )
+        .await;
+
+        // Get token from email
+        let email = env::var("TEST_EMAIL").unwrap();
+        let req_message = EmailRequest { email.clone() };
+
+        let mut request_buffer: Vec<u8> = Vec::new();
+        req_message.encode(&mut request_buffer).unwrap();
+
+        let mut request = test::TestRequest::post()
+            .uri("/login/email")
+            .append_header(("Content-Type", "application/protobuf"))
+            .set_payload(Bytes::from(request_buffer))
+            .to_request();
+
+        let resp = test::call_service(&mut app, request).await;
+        let response_buffer: Vec<u8> = test::read_body(resp).await.to_vec();
+        let decoded: EmailResponse = Message::decode(&response_buffer[..]).unwrap();
+
+        let token = match decoded.response_field {
+            None => panic!("Should be token but is none"),
+            Some(response_field) => match response_field {
+                EmailResponseField::Error(_) => panic!("Should be token but is error"),
+                EmailResponseField::Token(token) => token,
+            },
+        };
+
+        // post password
+        let password = env::var("TEST_PASSWORD").unwrap();
+
+        let user: User = User::new(
+            "username".to_string(),
+            email,
+            password.clone(),
+            Some("First".to_string()),
+            Some("Lastname".to_string()),
+        )
+        .unwrap();
+        let token: String = AccessToken::new(&user).to_string();
+        let auth_token = String::from("Bearer ") + &token;
+        
+        let remember_me = false;
+        let req_message = Request {
+            password,
+            remember_me,
+        };
+        request_buffer = Vec::new();
+        req_message.encode(&mut request_buffer).unwrap();
+
+        request = test::TestRequest::post()
+            .uri("/login/password")
+            .append_header(("Content-Type", "application/protobuf"))
+            .append_header(("Authorization", auth_token.clone()))
+            .append_header(("Login-Email-Token", token))
+            .set_payload(Bytes::from(request_buffer))
+            .to_request();
+
+        let resp = test::call_service(&mut app, request).await;
+        let response_buffer: Vec<u8> = test::read_body(resp).await.to_vec();
+        let decoded: Response = Message::decode(&response_buffer[..]).unwrap();
+        println!("{:#?}", decoded);
+
+        if let Some(response_field) = decoded.response_field {
+            println!("{:#?}", response_field);
+            panic!("Should be None but is instead response field");
+        } else if decoded.response_field == None {
+            assert!(true);
+        } else {
+            panic!("Error generating token");
+        }
+    }
 
     #[actix_web::test]
-    async fn test_post_correct_password_with_totp_while_authenticated() {}
+    async fn test_post_correct_password_with_totp_while_authenticated() {
+        dotenv().ok();
+
+        let mut app = test::init_service(
+            App::new().service(
+                web::scope("/login")
+                    .wrap(middleware::authentication::not_authenticated::NotAuthenticated)
+                    .route("/email", web::post().to(post_email))
+                    .route("/password", web::post().to(post_password)),
+            ),
+        )
+        .await;
+
+        // Get token from email
+        let email = env::var("TEST_EMAIL_WITH_TOTP").unwrap();
+        let req_message = EmailRequest { email.clone() };
+
+        let mut request_buffer: Vec<u8> = Vec::new();
+        req_message.encode(&mut request_buffer).unwrap();
+
+        let mut request = test::TestRequest::post()
+            .uri("/login/email")
+            .append_header(("Content-Type", "application/protobuf"))
+            .set_payload(Bytes::from(request_buffer))
+            .to_request();
+
+        let resp = test::call_service(&mut app, request).await;
+        let response_buffer: Vec<u8> = test::read_body(resp).await.to_vec();
+        let decoded: EmailResponse = Message::decode(&response_buffer[..]).unwrap();
+
+        let token = match decoded.response_field {
+            None => panic!("Should be token but is none"),
+            Some(response_field) => match response_field {
+                EmailResponseField::Error(_) => panic!("Should be token but is error"),
+                EmailResponseField::Token(token) => token,
+            },
+        };
+
+        // post password
+        let password = env::var("TEST_PASSWORD_WITH_TOTP").unwrap();
+
+        let user: User = User::new(
+            "username".to_string(),
+            email,
+            password.clone(),
+            Some("First".to_string()),
+            Some("Lastname".to_string()),
+        )
+        .unwrap();
+        let token: String = AccessToken::new(&user).to_string();
+        let auth_token = String::from("Bearer ") + &token;
+        
+        let remember_me = false;
+        let req_message = Request {
+            password,
+            remember_me,
+        };
+        request_buffer = Vec::new();
+        req_message.encode(&mut request_buffer).unwrap();
+
+        request = test::TestRequest::post()
+            .uri("/login/password")
+            .append_header(("Content-Type", "application/protobuf"))
+            .append_header(("Authorization", auth_token.clone()))
+            .append_header(("Login-Email-Token", token))
+            .set_payload(Bytes::from(request_buffer))
+            .to_request();
+
+        let resp = test::call_service(&mut app, request).await;
+        let response_buffer: Vec<u8> = test::read_body(resp).await.to_vec();
+        let decoded: Response = Message::decode(&response_buffer[..]).unwrap();
+        println!("{:#?}", decoded);
+
+        if let Some(response_field) = decoded.response_field {
+            println!("{:#?}", response_field);
+            panic!("Should be None but is instead response field");
+        } else if decoded.response_field == None {
+            assert!(true);
+        } else {
+            panic!("Error generating token");
+        }
+    }
 
     #[actix_web::test]
-    async fn test_post_wrong_password_no_totp_while_authenticated() {}
+    async fn test_post_wrong_password_no_totp_while_authenticated() {
+        dotenv().ok();
+
+        let mut app = test::init_service(
+            App::new().service(
+                web::scope("/login")
+                    .wrap(middleware::authentication::not_authenticated::NotAuthenticated)
+                    .route("/email", web::post().to(post_email))
+                    .route("/password", web::post().to(post_password)),
+            ),
+        )
+        .await;
+
+        // Get token from email
+        let email = env::var("TEST_EMAIL").unwrap();
+        let req_message = EmailRequest { email.clone() };
+
+        let mut request_buffer: Vec<u8> = Vec::new();
+        req_message.encode(&mut request_buffer).unwrap();
+
+        let mut request = test::TestRequest::post()
+            .uri("/login/email")
+            .append_header(("Content-Type", "application/protobuf"))
+            .set_payload(Bytes::from(request_buffer))
+            .to_request();
+
+        let resp = test::call_service(&mut app, request).await;
+        let response_buffer: Vec<u8> = test::read_body(resp).await.to_vec();
+        let decoded: EmailResponse = Message::decode(&response_buffer[..]).unwrap();
+
+        let token = match decoded.response_field {
+            None => panic!("Should be token but is none"),
+            Some(response_field) => match response_field {
+                EmailResponseField::Error(_) => panic!("Should be token but is error"),
+                EmailResponseField::Token(token) => token,
+            },
+        };
+
+        // post password
+        let password = String::from("WrongPassword123");
+
+        let user: User = User::new(
+            "username".to_string(),
+            email,
+            password.clone(),
+            Some("First".to_string()),
+            Some("Lastname".to_string()),
+        )
+        .unwrap();
+        let token: String = AccessToken::new(&user).to_string();
+        let auth_token = String::from("Bearer ") + &token;
+        
+        let remember_me = false;
+        let req_message = Request {
+            password,
+            remember_me,
+        };
+        request_buffer = Vec::new();
+        req_message.encode(&mut request_buffer).unwrap();
+
+        request = test::TestRequest::post()
+            .uri("/login/password")
+            .append_header(("Content-Type", "application/protobuf"))
+            .append_header(("Authorization", auth_token.clone()))
+            .append_header(("Login-Email-Token", token))
+            .set_payload(Bytes::from(request_buffer))
+            .to_request();
+
+        let resp = test::call_service(&mut app, request).await;
+        let response_buffer: Vec<u8> = test::read_body(resp).await.to_vec();
+        let decoded: Response = Message::decode(&response_buffer[..]).unwrap();
+        println!("{:#?}", decoded);
+
+        if let Some(response_field) = decoded.response_field {
+            println!("{:#?}", response_field);
+            panic!("Should be None but is instead response field");
+        } else if decoded.response_field == None {
+            assert!(true);
+        } else {
+            panic!("Error generating token");
+        }
+    }
 
     #[actix_web::test]
-    async fn test_post_wrong_password_with_totp_while_authenticated() {}
+    async fn test_post_wrong_password_with_totp_while_authenticated() {
+        dotenv().ok();
+
+        let mut app = test::init_service(
+            App::new().service(
+                web::scope("/login")
+                    .wrap(middleware::authentication::not_authenticated::NotAuthenticated)
+                    .route("/email", web::post().to(post_email))
+                    .route("/password", web::post().to(post_password)),
+            ),
+        )
+        .await;
+
+        // Get token from email
+        let email = env::var("TEST_EMAIL_WITH_TOTP").unwrap();
+        let req_message = EmailRequest { email.clone() };
+
+        let mut request_buffer: Vec<u8> = Vec::new();
+        req_message.encode(&mut request_buffer).unwrap();
+
+        let mut request = test::TestRequest::post()
+            .uri("/login/email")
+            .append_header(("Content-Type", "application/protobuf"))
+            .set_payload(Bytes::from(request_buffer))
+            .to_request();
+
+        let resp = test::call_service(&mut app, request).await;
+        let response_buffer: Vec<u8> = test::read_body(resp).await.to_vec();
+        let decoded: EmailResponse = Message::decode(&response_buffer[..]).unwrap();
+
+        let token = match decoded.response_field {
+            None => panic!("Should be token but is none"),
+            Some(response_field) => match response_field {
+                EmailResponseField::Error(_) => panic!("Should be token but is error"),
+                EmailResponseField::Token(token) => token,
+            },
+        };
+
+        // post password
+        let password = String::from("WrongPassword123");
+
+        let user: User = User::new(
+            "username".to_string(),
+            email,
+            password.clone(),
+            Some("First".to_string()),
+            Some("Lastname".to_string()),
+        )
+        .unwrap();
+        let token: String = AccessToken::new(&user).to_string();
+        let auth_token = String::from("Bearer ") + &token;
+        
+        let remember_me = false;
+        let req_message = Request {
+            password,
+            remember_me,
+        };
+        request_buffer = Vec::new();
+        req_message.encode(&mut request_buffer).unwrap();
+
+        request = test::TestRequest::post()
+            .uri("/login/password")
+            .append_header(("Content-Type", "application/protobuf"))
+            .append_header(("Authorization", auth_token.clone()))
+            .append_header(("Login-Email-Token", token))
+            .set_payload(Bytes::from(request_buffer))
+            .to_request();
+
+        let resp = test::call_service(&mut app, request).await;
+        let response_buffer: Vec<u8> = test::read_body(resp).await.to_vec();
+        let decoded: Response = Message::decode(&response_buffer[..]).unwrap();
+        println!("{:#?}", decoded);
+
+        if let Some(response_field) = decoded.response_field {
+            println!("{:#?}", response_field);
+            panic!("Should be None but is instead response field");
+        } else if decoded.response_field == None {
+            assert!(true);
+        } else {
+            panic!("Error generating token");
+        }
+    }
 
     #[actix_web::test]
-    async fn test_post_invalid_password_no_totp_while_authenticated() {}
+    async fn test_post_invalid_password_no_totp_while_authenticated() {
+        dotenv().ok();
+
+        let mut app = test::init_service(
+            App::new().service(
+                web::scope("/login")
+                    .wrap(middleware::authentication::not_authenticated::NotAuthenticated)
+                    .route("/email", web::post().to(post_email))
+                    .route("/password", web::post().to(post_password)),
+            ),
+        )
+        .await;
+
+        // Get token from email
+        let email = env::var("TEST_EMAIL").unwrap();
+        let req_message = EmailRequest { email.clone() };
+
+        let mut request_buffer: Vec<u8> = Vec::new();
+        req_message.encode(&mut request_buffer).unwrap();
+
+        let mut request = test::TestRequest::post()
+            .uri("/login/email")
+            .append_header(("Content-Type", "application/protobuf"))
+            .set_payload(Bytes::from(request_buffer))
+            .to_request();
+
+        let resp = test::call_service(&mut app, request).await;
+        let response_buffer: Vec<u8> = test::read_body(resp).await.to_vec();
+        let decoded: EmailResponse = Message::decode(&response_buffer[..]).unwrap();
+
+        let token = match decoded.response_field {
+            None => panic!("Should be token but is none"),
+            Some(response_field) => match response_field {
+                EmailResponseField::Error(_) => panic!("Should be token but is error"),
+                EmailResponseField::Token(token) => token,
+            },
+        };
+
+        // post password
+        let password = String::from("a");
+
+        let user: User = User::new(
+            "username".to_string(),
+            email,
+            password.clone(),
+            Some("First".to_string()),
+            Some("Lastname".to_string()),
+        )
+        .unwrap();
+        let token: String = AccessToken::new(&user).to_string();
+        let auth_token = String::from("Bearer ") + &token;
+        
+        let remember_me = false;
+        let req_message = Request {
+            password,
+            remember_me,
+        };
+        request_buffer = Vec::new();
+        req_message.encode(&mut request_buffer).unwrap();
+
+        request = test::TestRequest::post()
+            .uri("/login/password")
+            .append_header(("Content-Type", "application/protobuf"))
+            .append_header(("Authorization", auth_token.clone()))
+            .append_header(("Login-Email-Token", token))
+            .set_payload(Bytes::from(request_buffer))
+            .to_request();
+
+        let resp = test::call_service(&mut app, request).await;
+        let response_buffer: Vec<u8> = test::read_body(resp).await.to_vec();
+        let decoded: Response = Message::decode(&response_buffer[..]).unwrap();
+        println!("{:#?}", decoded);
+
+        if let Some(response_field) = decoded.response_field {
+            println!("{:#?}", response_field);
+            panic!("Should be None but is instead response field");
+        } else if decoded.response_field == None {
+            assert!(true);
+        } else {
+            panic!("Error generating token");
+        }
+    }
 
     #[actix_web::test]
-    async fn test_post_invalid_password_with_totp_while_authenticated() {}
+    async fn test_post_invalid_password_with_totp_while_authenticated() {
+        dotenv().ok();
+
+        let mut app = test::init_service(
+            App::new().service(
+                web::scope("/login")
+                    .wrap(middleware::authentication::not_authenticated::NotAuthenticated)
+                    .route("/email", web::post().to(post_email))
+                    .route("/password", web::post().to(post_password)),
+            ),
+        )
+        .await;
+
+        // Get token from email
+        let email = env::var("TEST_EMAIL_WITH_TOTP").unwrap();
+        let req_message = EmailRequest { email.clone() };
+
+        let mut request_buffer: Vec<u8> = Vec::new();
+        req_message.encode(&mut request_buffer).unwrap();
+
+        let mut request = test::TestRequest::post()
+            .uri("/login/email")
+            .append_header(("Content-Type", "application/protobuf"))
+            .set_payload(Bytes::from(request_buffer))
+            .to_request();
+
+        let resp = test::call_service(&mut app, request).await;
+        let response_buffer: Vec<u8> = test::read_body(resp).await.to_vec();
+        let decoded: EmailResponse = Message::decode(&response_buffer[..]).unwrap();
+
+        let token = match decoded.response_field {
+            None => panic!("Should be token but is none"),
+            Some(response_field) => match response_field {
+                EmailResponseField::Error(_) => panic!("Should be token but is error"),
+                EmailResponseField::Token(token) => token,
+            },
+        };
+
+        // post password
+        let password = String::from("a");
+
+        let user: User = User::new(
+            "username".to_string(),
+            email,
+            password.clone(),
+            Some("First".to_string()),
+            Some("Lastname".to_string()),
+        )
+        .unwrap();
+        let token: String = AccessToken::new(&user).to_string();
+        let auth_token = String::from("Bearer ") + &token;
+        
+        let remember_me = false;
+        let req_message = Request {
+            password,
+            remember_me,
+        };
+        request_buffer = Vec::new();
+        req_message.encode(&mut request_buffer).unwrap();
+
+        request = test::TestRequest::post()
+            .uri("/login/password")
+            .append_header(("Content-Type", "application/protobuf"))
+            .append_header(("Authorization", auth_token.clone()))
+            .append_header(("Login-Email-Token", token))
+            .set_payload(Bytes::from(request_buffer))
+            .to_request();
+
+        let resp = test::call_service(&mut app, request).await;
+        let response_buffer: Vec<u8> = test::read_body(resp).await.to_vec();
+        let decoded: Response = Message::decode(&response_buffer[..]).unwrap();
+        println!("{:#?}", decoded);
+
+        if let Some(response_field) = decoded.response_field {
+            println!("{:#?}", response_field);
+            panic!("Should be None but is instead response field");
+        } else if decoded.response_field == None {
+            assert!(true);
+        } else {
+            panic!("Error generating token");
+        }
+    }
 }
