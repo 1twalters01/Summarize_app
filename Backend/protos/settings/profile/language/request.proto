@@ -2,6 +2,12 @@ syntax = "proto3";
 
 package settings.profile.language.request;
 
+enum Language {
+    ENGLISH = 0;
+    FRENCH = 1;
+    SPANISH = 2;
+}
+
 message Request {
-    string language = 1;
+    Language language = 1;
 }
