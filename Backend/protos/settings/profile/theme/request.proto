@@ -23,13 +23,14 @@ message Custom {
     Colours secondary = 2;
 }
 
-message None {
+enum Presets {
+    DARK = 0;
+    LIGHT = 1;
 }
 
 message Request {
     oneof request_field {
-        None dark = 1;
-        None light = 2;
-        Custom custom= 3;
+        Presets presets = 1;
+        Custom custom = 2;
     }
 }
