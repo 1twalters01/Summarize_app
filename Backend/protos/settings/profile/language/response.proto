@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package settings.profile.language.response;
+
+enum Error {
+    INVALID_CREDENTIALS = 0;
+    TOO_MANY_REQUESTS = 1;
+    INVALID_LANGUAGE = 2;
+    SERVER_ERROR = 3;
+}
+
+message Success {}
+
+message Response {
+    oneof response_field {
+        Error error = 1;
+        Success success = 2;
+    }
+}
