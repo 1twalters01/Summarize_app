@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package settings.profile.theme.response;
+
+enum Error {
+    INVALID_CREDENTIALS = 0;
+    TOO_MANY_REQUESTS = 2;
+    INVALID_Theme = 3;
+    SERVER_ERROR = 4;
+}
+
+message Success {}
+
+message Response {
+    oneof response_field {
+        Error error = 1;
+        Success success = 2;
+    }
+}
