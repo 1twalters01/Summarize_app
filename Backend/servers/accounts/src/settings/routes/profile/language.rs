@@ -122,3 +122,4 @@ pub async fn update_language_for_user_in_pg_users_table(
     } else {
         return Ok(());
     }
+}
