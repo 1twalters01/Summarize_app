@@ -41,6 +41,12 @@ fn main() {
         "../../protos/settings/profile/password/response.proto",
         "../../protos/settings/profile/username/request.proto",
         "../../protos/settings/profile/username/response.proto",
+        "../../protos/settings/profile/language/request.proto",
+        "../../protos/settings/profile/language/response.proto",
+        "../../protos/settings/profile/theme/request.proto",
+        "../../protos/settings/profile/theme/response.proto",
+        "../../protos/settings/profile/totp/request.proto",
+        "../../protos/settings/profile/totp/response.proto",
     ]);
     generate_files_from_protobufs(prost_config, out_dir, protobuf_filename_vec, base_dir);
 }

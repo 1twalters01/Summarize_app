@@ -189,6 +189,7 @@ mod tests {
     use crate::{
         accounts::{
             datatypes::users::User,
+            schema::auth::AccessToken,
             views::login::{
                 email::post_email,
                 password::{
@@ -400,7 +401,7 @@ mod tests {
                             if refresh == None {
                                 println!("requires totp: {}", requires_totp);
                                 println!("access token: {}", access);
-                                println!("refresh token: {:?}", refresh_token);
+                                println!("refresh token: {:?}", refresh);
                                 panic!("Refresh token should be Some(String)")
                             }
 
@@ -510,6 +511,8 @@ mod tests {
                 requires_totp,
             }) = response_field
             {
+                println!("totp status: {}", requires_totp);
+                println!("token: {:?}", token);
                 println!("Should be an error but instead is a token");
             } else if let ResponseField::Error(error) = response_field {
                 assert!(error == Error::IncorrectPassword as i32);
@@ -588,6 +591,8 @@ mod tests {
                 requires_totp,
             }) = response_field
             {
+                println!("totp status: {}", requires_totp);
+                println!("token: {:?}", token);
                 println!("Should be an error but instead is a token");
             } else if let ResponseField::Error(error) = response_field {
                 assert!(error == Error::IncorrectPassword as i32);
@@ -598,7 +603,6 @@ mod tests {
             panic!("Error generating token");
         }
     }
-
 
     #[actix_web::test]
     async fn test_post_invalid_password_no_totp_while_not_authenticated() {
@@ -667,6 +671,8 @@ mod tests {
                 requires_totp,
             }) = response_field
             {
+                println!("totp status: {}", requires_totp);
+                println!("token: {:?}", token);
                 println!("Should be an error but instead is a token");
             } else if let ResponseField::Error(error) = response_field {
                 assert!(error == Error::InvalidPassword as i32);
@@ -745,6 +751,8 @@ mod tests {
                 requires_totp,
             }) = response_field
             {
+                println!("totp status: {}", requires_totp);
+                println!("token: {:?}", token);
                 println!("Should be an error but instead is a token");
             } else if let ResponseField::Error(error) = response_field {
                 assert!(error == Error::InvalidPassword as i32);
@@ -755,6 +763,8 @@ mod tests {
             panic!("Error generating token");
         }
     }
+
+
 
     #[actix_web::test]
     async fn test_post_correct_password_no_totp_while_authenticated() {
@@ -772,7 +782,7 @@ mod tests {
 
         // Get token from email
         let email = env::var("TEST_EMAIL").unwrap();
-        let req_message = EmailRequest { email.clone() };
+        let req_message = EmailRequest { email: email.clone() };
 
         let mut request_buffer: Vec<u8> = Vec::new();
         req_message.encode(&mut request_buffer).unwrap();
@@ -806,8 +816,8 @@ mod tests {
             Some("Lastname".to_string()),
         )
         .unwrap();
-        let token: String = AccessToken::new(&user).to_string();
-        let auth_token = String::from("Bearer ") + &token;
+        let access_token: String = AccessToken::new(&user).to_string();
+        let auth_token = String::from("Bearer ") + &access_token;
         
         let remember_me = false;
         let req_message = Request {
@@ -856,7 +866,7 @@ mod tests {
 
         // Get token from email
         let email = env::var("TEST_EMAIL_WITH_TOTP").unwrap();
-        let req_message = EmailRequest { email.clone() };
+        let req_message = EmailRequest { email: email.clone() };
 
         let mut request_buffer: Vec<u8> = Vec::new();
         req_message.encode(&mut request_buffer).unwrap();
@@ -890,8 +900,8 @@ mod tests {
             Some("Lastname".to_string()),
         )
         .unwrap();
-        let token: String = AccessToken::new(&user).to_string();
-        let auth_token = String::from("Bearer ") + &token;
+        let access_token: String = AccessToken::new(&user).to_string();
+        let auth_token = String::from("Bearer ") + &access_token;
         
         let remember_me = false;
         let req_message = Request {
@@ -940,7 +950,7 @@ mod tests {
 
         // Get token from email
         let email = env::var("TEST_EMAIL").unwrap();
-        let req_message = EmailRequest { email.clone() };
+        let req_message = EmailRequest { email: email.clone() };
 
         let mut request_buffer: Vec<u8> = Vec::new();
         req_message.encode(&mut request_buffer).unwrap();
@@ -974,8 +984,8 @@ mod tests {
             Some("Lastname".to_string()),
         )
         .unwrap();
-        let token: String = AccessToken::new(&user).to_string();
-        let auth_token = String::from("Bearer ") + &token;
+        let access_token: String = AccessToken::new(&user).to_string();
+        let auth_token = String::from("Bearer ") + &access_token;
         
         let remember_me = false;
         let req_message = Request {
@@ -1024,7 +1034,7 @@ mod tests {
 
         // Get token from email
         let email = env::var("TEST_EMAIL_WITH_TOTP").unwrap();
-        let req_message = EmailRequest { email.clone() };
+        let req_message = EmailRequest { email: email.clone() };
 
         let mut request_buffer: Vec<u8> = Vec::new();
         req_message.encode(&mut request_buffer).unwrap();
@@ -1058,8 +1068,8 @@ mod tests {
             Some("Lastname".to_string()),
         )
         .unwrap();
-        let token: String = AccessToken::new(&user).to_string();
-        let auth_token = String::from("Bearer ") + &token;
+        let access_token: String = AccessToken::new(&user).to_string();
+        let auth_token = String::from("Bearer ") + &access_token;
         
         let remember_me = false;
         let req_message = Request {
@@ -1108,7 +1118,7 @@ mod tests {
 
         // Get token from email
         let email = env::var("TEST_EMAIL").unwrap();
-        let req_message = EmailRequest { email.clone() };
+        let req_message = EmailRequest { email: email.clone() };
 
         let mut request_buffer: Vec<u8> = Vec::new();
         req_message.encode(&mut request_buffer).unwrap();
@@ -1137,13 +1147,13 @@ mod tests {
         let user: User = User::new(
             "username".to_string(),
             email,
-            password.clone(),
+            "Something123".to_string(),
             Some("First".to_string()),
             Some("Lastname".to_string()),
         )
         .unwrap();
-        let token: String = AccessToken::new(&user).to_string();
-        let auth_token = String::from("Bearer ") + &token;
+        let access_token: String = AccessToken::new(&user).to_string();
+        let auth_token = String::from("Bearer ") + &access_token;
         
         let remember_me = false;
         let req_message = Request {
@@ -1192,7 +1202,7 @@ mod tests {
 
         // Get token from email
         let email = env::var("TEST_EMAIL_WITH_TOTP").unwrap();
-        let req_message = EmailRequest { email.clone() };
+        let req_message = EmailRequest { email: email.clone() };
 
         let mut request_buffer: Vec<u8> = Vec::new();
         req_message.encode(&mut request_buffer).unwrap();
@@ -1226,8 +1236,8 @@ mod tests {
             Some("Lastname".to_string()),
         )
         .unwrap();
-        let token: String = AccessToken::new(&user).to_string();
-        let auth_token = String::from("Bearer ") + &token;
+        let access_token: String = AccessToken::new(&user).to_string();
+        let auth_token = String::from("Bearer ") + &access_token;
         
         let remember_me = false;
         let req_message = Request {

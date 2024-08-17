@@ -4,15 +4,12 @@ use crate::{
         schema::auth::Claims,
     },
     generated::protos::settings::profile::theme::{
-        request::Request,
-        response::{response, Error, Response}
+        request::{Request, request::RequestField},
+        response::{response, Error, Response, Success},
     },
     utils::{
-        database_connections::{
-            create_pg_pool_connection, create_redis_client_connection, set_key_value_in_redis,
-        },
-        tokens::generate_opaque_token_of_length,
-        validations::validate_language,
+        database_connections::create_pg_pool_connection,
+        validations::validate_theme,
     },
 };
 
@@ -25,10 +22,10 @@ pub async fn post_language(
     req_body: ProtoBuf<Request>,
     req: HttpRequest,
 ) -> Result<impl Responder> {
-    let Request { theme } = req_body.0;
+    let Request { request_field: theme } = req_body.0;
 
     // validate theme
-    let validated_theme = validate_theme(theme);
+    let validated_theme = validate_theme(theme.clone());
     if validated_theme.is_err() {
         let response: Response = Response {
             response_field: Some(response::ResponseField::Error(
@@ -44,9 +41,9 @@ pub async fn post_language(
     let user_uuid: String = match req.extensions().get::<Claims>() {
         Some(claims) => claims.sub.clone(),
         None => {
-            let response: MainResponse = MainResponse {
+            let response: Response = Response {
                 response_field: Some(response::ResponseField::Error(
-                    MainError::InvalidCredentials as i32,
+                    Error::InvalidCredentials as i32,
                 )),
             };
             return Ok(HttpResponse::InternalServerError()
@@ -57,9 +54,9 @@ pub async fn post_language(
     let user_result: Result<Option<User>, sqlx::Error> = User::from_uuid_str(&user_uuid).await;
     let user: User = match user_result {
         Err(_) => {
-            let response: MainResponse = MainResponse {
+            let response: Response = Response {
                 response_field: Some(response::ResponseField::Error(
-                    MainError::ServerError as i32,
+                    Error::ServerError as i32,
                 )),
             };
             return Ok(HttpResponse::InternalServerError()
@@ -69,9 +66,9 @@ pub async fn post_language(
         Ok(user) => match user {
             Some(user) => user,
             None => {
-                let response: MainResponse = MainResponse {
+                let response: Response = Response {
                     response_field: Some(response::ResponseField::Error(
-                        MainError::InvalidCredentials as i32,
+                        Error::InvalidCredentials as i32,
                     )),
                 };
                 return Ok(HttpResponse::InternalServerError()
@@ -88,7 +85,7 @@ pub async fn post_language(
 
     // if sql update error then return an error
     if update_result.is_err() {
-        let response: Response = PasswordResponse {
+        let response: Response = Response {
             response_field: Some(response::ResponseField::Error(
                 Error::ServerError as i32,
             )),
@@ -111,10 +108,10 @@ pub async fn post_language(
 
 pub async fn update_theme_for_user_in_pg_users_table(
     pool: &Pool<Postgres>,
-    user: &User
-    theme: &Theme,
+    user: &User,
+    theme: &Option<RequestField>,
 ) -> Result<(), sqlx::Error> {
-    let user_update_query = sqlx::query("").bind(email).execute(pool).await;
+    let user_update_query = sqlx::query("").bind("").execute(pool).await;
 
     if let Err(err) = user_update_query {
         return Err(err);

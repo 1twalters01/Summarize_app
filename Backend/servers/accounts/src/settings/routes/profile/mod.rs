@@ -5,3 +5,4 @@ pub mod password;
 pub mod username;
 pub mod language;
 pub mod theme;
+pub mod totp;
