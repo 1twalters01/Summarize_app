@@ -1,6 +1,6 @@
 use crate::{
     accounts::{
-        datatypes::users::User, queries::postgres::get_user_from_email_in_pg_users_table,
+        datatypes::users::User,
         schema::auth::Claims,
     },
     generated::protos::settings::profile::language::{
