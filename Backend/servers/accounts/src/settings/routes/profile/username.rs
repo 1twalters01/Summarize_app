@@ -301,9 +301,14 @@ fn get_object_from_token_in_redis(
 
 pub async fn update_username_for_user_in_pg_users_table(
     pool: &Pool<Postgres>,
+    user_uuid: &str,
     username: &str,
 ) -> Result<(), sqlx::Error> {
-    let user_update_query = sqlx::query("").bind(username).execute(pool).await;
+    let user_update_query = sqlx::query("UPDATE users SET username=($1) WHERE uuid=($2);")
+        .bind(username)
+        .bind(user_uuid)
+        .execute(pool)
+        .await;
 
     if let Err(err) = user_update_query {
         return Err(err);
