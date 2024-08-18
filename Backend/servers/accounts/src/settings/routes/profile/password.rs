@@ -294,7 +294,7 @@ pub async fn post_confirmation(
     // change password
     let pool = create_pg_pool_connection().await;
     let update_result: Result<(), sqlx::Error> =
-        update_password_for_user_in_pg_users_table(&pool, &password_hash).await;
+        update_password_for_user_in_pg_users_table(&pool, &user_uuid, &password_hash).await;
 
     // if sql update error then return an error
     if update_result.is_err() {
@@ -335,9 +335,14 @@ fn get_object_from_token_in_redis(
 
 pub async fn update_password_for_user_in_pg_users_table(
     pool: &Pool<Postgres>,
+    user_uuid: &str,
     password_hash: &str,
 ) -> Result<(), sqlx::Error> {
-    let user_update_query = sqlx::query("").bind(password_hash).execute(pool).await;
+    let user_update_query = sqlx::query("UPDATE users SET password=($1) WHERE uuid=($2);")
+        .bind(password_hash)
+        .bind(user_uuid)
+        .execute(pool)
+        .await;
 
     if let Err(err) = user_update_query {
         return Err(err);
