@@ -4,7 +4,7 @@ use crate::{
         schema::auth::Claims,
     },
     generated::protos::settings::profile::language::{
-        request::Request,
+        request::{Language, Request},
         response::{response, Error, Response, Success},
     },
     utils::{
@@ -81,7 +81,7 @@ pub async fn post_language(
     // change language
     let pool = create_pg_pool_connection().await;
     let update_result: Result<(), sqlx::Error> =
-        update_language_for_user_in_pg_users_table(&pool, &user, &language).await;
+        update_language_for_user_in_pg_users_table(&pool, &user, language).await;
 
     // if sql update error then return an error
     if update_result.is_err() {
@@ -109,15 +109,11 @@ pub async fn post_language(
 pub async fn update_language_for_user_in_pg_users_table(
     pool: &Pool<Postgres>,
     user: &User,
-    language: &i32,
+    language: i32,
 ) -> Result<(), sqlx::Error> {
-    UPDATE vehicles_vehicle AS v 
-SET price = s.price_per_vehicle
-FROM shipments_shipment AS s
-WHERE v.shipment_id = s.id
     let user_update_query = sqlx::query("UPDATE users SET language=l.language FROM languages AS l WHERE uuid=($1), l.language = ($2);")
         .bind(user.get_uuid())
-        .bind(language.get_string())
+        .bind(Language::try_from(language).unwrap().as_str_name())
         .execute(pool)
         .await;
 

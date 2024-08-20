@@ -260,7 +260,7 @@ pub async fn post_confirmation(
     // change username
     let pool = create_pg_pool_connection().await;
     let update_result: Result<(), sqlx::Error> =
-        update_username_for_user_in_pg_users_table(&pool, &username).await;
+        update_username_for_user_in_pg_users_table(&pool, &user_uuid, &username).await;
 
     // if sql update error then return an error
     if update_result.is_err() {

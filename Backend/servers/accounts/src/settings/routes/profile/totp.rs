@@ -305,14 +305,14 @@ pub async fn post_confirmation(
     }
 }
 
-use sqlx::{Pool, Postgres};
+use sqlx::{Pool, Postgres, Row};
 async fn get_totp_key_from_uuid_in_pg_users_table(
     pool: &Pool<Postgres>,
     user_uuid: &str,
 ) -> Result<Option<String>, sqlx::Error> {
     let user_select_query = sqlx::query("Select totp_key from users WHERE uuid=($1")
         .bind(user_uuid)
-        .execute(pool)
+        .fetch_all(pool)
         .await;
     
     match user_select_query {
@@ -325,13 +325,6 @@ async fn get_totp_key_from_uuid_in_pg_users_table(
             let key: Option<String> = res[0].get("totp_key");
             return Ok(key);
         }
-    }
-
-    if let Err(err) = user_select_query {
-        return Err(err);
-    } else {
-        let result: String = "String".to_string();
-        return Ok(result);
     }
 }
 

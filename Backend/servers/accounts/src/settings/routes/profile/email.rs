@@ -257,7 +257,7 @@ pub async fn post_confirmation(
     // change email
     let pool = create_pg_pool_connection().await;
     let update_result: Result<(), sqlx::Error> =
-        update_email_for_user_in_pg_users_table(&pool, &email).await;
+        update_email_for_user_in_pg_users_table(&pool, &user_uuid, &email).await;
 
     // if sql update error then return an error
     if update_result.is_err() {

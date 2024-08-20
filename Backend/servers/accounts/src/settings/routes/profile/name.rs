@@ -268,7 +268,7 @@ pub async fn post_confirmation(
     // change name
     let pool = create_pg_pool_connection().await;
     let update_result: Result<(), sqlx::Error> =
-        update_name_for_user_in_pg_users_table(&pool, first_name.as_ref(), last_name.as_ref())
+        update_name_for_user_in_pg_users_table(&pool, &user_uuid, first_name.as_ref(), last_name.as_ref())
             .await;
 
     // if sql update error then return an error
@@ -310,18 +310,48 @@ fn get_object_from_token_in_redis(
 
 pub async fn update_name_for_user_in_pg_users_table(
     pool: &Pool<Postgres>,
+    user_uuid: &str,
     first_name: Option<&String>,
     last_name: Option<&String>,
 ) -> Result<(), sqlx::Error> {
-    let user_update_query = sqlx::query("")
-        .bind(first_name)
-        .bind(last_name)
-        .execute(pool)
-        .await;
+    match first_name {
+        Some(name) => {
+            let user_update_query = sqlx::query("UPDATE users SET first_name=($1) WHERE uuid=($2);")
+                .bind(name)
+                .bind(user_uuid)
+                .execute(pool)
+                .await;
 
-    if let Err(err) = user_update_query {
-        return Err(err);
-    } else {
-        return Ok(());
+            if let Err(err) = user_update_query { return Err(err); }
+        },
+        None => {
+            let user_update_query = sqlx::query("UPDATE users SET first_name=NULL WHERE uuid=($1);")
+                .bind(user_uuid)
+                .execute(pool)
+                .await;
+
+            if let Err(err) = user_update_query { return Err(err); }
+        },
     }
+
+    match last_name {
+        Some(name) => {
+            let user_update_query = sqlx::query("UPDATE users SET last_name=($1) WHERE uuid=($2);")
+                .bind(name)
+                .bind(user_uuid)
+                .execute(pool)
+                .await;
+
+            if let Err(err) = user_update_query { return Err(err); }
+        },
+        None => {
+            let user_update_query = sqlx::query("UPDATE users SET last_name=NULL WHERE uuid=($1);")
+                .bind(user_uuid)
+                .execute(pool)
+                .await;
+
+            if let Err(err) = user_update_query { return Err(err); }
+        },
+    }
+    return Ok(());
 }
