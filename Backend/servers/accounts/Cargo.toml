@@ -14,8 +14,10 @@ argon2 = "0.5.3"
 bytes = "1.7.1"
 captcha = "0.0.9"
 chrono = "0.4.38"
+data-encoding = "2.6.0"
 dotenv = "0.15.0"
 futures-util = "0.3.30"
+hmac = "0.12.1"
 jsonwebtoken = "9.3.0"
 lettre = { version = "0.11.7", features = ["smtp-transport", "rustls-tls", "hostname", "builder"] }
 prost = { version = "0.12", features = ["prost-derive"] }
@@ -25,6 +27,7 @@ redis = { version = "0.25.2", features = ["tokio-comp"] }
 reqwest = { version = "0.12.4", features = ["json"] }
 serde = { version = "1.0.197", features = ["derive"] }
 serde_json = "1.0.114"
+sha1 = "0.10.6"
 sqlx = { version = "0.7.4", features = ["runtime-tokio", "postgres", "uuid"] }
 tokio = { version = "1.37.0", features = ["full"] }
 url = "2.5.0"

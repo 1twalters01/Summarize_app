@@ -84,12 +84,9 @@ pub async fn post_totp(
             .content_type("application/x-protobuf; charset=utf-8")
             .protobuf(response));
     }
-    let totp =
-        digit1 + digit2 * 10 + digit3 * 100 + digit4 * 1000 + digit5 * 10000 + digit6 * 100000;
-    println!("totp: {:#?}", totp);
 
     // check totp
-    if user.check_totp(totp) == false {
+    if user.check_totp(digit1, digit2, digit3, digit4, digit5, digit6) == false {
         let response: response::Response = response::Response {
             response_field: Some(ResponseField::Error(response::Error::IncorrectTotp as i32)),
         };

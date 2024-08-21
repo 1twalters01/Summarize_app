@@ -13,8 +13,10 @@ dependencies = [
  "bytes",
  "captcha",
  "chrono",
+ "data-encoding",
  "dotenv",
  "futures-util",
+ "hmac",
  "jsonwebtoken",
  "lettre",
  "prost",
@@ -25,6 +27,7 @@ dependencies = [
  "reqwest",
  "serde",
  "serde_json",
+ "sha1",
  "sqlx",
  "tokio",
  "url",
@@ -660,6 +663,12 @@ dependencies = [
  "generic-array",
  "typenum",
 ]
+
+[[package]]
+name = "data-encoding"
+version = "2.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e8566979429cf69b49a5c740c60791108e86440e8be149bbea4fe54d2c32d6e2"
 
 [[package]]
 name = "der"
