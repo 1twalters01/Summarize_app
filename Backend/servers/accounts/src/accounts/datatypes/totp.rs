@@ -113,7 +113,7 @@ impl Totp {
         // let totp = digit6 + 10*digit5 + 100*digit4 + 1000*digit3 + 10000*digit2 + 100000*digit1;
         let totp_check = self.generate_totp();
 
-        if totp.to_string() != totp_check {
+        if totp != totp_check {
             return Err(());
         }
 
