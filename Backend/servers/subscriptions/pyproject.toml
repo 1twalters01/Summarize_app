@@ -3,17 +3,20 @@ name = "subscriptions"
 version = "0.1.0"
 description = ""
 authors = ["1twalters01 <1twalters01@gmail.com>"]
-readme = "README.md"
+readme = "README.rst"
 
 [tool.poetry.scripts]
-format = "poetry run black ."
-venv = "source .venv/bin/activate"
+run = "src.main:application"
+# format = "poetry run black ."
+# venv = "source .venv/bin/activate"
 
 [tool.poetry.dependencies]
 python = "^3.10"
 fernet = "^1.0.1"
 fastapi = "^0.112.1"
 python-dateutil = "^2.9.0.post0"
+uvicorn = "^0.30.6"
+cryptography = "^43.0.0"
 
 
 [tool.poetry.group.dev.dependencies]
