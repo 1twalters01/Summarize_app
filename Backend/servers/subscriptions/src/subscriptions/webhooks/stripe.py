@@ -29,7 +29,7 @@ async def stripe_webhook(event: StripeEvent):
         if user_uuid == None:
             response = {"success": False}
             return JSONResponse(content=response, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        # set subscribed=False where user_uuid=user_uuid
+        # set subscription_id=NULL, start_date=NULL, trial_status=False, end_date=NULL, subscribed=false, methods.payment_method=NULL WHERE uuid=user_uuid
         response = {"success": True}
         return JSONResponse(content=response, status_code=status.HTTP_200_OK)
 
@@ -60,7 +60,7 @@ async def stripe_webhook(event: StripeEvent):
         else:
             end_date = datetime.now() + relativedelta(months=1, weeks=2, days=2)
 
-        # set customer_id=customer_id, subscription_id=subscription_id, start_date=start_date, trial_status=False, end_date=end_date, subscribed=true WHERE uuid=user_uuid
+        # set customer_id=customer_id, subscription_id=subscription_id, start_date=start_date, trial_status=False, end_date=end_date, subscribed=true, methods.payment_method=stripe WHERE uuid=user_uuid
         response = {"success": True}
         return JSONResponse(content=response, status_code=status.HTTP_200_OK)
 
