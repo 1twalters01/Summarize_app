@@ -60,7 +60,7 @@ async def stripe_webhook(event: StripeEvent):
         else:
             end_date = datetime.now() + relativedelta(months=1, weeks=2, days=2)
 
-        # set customer_id=customer_id, subscription_id=subscription_id, start_date=start_date, trial_status=False, end_date=end_date WHERE uuid=user_uuid
+        # set customer_id=customer_id, subscription_id=subscription_id, start_date=start_date, trial_status=False, end_date=end_date, subscribed=true WHERE uuid=user_uuid
         response = {"success": True}
         return JSONResponse(content=response, status_code=status.HTTP_200_OK)
 
