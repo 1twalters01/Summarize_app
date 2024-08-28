@@ -1,4 +1,5 @@
 from fastapi import Request, status
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 import stripe
 
@@ -31,7 +32,7 @@ async def RetrieveStatus(subscription: Subscription):
         coinbase_url = charge.hosted_url
 
         response = {
-            'subscribed':subscribed,
+            'subscribed':is_subscribed,
             'trial':subscriber.trial,
             'stripe_customer_id':customer.id,
             'stripe_url':stripe_url,
