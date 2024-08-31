@@ -7,21 +7,20 @@ readme = "README.rst"
 
 [tool.poetry.scripts]
 run = "src.main:application"
-# format = "poetry run black ."
-# venv = "source .venv/bin/activate"
+activate-venv = "scripts.venv:activate"
 
 [tool.poetry.dependencies]
 python = "^3.10"
-fernet = "^1.0.1"
 fastapi = "^0.112.1"
-python-dateutil = "^2.9.0.post0"
 uvicorn = "^0.30.6"
-cryptography = "^43.0.0"
-pyjwt = "^2.9.0"
+python-dotenv = "^1.0.1"
 sqlalchemy = "^2.0.32"
 psycopg2-binary = "^2.9.9"
-python-dotenv = "^1.0.1"
-
+fernet = "^1.0.1"
+python-dateutil = "^2.9.0.post0"
+cryptography = "^43.0.0"
+pyjwt = "^2.9.0"
+stripe = "^10.9.0"
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.8.0"

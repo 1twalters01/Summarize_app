@@ -7,10 +7,8 @@ app = FastAPI()
 app.include_router(ping_router)
 app.include_router(subscriptions_router)
 
-@app.get("/")
-def read_root():
-    return {"Hello": "World"}
-
 def application():
     if __name__ == "src.main":
+        print("ping: http://127.0.0.1:8001/ping/any_auth")
         uvicorn.run(app, host="127.0.0.1", port=8001)
+
