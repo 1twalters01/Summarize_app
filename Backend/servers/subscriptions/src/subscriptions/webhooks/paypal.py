@@ -3,6 +3,7 @@ from dateutil.relativedelta import relativedelta
 from fastapi import Request, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
+from starlette.status import HTTP_200_OK
 from ...utils.encryption import decrypt, encrypt
 
 class StripeObject(BaseModel):
@@ -36,7 +37,7 @@ async def paypal_webhooks(event: PaypalEvent):
         start_date = datetime.now()
         # set subscription_id=subscription_id, start_date=start_date, trial_status=False, end_date=end_date, subscribed=true, methods.payment_method=paypal WHERE uuid=user_uuid
         response = {"success": True}
-        return JsonResponse(response, status=200)
+        return JSONResponse(response, status_code=status.HTTP_200_OK)
     
     # Whenever I get paid
     elif event.event_type == "PAYMENT.SALE.COMPLETED":
@@ -72,7 +73,7 @@ async def paypal_webhooks(event: PaypalEvent):
     
         # set subscription_id=NULL, start_date=NULL, trial_status=False, end_date=NULL, subscribed=false, methods.payment_method=NULL WHERE uuid=user_uuid
         response = {"success": True}
-        return JsonResponse(response, status=200)
+        return JSONResponse(response, status_code=HTTP_200_OK)
         
     else:
         response = {"success": False}

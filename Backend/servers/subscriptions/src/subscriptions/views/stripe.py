@@ -77,7 +77,7 @@ async def create_stripe_customer(request: Request, stripe_customer_id: str):
             response = {"error": "Server error"}
             return JSONResponse(content=response, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
         # SET subscription_id=NULL, customer_id=encrypt(customer_id), m.method="Stripe" INTO subscriptions where user_uuid=user_uuid (joins, fix this)
-        query = "SET s.customer_id=:encrypted_customer_id, s.subscription_id=NULL, m.method=\"Paypal\" INTO subscriptions WHERE user_uuid=:user_uuid"
+        query = "SET s.customer_id=:encrypted_customer_id, s.subscription_id=NULL, m.method=\"Stripe\" INTO subscriptions WHERE user_uuid=:user_uuid"
         db.execute(
             text(query),
             {"encrypted_customer_id": encrypted_customer_id, "user_uuid": user_uuid},

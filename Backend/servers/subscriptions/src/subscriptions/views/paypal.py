@@ -33,8 +33,8 @@ async def get_subscription_status(user_uuid: str, db: Session = Depends(get_pg_d
     return is_subscribed[0] if is_subscribed else None
 
 
-def validate_paypal_customer_id(stripe_customer_id):
-    if stripe_customer_id.len() < 5:
+def validate_paypal_customer_id(paypal_customer_id):
+    if paypal_customer_id.len() < 5:
         return False
     return True
 
@@ -65,13 +65,13 @@ async def create_paypal_customer(request: Request, paypal_customer_id: str):
         return JSONResponse(content=response, status_code=status.HTTP_409_CONFLICT)
 
     # Validate stripe_customer_ID
-    if validate_paypal_customer_id(stripe_customer_id) == False:
+    if validate_paypal_customer_id(paypal_customer_id) == False:
         response = {"error": "Invalid stripe customer ID"}
         return JSONResponse(content=response, status_code=status.HTTP_400_BAD_REQUEST)
 
     # set new customer
     try:
-        encrypted_customer_id = encrypt(stripe_customer_id)
+        encrypted_customer_id = encrypt(paypal_customer_id)
         db = get_pg_db()
         if db == None:
             response = {"error": "Server error"}
