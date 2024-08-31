@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from .ping.urls import router as ping_router
 from .subscriptions.urls import router as subscriptions_router
+from .settings.urls import router as settings_router
 import uvicorn
 
 app = FastAPI()
