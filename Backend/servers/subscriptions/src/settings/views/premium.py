@@ -1,5 +1,8 @@
 from fastapi import Depends, Request, status
 from fastapi.responses import JSONResponse
+from sqlalchemy import create_engine, text
+from sqlalchemy.orm import sessionmaker, Session
+from dotenv import load_dotenv
 from ...utils.encryption import decrypt, encrypt
 from ...utils.encryption import decrypt
 from ...utils.paypal import show_sub_details, suspend_sub, activate_sub, cancel_sub
@@ -7,6 +10,15 @@ import stripe
 import os
 
 load_dotenv()
+
+
+class Subscriber:
+    trial_status: bool
+    is_subscribed: bool
+
+    def __init__(self, is_subscribed, trial_status):
+        self.is_subscribed = is_subscribed
+        self.trial_status = trial_status
 
 
 def get_pg_db() -> Session | None:
@@ -31,16 +43,18 @@ async def get_subscription_status(
     db.close()
     return is_subscribed[0] if is_subscribed else None
 
-
-def does_subscriber_exist(self, user):
-    try:
-        subscriber = UserProfile.objects.get(user=user)
-    except:
-        subscriber = UserProfile.objects.create(
-            user=user, method_id=self.payment_method("None")
-        )
-        subscriber.save()
+async def get_subscriber(
+    user_uuid: str, db: Session = Depends(get_pg_db)
+) -> Subscriber | None:
+    # get is_subscribed in users from user_uuid
+    query = "SELECT s.is_subscribed, s.trial FROM subscribers s JOIN users ON s.userID=u.userID WHERE u.userID=:id"
+    result = db.execute(text(query), {"id": user_uuid}).fetchall()
+    if result[0] == None or result[1] == None:
+        return None
+    subscriber = Subscriber(is_subscribed=result[0], trial_status=result[1])
+    db.close()
     return subscriber
+
 
 def obtain_method(subscriber):
     if subscriber:
@@ -51,23 +65,23 @@ def obtain_method(subscriber):
 
 def build_stripe_checkout(subscriber, customer, success_url, cancel_url):
     prices = stripe.Price.list(
-            lookup_keys=["Conjugat Premium"], expand=["data.product"]
-            )
+        lookup_keys=["Conjugat Premium"], expand=["data.product"]
+    )
 
     line_items = [
-            {
-                "price": prices.data[0].id,
-                "quantity": 1,
-                },
-            ]
+        {
+            "price": prices.data[0].id,
+            "quantity": 1,
+        },
+    ]
 
     checkout_kwargs = {
-            "line_items": line_items,
-            "customer": customer,
-            "mode": "subscription",
-            "success_url": success_url,
-            "cancel_url": cancel_url,
-            }
+        "line_items": line_items,
+        "customer": customer,
+        "mode": "subscription",
+        "success_url": success_url,
+        "cancel_url": cancel_url,
+    }
 
     if not subscriber or subscriber.trial == True:
         checkout_kwargs["subscription_data"] = {"trial_period_days": 7}
@@ -75,22 +89,12 @@ def build_stripe_checkout(subscriber, customer, success_url, cancel_url):
     checkout_session = stripe.checkout.Session.create(**checkout_kwargs)
     return checkout_session
 
-def payment_method(method):
-    if method == "Stripe":
-        return 1
-    elif method == "Paypal":
-        return 2
-    elif method == "Coinbase":
-        return 3
-    elif method == "None":
-        return 4
-
-def save_subscriber(self, user, subscriber, customer_id):
+def save_subscriber(user, subscriber, customer_id):
     if not subscriber:
         subscriber = UserProfile.objects.create(
-                user=user, method_id=self.payment_method("Stripe")
-                )
-    subscriber.method_id = self.payment_method("Stripe")
+            user=user, method_id=self.payment_method("Stripe")
+        )
+    subscriber.method_id = payment_method("Stripe")
     # Reset the subscription and customer ids
     subscriber.subscription_id = None
     subscriber.customer_id = encrypt(customer_id)
@@ -99,44 +103,43 @@ def save_subscriber(self, user, subscriber, customer_id):
 def build_stripe_portal(stripe, subscriber, return_url):
     customer = decrypt(subscriber.customer_id)
     portalSession = stripe.billing_portal.Session.create(
-            customer=customer,
-            return_url=return_url,
-            )
+        customer=customer,
+        return_url=return_url,
+    )
     return portalSession
 
-def get_premium_status(self, data):
+def get_premium_status(data):
     user = self.context["user"]
     stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
-    subscriber = self.does_subscriber_exist(user)
-    method = self.obtain_method(subscriber)
-    subscribed = self.is_user_subscribed(user, subscriber)
+    subscriber = get_subscriber(user)
+    method = obtain_method(subscriber)
+    subscribed = is_user_subscribed(user, subscriber)
     if subscribed == False:
         if data["method"] == None:
             success_url = data["success_url"]
             cancel_url = data["cancel_url"]
             customer = stripe.Customer.create()
-            stripe_url = self.build_stripe_checkout(
-                    subscriber, customer, success_url, cancel_url
-                    ).url
+            stripe_url = build_stripe_checkout(
+                subscriber, customer, success_url, cancel_url
+            ).url
 
             charge = self.build_coinbase_checkout(
-                    subscriber, success_url, cancel_url
-                    )
+                subscriber, success_url, cancel_url
+            )
             coinbase_url = charge.hosted_url
 
             response = {
-                    "subscribed": subscribed,
-                    "trial": subscriber.trial,
-                    "stripe_customer_id": customer.id,
-                    "stripe_url": stripe_url,
-                    "coinbase_url": coinbase_url,
-                    }
+                "subscribed": subscribed,
+                "trial": subscriber.trial,
+                "stripe_customer_id": customer.id,
+                "stripe_url": stripe_url,
+                "coinbase_url": coinbase_url,
+            }
             return JSONResponse(content=response, status_code=status.HTTP_200_OK)
 
         if data["method"] == "Stripe":
-            user = self.context["user"]
-            subscriber = self.does_subscriber_exist(user)
-            subscribed = self.is_user_subscribed(user, subscriber)
+            subscriber = does_subscriber_exist(user)
+            subscribed = is_user_subscribed(user, subscriber)
             if subscribed == False:
                 customer_id = data["customer_id"]
                 try:
@@ -148,7 +151,6 @@ def get_premium_status(self, data):
                 return JSONResponse(content=response, status_code=status.HTTP_200_OK)
 
         if data["method"] == "Paypal":
-            user = self.context["user"]
             subscriber = self.does_subscriber_exist(user)
             subscribed = self.is_user_subscribed(user, subscriber)
             if subscribed == False:
@@ -162,25 +164,24 @@ def get_premium_status(self, data):
                 return JSONResponse(content=response, status_code=status.HTTP_200_OK)
 
     else:
-        user = self.context["user"]
         stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
-        subscriber = self.does_subscriber_exist(user)
-        method = self.obtain_method(subscriber)
-        subscribed = self.is_user_subscribed(user, subscriber)
+        subscriber = does_subscriber_exist(user)
+        method = obtain_method(subscriber)
+        subscribed = is_user_subscribed(user, subscriber)
         if subscribed == True:
             subscriber.url = None
             subscriber.status = None
 
             if method == "Stripe":
                 return_url = data["return_url"]
-                stripe_portal = self.build_stripe_portal(
-                        stripe, subscriber, return_url
-                        )
+                stripe_portal = build_stripe_portal(
+                    stripe, subscriber, return_url
+                )
                 response = {
-                        "method": method,
-                        "subscribed": subscribed,
-                        "url": stripe_portal.url,
-                        }
+                    "method": method,
+                    "subscribed": subscribed,
+                    "url": stripe_portal.url,
+                }
                 return JSONResponse(content=response, status_code=status.HTTP_200_OK)
 
             if method == "Paypal":
@@ -190,28 +191,28 @@ def get_premium_status(self, data):
                     details = show_sub_details(subscription_id)
                     subscriber.status = details["status"]
                     response = {
-                            "method": method,
-                            "subscribed": subscribed,
-                            "status": subscriber.status,
-                            }
+                        "method": method,
+                        "subscribed": subscribed,
+                        "status": subscriber.status,
+                    }
                     return JSONResponse(content=response, status_code=status.HTTP_200_OK)
                 elif action == "Stop":
                     suspend_sub(subscription_id)
                     details = show_sub_details(subscription_id)
                     subscriber.status = details["status"]
                     response = {
-                            "method": method,
-                            "subscribed": subscribed,
-                            "status": subscriber.status,
-                            }
+                        "method": method,
+                        "subscribed": subscribed,
+                        "status": subscriber.status,
+                    }
                     return JSONResponse(content=response, status_code=status.HTTP_200_OK)
                 elif action == "Re-start":
                     activate_sub(subscription_id)
                     details = show_sub_details(subscription_id)
                     subscriber.status = details["status"]
                     response = {
-                            "method": method,
-                            "subscribed": subscribed,
-                            "status": subscriber.status,
-                            }
+                        "method": method,
+                        "subscribed": subscribed,
+                        "status": subscriber.status,
+                    }
                     return JSONResponse(content=response, status_code=status.HTTP_200_OK)
