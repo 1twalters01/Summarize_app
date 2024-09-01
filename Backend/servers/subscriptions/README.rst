@@ -9,5 +9,4 @@ Overview
 Details
 ########
 * Stripe, and Paypal are in use
-* Code for coinbase will be created but not used for this project
 * Webhooks for each are created
