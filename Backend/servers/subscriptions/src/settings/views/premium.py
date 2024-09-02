@@ -1,8 +1,10 @@
 from fastapi import Depends, Request, status
 from fastapi.responses import JSONResponse
+import jwt
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker, Session
 from dotenv import load_dotenv
+from datetime import datetime
 from ...utils.encryption import decrypt, encrypt
 from ...utils.encryption import decrypt
 from ...utils.paypal import show_sub_details, suspend_sub, activate_sub, cancel_sub
@@ -15,10 +17,16 @@ load_dotenv()
 class Subscriber:
     trial_status: bool
     is_subscribed: bool
+    end_date: datetime
+    subscription_id: str|None
+    customer_id: str|None
 
-    def __init__(self, is_subscribed, trial_status):
+    def __init__(self, is_subscribed, trial_status, date, s_id=None, c_id=None):
         self.is_subscribed = is_subscribed
         self.trial_status = trial_status
+        self.end_date = date
+        self.subscription_id = s_id
+        self.customer_id = c_id
 
 
 def get_pg_db() -> Session | None:
@@ -42,6 +50,7 @@ async def get_subscription_status(
     is_subscribed = db.execute(text(query), {"id": user_uuid}).fetchone()
     db.close()
     return is_subscribed[0] if is_subscribed else None
+
 
 async def get_subscriber(
     user_uuid: str, db: Session = Depends(get_pg_db)
@@ -92,7 +101,7 @@ def build_stripe_checkout(subscriber, customer, success_url, cancel_url):
 def save_subscriber(user, subscriber, customer_id):
     if not subscriber:
         subscriber = UserProfile.objects.create(
-            user=user, method_id=self.payment_method("Stripe")
+            user=user, method_id=payment_method("Stripe")
         )
     subscriber.method_id = payment_method("Stripe")
     # Reset the subscription and customer ids
@@ -108,13 +117,30 @@ def build_stripe_portal(stripe, subscriber, return_url):
     )
     return portalSession
 
-def get_premium_status(data):
-    user = self.context["user"]
+async def get_premium_status(request: Request, data):
+    headers = request.headers
+    bearer: str | None = headers.get("bearer_token")
+    match bearer:
+        case None:
+            response = {"error", "no token"}
+            return JSONResponse(
+                content=response, status_code=status.HTTP_400_BAD_REQUEST
+            )
+        case bearer:
+            encoded_jwt = bearer[7:]
+    decoded_jwt = jwt.decode(encoded_jwt, "secret", algorithms=["HS256"])
+
+    # get claims from token
+    print(decoded_jwt)
+    user_uuid = decoded_jwt["sub"]
+
     stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
-    subscriber = get_subscriber(user)
+    subscriber: Subscriber|None = await get_subscriber(user_uuid)
+    if subscriber == None:
+        response = {"error", "Invalid token"}
+        return JSONResponse(content=response, status_code=status.HTTP_400_BAD_REQUEST)
     method = obtain_method(subscriber)
-    subscribed = is_user_subscribed(user, subscriber)
-    if subscribed == False:
+    if subscriber.is_subscribed == False:
         if data["method"] == None:
             success_url = data["success_url"]
             cancel_url = data["cancel_url"]
@@ -123,27 +149,19 @@ def get_premium_status(data):
                 subscriber, customer, success_url, cancel_url
             ).url
 
-            charge = self.build_coinbase_checkout(
-                subscriber, success_url, cancel_url
-            )
-            coinbase_url = charge.hosted_url
-
             response = {
-                "subscribed": subscribed,
-                "trial": subscriber.trial,
+                "subscribed": subscriber.is_subscribed,
+                "trial": subscriber.trial_status,
                 "stripe_customer_id": customer.id,
                 "stripe_url": stripe_url,
-                "coinbase_url": coinbase_url,
             }
             return JSONResponse(content=response, status_code=status.HTTP_200_OK)
 
         if data["method"] == "Stripe":
-            subscriber = does_subscriber_exist(user)
-            subscribed = is_user_subscribed(user, subscriber)
-            if subscribed == False:
+            if subscriber.is_subscribed == False:
                 customer_id = data["customer_id"]
                 try:
-                    self.save_subscriber(user, subscriber, customer_id)
+                    save_subscriber(user_uuid, subscriber, customer_id)
                 except:
                     error = {"error": "Stripe customer id was not found"}
                     return JSONResponse(content=error, status_code=status.HTTP_404_NOT_FOUND)
@@ -151,12 +169,10 @@ def get_premium_status(data):
                 return JSONResponse(content=response, status_code=status.HTTP_200_OK)
 
         if data["method"] == "Paypal":
-            subscriber = self.does_subscriber_exist(user)
-            subscribed = self.is_user_subscribed(user, subscriber)
-            if subscribed == False:
+            if subscriber.is_subscribed == False:
                 subscriber_id = data.get("subscriber_id")
                 try:
-                    self.save_subscriber("Paypal", user, subscriber, subscriber_id)
+                    save_subscriber("Paypal", user_uuid, subscriber, subscriber_id)
                 except:
                     error = "Paypal customer id was not found"
                     return JSONResponse(content=error, status_code=status.HTTP_404_NOT_FOUND)
@@ -165,10 +181,8 @@ def get_premium_status(data):
 
     else:
         stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
-        subscriber = does_subscriber_exist(user)
         method = obtain_method(subscriber)
-        subscribed = is_user_subscribed(user, subscriber)
-        if subscribed == True:
+        if subscriber.is_subscribed == True:
             subscriber.url = None
             subscriber.status = None
 
@@ -179,7 +193,7 @@ def get_premium_status(data):
                 )
                 response = {
                     "method": method,
-                    "subscribed": subscribed,
+                    "subscribed": subscriber.is_subscribed,
                     "url": stripe_portal.url,
                 }
                 return JSONResponse(content=response, status_code=status.HTTP_200_OK)
@@ -192,7 +206,7 @@ def get_premium_status(data):
                     subscriber.status = details["status"]
                     response = {
                         "method": method,
-                        "subscribed": subscribed,
+                        "subscribed": subscriber.is_subscribed,
                         "status": subscriber.status,
                     }
                     return JSONResponse(content=response, status_code=status.HTTP_200_OK)
@@ -202,7 +216,7 @@ def get_premium_status(data):
                     subscriber.status = details["status"]
                     response = {
                         "method": method,
-                        "subscribed": subscribed,
+                        "subscribed": subscriber.is_subscribed,
                         "status": subscriber.status,
                     }
                     return JSONResponse(content=response, status_code=status.HTTP_200_OK)
@@ -212,7 +226,7 @@ def get_premium_status(data):
                     subscriber.status = details["status"]
                     response = {
                         "method": method,
-                        "subscribed": subscribed,
+                        "subscribed": subscriber.is_subscribed,
                         "status": subscriber.status,
                     }
                     return JSONResponse(content=response, status_code=status.HTTP_200_OK)

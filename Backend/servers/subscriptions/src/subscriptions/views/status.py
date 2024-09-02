@@ -84,15 +84,11 @@ async def retrieve_status(request: Request, subscription: Subscription):
         )
         stripe_url = stripe_checkout.url
 
-        # charge = build_coinbase_checkout(subscriber, success_url, cancel_url)
-        # coinbase_url = charge.hosted_url
-
         response = {
             "subscribed": subscriber.is_subscribed,
             "trial": subscriber.trial_status,
             "stripe_customer_id": customer.id,
             "stripe_url": stripe_url,
-            # 'coinbase_url':coinbase_url
         }
         return JSONResponse(content=response, status_code=status.HTTP_200_OK)
     else:
@@ -133,31 +129,3 @@ def build_stripe_checkout(subscriber, customer, success_url, cancel_url):
     checkout_session = stripe.checkout.Session.create(**checkout_kwargs)
     return checkout_session
 
-
-# def build_coinbase_checkout(subscriber, success_url, cancel_url):
-#     if not subscriber:
-#         error = 'Subscriber does not exist)'
-#         raise Exception(error)
-#
-#     client = Client(api_key=os.getenv("COINBASE_COMMERCE_API_KEY"))
-#
-#     checkout_kwargs = {
-#         'name':'Conjugat Premium',
-#         'local_price': {
-#             'currency':'GBP'
-#         },
-#         'pricing_type':'fixed_price',
-#         'rediret_url':success_url,
-#         'cancel_url':cancel_url,
-#     }
-#
-#     if subscriber.trial == True:
-#         checkout_kwargs['description'] = '1 Week of conjugat Premium'
-#         checkout_kwargs['local_price']['amount'] = '0.01'
-#
-#     else:
-#         checkout_kwargs['description'] = '1 Month of conjugat Premium'
-#         checkout_kwargs['local_price']['amount'] = '3.00'
-#
-#     charge = client.charge.create(**checkout_kwargs)
-#     return charge
