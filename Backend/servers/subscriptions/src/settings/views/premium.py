@@ -21,10 +21,11 @@ class Subscriber:
     subscription_id: str|None
     customer_id: str|None
 
-    def __init__(self, is_subscribed, trial_status, date, s_id=None, c_id=None):
+    def __init__(self, is_subscribed, trial_status, date, method=None, s_id=None, c_id=None):
         self.is_subscribed = is_subscribed
         self.trial_status = trial_status
         self.end_date = date
+        self.method = method
         self.subscription_id = s_id
         self.customer_id = c_id
 
@@ -56,11 +57,17 @@ async def get_subscriber(
     user_uuid: str, db: Session = Depends(get_pg_db)
 ) -> Subscriber | None:
     # get is_subscribed in users from user_uuid
-    query = "SELECT s.is_subscribed, s.trial FROM subscribers s JOIN users ON s.userID=u.userID WHERE u.userID=:id"
+    query = "SELECT s.is_subscribed, s.trial, s.end_date, s.subscription_id, s.customer_id FROM subscribers s JOIN users ON s.userID=u.userID WHERE u.userID=:id"
     result = db.execute(text(query), {"id": user_uuid}).fetchall()
     if result[0] == None or result[1] == None:
         return None
-    subscriber = Subscriber(is_subscribed=result[0], trial_status=result[1])
+    subscriber = Subscriber(
+        is_subscribed=result[0],
+        trial_status=result[1],
+        date=result[2],
+        s_id=result[3],
+        c_id=result[4]
+    )
     db.close()
     return subscriber
 
@@ -98,16 +105,25 @@ def build_stripe_checkout(subscriber, customer, success_url, cancel_url):
     checkout_session = stripe.checkout.Session.create(**checkout_kwargs)
     return checkout_session
 
-def save_subscriber(user, subscriber, customer_id):
-    if not subscriber:
-        subscriber = UserProfile.objects.create(
-            user=user, method_id=payment_method("Stripe")
-        )
-    subscriber.method_id = payment_method("Stripe")
-    # Reset the subscription and customer ids
-    subscriber.subscription_id = None
-    subscriber.customer_id = encrypt(customer_id)
-    subscriber.save()
+def save_subscriber(user_uuid: str, subscriber: Subscriber, method: str, subscriber_id: str|None=None, customer_id: str|None=None, db: Session=Depends(get_pg_db)):
+    encrypted_subscriber_id = encrypt(subscriber_id)
+    encrypted_customer_id = encrypt(customer_id)
+    method_id = method
+    
+    query = "INSERT INTO subscriptions s (trial_status, is_subscribed, end_date, method_id, subscription_id, customer_id, user_id) VALUES (:trial_status, :is_subscribed, :end_date, :method_id, :encrypted_subscription_id, :encrypted_customer_id, SELECT u.userID From users u Join subscriptions ON s.userID=u.userID WHERE u.user_uuid=:user_uuid) ON CONFLICT (user_id) UPDATE subscribers s SET s.trial_status=:trial_status, s.is_subscribed=:is_subscribed, s.end_date=:end_date, s.method_id=:method_id, s.subscription_id=:encrypted_subscription_id, s.userID=u.user_id JOIN users u on u.user_id=s.user_id WHERE u.user_uuid=user_uuid"
+    db.execute(
+        text(query),
+        {
+            "trial_status": subscriber.trial_status,
+            "is_subscribed": subscriber.is_subscribed,
+            "encrypted_subscription_id": encrypted_subscriber_id,
+            "encrypted_customer_id": encrypted_customer_id,
+            "method_id": method_id,
+            "user_uuid": user_uuid
+        },
+    )
+    db.commit()
+    # if error then return x else return y
 
 def build_stripe_portal(stripe, subscriber, return_url):
     customer = decrypt(subscriber.customer_id)
@@ -161,7 +177,7 @@ async def get_premium_status(request: Request, data):
             if subscriber.is_subscribed == False:
                 customer_id = data["customer_id"]
                 try:
-                    save_subscriber(user_uuid, subscriber, customer_id)
+                    save_subscriber(user_uuid, subscriber, method=data["method"], customer_id=customer_id)
                 except:
                     error = {"error": "Stripe customer id was not found"}
                     return JSONResponse(content=error, status_code=status.HTTP_404_NOT_FOUND)
@@ -172,7 +188,7 @@ async def get_premium_status(request: Request, data):
             if subscriber.is_subscribed == False:
                 subscriber_id = data.get("subscriber_id")
                 try:
-                    save_subscriber("Paypal", user_uuid, subscriber, subscriber_id)
+                    save_subscriber(user_uuid, subscriber, method=data["method"], subscriber_id=subscriber_id)
                 except:
                     error = "Paypal customer id was not found"
                     return JSONResponse(content=error, status_code=status.HTTP_404_NOT_FOUND)
@@ -180,13 +196,10 @@ async def get_premium_status(request: Request, data):
                 return JSONResponse(content=response, status_code=status.HTTP_200_OK)
 
     else:
-        stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
-        method = obtain_method(subscriber)
+        method = subscriber.method
         if subscriber.is_subscribed == True:
-            subscriber.url = None
-            subscriber.status = None
-
             if method == "Stripe":
+                stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
                 return_url = data["return_url"]
                 stripe_portal = build_stripe_portal(
                     stripe, subscriber, return_url
@@ -203,30 +216,30 @@ async def get_premium_status(request: Request, data):
                 subscription_id = decrypt(subscriber.subscription_id)
                 if action == None:
                     details = show_sub_details(subscription_id)
-                    subscriber.status = details["status"]
+                    paypal_status = details["status"]
                     response = {
                         "method": method,
                         "subscribed": subscriber.is_subscribed,
-                        "status": subscriber.status,
+                        "status": paypal_status,
                     }
                     return JSONResponse(content=response, status_code=status.HTTP_200_OK)
                 elif action == "Stop":
                     suspend_sub(subscription_id)
                     details = show_sub_details(subscription_id)
-                    subscriber.status = details["status"]
+                    paypal_status = details["status"]
                     response = {
                         "method": method,
                         "subscribed": subscriber.is_subscribed,
-                        "status": subscriber.status,
+                        "status": paypal_status,
                     }
                     return JSONResponse(content=response, status_code=status.HTTP_200_OK)
                 elif action == "Re-start":
                     activate_sub(subscription_id)
                     details = show_sub_details(subscription_id)
-                    subscriber.status = details["status"]
+                    paypal_status = details["status"]
                     response = {
                         "method": method,
                         "subscribed": subscriber.is_subscribed,
-                        "status": subscriber.status,
+                        "status": paypal_status,
                     }
                     return JSONResponse(content=response, status_code=status.HTTP_200_OK)
