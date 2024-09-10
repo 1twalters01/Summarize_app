@@ -1,0 +1,7 @@
+{
+    "compilerOptions": {
+        "outDir": "target/release"
+    },
+    "extends": "./tsconfig.base.json"
+}
+

@@ -1,0 +1,24 @@
+{
+  "name": "notifications",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.ts",
+  "scripts": {
+    "run:release": "tsc -p tsconfig.prod.json && node ./target/release/main.js",
+    "run:dev": "tsc -p tsconfig.dev.json && node ./target/debug/main.js",
+    "build:release": "tsc -p tsconfig.prod.json",
+    "build:dev": "tsc -p tsconfig.dev.json",
+    "test": "jest"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^22.5.4",
+    "jest": "^29.7.0",
+    "typescript": "^5.6.2"
+  },
+  "dependencies": {
+    "express": "^4.20.0"
+  }
+}

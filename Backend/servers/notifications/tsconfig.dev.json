@@ -1,0 +1,6 @@
+{
+    "compilerOptions": {
+        "outDir": "target/debug"
+    },
+    "extends": "./tsconfig.base.json"
+}
