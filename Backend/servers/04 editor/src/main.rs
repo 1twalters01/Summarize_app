@@ -23,7 +23,7 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .wrap(cors)
             .configure(ping::urls::config)
-            //.configure(accounts::urls::config)
+            //.configure(editor::urls::config)
             //.configure(settings::urls::config)
     })
     .bind("127.0.0.1:8003")?
