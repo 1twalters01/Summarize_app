@@ -26,7 +26,7 @@ async fn main() -> std::io::Result<()> {
             //.configure(editor::urls::config)
             //.configure(settings::urls::config)
     })
-    .bind("127.0.0.1:8003")?
+    .bind("127.0.0.1:8004")?
     .run()
     .await
 }

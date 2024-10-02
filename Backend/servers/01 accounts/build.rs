@@ -119,8 +119,8 @@ fn create_dirs(path_root: &str, custom_vec: &Vec<&str>) {
     for folder in custom_vec[..custom_vec.len() - 1].iter() {
         path = path + folder;
         match fs::create_dir(Path::new(path_root).join(path.to_string())) {
-            Ok(_) => {}
-            Err(err) if err.kind() == ErrorKind::AlreadyExists => {}
+            Ok(_) => {},
+            Err(err) if err.kind() == ErrorKind::AlreadyExists => {},
             _ => panic!("unable to create file"),
         };
         path = path + "/";

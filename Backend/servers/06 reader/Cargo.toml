@@ -9,5 +9,9 @@ edition = "2021"
 actix-cors = "0.7.0"
 actix-protobuf = "0.11.0"
 actix-web = "4.9.0"
-prost = "0.13.3"
+prost = { version = "0.13.3", features = ["prost-derive"] }
+prost-types = "0.13.3"
 rkyv = "0.7.45"
+
+[build-dependencies]
+prost-build = "0.12"
