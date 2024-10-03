@@ -14,3 +14,4 @@
 * 12 analytics - python
 * 13 admin - go/python
 * 14 linux - rust
+* 15 windows - rust
