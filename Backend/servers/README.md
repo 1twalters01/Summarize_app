@@ -7,10 +7,10 @@
 * 05 search - java
 * 06 reader - rust
 * 07 history - go
-* 08 recommendations - python
+* 08 recommendations - python/rust
 * 09 notifications - elixir
 * 10 messages - elixir
 * 11 moderation - python
 * 12 analytics - python
-* 13 admin - go
+* 13 admin - go/python
 * 14 linux - rust
