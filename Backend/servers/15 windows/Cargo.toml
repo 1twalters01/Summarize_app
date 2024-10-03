@@ -1,17 +1,14 @@
 [package]
-name = "linux"
+name = "windows"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
 actix-cors = "0.7.0"
-actix-files = "0.6.6"
 actix-protobuf = "0.11.0"
 actix-web = "4.9.0"
 dotenv = "0.15.0"
-prost = { version = "0.13.3", features = ["prost-derive"] }
+prost = { version = "0.13.3", featrures = ["prost-derive"] }
 prost-types = "0.13.3"
 serde = { version = "1.0.210", features = ["derive"] }
 serde_json = "1.0.128"
