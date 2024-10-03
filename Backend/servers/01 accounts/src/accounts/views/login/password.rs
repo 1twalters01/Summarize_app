@@ -90,7 +90,7 @@ pub async fn post_password(data: ProtoBuf<Request>, req: HttpRequest) -> Result<
         let expiry_in_seconds: Option<i64> = Some(300);
         let mut con = create_redis_client_connection();
         let set_redis_result =
-            set_key_value_in_redis(con, &token, &token_object_json, &expiry_in_seconds);
+            set_key_value_in_redis(con, &token, &token_object_json, expiry_in_seconds);
 
         // if redis fails then return an error
         if set_redis_result.is_err() {

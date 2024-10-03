@@ -83,7 +83,7 @@ async fn register_verification_functionality(
         con,
         &register_verification_token,
         &email,
-        &expiry_in_seconds,
+        expiry_in_seconds,
     );
     if set_redis_result.is_err() {
         panic!("redis error, panic debug")

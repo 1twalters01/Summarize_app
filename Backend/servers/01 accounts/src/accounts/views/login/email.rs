@@ -71,7 +71,7 @@ pub async fn post_email(data: ProtoBuf<Request>) -> Result<impl Responder> {
     // save {key: token, value: user} to redis cache for 300 seconds
     let expiry_in_seconds: Option<i64> = Some(300);
     let con = create_redis_client_connection();
-    let set_redis_result = set_key_value_in_redis(con, &token, &user_json, &expiry_in_seconds);
+    let set_redis_result = set_key_value_in_redis(con, &token, &user_json, expiry_in_seconds);
 
     // if redis fails then return an error
     if set_redis_result.is_err() {

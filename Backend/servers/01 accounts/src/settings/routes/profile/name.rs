@@ -130,7 +130,7 @@ pub async fn post_name(
     let expiry_in_seconds: Option<i64> = Some(300);
     let con = create_redis_client_connection();
     let set_redis_result =
-        set_key_value_in_redis(con, &token, &token_object_json, &expiry_in_seconds);
+        set_key_value_in_redis(con, &token, &token_object_json, expiry_in_seconds);
 
     // err handling
     if set_redis_result.is_err() {

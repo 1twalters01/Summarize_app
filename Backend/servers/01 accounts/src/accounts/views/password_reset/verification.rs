@@ -80,7 +80,7 @@ async fn password_reset_verification_functionality(
         con,
         &password_reset_verification_token,
         &user_json,
-        &expiry_in_seconds,
+        expiry_in_seconds,
     );
     if set_redis_result.is_err() {
         panic!("redis error, panic debug")

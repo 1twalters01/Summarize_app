@@ -98,7 +98,7 @@ pub async fn post_email(data: ProtoBuf<request::Request>) -> Result<impl Respond
     let expiry_in_seconds: Option<i64> = Some(300);
 
     let set_redis_result =
-        set_key_value_in_redis(con, &token_struct_json, &user_json, &expiry_in_seconds);
+        set_key_value_in_redis(con, &token_struct_json, &user_json, expiry_in_seconds);
 
     // if redis fails then return an error
     if set_redis_result.is_err() {
