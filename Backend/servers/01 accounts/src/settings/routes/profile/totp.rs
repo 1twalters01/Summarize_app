@@ -1,21 +1,27 @@
 use crate::{
     accounts::{
-        datatypes::{users::User, totp::Totp},
+        datatypes::{totp::Totp, users::User},
         schema::auth::Claims,
     },
     generated::protos::settings::profile::{
         confirmation::{
-            response as password_response, Error as PasswordError, Request as PasswordRequest, Response as PasswordResponse, Success as PasswordSuccess
+            response as password_response, Error as PasswordError, Request as PasswordRequest,
+            Response as PasswordResponse, Success as PasswordSuccess,
         },
         totp::{
             request::Request as TotpRequest,
-            response::{Error as TotpError, Response as TotpResponse, Success as TotpSuccess, response as totp_response}
+            response::{
+                response as totp_response, Error as TotpError, Response as TotpResponse,
+                Success as TotpSuccess,
+            },
         },
     },
     utils::{
-        database_connections::{create_pg_pool_connection, create_redis_client_connection, set_key_value_in_redis},
+        database_connections::{
+            create_pg_pool_connection, create_redis_client_connection, set_key_value_in_redis,
+        },
         tokens::generate_opaque_token_of_length,
-        validations::{validate_password, validate_totp}
+        validations::{validate_password, validate_totp},
     },
 };
 use actix_protobuf::{ProtoBuf, ProtoBufResponseBuilder};
@@ -100,8 +106,7 @@ pub async fn post_totp(
     // Save key: token, value: {token, uuid/jwt} to redis
     let expiry_in_seconds: Option<i64> = Some(300);
     let con = create_redis_client_connection();
-    let set_redis_result =
-        set_key_value_in_redis(con, &token, &token_object, expiry_in_seconds);
+    let set_redis_result = set_key_value_in_redis(con, &token, &token_object, expiry_in_seconds);
 
     // err handling
     if set_redis_result.is_err() {
@@ -130,7 +135,14 @@ pub async fn post_confirmation(
     req_body: ProtoBuf<TotpRequest>,
     req: HttpRequest,
 ) -> Result<impl Responder> {
-    let TotpRequest { digit1, digit2, digit3, digit4, digit5, digit6 } = req_body.0;
+    let TotpRequest {
+        digit1,
+        digit2,
+        digit3,
+        digit4,
+        digit5,
+        digit6,
+    } = req_body.0;
     let login_email_token: String = req
         .headers()
         .get("Change-Totp-Token")
@@ -179,7 +191,7 @@ pub async fn post_confirmation(
                 .protobuf(response));
         }
         Ok(user) => match user {
-            Some(_) => {},
+            Some(_) => {}
             None => {
                 let response: PasswordResponse = PasswordResponse {
                     response_field: Some(password_response::ResponseField::Error(
@@ -193,7 +205,6 @@ pub async fn post_confirmation(
         },
     };
 
-    
     // get uuid from redis - make the jwt the token instead of uuid for safety?
     let con = create_redis_client_connection();
     let saved_uuid: String = match get_object_from_token_in_redis(con, &login_email_token) {
@@ -224,49 +235,51 @@ pub async fn post_confirmation(
             .content_type("application/x-protobuf; charset=utf-8")
             .protobuf(response));
     }
-            
+
     // get current totp status
     let pool = create_pg_pool_connection().await;
-    let totp_key: Option<String> = match get_totp_key_from_uuid_in_pg_users_table(&pool, &user_uuid).await {
-        Ok(result) => result,
-        Err(_) => {
+    let totp_key: Option<String> =
+        match get_totp_key_from_uuid_in_pg_users_table(&pool, &user_uuid).await {
+            Ok(result) => result,
+            Err(_) => {
+                let response: TotpResponse = TotpResponse {
+                    response_field: Some(totp_response::ResponseField::Error(
+                        TotpError::ServerError as i32,
+                    )),
+                };
+                return Ok(HttpResponse::InternalServerError()
+                    .content_type("application/x-protobuf; charset=utf-8")
+                    .protobuf(response));
+            }
+        };
+
+    // if totp = there then delete
+    if let Some(totp_key) = totp_key {
+        let mut totp: Totp = Totp::from_key(totp_key);
+
+        if totp
+            .verify(digit1, digit2, digit3, digit4, digit5, digit6)
+            .is_err()
+        {
             let response: TotpResponse = TotpResponse {
                 response_field: Some(totp_response::ResponseField::Error(
                     TotpError::ServerError as i32,
                 )),
             };
-            return Ok(HttpResponse::InternalServerError()
-                .content_type("application/x-protobuf; charset=utf-8")
-                .protobuf(response));
-        },
-    };
-    
-    // if totp = there then delete
-    if let Some(totp_key) = totp_key {
-        let mut totp: Totp = Totp::from_key(totp_key);
-        
-        if totp.verify(digit1, digit2, digit3, digit4, digit5, digit6).is_err() {
-            let response: TotpResponse = TotpResponse {
-                response_field: Some(totp_response::ResponseField::Error(
-                    TotpError::ServerError as i32,
-            )),
-            };
             return Ok(HttpResponse::Unauthorized()
                 .content_type("application/x-protobuf; charset=utf-8")
                 .protobuf(response));
-
         };
 
         match delete_totp_from_uuid_in_pg_users_table(&pool, &user_uuid).await {
             Ok(_) => {
                 let response: TotpResponse = TotpResponse {
-                    response_field: Some(totp_response::ResponseField::Success( TotpSuccess {  } ))
+                    response_field: Some(totp_response::ResponseField::Success(TotpSuccess {})),
                 };
                 return Ok(HttpResponse::Ok()
                     .content_type("application/x-protobuf; charset=utf-8")
                     .protobuf(response));
-
-            },
+            }
             Err(_) => {
                 let response: TotpResponse = TotpResponse {
                     response_field: Some(totp_response::ResponseField::Error(
@@ -278,19 +291,17 @@ pub async fn post_confirmation(
                     .protobuf(response));
             }
         }
-
     } else {
         let totp: Totp = Totp::new();
         match set_totp_for_uuid_in_pg_users_table(&pool, &user_uuid, &totp).await {
             Ok(_) => {
                 let response: TotpResponse = TotpResponse {
-                    response_field: Some(totp_response::ResponseField::Success( TotpSuccess {  } ))
+                    response_field: Some(totp_response::ResponseField::Success(TotpSuccess {})),
                 };
                 return Ok(HttpResponse::Ok()
                     .content_type("application/x-protobuf; charset=utf-8")
                     .protobuf(response));
-
-            },
+            }
             Err(_) => {
                 let response: TotpResponse = TotpResponse {
                     response_field: Some(totp_response::ResponseField::Error(
@@ -314,7 +325,7 @@ async fn get_totp_key_from_uuid_in_pg_users_table(
         .bind(user_uuid)
         .fetch_all(pool)
         .await;
-    
+
     match user_select_query {
         Err(err) => return Err(err),
         Ok(res) => {
@@ -332,7 +343,10 @@ async fn delete_totp_from_uuid_in_pg_users_table(
     pool: &Pool<Postgres>,
     user_uuid: &str,
 ) -> Result<(), sqlx::Error> {
-    let user_select_query = sqlx::query("UPDATE users SET totp_key=NULL WHERE uuid=($1)").bind(user_uuid).execute(pool).await;
+    let user_select_query = sqlx::query("UPDATE users SET totp_key=NULL WHERE uuid=($1)")
+        .bind(user_uuid)
+        .execute(pool)
+        .await;
 
     if let Err(err) = user_select_query {
         return Err(err);
@@ -345,7 +359,7 @@ async fn set_totp_for_uuid_in_pg_users_table(
     pool: &Pool<Postgres>,
     user_uuid: &str,
     totp: &Totp,
-) -> Result<(), sqlx::Error>{
+) -> Result<(), sqlx::Error> {
     let user_update_query = sqlx::query("UPDATE users SET totp_key=($1) WHERE uuid=($2)")
         .bind(totp.get_url())
         .bind(user_uuid)
@@ -360,10 +374,7 @@ async fn set_totp_for_uuid_in_pg_users_table(
 }
 
 use redis::{Commands, Connection, RedisResult};
-fn get_object_from_token_in_redis(
-    mut con: Connection,
-    token: &str,
-) -> Result<String, String> {
+fn get_object_from_token_in_redis(mut con: Connection, token: &str) -> Result<String, String> {
     let redis_result: RedisResult<String> = con.get(token);
     let object_json: String = match redis_result {
         Ok(object_json) => object_json,
@@ -372,4 +383,3 @@ fn get_object_from_token_in_redis(
     let object: String = serde_json::from_str(&object_json).unwrap();
     return Ok(object);
 }
-

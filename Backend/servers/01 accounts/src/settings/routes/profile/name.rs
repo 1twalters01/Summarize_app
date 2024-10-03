@@ -267,9 +267,13 @@ pub async fn post_confirmation(
 
     // change name
     let pool = create_pg_pool_connection().await;
-    let update_result: Result<(), sqlx::Error> =
-        update_name_for_user_in_pg_users_table(&pool, &user_uuid, first_name.as_ref(), last_name.as_ref())
-            .await;
+    let update_result: Result<(), sqlx::Error> = update_name_for_user_in_pg_users_table(
+        &pool,
+        &user_uuid,
+        first_name.as_ref(),
+        last_name.as_ref(),
+    )
+    .await;
 
     // if sql update error then return an error
     if update_result.is_err() {
@@ -316,22 +320,28 @@ pub async fn update_name_for_user_in_pg_users_table(
 ) -> Result<(), sqlx::Error> {
     match first_name {
         Some(name) => {
-            let user_update_query = sqlx::query("UPDATE users SET first_name=($1) WHERE uuid=($2);")
-                .bind(name)
-                .bind(user_uuid)
-                .execute(pool)
-                .await;
+            let user_update_query =
+                sqlx::query("UPDATE users SET first_name=($1) WHERE uuid=($2);")
+                    .bind(name)
+                    .bind(user_uuid)
+                    .execute(pool)
+                    .await;
 
-            if let Err(err) = user_update_query { return Err(err); }
-        },
+            if let Err(err) = user_update_query {
+                return Err(err);
+            }
+        }
         None => {
-            let user_update_query = sqlx::query("UPDATE users SET first_name=NULL WHERE uuid=($1);")
-                .bind(user_uuid)
-                .execute(pool)
-                .await;
+            let user_update_query =
+                sqlx::query("UPDATE users SET first_name=NULL WHERE uuid=($1);")
+                    .bind(user_uuid)
+                    .execute(pool)
+                    .await;
 
-            if let Err(err) = user_update_query { return Err(err); }
-        },
+            if let Err(err) = user_update_query {
+                return Err(err);
+            }
+        }
     }
 
     match last_name {
@@ -342,16 +352,20 @@ pub async fn update_name_for_user_in_pg_users_table(
                 .execute(pool)
                 .await;
 
-            if let Err(err) = user_update_query { return Err(err); }
-        },
+            if let Err(err) = user_update_query {
+                return Err(err);
+            }
+        }
         None => {
             let user_update_query = sqlx::query("UPDATE users SET last_name=NULL WHERE uuid=($1);")
                 .bind(user_uuid)
                 .execute(pool)
                 .await;
 
-            if let Err(err) = user_update_query { return Err(err); }
-        },
+            if let Err(err) = user_update_query {
+                return Err(err);
+            }
+        }
     }
     return Ok(());
 }

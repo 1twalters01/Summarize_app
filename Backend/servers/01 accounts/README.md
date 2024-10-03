@@ -1,4 +1,4 @@
-Accounts microservice created in Rust.
+Accounts microservice created purely in Rust.
 
 # Overview
 * A solution like clerk.js was not used due to costs.

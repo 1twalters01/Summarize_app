@@ -10,3 +10,4 @@ Details
 ########
 * Stripe, and Paypal are in use
 * Webhooks for each are created
+* Has settings to control subscriptions

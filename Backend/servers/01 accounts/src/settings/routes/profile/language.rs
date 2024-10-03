@@ -1,22 +1,15 @@
 use crate::{
-    accounts::{
-        datatypes::users::User,
-        schema::auth::Claims,
-    },
+    accounts::{datatypes::users::User, schema::auth::Claims},
     generated::protos::settings::profile::language::{
         request::{Language, Request},
         response::{response, Error, Response, Success},
     },
-    utils::{
-        database_connections::create_pg_pool_connection,
-        validations::validate_language,
-    },
+    utils::{database_connections::create_pg_pool_connection, validations::validate_language},
 };
 
 use actix_protobuf::{ProtoBuf, ProtoBufResponseBuilder};
 use actix_web::{HttpMessage, HttpRequest, HttpResponse, Responder, Result};
 use sqlx::{Pool, Postgres};
-
 
 pub async fn post_language(
     req_body: ProtoBuf<Request>,
@@ -55,9 +48,7 @@ pub async fn post_language(
     let user: User = match user_result {
         Err(_) => {
             let response: Response = Response {
-                response_field: Some(response::ResponseField::Error(
-                    Error::ServerError as i32,
-                )),
+                response_field: Some(response::ResponseField::Error(Error::ServerError as i32)),
             };
             return Ok(HttpResponse::InternalServerError()
                 .content_type("application/x-protobuf; charset=utf-8")
@@ -86,9 +77,7 @@ pub async fn post_language(
     // if sql update error then return an error
     if update_result.is_err() {
         let response: Response = Response {
-            response_field: Some(response::ResponseField::Error(
-                Error::ServerError as i32,
-            )),
+            response_field: Some(response::ResponseField::Error(Error::ServerError as i32)),
         };
         return Ok(HttpResponse::FailedDependency()
             .content_type("application/x-protobuf; charset=utf-8")
@@ -97,9 +86,7 @@ pub async fn post_language(
 
     // return ok
     let response: Response = Response {
-        response_field: Some(response::ResponseField::Success(
-            Success {},
-        )),
+        response_field: Some(response::ResponseField::Success(Success {})),
     };
     return Ok(HttpResponse::Ok()
         .content_type("application/x-protobuf; charset=utf-8")

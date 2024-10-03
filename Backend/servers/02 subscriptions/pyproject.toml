@@ -7,6 +7,7 @@ readme = "README.rst"
 
 [tool.poetry.scripts]
 run = "src.main:application"
+build = "build:main"
 activate-venv = "scripts.venv:activate"
 
 [tool.poetry.dependencies]
@@ -21,6 +22,7 @@ python-dateutil = "^2.9.0.post0"
 cryptography = "^43.0.0"
 pyjwt = "^2.9.0"
 stripe = "^10.9.0"
+protobuf = "^5.28.2"
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.8.0"

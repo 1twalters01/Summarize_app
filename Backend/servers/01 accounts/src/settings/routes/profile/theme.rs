@@ -1,28 +1,23 @@
 use crate::{
-    accounts::{
-        datatypes::users::User,
-        schema::auth::Claims,
-    },
+    accounts::{datatypes::users::User, schema::auth::Claims},
     generated::protos::settings::profile::theme::{
         request::{request::RequestField, Colour, Colours, Custom, Presets, Request},
         response::{response, Error, Response, Success},
     },
-    utils::{
-        database_connections::create_pg_pool_connection,
-        validations::validate_theme,
-    },
+    utils::{database_connections::create_pg_pool_connection, validations::validate_theme},
 };
 
 use actix_protobuf::{ProtoBuf, ProtoBufResponseBuilder};
 use actix_web::{HttpMessage, HttpRequest, HttpResponse, Responder, Result};
 use sqlx::{Pool, Postgres};
 
-
 pub async fn post_language(
     req_body: ProtoBuf<Request>,
     req: HttpRequest,
 ) -> Result<impl Responder> {
-    let Request { request_field: theme } = req_body.0;
+    let Request {
+        request_field: theme,
+    } = req_body.0;
 
     // validate theme
     let validated_theme = validate_theme(theme.clone());
@@ -55,9 +50,7 @@ pub async fn post_language(
     let _ = match user_result {
         Err(_) => {
             let response: Response = Response {
-                response_field: Some(response::ResponseField::Error(
-                    Error::ServerError as i32,
-                )),
+                response_field: Some(response::ResponseField::Error(Error::ServerError as i32)),
             };
             return Ok(HttpResponse::InternalServerError()
                 .content_type("application/x-protobuf; charset=utf-8")
@@ -86,9 +79,7 @@ pub async fn post_language(
     // if sql update error then return an error
     if update_result.is_err() {
         let response: Response = Response {
-            response_field: Some(response::ResponseField::Error(
-                Error::ServerError as i32,
-            )),
+            response_field: Some(response::ResponseField::Error(Error::ServerError as i32)),
         };
         return Ok(HttpResponse::FailedDependency()
             .content_type("application/x-protobuf; charset=utf-8")
@@ -97,9 +88,7 @@ pub async fn post_language(
 
     // return ok
     let response: Response = Response {
-        response_field: Some(response::ResponseField::Success(
-            Success {},
-        )),
+        response_field: Some(response::ResponseField::Success(Success {})),
     };
     return Ok(HttpResponse::Ok()
         .content_type("application/x-protobuf; charset=utf-8")
@@ -112,14 +101,14 @@ pub async fn update_theme_for_user_in_pg_users_table(
     theme: RequestField,
 ) -> Result<(), sqlx::Error> {
     match theme {
-        RequestField::Custom(Custom{primary, secondary}) => {
+        RequestField::Custom(Custom { primary, secondary }) => {
             let Colours {
                 colour_1: primary_1,
                 colour_2: primary_2,
                 colour_3: primary_3,
                 colour_4: primary_4,
                 colour_5: primary_5,
-                colour_6: primary_6
+                colour_6: primary_6,
             } = primary.unwrap();
 
             let Colours {
@@ -128,7 +117,7 @@ pub async fn update_theme_for_user_in_pg_users_table(
                 colour_3: secondary_3,
                 colour_4: secondary_4,
                 colour_5: secondary_5,
-                colour_6: secondary_6
+                colour_6: secondary_6,
             } = secondary.unwrap();
 
             let Colour {
@@ -204,7 +193,8 @@ pub async fn update_theme_for_user_in_pg_users_table(
                 alpha: alpha_secondary_6,
             } = secondary_6.unwrap();
 
-            let user_update_query = sqlx::query("UPDATE users SET
+            let user_update_query = sqlx::query(
+                "UPDATE users SET
 red_primary_1=($1), green_primary_1=($2), blue_primary_1=($3), alpha_primary_1=($4),
 red_primary_2=($5), green_primary_2=($6), blue_primary_2=($7), alpha_primary_2=($8),
 red_primary_3=($9), green_primary_3=($10), blue_primary_3=($11), alpha_primary_3=($12),
@@ -217,19 +207,56 @@ red_secondary_3=($33), green_secondary_3=($34), blue_secondary_3=($35), alpha_se
 red_secondary_4=($37), green_secondary_4=($38), blue_primary_4=($39), alpha_secondary_4=($40),
 red_secondary_5=($41), green_secondary_5=($42), blue_primary_5=($43), alpha_secondary_5=($44),
 red_secondary_6=($45), green_secondary_6=($46), blue_primary_6=($47), alpha_secondary_6=($48),
-            WHERE uuid=($39);")
-            .bind(red_primary_1 as i32).bind(green_primary_1 as i32).bind(blue_primary_1 as i32).bind(alpha_primary_1 as i32)
-            .bind(red_primary_2 as i32).bind(green_primary_2 as i32).bind(blue_primary_2 as i32).bind(alpha_primary_2 as i32)
-            .bind(red_primary_3 as i32).bind(green_primary_3 as i32).bind(blue_primary_3 as i32).bind(alpha_primary_3 as i32)
-            .bind(red_primary_4 as i32).bind(green_primary_4 as i32).bind(blue_primary_4 as i32).bind(alpha_primary_4 as i32)
-            .bind(red_primary_5 as i32).bind(green_primary_5 as i32).bind(blue_primary_5 as i32).bind(alpha_primary_5 as i32)
-            .bind(red_primary_6 as i32).bind(green_primary_6 as i32).bind(blue_primary_6 as i32).bind(alpha_primary_6 as i32)
-            .bind(red_secondary_1 as i32).bind(green_secondary_1 as i32).bind(blue_secondary_1 as i32).bind(alpha_secondary_1 as i32)
-            .bind(red_secondary_2 as i32).bind(green_secondary_2 as i32).bind(blue_secondary_2 as i32).bind(alpha_secondary_2 as i32)
-            .bind(red_secondary_3 as i32).bind(green_secondary_3 as i32).bind(blue_secondary_3 as i32).bind(alpha_secondary_3 as i32)
-            .bind(red_secondary_4 as i32).bind(green_secondary_4 as i32).bind(blue_secondary_4 as i32).bind(alpha_secondary_4 as i32)
-            .bind(red_secondary_5 as i32).bind(green_secondary_5 as i32).bind(blue_secondary_5 as i32).bind(alpha_secondary_5 as i32)
-            .bind(red_secondary_6 as i32).bind(green_secondary_6 as i32).bind(blue_secondary_6 as i32).bind(alpha_secondary_6 as i32)
+            WHERE uuid=($39);",
+            )
+            .bind(red_primary_1 as i32)
+            .bind(green_primary_1 as i32)
+            .bind(blue_primary_1 as i32)
+            .bind(alpha_primary_1 as i32)
+            .bind(red_primary_2 as i32)
+            .bind(green_primary_2 as i32)
+            .bind(blue_primary_2 as i32)
+            .bind(alpha_primary_2 as i32)
+            .bind(red_primary_3 as i32)
+            .bind(green_primary_3 as i32)
+            .bind(blue_primary_3 as i32)
+            .bind(alpha_primary_3 as i32)
+            .bind(red_primary_4 as i32)
+            .bind(green_primary_4 as i32)
+            .bind(blue_primary_4 as i32)
+            .bind(alpha_primary_4 as i32)
+            .bind(red_primary_5 as i32)
+            .bind(green_primary_5 as i32)
+            .bind(blue_primary_5 as i32)
+            .bind(alpha_primary_5 as i32)
+            .bind(red_primary_6 as i32)
+            .bind(green_primary_6 as i32)
+            .bind(blue_primary_6 as i32)
+            .bind(alpha_primary_6 as i32)
+            .bind(red_secondary_1 as i32)
+            .bind(green_secondary_1 as i32)
+            .bind(blue_secondary_1 as i32)
+            .bind(alpha_secondary_1 as i32)
+            .bind(red_secondary_2 as i32)
+            .bind(green_secondary_2 as i32)
+            .bind(blue_secondary_2 as i32)
+            .bind(alpha_secondary_2 as i32)
+            .bind(red_secondary_3 as i32)
+            .bind(green_secondary_3 as i32)
+            .bind(blue_secondary_3 as i32)
+            .bind(alpha_secondary_3 as i32)
+            .bind(red_secondary_4 as i32)
+            .bind(green_secondary_4 as i32)
+            .bind(blue_secondary_4 as i32)
+            .bind(alpha_secondary_4 as i32)
+            .bind(red_secondary_5 as i32)
+            .bind(green_secondary_5 as i32)
+            .bind(blue_secondary_5 as i32)
+            .bind(alpha_secondary_5 as i32)
+            .bind(red_secondary_6 as i32)
+            .bind(green_secondary_6 as i32)
+            .bind(blue_secondary_6 as i32)
+            .bind(alpha_secondary_6 as i32)
             .bind(user_uuid)
             .execute(pool)
             .await;
@@ -239,7 +266,7 @@ red_secondary_6=($45), green_secondary_6=($46), blue_primary_6=($47), alpha_seco
             } else {
                 return Ok(());
             }
-        },
+        }
         RequestField::Presets(theme) => {
             // If theme is a preset then set the preset field to the choice and set is_theme_preset to preset
             let preset = Presets::try_from(theme.to_owned()).unwrap().as_str_name();
@@ -255,6 +282,6 @@ red_secondary_6=($45), green_secondary_6=($46), blue_primary_6=($47), alpha_seco
             } else {
                 return Ok(());
             }
-        },
+        }
     }
 }

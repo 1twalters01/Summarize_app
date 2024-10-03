@@ -79,12 +79,8 @@ async fn register_verification_functionality(
     // add {key: token, value: email} to redis
     con = create_redis_client_connection();
     let expiry_in_seconds: Option<i64> = Some(1800);
-    let set_redis_result = set_key_value_in_redis(
-        con,
-        &register_verification_token,
-        &email,
-        expiry_in_seconds,
-    );
+    let set_redis_result =
+        set_key_value_in_redis(con, &register_verification_token, &email, expiry_in_seconds);
     if set_redis_result.is_err() {
         panic!("redis error, panic debug")
     }

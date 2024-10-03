@@ -1,10 +1,9 @@
-use serde::{Deserialize, Serialize};
-use std::time::{SystemTime, UNIX_EPOCH};
-use rand::Rng;
 use data_encoding::BASE32;
 use hmac::{Hmac, Mac};
+use rand::Rng;
+use serde::{Deserialize, Serialize};
 use sha1::Sha1;
-
+use std::time::{SystemTime, UNIX_EPOCH};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Totp {
@@ -50,7 +49,7 @@ impl Totp {
             fields: None,
         };
         totp.set_url(url);
-        return totp
+        return totp;
     }
 
     pub fn generate_totp(&mut self) -> String {
@@ -58,7 +57,10 @@ impl Totp {
         let length_of_otp = 6;
 
         // Get Totp time step and convert it to byte array
-        let epoch_time = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
+        let epoch_time = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs();
         let t = epoch_time / step_in_seconds;
         let t_bytes = t.to_be_bytes();
         println!("t_bytes: {:?}", t_bytes);
@@ -72,7 +74,13 @@ impl Totp {
         let mut mac = Hmac::<Sha1>::new_from_slice(key).unwrap();
         mac.update(&t_bytes);
         let hmac_bytes = mac.finalize().into_bytes();
-        println!("hmac object: {:02X?}", hmac_bytes.iter().map(|x| format!("{:02x}", x)).collect::<String>());
+        println!(
+            "hmac object: {:02X?}",
+            hmac_bytes
+                .iter()
+                .map(|x| format!("{:02x}", x))
+                .collect::<String>()
+        );
 
         // Convert last nibble to an offset
         let offset = (hmac_bytes[hmac_bytes.len() - 1] & 0xf) as usize;
@@ -96,7 +104,7 @@ impl Totp {
         let binding = self.fields.clone().unwrap();
         let key = binding.key;
         let token = BASE32.encode(&key.as_bytes());
-        
+
         let qr_string = format!(
             "otpauth://totp/{site}:{email}?secret={token}&issuer={site}&algorithm=SHA1&digits={length_of_otp}&counter=0&period={step_in_seconds}",
             site=site,
@@ -108,8 +116,19 @@ impl Totp {
         return qr_string;
     }
 
-    pub fn verify(&mut self, digit1: u32, digit2: u32, digit3: u32, digit4: u32, digit5: u32, digit6: u32) -> Result<(), ()> {
-        let totp = format!("{}{}{}{}{}{}", digit1, digit2, digit3, digit4, digit5, digit6);
+    pub fn verify(
+        &mut self,
+        digit1: u32,
+        digit2: u32,
+        digit3: u32,
+        digit4: u32,
+        digit5: u32,
+        digit6: u32,
+    ) -> Result<(), ()> {
+        let totp = format!(
+            "{}{}{}{}{}{}",
+            digit1, digit2, digit3, digit4, digit5, digit6
+        );
         // let totp = digit6 + 10*digit5 + 100*digit4 + 1000*digit3 + 10000*digit2 + 100000*digit1;
         let totp_check = self.generate_totp();
 
@@ -161,8 +180,8 @@ impl Totp {
 
 #[cfg(test)]
 mod tests {
-    use dotenv::dotenv;
     use super::*;
+    use dotenv::dotenv;
     use std::env;
 
     #[test]

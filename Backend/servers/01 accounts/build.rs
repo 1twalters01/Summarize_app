@@ -11,59 +11,67 @@ fn main() {
 
     let mut prost_config = prost_build::Config::new();
     prost_config.out_dir(out_dir);
-    let protobuf_filename_vec: &Vec<&str> = &Vec::from([
-        "../../../Interface/protos/accounts/auth_tokens.proto",
-        "../../../Interface/protos/accounts/login/email/request.proto",
-        "../../../Interface/protos/accounts/login/email/response.proto",
-        "../../../Interface/protos/accounts/login/password/request.proto",
-        "../../../Interface/protos/accounts/login/password/response.proto",
-        "../../../Interface/protos/accounts/login/totp/request.proto",
-        "../../../Interface/protos/accounts/login/totp/response.proto",
-        "../../../Interface/protos/accounts/register/email/request.proto",
-        "../../../Interface/protos/accounts/register/email/response.proto",
-        "../../../Interface/protos/accounts/register/verification/request.proto",
-        "../../../Interface/protos/accounts/register/verification/response.proto",
-        "../../../Interface/protos/accounts/register/details/request.proto",
-        "../../../Interface/protos/accounts/register/details/response.proto",
-        "../../../Interface/protos/accounts/password_reset/email/request.proto",
-        "../../../Interface/protos/accounts/password_reset/email/response.proto",
-        "../../../Interface/protos/accounts/password_reset/verification/request.proto",
-        "../../../Interface/protos/accounts/password_reset/verification/response.proto",
-        "../../../Interface/protos/accounts/password_reset/password/request.proto",
-        "../../../Interface/protos/accounts/password_reset/password/response.proto",
+    let protobuf_location_vec: &Vec<&str> = &Vec::from([
+        "/accounts/auth_tokens.proto",
+        "/accounts/login/email/request.proto",
+        "/accounts/login/email/response.proto",
+        "/accounts/login/password/request.proto",
+        "/accounts/login/password/response.proto",
+        "/accounts/login/totp/request.proto",
+        "/accounts/login/totp/response.proto",
+        "/accounts/register/email/request.proto",
+        "/accounts/register/email/response.proto",
+        "/accounts/register/verification/request.proto",
+        "/accounts/register/verification/response.proto",
+        "/accounts/register/details/request.proto",
+        "/accounts/register/details/response.proto",
+        "/accounts/password_reset/email/request.proto",
+        "/accounts/password_reset/email/response.proto",
+        "/accounts/password_reset/verification/request.proto",
+        "/accounts/password_reset/verification/response.proto",
+        "/accounts/password_reset/password/request.proto",
+        "/accounts/password_reset/password/response.proto",
     ]);
-    generate_files_from_protobufs(prost_config, out_dir, protobuf_filename_vec, base_dir);
+    let filename_vec = &protobuf_location_vec
+        .into_iter()
+        .map(|location| base_dir.to_string() + location)
+        .collect::<Vec<String>>();
+    generate_files_from_protobufs(prost_config, out_dir, filename_vec, base_dir);
 
     prost_config = prost_build::Config::new();
     prost_config.out_dir(out_dir);
-    let protobuf_filename_vec: &Vec<&str> = &Vec::from([
-        "../../../Interface/protos/settings/profile/confirmation.proto",
-        "../../../Interface/protos/settings/profile/email/request.proto",
-        "../../../Interface/protos/settings/profile/email/response.proto",
-        "../../../Interface/protos/settings/profile/name/request.proto",
-        "../../../Interface/protos/settings/profile/name/response.proto",
-        "../../../Interface/protos/settings/profile/password/request.proto",
-        "../../../Interface/protos/settings/profile/password/response.proto",
-        "../../../Interface/protos/settings/profile/username/request.proto",
-        "../../../Interface/protos/settings/profile/username/response.proto",
-        "../../../Interface/protos/settings/profile/language/request.proto",
-        "../../../Interface/protos/settings/profile/language/response.proto",
-        "../../../Interface/protos/settings/profile/theme/request.proto",
-        "../../../Interface/protos/settings/profile/theme/response.proto",
-        "../../../Interface/protos/settings/profile/totp/request.proto",
-        "../../../Interface/protos/settings/profile/totp/response.proto",
+    let protobuf_location_vec: &Vec<&str> = &Vec::from([
+        "/settings/profile/confirmation.proto",
+        "/settings/profile/email/request.proto",
+        "/settings/profile/email/response.proto",
+        "/settings/profile/name/request.proto",
+        "/settings/profile/name/response.proto",
+        "/settings/profile/password/request.proto",
+        "/settings/profile/password/response.proto",
+        "/settings/profile/username/request.proto",
+        "/settings/profile/username/response.proto",
+        "/settings/profile/language/request.proto",
+        "/settings/profile/language/response.proto",
+        "/settings/profile/theme/request.proto",
+        "/settings/profile/theme/response.proto",
+        "/settings/profile/totp/request.proto",
+        "/settings/profile/totp/response.proto",
     ]);
-    generate_files_from_protobufs(prost_config, out_dir, protobuf_filename_vec, base_dir);
+    let filename_vec = &protobuf_location_vec
+        .into_iter()
+        .map(|location| base_dir.to_string() + location)
+        .collect::<Vec<String>>();
+    generate_files_from_protobufs(prost_config, out_dir, filename_vec, base_dir);
 }
 
 fn generate_files_from_protobufs(
     mut prost_config: prost_build::Config,
     out_dir: &str,
-    protobuf_filename_vec: &Vec<&str>,
-    protobuf_base_dir: &str,
+    filename_vec: &Vec<String>,
+    base_dir: &str,
 ) {
-    let proto_include_dirs: &[&str] = &[protobuf_base_dir];
-    let proto_files: &[&str] = protobuf_filename_vec;
+    let proto_include_dirs: &[&str] = &[base_dir];
+    let proto_files: &[String] = filename_vec;
     prost_config
         .compile_protos(proto_files, proto_include_dirs)
         .expect("Failed to compile protos");
@@ -72,7 +80,7 @@ fn generate_files_from_protobufs(
         .into_iter()
         .map(|file_path| {
             file_path
-                .strip_prefix(&format!("{}{}", protobuf_base_dir, "/"))
+                .strip_prefix(&format!("{}{}", base_dir, "/"))
                 .unwrap()
                 .replace(".proto", ".rs")
         })
@@ -119,8 +127,8 @@ fn create_dirs(path_root: &str, custom_vec: &Vec<&str>) {
     for folder in custom_vec[..custom_vec.len() - 1].iter() {
         path = path + folder;
         match fs::create_dir(Path::new(path_root).join(path.to_string())) {
-            Ok(_) => {},
-            Err(err) if err.kind() == ErrorKind::AlreadyExists => {},
+            Ok(_) => {}
+            Err(err) if err.kind() == ErrorKind::AlreadyExists => {}
             _ => panic!("unable to create file"),
         };
         path = path + "/";

@@ -180,8 +180,18 @@ impl User {
     //     self.totp.set_url(url);
     // }
 
-    pub fn check_totp(&mut self, digit1: u32, digit2: u32, digit3: u32, digit4: u32, digit5: u32, digit6: u32) -> bool {
-        let is_totp_correct = self.totp.verify(digit1, digit2, digit3, digit4, digit5, digit6);
+    pub fn check_totp(
+        &mut self,
+        digit1: u32,
+        digit2: u32,
+        digit3: u32,
+        digit4: u32,
+        digit5: u32,
+        digit6: u32,
+    ) -> bool {
+        let is_totp_correct = self
+            .totp
+            .verify(digit1, digit2, digit3, digit4, digit5, digit6);
         if is_totp_correct.is_ok() {
             return true;
         }
