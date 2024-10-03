@@ -68,7 +68,7 @@ def webpack_build():
     run_command(command, "")
 
 
-backend_protobuf_location = "../../Backend/protos"
+backend_protobuf_location = "../../../Interface/protos"
 frontend_protobuf_location = "./src/protos"
 
 file_pair_1 = {
