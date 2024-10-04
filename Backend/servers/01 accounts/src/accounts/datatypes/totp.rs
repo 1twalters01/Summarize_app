@@ -129,7 +129,6 @@ impl Totp {
             "{}{}{}{}{}{}",
             digit1, digit2, digit3, digit4, digit5, digit6
         );
-        // let totp = digit6 + 10*digit5 + 100*digit4 + 1000*digit3 + 10000*digit2 + 100000*digit1;
         let totp_check = self.generate_totp();
 
         if totp != totp_check {

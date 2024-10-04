@@ -23,6 +23,7 @@ async fn main() {
             .wrap(cors)
             .configure(ping::urls::config)
             .configure(settings::urls::config)
+            .configure(recommendations::urls::config)
     })
     .bind("127.0.0.1:8006")?
     .run()
