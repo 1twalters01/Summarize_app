@@ -6,30 +6,36 @@ use std::{
 
 fn main() {
     let out_dir = "src/generated/protos";
-    let base_dir = "../../protos";
+    let base_dir = "../../../Interface/protos";
     delete_rust_files_in_dir(out_dir).expect("error cleaning output directory");
 
     let mut prost_config = prost_build::Config::new();
     prost_config.out_dir(out_dir);
-    let protobuf_filename_vec: &Vec<&str> = &Vec::from([
+    let protobuf_location_vec: &Vec<&str> = &Vec::from([
+        "/recommendations/books/example/request.proto",
+        "/recommendations/books/example/response.proto",
     ]);
-    generate_files_from_protobufs(prost_config, out_dir, protobuf_filename_vec, base_dir);
+    let filename_vec = &protobuf_location_vec
+        .into_iter()
+        .map(|location| base_dir.to_string() + location)
+        .collect::<Vec<String>>();
+    generate_files_from_protobufs(prost_config, out_dir, filename_vec, base_dir);
 
-    prost_config = prost_build::Config::new();
-    prost_config.out_dir(out_dir);
-    let protobuf_filename_vec: &Vec<&str> = &Vec::from([
-    ]);
-    generate_files_from_protobufs(prost_config, out_dir, protobuf_filename_vec, base_dir);
+    // prost_config = prost_build::Config::new();
+    // prost_config.out_dir(out_dir);
+    // let protobuf_filename_vec: &Vec<&str> = &Vec::from([
+    // ]);
+    // generate_files_from_protobufs(prost_config, out_dir, protobuf_filename_vec, base_dir);
 }
 
 fn generate_files_from_protobufs(
     mut prost_config: prost_build::Config,
     out_dir: &str,
-    protobuf_filename_vec: &Vec<&str>,
-    protobuf_base_dir: &str,
+    filename_vec: &Vec<String>,
+    base_dir: &str,
 ) {
-    let proto_include_dirs: &[&str] = &[protobuf_base_dir];
-    let proto_files: &[&str] = protobuf_filename_vec;
+    let proto_include_dirs: &[&str] = &[base_dir];
+    let proto_files: &[String] = filename_vec;
     prost_config
         .compile_protos(proto_files, proto_include_dirs)
         .expect("Failed to compile protos");
@@ -38,7 +44,7 @@ fn generate_files_from_protobufs(
         .into_iter()
         .map(|file_path| {
             file_path
-                .strip_prefix(&format!("{}{}", protobuf_base_dir, "/"))
+                .strip_prefix(&format!("{}{}", base_dir, "/"))
                 .unwrap()
                 .replace(".proto", ".rs")
         })

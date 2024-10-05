@@ -6,10 +6,11 @@ pub mod recommendations;
 pub mod generated;
 pub mod middleware;
 pub mod ping;
-pub mod settings;
+// pub mod settings;
 pub mod utils;
 
-async fn main() {
+#[actix_web::main]
+async fn main() -> std::io::Result<()> {
     dotenv().ok();
     
     HttpServer::new(|| {
@@ -22,7 +23,7 @@ async fn main() {
         App::new()
             .wrap(cors)
             .configure(ping::urls::config)
-            .configure(settings::urls::config)
+            // .configure(settings::urls::config)
             .configure(recommendations::urls::config)
     })
     .bind("127.0.0.1:8006")?

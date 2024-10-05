@@ -1,3 +1,5 @@
+import json
+
 books_db = [
     {
         "id": "aaaa",
@@ -31,7 +33,7 @@ books_db = [
     },
 ]
 
-def get_recommendations(book_id, number_of_books=15, genre_level=10):
+def get_recommendations(book_id, genre_level=10, recommendation_number=15):
     book = next((book for book in books_db if book["id"] == book_id), None)
     if book == None:
         return []
@@ -43,13 +45,15 @@ def get_recommendations(book_id, number_of_books=15, genre_level=10):
         recommendations += [
             book for book in books_db if genre in book["genres"] and book["id"] != book_id and book not in recommendations
         ]
-    return recommendations[:number_of_books]
+    # replace json.dumps for a rust thing for speed?
+    return json.dumps(recommendations[:recommendation_number], indent=4)
 
-book_id = "dddd"
-number_of_books = 3
-genre_level = 3
-book = next((book for book in books_db if book["id"] == book_id), None)
-print(book)
-recommendations = get_recommendations(book_id, number_of_books, genre_level)
-import json
-print(json.dumps(recommendations, indent=4))
+if __name__ == "__main__":
+    book_id = "dddd"
+    genre_level = 3
+    recommendation_number = 3
+    book = next((book for book in books_db if book["id"] == book_id), None)
+    print(book)
+    recommendations = get_recommendations(book_id, genre_level, recommendation_number)
+    print(recommendations)
+    # print(json.dumps(recommendations, indent=4))
