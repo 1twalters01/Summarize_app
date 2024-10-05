@@ -1,3 +1,23 @@
+[ ] - Extremely basic examples
+    [x] - website
+    [x] - accounts
+    [x] - subscriptions
+    [ ] - data-scraper
+    [ ] - catalogues
+    [ ] - polyglot
+    [ ] - editor
+    [ ] - search
+    [ ] - reader
+    [ ] - history
+    [x] - recommendations
+    [ ] - notifications
+    [ ] - messages
+    [ ] - moderation
+    [ ] - analytics
+    [ ] - admin
+    [ ] - linux
+
+
 [ ] - Rough builds
     [x] - website
     [x] - accounts

@@ -91,9 +91,9 @@ fn create_dirs(path_root: &str, custom_vec: &Vec<&str>) {
     for folder in custom_vec[..custom_vec.len() - 1].iter() {
         path = path + folder;
         match fs::create_dir(Path::new(path_root).join(path.to_string())) {
-            Ok(_) => {},
-            Err(err) if err.kind() == ErrorKind::AlreadyExists => {},
-            _=> panic!("unable to create file"),
+            Ok(_) => {}
+            Err(err) if err.kind() == ErrorKind::AlreadyExists => {}
+            _ => panic!("unable to create file"),
         };
         path = path + "/";
     }
@@ -104,4 +104,3 @@ fn rename_file(dir: &str, generated_file: PathBuf, custom_file_path: &str) {
     let custom_file: PathBuf = Path::new(dir).join(custom_file_path);
     fs::rename(generated_file, custom_file).expect("failed to rename generated file");
 }
-

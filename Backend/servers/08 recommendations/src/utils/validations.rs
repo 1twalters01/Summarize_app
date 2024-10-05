@@ -13,7 +13,6 @@ pub fn validate_genre_level(genre_level: i32) -> Result<(), String> {
         true => return Ok(()),
         false => return Err("Number too large".to_string()),
     }
-    
 }
 pub fn validate_recommendation_number(recommendation_number: i32) -> Result<(), String> {
     match recommendation_number < 20 {

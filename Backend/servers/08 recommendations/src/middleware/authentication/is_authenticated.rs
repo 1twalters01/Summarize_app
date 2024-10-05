@@ -6,9 +6,8 @@ use actix_web::{
 };
 use futures_util::future::{ok, Ready};
 use jsonwebtoken::{decode, DecodingKey, TokenData, Validation};
-use std::{env, future::Future, pin::Pin, rc::Rc};
 use serde::{Deserialize, Serialize};
-
+use std::{env, future::Future, pin::Pin, rc::Rc};
 
 pub struct IsAuthenticated;
 

@@ -30,4 +30,3 @@ pub async fn ping_post_any_auth(data: Json<Message>) -> Result<impl Responder> {
         .content_type("application/json; charset=utf-8")
         .json(dual_message));
 }
-
