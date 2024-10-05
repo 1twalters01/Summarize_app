@@ -1,23 +1,6 @@
 # Summarise
 [Polyglot datatypes goes brr](https://github.com/1twalters01/Summarize_app/blob/main/Backend/polyglot/src/datatypes.rs)
 
-## Lanugages
-* Server:
-    * Rust - Actix
-* Website:
-    * HTML
-    * CSS - SCSS
-    * JS - SolidJS, JSDoc
-* Linux:
-    * C - GTK
-    * Lua
-* Android:
-    * Kotlin - Android SDK
-* iOS:
-    * Swift - XCode
-* Windows:
-    * C# - Windows Forms Apps
-
 ## Requirements
 * Book files
     * Accept various rich text formats
