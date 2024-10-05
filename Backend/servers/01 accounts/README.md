@@ -1,7 +1,14 @@
 Accounts microservice created purely in Rust.
 
+# Why Rust
+* A fast, smooth experience here is critical for first impressions
+* Will have a lot of throughput so low memory usage is desired
+* Has solid libraries and great web development frameworks
+* Is a very reusable piece of software so the time investment is worth it
+* No proprietary apis so there are no worries about rust support
+
 # Overview
-* A solution like clerk.js was not used due to costs.
+* Solutions like clerk.js will take all your money
 * Rust was chosen as it is a fast, efficient, lightweight language with solid libraries and great web devevelopment frameworks.
 * Actix_web is the framework of choice due to its strong async capabilities and speed.
 * Protobufs are used rather than json due to lower data size requirements to try and minimize costs.

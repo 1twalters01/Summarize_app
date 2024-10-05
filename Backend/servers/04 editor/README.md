@@ -1,7 +1,17 @@
-Editor microservice created in Rust.
+Editor microservice created purely in Rust.
+
+# Why Rust
+* A fast, smooth experience here is critical as it is a main section of the app
+* Will have a lot of throughput so low memory usage is desired
+* Requires systems level things such as retrieving binary data
+* No proprietary apis so there are no worries about rust support
 
 # Overview
-* uses my polyglot crate to convert files to and from structural data
+* Uses the polyglot app to convert files to and from structural data
+* Links summaries to books
+* Ensures that guidelines are met upon submission (piracy, explicit tag, etc.)
+* Allows muliple people to edit at the same time
+* Optional voice upload
 
 # Details
 * Store in a cache when document is being edited?
