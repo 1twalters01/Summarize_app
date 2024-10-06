@@ -23,6 +23,7 @@ Overview
 
 Details
 ########
-* Automatically and manually add, update, or delete book/author information
+* Admins can automatically and manually add, update, or delete book/author/genre/publisher/etc. information
+* Regular users can request to add or modify a book/author/genre/publisher
 * Update the database in the case of any schema changes
 * Uses the web_scraper app to get the information
