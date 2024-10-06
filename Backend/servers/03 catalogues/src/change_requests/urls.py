@@ -15,7 +15,6 @@ router.add_api_route("/change-request/accept/{:id}", post_accept_change_request,
 router.add_api_route("/change-requests/delete", post_delete_change_requests, methods=["POST"])
 router.add_api_route("/change-requests/delete/confirmation", post_delete_change_requests_confirmation, methods=["POST"])
 
-
 # Admin view change requests [GET]
 # Admin view specific change request [GET]
 # Admin modify specific change request [GET]

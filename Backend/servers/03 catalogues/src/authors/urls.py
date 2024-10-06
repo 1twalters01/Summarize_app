@@ -1,21 +1,23 @@
 from fastapi import APIRouter
-from .views.create_author import post_request_new_author, post_force_new_author
-from .views.modify_author import post_request_author_modification, post_force_author_modification
-from .views.delete_author import post_request_author_deletion, post_force_author_deletion
+from .views.create import post_request_author_creation, post_force_author_creation, post_force_author_creation_manually
+from .views.modify import post_request_author_modification, post_force_author_modification
+from .views.delete import post_request_author_deletion, post_force_author_deletion
 
 router = APIRouter()
 
-router.add_api_route("/author/request-new-author", post_request_new_author, methods=["POST"])
-router.add_api_route("/author/request-author-modification", post_request_author_modification, methods=["POST"])
-router.add_api_route("/author/request-author-deletion", post_request_author_deletion, methods=["POST"])
-router.add_api_route("/author/force-new-author", post_force_new_author, methods=["POST"])
-router.add_api_route("/author/force-author-modification", post_force_author_modification, methods=["POST"])
-router.add_api_route("/author/force-author-deletion", post_force_author_deletion, methods=["POST"])
+router.add_api_route("/author/request-creation", post_request_author_creation, methods=["POST"])
+router.add_api_route("/author/request-modification", post_request_author_modification, methods=["POST"])
+router.add_api_route("/author/request-deletion", post_request_author_deletion, methods=["POST"])
+router.add_api_route("/author/force-creation", post_force_author_creation, methods=["POST"])
+router.add_api_route("/author/force-creation/manually", post_force_author_creation_manually, methods=["POST"])
+router.add_api_route("/author/force-modification", post_force_author_modification, methods=["POST"])
+router.add_api_route("/author/force-deletion", post_force_author_deletion, methods=["POST"])
 
 # Request new Author to be added [POST]
 # Request Author information to be modified [POST]
 # Request Author information to be deleted [POST]
 # Admin add new Author [POST]
+# Admin add new Author manually [POST]
 # Admin modify Author information [POST]
 # Admin delete Author information [POST]
 # Admin view change requests [GET]
