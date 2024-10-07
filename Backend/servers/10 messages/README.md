@@ -1,4 +1,4 @@
-Notifications microservice created purely in Elixir.
+Notifications microservice created in Elixir and Erlang.
 
 # Why Elixir
 * 

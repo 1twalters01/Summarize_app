@@ -21,11 +21,12 @@ defmodule Messages.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:phoenix, "~> 1.7.14"}, # phoenix framework
-      {:telemetry_metrics, "~> 1.0"},  # Monitoring tools
+      {:phoenix, "~> 1.7.14"},
+      {:phoenix_pubsub, "~> 2.1"},
+      {:jason, "~> 1.4.4"},
+      {:plug_cowboy, "~> 2.7.2"},
+      {:telemetry_metrics, "~> 1.0"},
       {:telemetry_poller, "~> 1.0"},
-      {:jason, "~> 1.4.4"},   # JSON handling
-      {:plug_cowboy, "~> 2.7.2"}, # web framework
 
 
       # {:dep_from_hexpm, "~> 0.3.0"},
