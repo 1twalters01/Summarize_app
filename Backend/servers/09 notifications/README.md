@@ -4,7 +4,7 @@ Notifications microservice created purely in Elixir
 * 
 
 # Overview
-*
+* 
 
 # Details
-*
+* Email and Push notification settings
