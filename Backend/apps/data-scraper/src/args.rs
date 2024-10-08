@@ -17,6 +17,7 @@ pub struct ScraperArgs {
     pub database: SaveDatabase,
 }
 
+// continue by default
 #[derive(Debug, Subcommand)]
 pub enum ScrapeMode {
     ///
@@ -25,4 +26,3 @@ pub enum ScrapeMode {
     ///
     Continue,
 }
-
