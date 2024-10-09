@@ -8,13 +8,13 @@ pub struct ScraperArgs {
     pub scrape_mode: ScrapeMode,
 
     /// Save a binary file
-    pub binary: SaveBinary,
+    pub binary: bool,
     
     /// Save a json file
-    pub json: SaveJson,
+    pub json: bool,
 
     // Save to database
-    pub database: SaveDatabase,
+    pub database: bool,
 }
 
 // continue by default

@@ -3,7 +3,10 @@ use clap::Parser;
 
 mod args;
 mod data_types;
+mod processes;
 
+
+use processes::{continue_process, initialise_process};
 use args::{ScrapeMode, ScraperArgs};
 
 /* Normal mode
@@ -34,7 +37,8 @@ use args::{ScrapeMode, ScraperArgs};
    - Return the publisher, author, book and genre information
 */
 
-fn main() {
+#[tokio::main]
+async fn main() {
     dotenv().ok();
 
     let args = ScraperArgs::parse();
