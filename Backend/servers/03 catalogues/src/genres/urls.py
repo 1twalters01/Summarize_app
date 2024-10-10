@@ -12,13 +12,3 @@ router.add_api_route("/genre/force-creation", post_force_genre_creation, methods
 router.add_api_route("/genre/force-creation/manually", post_force_genre_creation_manually, methods=["POST"])
 router.add_api_route("/genre/force-modification", post_force_genre_modification, methods=["POST"])
 router.add_api_route("/genre/force-deletion", post_force_genre_deletion, methods=["POST"])
-
-# Request new Genre to be added [POST]
-# Request Genre information to be modified [POST]
-# Request Genre information to be deleted [POST]
-# Admin add new Genre [POST]
-# Admin add new Genre manually [POST]
-# Admin modify Genre information [POST]
-# Admin delete Genre information [POST]
-# Admin view change requests [GET]
-# Admin accept change requests (with posible modifications made) [POST]
