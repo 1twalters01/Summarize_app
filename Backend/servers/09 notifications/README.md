@@ -1,6 +1,9 @@
-Notifications microservice created purely in Elixir
+Notifications microservice created purely in Elixir and Gleam.
 
 # Why Elixir
+* 
+
+# Why Gleam
 * 
 
 # Overview
