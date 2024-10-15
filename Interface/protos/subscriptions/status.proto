@@ -1,0 +1,8 @@
+syntax = "proto3";
+
+package subscriptions.status;
+
+message Status {
+    string user_uuid = 1;
+}
+

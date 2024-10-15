@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package recommendations.books.example.request;
+
+message Request {
+    string book_id = 1;
+    int32 genre_level = 2;
+    int32 recommendation_number = 3;
+}

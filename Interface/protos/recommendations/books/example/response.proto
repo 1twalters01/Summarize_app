@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package recommendations.books.example.response;
+
+enum Error {
+    INVALID_CREDENTIALS = 0;
+    INVALID_BOOK_ID = 1;
+    INVALID_GENRE_LEVEL = 2;
+    INVALID_RECOMMENDATION_NUMBER = 3;
+    TOO_MANY_REQUESTS = 4;
+    SERVER_ERROR = 5;
+}
+
+message BookRecommendation {
+    string id = 1;
+    string title = 2;
+    repeated string authors = 3;
+    repeated string genres = 4;
+}
+
+message Success {
+    repeated BookRecommendation recommendations = 1;
+}
+
+message Response {
+    oneof response_field {
+        Error error = 1;
+        Success success = 2;
+    }
+}
