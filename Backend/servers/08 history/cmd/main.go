@@ -1,7 +1,7 @@
 package main
 
 import (
-    "github.com/gin-gonic/gin";
+    "github.com/gin-gonic/gin"
 )
 
 func main() {
@@ -11,5 +11,5 @@ func main() {
         c.String(200, "Hello World")
     })
 
-    r.Run(":8013")
+    r.Run(":8008")
 }
