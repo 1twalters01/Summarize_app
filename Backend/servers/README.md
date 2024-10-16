@@ -8,8 +8,8 @@
 * 06 reader - rust
 * 07 history - go
 * 08 recommendations - python/rust
-* 09 notifications - elixir
-* 10 messages - elixir
+* 09 notifications - elixir/gleam/rust
+* 10 messages - elixir/erlang/rust
 * 11 moderation - python
 * 12 analytics - python
 * 13 admin - go/python
