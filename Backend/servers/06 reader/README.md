@@ -16,7 +16,7 @@ Reader microservice created purely in Rust.
 
 # Details
 * Store in a cache when document is being edited?
-* saves the text and binary data as a (zipped?) folder
+* saves the text and binary data as a (zipped?) folder or markdown (whichever is smaller)
   * Saves it to S3?
   * rkyv crate to save binary
 * Each chapter/section is in its own folder
