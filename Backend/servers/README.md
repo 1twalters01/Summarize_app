@@ -2,7 +2,7 @@
 * 00 website - rust
 * 01 accounts - rust
 * 02 subscriptions - python
-* 03 catalogues - python/c
+* 03 catalogues - python/rust/c
 * 04 editor - rust
 * 05 search - java
 * 06 reader - rust
