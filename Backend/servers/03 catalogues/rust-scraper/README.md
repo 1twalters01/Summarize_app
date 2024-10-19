@@ -1,10 +1,3 @@
 Scraper build in Rust.
 
-# Why Rust
-*
-
-# Overview
-*
-
-# Details
-*
+# How to install
