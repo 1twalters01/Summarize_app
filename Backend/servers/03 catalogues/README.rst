@@ -1,4 +1,4 @@
-Microservice that managues all artist/book/genre data created in Python and C.
+Microservice that managues all artist/book/genre data created in Python, Rust and C.
 
 Why Python
 ###########
@@ -6,6 +6,12 @@ Why Python
 * Api speed is not a large issue
 * Ease to maintain is important as metadata structure may change
     * Being a dynamic language helps massively in this case
+
+Why Rust
+#########
+* Solid type system makes handling errors great
+* Great async capabilities
+* Easy to embed into python via maturin
 
 Why C
 ######
