@@ -11,8 +11,8 @@ def post_request_author_modification(request: Request):
     # return success
     pass
 
-def post_request_author_deletion_confirmation(request: Request):
-    # Confirm author deletion
+def post_request_author_modofication_confirmation(request: Request):
+    # Confirm author modification
 
     # Get user uuid
     # Retrieve author info from redis
