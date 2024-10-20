@@ -13,7 +13,7 @@ class DetailedBook(BaseModel):
     author: str
     genres: list[str]
 
-def post_request_book_creation():
+def post_request_book_creation(request: Request):
     # Request new Book to be added [POST]
 
     # Get user uuid
@@ -34,7 +34,7 @@ def post_request_book_creation():
     # return success
     pass
 
-def post_request_book_creation_confirmation(request: Request, book: Book):
+def post_request_book_creation_confirmation(request: Request):
     # Request new Author to be added [POST]
 
     # Get user uuid
@@ -77,7 +77,7 @@ def post_force_book_creation(request: Request, book: Book):
     # Return data about book to user
     pass
 
-def post_force_book_creation_confirmation():
+def post_force_book_creation_confirmation(request: Request):
     # Confirm that book scraped is correct [POST]
 
     # Get user uuid
@@ -106,7 +106,7 @@ def post_force_book_creation_manually(request: Request, book: DetailedBook):
     # Return data about book to user
     pass
 
-def post_force_book_creation_manually_confirmation(request: Request, book: Book):
+def post_force_book_creation_manually_confirmation(request: Request):
     # Confirm that Book information is correct
 
     # Get user uuid
