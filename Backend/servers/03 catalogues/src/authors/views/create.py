@@ -51,7 +51,7 @@ def post_request_author_creation_confirmation(request: Request):
     
     # if incorrect author then remove from database and return error?
     # Retrieve author info from redis
-    # Add user and author to request database
+    # Add user and author creation request to request database to be approved by admin
     # return success
     pass
 
@@ -118,7 +118,7 @@ def post_force_author_creation_manually(request: Request, author: DetailedAuthor
     # Return data about author to user
     pass
 
-def post_force_author_creation_manually_confirmation:
+def post_force_author_creation_manually_confirmation(request: Request):
     # Confirm that author information is correct
 
     # Get user uuid
@@ -134,6 +134,8 @@ def post_force_author_creation_manually_confirmation:
     decoded_jwt = jwt.decode(encoded_jwt, "secret", algorithms=["HS256"])
     user_uuid = decoded_jwt["sub"]
 
-    # if incorrect then remove
+    # if incorrect then remove and return deletion cancelled
     # Add author to database
+    # Add action and user_uuid to log
     # return success
+    pass
