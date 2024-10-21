@@ -7,5 +7,5 @@ app.include_router(ping_router)
 
 def application():
     if __name__ == "src.main":
-        print("ping: http://127.0.0.1:8012/ping/any_auth")
-        uvicorn.run(app, host="127.0.0.1", port=8012)
+        print("ping: http://127.0.0.1:8015/ping/any_auth")
+        uvicorn.run(app, host="127.0.0.1", port=8015)

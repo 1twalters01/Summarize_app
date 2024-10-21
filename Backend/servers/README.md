@@ -1,5 +1,4 @@
 # Languages
-* 00 website - rust
 * 01 accounts - rust
 * 02 subscriptions - python
 * 03 catalogues - python/rust/c
@@ -9,10 +8,13 @@
 * 07 libraries - go
 * 08 history - go
 * 09 recommendations - python/rust
-* 10 notifications - elixir/gleam/rust
-* 11 messages - elixir/erlang/rust
-* 12 moderation - python
-* 13 analytics - python
-* 14 admin - go/python
-* 15 linux - rust
-* 16 windows - rust
+* 10 collaboration - elixir
+* 11 notifications - elixir/gleam/rust
+* 12 messages - elixir/erlang/rust
+* 13 moderation - python
+* 14 analytics - python
+* 15 admin - go/python
+* 80 website - rust
+* 81 linux - rust
+* 82 windows - rust
+* 83 ios - rust
