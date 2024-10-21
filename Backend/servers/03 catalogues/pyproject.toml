@@ -5,6 +5,9 @@ description = ""
 authors = ["1twalters01 <1twalters01@gmail.com>"]
 readme = "README.md"
 
+[tool.poetry.scripts]
+run = "src.main:application"
+
 [tool.poetry.dependencies]
 python = "^3.12"
 fastapi = "^0.112.1"

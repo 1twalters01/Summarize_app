@@ -1,16 +1,17 @@
-from fastapi import Request, status, retrieve_status
+from fastapi import Request, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
+import jwt
 
-class Author(BaseModel):
-    id: str # uuid?
+class Book(BaseModel):
+    id: str
     reason: str
 
-def post_request_author_deletion(request: Request, author: Author):
-    # Request Author information to be deleted [POST]
+async def post_request_book_deletion(request: Request, book: Book):
+    # Request Book information to be deleted [POST]
 
     # Get user uuid
-    bearer: str|None = Request.headers.get("bearer_token")
+    bearer: str|None = request.headers.get("bearer_token")
     if bearer == None:
         response = {"error", "no token"}
         return JSONResponse(
@@ -22,16 +23,16 @@ def post_request_author_deletion(request: Request, author: Author):
     decoded_jwt = jwt.decode(encoded_jwt, "secret", algorithms=["HS256"])
     user_uuid = decoded_jwt["sub"]
 
-    # Check that author id is valid
-    # save key: uuid, value: author id
+    # Check that book id is valid
+    # save key: user_uuid, value: book id
     # return success
     pass
 
-def post_request_author_deletion_confirmation(request: Request):
-    # Confirm author deletion
+async def post_request_book_deletion_confirmation(request: Request):
+    # Confirm book deletion
 
     # Get user uuid
-    bearer: str|None = Request.headers.get("bearer_token")
+    bearer: str|None = request.headers.get("bearer_token")
     if bearer == None:
         response = {"error", "no token"}
         return JSONResponse(
@@ -43,16 +44,16 @@ def post_request_author_deletion_confirmation(request: Request):
     decoded_jwt = jwt.decode(encoded_jwt, "secret", algorithms=["HS256"])
     user_uuid = decoded_jwt["sub"]
 
-    # Retrieve author info from redis
-    # Add user and author deletion request to request database for admin to approve
+    # Retrieve book info from redis
+    # Add user and book deletion request to request database for admin to approve
     # return success
     pass
 
-def post_force_author_deletion(request: Request, author: Author):
-    # Admin delete Author information [POST]
+async def post_force_book_deletion(request: Request, book: Book):
+    # Admin delete Book information [POST]
 
     # Get user uuid
-    bearer: str|None = Request.headers.get("bearer_token")
+    bearer: str|None = request.headers.get("bearer_token")
     if bearer == None:
         response = {"error", "no token"}
         return JSONResponse(
@@ -63,17 +64,17 @@ def post_force_author_deletion(request: Request, author: Author):
     encoded_jwt = bearer[:7]
     decoded_jwt = jwt.decode(encoded_jwt, "secret", algorithms=["HS256"])
     user_uuid = decoded_jwt["sub"]
-
+    
     # Check if user is admin
-    # save key: uuid, value: author id
+    # save key: uuid, value: book id
     # return success
     pass
 
-def post_foce_author_deletion_confirmation(request: Request):
+async def post_force_book_deletion_confirmation(request: Request):
     # Confirmation for admin delete post
 
     # Get user uuid
-    bearer: str|None = Request.headers.get("bearer_token")
+    bearer: str|None = request.headers.get("bearer_token")
     if bearer == None:
         response = {"error", "no token"}
         return JSONResponse(
@@ -86,7 +87,7 @@ def post_foce_author_deletion_confirmation(request: Request):
     user_uuid = decoded_jwt["sub"]
 
     # if rejected then delete from redis and return deletion cancelled
-    # remove author from database
+    # remove book from database
     # Add action and user_uuid to log
     # return success
     pass
