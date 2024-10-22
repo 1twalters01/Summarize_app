@@ -15,7 +15,7 @@ async fn main() -> std::io::Result<()> {
             .route("/update/check", post().to(updates::validations::views::check))
             .route("/update/validate", get().to(updates::validations::views::validate))
     })
-    .bind("127.0.0.1:8016")?
+    .bind("127.0.0.1:8083")?
     .run()
     .await
 }

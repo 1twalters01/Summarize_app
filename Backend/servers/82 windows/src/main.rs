@@ -12,7 +12,7 @@ async fn main() -> std::io::Result<()> {
         let website_dir: String = env::var("WEBSITE_DIR").unwrap();
 
     })
-    .bind("127.0.0.1:8015")?
+    .bind("127.0.0.1:8082")?
     .run()
     .await
 }

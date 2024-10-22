@@ -23,7 +23,7 @@ async fn main() -> std::io::Result<()> {
             .route("update/lua/push", post().to(updates::lua::views::post_push))
             .route("update/c/push", post().to(updates::c::views::post_push))
     })
-    .bind("127.0.0.1:8014")?
+    .bind("127.0.0.1:8081")?
     .run()
     .await
 }

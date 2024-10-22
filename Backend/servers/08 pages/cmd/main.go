@@ -1,15 +1,15 @@
 package main
 
 import (
-    "github.com/gin-gonic/gin";
+    "github.com/gin-gonic/gin"
 )
 
 func main() {
     r := gin.Default()
 
-    r.GET("/", func(c *gin.Context) {
+    r.GET("/", func(c*gin.Context) {
         c.String(200, "Hello World")
     })
 
-    r.Run(":8013")
+    r.Run(":8008")
 }
