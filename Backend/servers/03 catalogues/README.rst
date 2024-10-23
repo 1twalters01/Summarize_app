@@ -1,5 +1,7 @@
 Microservice that managues all artist/book/genre data created in Python, Rust and C.
 
+Move change request stuff to admin microservice?
+
 Why Python
 ###########
 * Is going to be used less and less over time so load is going to be low
