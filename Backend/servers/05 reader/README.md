@@ -14,7 +14,7 @@ Reader microservice created purely in Rust.
 * Optionally sync where user got to
     * Can opt out on a per book basis
 * Highlight (and choose colours)
-  * Add notes to highlighted areas
+* Add notes/audio/pictures (to highlighted areas)
 
 # Details
 * Store in a cache when document is being edited?

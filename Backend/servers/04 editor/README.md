@@ -19,5 +19,10 @@ Editor microservice created purely in Rust.
   * Structure
     * Each chapter/section is in its own folder
     * Each paragraph is in its own folder
+    * So Vec<Paragraph> (Chapter<Paragraph>)
 * Store in a cache when document is being edited?
 * Get document from cache or database
+* Git-like change log upon being published between changes
+* Choose if others can choose versions and which ones
+  * Limit number of saved versions
+  

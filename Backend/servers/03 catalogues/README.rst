@@ -15,12 +15,6 @@ Why Rust
 * Great async capabilities
 * Easy to embed into python via maturin
 
-Why C
-######
-* Is used for doing things that would be slow in python
-* Is extremely easy to embed into python
-* Very high speed and low memory usage
-
 Overview
 #########
 * Manages the catalogue of books/authors/genres available
