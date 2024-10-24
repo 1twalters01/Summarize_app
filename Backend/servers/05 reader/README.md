@@ -13,6 +13,8 @@ Reader microservice created purely in Rust.
 * Voiced reading if summary has it
 * Optionally sync where user got to
     * Can opt out on a per book basis
+* Highlight (and choose colours)
+  * Add notes to highlighted areas
 
 # Details
 * Store in a cache when document is being edited?

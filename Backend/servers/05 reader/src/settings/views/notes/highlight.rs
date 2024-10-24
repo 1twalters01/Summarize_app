@@ -1,0 +1,1 @@
+// different highlight types to set colours/fonts to, e.g. quote, idea, custom
