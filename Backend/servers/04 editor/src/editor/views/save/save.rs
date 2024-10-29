@@ -2,7 +2,7 @@ use actix_protobuf::{ProtoBuf, ProtoBufResponseBuilder};
 use actix_web::{HttpResponse, Responder, Result};
 
 // Save summary changes
-pub async fn post_save() {
+pub async fn post_save(data: ProtoBuf<Request>) -> Result<impl Responder> {
     // get request variables
     let Request { summary } = data.0;
 

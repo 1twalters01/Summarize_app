@@ -1,0 +1,1 @@
+// Get/set line/word if possible (from ruler and audio)

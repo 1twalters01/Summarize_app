@@ -2,7 +2,7 @@ use actix_protobuf::{ProtoBuf, ProtoBufResponseBuilder};
 use actix_web::{HttpResponse, Responder, Result};
 
 // Get Chapter being worked on
-pub async fn post_retrieve_chapter(data: Protobuf<Request>) {
+pub async fn post_retrieve_chapter(data: Protobuf<Request>) -> Result<impl Responder> {
     // get request variables
     let Request { summary_id, chapter_id } = data.0;
 

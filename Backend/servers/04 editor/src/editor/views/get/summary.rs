@@ -2,7 +2,7 @@ use actix_protobuf::{ProtoBuf, ProtoBufResponseBuilder};
 use actix_web::{HttpResponse, Responder, Result};
 
 // Get summary data
-pub async fn post_retrieve_summary(data: Protobuf<Request>) {
+pub async fn post_retrieve_summary(data: Protobuf<Request>) -> Result<impl Responder> {
     // get request variables
     let Request { summary_id } = data.0;
 

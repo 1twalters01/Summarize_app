@@ -1,0 +1,1 @@
+// prefered syntax for editor (md, rst, ect.)
