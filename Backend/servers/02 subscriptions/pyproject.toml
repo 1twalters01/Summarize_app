@@ -6,7 +6,7 @@ authors = ["1twalters01 <1twalters01@gmail.com>"]
 readme = "README.rst"
 
 [tool.poetry.scripts]
-run = "src.main:application"
+run = "src.main:main"
 build = "build:main"
 
 [tool.poetry.dependencies]
@@ -26,6 +26,9 @@ protobuf = "^5.28.2"
 [tool.poetry.group.dev.dependencies]
 black = "^24.8.0"
 pytest = "^8.3.2"
+
+[[tool.poetry.packages]]
+include = "src"
 
 [build-system]
 requires = ["poetry-core"]

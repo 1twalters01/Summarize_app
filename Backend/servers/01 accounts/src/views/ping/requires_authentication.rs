@@ -1,6 +1,6 @@
 use crate::{
     accounts::schema::auth::Claims,
-    ping::datatypes::{DualMessage, Message},
+    datatypes::ping_message::{DualMessage, Message},
 };
 use actix_web::{web::Json, HttpMessage, HttpRequest, HttpResponse, Responder, Result};
 
@@ -36,14 +36,15 @@ pub async fn ping_post_only_auth(data: Json<Message>) -> Result<impl Responder> 
 
 #[cfg(test)]
 mod tests {
+    use super::*;
     use actix_web::{test, web, App};
     use dotenv::dotenv;
     use serde_json::json;
 
     use crate::{
-        accounts::{datatypes::users::User, schema::auth::AccessToken},
+        models::user::User,
+        accounts::schema::auth::AccessToken,
         middleware,
-        ping::routes::requires_authentication::*,
     };
 
     #[actix_web::test]

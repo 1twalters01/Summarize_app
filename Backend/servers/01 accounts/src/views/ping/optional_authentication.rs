@@ -1,4 +1,4 @@
-use crate::ping::datatypes::{DualMessage, Message};
+use crate::datatypes::ping_message::{DualMessage, Message};
 use actix_web::{web::Json, HttpResponse, Responder, Result};
 
 /// A get route function that has no authentication requirements for the user
@@ -33,12 +33,13 @@ pub async fn ping_post_any_auth(data: Json<Message>) -> Result<impl Responder> {
 
 #[cfg(test)]
 mod tests {
-    use actix_web::{test, web, App};
+    use super::*;
     use serde_json::json;
+    use actix_web::{test, web, App};
 
     use crate::{
-        accounts::{datatypes::users::User, schema::auth::AccessToken},
-        ping::routes::optional_authentication::*,
+        models::user::User,
+        accounts::schema::auth::AccessToken,
     };
 
     #[actix_web::test]
@@ -186,3 +187,4 @@ mod tests {
         );
     }
 }
+

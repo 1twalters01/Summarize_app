@@ -1,9 +1,13 @@
 import requests
+from dotenv import load_dotenv
+import os
 
+load_dotenv()
 
 def get_access_token():
-    client_id = settings.PAYPAL_CLIENT_ID  # from env
-    secret_id = settings.PAYPAL_SECRET_KEY  # from env
+    client_id = str(os.getenv("PAYPAL_CLIENT_ID"))  # from env
+    secret_id = str(os.getenv("PAYPAL_SECRET_KEY"))  # from env
+
     user = (client_id, secret_id)
 
     url = "https://api-m.sandbox.paypal.com/v1/oauth2/token"

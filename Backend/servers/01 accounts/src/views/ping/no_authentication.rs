@@ -1,4 +1,4 @@
-use crate::ping::datatypes::{DualMessage, Message};
+use crate::datatypes::ping_message::{DualMessage, Message};
 use actix_web::{web::Json, HttpResponse, Responder, Result};
 
 /// A get route function that requires the user to be unauthenticated
@@ -31,13 +31,14 @@ pub async fn ping_post_not_auth(data: Json<Message>) -> Result<impl Responder> {
 
 #[cfg(test)]
 mod tests {
-    use actix_web::{test, web, App};
+    use super::*;
     use serde_json::json;
+    use actix_web::{test, web, App};
 
     use crate::{
-        accounts::{datatypes::users::User, schema::auth::AccessToken},
+        models::user::User,
+        accounts::schema::auth::AccessToken,
         middleware,
-        ping::routes::no_authentication::*,
     };
 
     #[actix_web::test]

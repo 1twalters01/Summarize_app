@@ -1,8 +1,6 @@
 use actix_web::{web::Json, HttpResponse, Responder, Result};
 // use actix_protobuf::{ProtoBuf, ProtoBufResponseBuilder};
 
-// mod request {include!(concat!(env!("OUT_DIR"), "/accounts/login/email/request.rs"));}
-// mod response {include!(concat!(env!("OUT_DIR"), "/accounts/login/email/response.rs"));}
 
 use crate::{
     queries::postgres::user::get::from_refresh_token,

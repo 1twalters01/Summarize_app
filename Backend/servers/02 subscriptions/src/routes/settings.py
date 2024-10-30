@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from .views.premium import get_premium_status
+from src.views.settings.premium import get_premium_status
 
 router = APIRouter()
 
