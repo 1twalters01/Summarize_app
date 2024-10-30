@@ -12,6 +12,8 @@ uvicorn = "^0.31.0"
 python-dotenv = "^1.0.1"
 sqlalchemy = "^2.0.35"
 psycopg2-binary = "^2.9.9"
+protobuf = "^5.28.3"
+pyjwt = "^2.9.0"
 
 
 [tool.poetry.group.dev.dependencies]
