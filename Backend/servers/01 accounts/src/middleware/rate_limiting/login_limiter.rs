@@ -11,7 +11,10 @@ use std::{
 };
 use tokio::time::sleep;
 
-use crate::utils::database_connections::{create_redis_client_connection, set_key_value_in_redis};
+use crate::{
+    utils::database_connections::create_redis_client_connection,
+    queries::redis::general::set_key_value_in_redis,
+};
 use redis::{Commands, Connection, ErrorKind, RedisResult};
 
 struct RateLimiter;
