@@ -1,0 +1,1 @@
+// delete list of summarizers from go via their uuid

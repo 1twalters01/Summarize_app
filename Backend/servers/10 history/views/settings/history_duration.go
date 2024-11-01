@@ -1,0 +1,1 @@
+// duration of history to be shared (infinite or up to x days back)

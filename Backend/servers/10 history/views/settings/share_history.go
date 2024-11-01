@@ -1,0 +1,1 @@
+// keep history list private, friends only or open to all and type to be shared

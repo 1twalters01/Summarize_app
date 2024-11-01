@@ -1,0 +1,1 @@
+// delete list of uuids from history

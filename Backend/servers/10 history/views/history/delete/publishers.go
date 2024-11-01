@@ -1,0 +1,1 @@
+// delete list of publishers from go via their uuid in the history
