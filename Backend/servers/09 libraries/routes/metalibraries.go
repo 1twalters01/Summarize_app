@@ -1,8 +1,7 @@
 // Create library
 
-// Delete library
-
-// Confirm delete library
+// Delete libraries
+// Confirm delete libraries
 
 // Modify library
 
