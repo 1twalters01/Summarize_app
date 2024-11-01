@@ -11,22 +11,8 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(|| {
         let website_dir: String = env::var("WEBSITE_DIR").unwrap();
         App::new()
-            .route("/favicon.ico", get().to(utils::routes::favicon_ico))
-            .route("/main.js", get().to(utils::routes::main_js))
-            .route("/", get().to(utils::routes::main_html))
-            .route("{param:.*[^.bundle.js]}", get().to(utils::routes::main_html))
-            .service(files::Files::new("", format!("{}/dist/main/javascript", website_dir)))
-            .default_service(
-                route().to(|| async {
-                    let website_dir: String = env::var("WEBSITE_DIR").unwrap();
-                    let path: PathBuf = format!("{}/dist/main/index.html", website_dir).into();
-                    let data = Bytes::from(fs::read(&path).unwrap());
-
-                    HttpResponse::Ok()
-                        .content_type("text/html; charset=UTF-8")
-                        .body(data)
-                })
-            )
+            .configure(routes::ping::config)
+            .configure(routes::website::config)
     })
     .bind("127.0.0.1:8000")?
     .run()
