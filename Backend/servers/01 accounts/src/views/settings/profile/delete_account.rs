@@ -2,9 +2,7 @@ use uuid::Uuid;
 use crate::{
     queries::postgres::user::delete::from_uuid,
     models::user::User,
-    accounts::{
-        schema::auth::Claims,
-    },
+    datatypes::auth::Claims,
     generated::protos::settings::profile::confirmation::{
         response as confirmation_response, Error as PasswordError, Request as PasswordRequest,
         Response as PasswordResponse, Success as PasswordSuccess,

@@ -10,9 +10,9 @@ use crate::{
         },
     },
     models::user::User,
-    datatypes::token_object::UserRememberMe,
-    accounts::{
-        schema::auth::AuthTokens,
+    datatypes::{
+        token_object::UserRememberMe,
+        auth::AuthTokens,
     },
     generated::protos::accounts::{
         auth_tokens,
@@ -24,9 +24,7 @@ use crate::{
         },
     },
     utils::{
-        database_connections::{
-            create_redis_client_connection,
-        },
+        database_connections::create_redis_client_connection,
         tokens::generate_opaque_token_of_length,
         validations::validate_password,
     },
@@ -192,19 +190,11 @@ mod tests {
     use dotenv::dotenv;
     use prost::Message;
     use std::env;
+    use super::*;
 
     use crate::{
-        accounts::{
-            datatypes::users::User,
-            schema::auth::AccessToken,
-            views::login::{
-                email::post_email,
-                password::{
-                    post_password, Error, Request, Response, ResponseField, Success, Token,
-                    TokenField,
-                },
-            },
-        },
+        datatypes::auth::{AccessToken, Claims},
+        views::accounts::login::email::post_email,
         generated::protos::accounts::{
             auth_tokens::AuthTokens,
             login::email::{
@@ -305,7 +295,7 @@ mod tests {
                             let decoding_key =
                                 jsonwebtoken::DecodingKey::from_secret(secret.as_ref());
                             let decoded = jsonwebtoken::decode::<
-                                crate::accounts::schema::auth::Claims,
+                                Claims,
                             >(
                                 &access, &decoding_key, &validation
                             );
@@ -418,7 +408,7 @@ mod tests {
                             let decoding_key =
                                 jsonwebtoken::DecodingKey::from_secret(secret.as_ref());
                             let decoded = jsonwebtoken::decode::<
-                                crate::accounts::schema::auth::Claims,
+                                crate::datatypes::auth::Claims,
                             >(
                                 &access, &decoding_key, &validation
                             );

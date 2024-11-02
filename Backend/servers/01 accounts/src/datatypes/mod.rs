@@ -1,2 +1,3 @@
 pub mod token_object;
-pub mod ping_message;
+pub mod ping;
+pub mod auth;

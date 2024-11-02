@@ -7,9 +7,7 @@ use crate::{
         general::delete_key_in_redis,
     },
     models::user::User,
-    accounts::{
-        schema::auth::AuthTokens,
-    },
+    datatypes::auth::AuthTokens,
     generated::protos::accounts::{
         auth_tokens,
         login::totp::{

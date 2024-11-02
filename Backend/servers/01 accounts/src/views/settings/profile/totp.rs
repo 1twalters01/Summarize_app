@@ -1,6 +1,6 @@
 use crate::{
     models::{user::User, totp::Totp},
-    accounts::schema::auth::Claims,
+    datatypes::auth::Claims,
     queries::redis::general::set_key_value_in_redis,
     generated::protos::settings::profile::{
         confirmation::{

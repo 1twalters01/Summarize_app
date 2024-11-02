@@ -1,6 +1,6 @@
 use crate::{
     models::user::User,
-    accounts::schema::auth::Claims,
+    datatypes::auth::Claims,
     generated::protos::settings::profile::theme::{
         request::{request::RequestField, Colour, Colours, Custom, Presets, Request},
         response::{response, Error, Response, Success},

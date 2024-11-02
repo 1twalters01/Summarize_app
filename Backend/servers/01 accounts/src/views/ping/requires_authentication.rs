@@ -1,6 +1,6 @@
 use crate::{
-    accounts::schema::auth::Claims,
-    datatypes::ping_message::{DualMessage, Message},
+    datatypes::auth::Claims,
+    datatypes::ping::{DualMessage, Message},
 };
 use actix_web::{web::Json, HttpMessage, HttpRequest, HttpResponse, Responder, Result};
 
@@ -43,7 +43,7 @@ mod tests {
 
     use crate::{
         models::user::User,
-        accounts::schema::auth::AccessToken,
+        datatypes::auth::AccessToken,
         middleware,
     };
 

@@ -8,7 +8,7 @@ use futures_util::future::{ok, Ready};
 use jsonwebtoken::{decode, DecodingKey, TokenData, Validation};
 use std::{env, future::Future, pin::Pin, rc::Rc};
 
-use crate::accounts::schema::auth::Claims;
+use crate::datatypes::auth::Claims;
 
 pub struct NotAuthenticated;
 

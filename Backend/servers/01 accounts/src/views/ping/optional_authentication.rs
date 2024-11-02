@@ -1,4 +1,4 @@
-use crate::datatypes::ping_message::{DualMessage, Message};
+use crate::datatypes::ping::{DualMessage, Message};
 use actix_web::{web::Json, HttpResponse, Responder, Result};
 
 /// A get route function that has no authentication requirements for the user
@@ -39,7 +39,7 @@ mod tests {
 
     use crate::{
         models::user::User,
-        accounts::schema::auth::AccessToken,
+        datatypes::auth::AccessToken,
     };
 
     #[actix_web::test]

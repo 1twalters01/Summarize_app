@@ -4,7 +4,7 @@ use crate::{
         redis::general::set_key_value_in_redis,
     },
     models::{password::Password, user::User},
-    accounts::schema::auth::Claims,
+    datatypes::auth::Claims,
     generated::protos::settings::profile::{
         confirmation::{
             response as confirmation_response, Error as PasswordError, Request as PasswordRequest,

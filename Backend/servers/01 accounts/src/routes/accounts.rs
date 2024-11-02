@@ -28,7 +28,7 @@ pub fn config(cfg: &mut ServiceConfig) {
                 post().to(accounts::login::password::post_password),
             )
             .route("/totp", post().to(accounts::login::totp::post_totp))
-            .route("/refresh-token", post().to(accounts::refresh::refresh_token)),
+            // .route("/refresh-token", post().to(accounts::refresh::refresh_token)),
     )
     .service(
         scope("/password-reset")
@@ -49,18 +49,18 @@ pub fn config(cfg: &mut ServiceConfig) {
                 "/password",
                 post().to(accounts::password_reset::password::post_password_reset),
             ),
-    )
-    .service(
-        scope("/captcha")
-            .route("/get", get().to(accounts::captcha::get_captcha))
-            .route("/verify", post().to(accounts::captcha::verify_captcha)),
-    )
-    .service(
-        scope("/oauth2")
-            .wrap(middleware::authentication::not_authenticated::NotAuthenticated)
-            // make google oauth account be the same as logging in regularly if using a gmail
-            .route("/authorise", post().to(accounts::oauth2::authorise))
-            .route("/callback", post().to(accounts::oauth2::callback))
-            .route("/refresh-token", post().to(accounts::oauth2::refresh_token)),
     );
+    // .service(
+    //     scope("/captcha")
+    //         .route("/get", get().to(accounts::captcha::get_captcha))
+    //         .route("/verify", post().to(accounts::captcha::verify_captcha)),
+    // )
+    // .service(
+    //     scope("/oauth2")
+    //         .wrap(middleware::authentication::not_authenticated::NotAuthenticated)
+    //         // make google oauth account be the same as logging in regularly if using a gmail
+    //         .route("/authorise", post().to(accounts::oauth2::authorise))
+    //         .route("/callback", post().to(accounts::oauth2::callback))
+    //         .route("/refresh-token", post().to(accounts::oauth2::refresh_token)),
+    // );
 }

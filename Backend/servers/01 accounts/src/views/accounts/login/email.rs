@@ -104,13 +104,10 @@ mod tests {
     use std::env;
 
     use crate::{
-        accounts::{
-            datatypes::users::User,
-            schema::auth::AccessToken,
-            views::login::email::{post_email, Error, Request, Response, ResponseField},
-        },
+        datatypes::auth::AccessToken,
         middleware,
     };
+    use super::*;
 
     #[actix_web::test]
     async fn test_post_known_email_while_not_authenticated() {
