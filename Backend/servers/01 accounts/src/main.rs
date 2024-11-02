@@ -11,7 +11,6 @@ pub mod datatypes;
 
 pub mod accounts;
 pub mod middleware;
-pub mod ping;
 pub mod utils;
 
 #[actix_web::main]

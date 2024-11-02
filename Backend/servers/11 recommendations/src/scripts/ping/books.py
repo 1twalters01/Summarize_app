@@ -45,10 +45,11 @@ def get_recommendations(book_id, genre_level=10, recommendation_number=15):
         recommendations += [
             book for book in books_db if genre in book["genres"] and book["id"] != book_id and book not in recommendations
         ]
+    # recommendations[:recommendation_number]
     return json.dumps(recommendations[:recommendation_number], indent=4)
 
 if __name__ == "__main__":
-    book_id = "dddd"
+    book_id = "2a9089f2-01c9-4f97-8f3e-69e3a5fcd04d"
     genre_level = 3
     recommendation_number = 3
     book = next((book for book in books_db if book["id"] == book_id), None)

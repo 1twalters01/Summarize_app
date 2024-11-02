@@ -3,20 +3,12 @@ use crate::{
         request::Request,
         response::{response::ResponseField, BookRecommendation, Error, Response, Success},
     },
+    datatypes::ping::Recommendation,
+    services::ping::get::recommendations,
     utils::validations::{validate_book_id, validate_genre_level, validate_recommendation_number},
 };
 use actix_protobuf::{ProtoBuf, ProtoBufResponseBuilder};
 use actix_web::{HttpResponse, Responder, Result};
-use pyo3::prelude::*;
-use serde::Deserialize;
-
-#[derive(Debug, Deserialize)]
-pub struct Recommendation {
-    pub id: String,
-    pub title: String,
-    pub authors: Vec<String>,
-    pub genres: Vec<String>,
-}
 
 pub async fn post_book_id(data: ProtoBuf<Request>) -> Result<impl Responder> {
     // get request variables
@@ -61,7 +53,8 @@ pub async fn post_book_id(data: ProtoBuf<Request>) -> Result<impl Responder> {
     }
 
     let recommendations: Result<Vec<BookRecommendation>, ()> =
-        get_recommendations(book_id, genre_level, recommendation_number);
+        get::recommendations::books(book_id, genre_level, recommendation_number);
+
     match recommendations {
         Ok(recommendations) => {
             let response: Response = Response {
@@ -83,53 +76,6 @@ pub async fn post_book_id(data: ProtoBuf<Request>) -> Result<impl Responder> {
     }
 }
 
-pub fn get_recommendations(
-    book_id: String,
-    genre_level: i32,
-    recommendation_number: i32,
-) -> Result<Vec<BookRecommendation>, ()> {
-    pyo3::prepare_freethreaded_python();
-
-    let py_code = include_str!(concat!(
-        env!("CARGO_MANIFEST_DIR"),
-        "/src/recommendations/algorithms/books/example.py"
-    ));
-
-    return Python::with_gil(|py| {
-        let py_engine = PyModule::from_code_bound(
-            py,
-            py_code,
-            "recommendations.algorithms.books.example",
-            "recommendations.algorithms.books.example",
-        )
-        .map_err(|err| format!("Failed to import Python module: {:?}", err))
-        .unwrap();
-
-        let py_fun = py_engine
-            .getattr("get_recommendations")
-            .map_err(|err| format!("Failed to get Python Function: {:?}", err))
-            .unwrap();
-
-        let py_recommendations = py_fun
-            .call1((book_id, genre_level, recommendation_number))
-            .map_err(|err| format!("Python function call failed: {:?}", err))
-            .unwrap()
-            .to_string();
-
-        let books: Vec<Recommendation> = serde_json::from_str(&py_recommendations).unwrap();
-        let recommendations = books
-            .into_iter()
-            .map(|recommendation| BookRecommendation {
-                id: recommendation.id,
-                title: recommendation.title,
-                authors: recommendation.authors,
-                genres: recommendation.genres,
-            })
-            .collect::<Vec<BookRecommendation>>();
-        Ok::<Vec<BookRecommendation>, ()>(recommendations)
-    });
-}
-
 #[cfg(test)]
 mod tests {
     use actix_web::{test, web, App};
@@ -145,7 +91,7 @@ mod tests {
     #[actix_web::test]
     async fn test_invalid() {
         let mut app = test::init_service(App::new().service(
-            web::scope("/recommendations").route("/example", web::post().to(post_book_id)),
+            web::scope("/ping").route("/post_books", web::post().to(post_book_id)),
         ))
         .await;
 
@@ -162,7 +108,7 @@ mod tests {
         req_message.encode(&mut request_buffer).unwrap();
 
         let request = test::TestRequest::post()
-            .uri("/recommendations/example")
+            .uri("/ping/post_books")
             .append_header(("Content-Type", "application/protobuf"))
             .set_payload(Bytes::from(request_buffer))
             .to_request();
