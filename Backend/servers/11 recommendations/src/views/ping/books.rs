@@ -3,7 +3,6 @@ use crate::{
         request::Request,
         response::{response::ResponseField, BookRecommendation, Error, Response, Success},
     },
-    datatypes::ping::Recommendation,
     services::ping::get::recommendations,
     utils::validations::{validate_book_id, validate_genre_level, validate_recommendation_number},
 };
@@ -52,10 +51,10 @@ pub async fn post_book_id(data: ProtoBuf<Request>) -> Result<impl Responder> {
             .protobuf(response));
     }
 
-    let recommendations: Result<Vec<BookRecommendation>, ()> =
-        get::recommendations::books(book_id, genre_level, recommendation_number);
+    let book_recommendations: Result<Vec<BookRecommendation>, ()> =
+        recommendations::books(book_id, genre_level, recommendation_number);
 
-    match recommendations {
+    match book_recommendations {
         Ok(recommendations) => {
             let response: Response = Response {
                 response_field: Some(ResponseField::Success(Success { recommendations })),

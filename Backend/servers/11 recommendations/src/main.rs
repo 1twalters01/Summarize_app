@@ -6,6 +6,7 @@ pub mod generated;
 pub mod routes;
 pub mod queries;
 pub mod views;
+pub mod services;
 pub mod models;
 pub mod datatypes;
 pub mod middleware;
@@ -28,7 +29,7 @@ async fn main() -> std::io::Result<()> {
             // .configure(routes::settings::config)
             // .configure(routes::recommendations::config)
     })
-    .bind("127.0.0.1:80011")?
+    .bind("127.0.0.1:8011")?
     .run()
     .await
 }

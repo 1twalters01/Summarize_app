@@ -13,7 +13,7 @@ pub fn books(
 
     let py_code = include_str!(concat!(
         env!("CARGO_MANIFEST_DIR"),
-        "/src/scripts/books.py"
+        "/src/scripts/ping/books.py"
     ));
 
     return Python::with_gil(|py| {

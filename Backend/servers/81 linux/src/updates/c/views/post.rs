@@ -6,12 +6,9 @@ pub async fn post_specific() -> Result<impl Responder> {
     // return the diff that brings it to the new version
 }
 
-pub async fn get_all() -> Result<impl Responder> {
-    // send all c files in a response
-}
-
 pub async fn post_push() -> Result<impl Responder> {
     // post most up to date versions of the c files
     // calculate the diff from the previous version and save
     // respond ok or err
 }
+
