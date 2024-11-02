@@ -1,0 +1,1 @@
+// get publisher information
