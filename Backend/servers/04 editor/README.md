@@ -25,4 +25,3 @@ Editor microservice created purely in Rust.
 * Git-like change log upon being published between changes
 * Choose if others can choose versions and which ones
   * Limit number of saved versions
-  
