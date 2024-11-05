@@ -1,4 +1,4 @@
-Admin microservice created purely in Rust.
+Admin microservice created in Go.
 
 # Why Rust
 *

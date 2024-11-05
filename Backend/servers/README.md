@@ -7,13 +7,13 @@
 * 06 collaboration - elixir fundamentals
 * 07 search - java fundamentals
 * 08 pages - go fundamentals
-* 09 libraries - go interop with rust
-* 10 history - go interop with c
+* 09 history - go interop with python
+* 10 libraries - go interop with rust
 * 11 recommendations - rust interop with python
 * 12 notifications - elixir interop with gleam and rust
 * 13 messages - elixir interop with erlang and rust
 * 14 moderation - python machine learning
-* 15 admin - go interop with python
+* 15 admin - go interop with c
 * 16 analytics - python interop with c
 * 80 website - rust web server
 * 81 linux - rust file serving
