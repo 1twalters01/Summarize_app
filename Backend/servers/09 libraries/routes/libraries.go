@@ -1,12 +1,19 @@
-// Get cached summaries
-// Get library information
-// Get all summaries
+import (
+    "github.com/gin-gonic/gin"
+    "net/http"
+)
 
-// Add to library
+func LibrariesRoutes(router *gin.RouterGroup) {
+	// Get cached summaries
+	// Get library information
+	// Get all summaries
 
-// Remove from library
-// Remove all library
+	// Add to library
 
-// Reorder library
+	// Remove from library
+	// Remove all library
 
-// Toggle privacy status of library
+	// Reorder library
+
+	// Toggle privacy status of library
+}

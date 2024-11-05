@@ -1,30 +1,37 @@
-// Add to history
+import (
+    "github.com/gin-gonic/gin"
+    "net/http"
+)
 
-// delete uuid list from history instead of all the other deletes
-// delete publishers from history
-// delete authors from history
-// delete summarizers from history
-// delete summaries from history
-// delete days from history
-// delete all history
+func HistoryRoutes(router *gin.RouterGroup) {
+	// Add to history
 
-// Get detailed view
+	// delete uuid list from history instead of all the other deletes
+	// delete publishers from history
+	// delete authors from history
+	// delete summarizers from history
+	// delete summaries from history
+	// delete days from history
+	// delete all history
 
-// Get authors (cached)
-// Get books (cached)
-// Get summaries (cached)
-// Get sumarizers (cached)
-// Get publishers (cached)
+	// Get detailed view
 
-// Get last n to m authors
-// Get last n to m books
-// Get last n to m summaries
-// Get last n to m summarizers
-// Get last n to m publishers
+	// Get authors (cached)
+	// Get books (cached)
+	// Get summaries (cached)
+	// Get sumarizers (cached)
+	// Get publishers (cached)
 
-// Get last read authors from publisher
-// Get last read books from publisher
-// Get last read summaries from publisher
-// Get last read summaries from summarizer
-// Get last read books from author
-// Get last read summaries from author
+	// Get last n to m authors
+	// Get last n to m books
+	// Get last n to m summaries
+	// Get last n to m summarizers
+	// Get last n to m publishers
+
+	// Get last read authors from publisher
+	// Get last read books from publisher
+	// Get last read summaries from publisher
+	// Get last read summaries from summarizer
+	// Get last read books from author
+	// Get last read summaries from author
+}

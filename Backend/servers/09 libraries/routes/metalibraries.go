@@ -1,11 +1,18 @@
-// Get libraries (cached)
-// Get all libraries
+import (
+    "github.com/gin-gonic/gin"
+    "net/http"
+)
 
-// Create library
+func MetalibrariesRoutes(router *gin.RouterGroup) {
+	// Get libraries (cached)
+	// Get all libraries
 
-// Delete libraries
-// Confirm delete libraries
+	// Create library
 
-// Modify library
+	// Delete libraries
+	// Confirm delete libraries
 
-// Reorder libraries
+	// Modify library
+
+	// Reorder libraries
+}

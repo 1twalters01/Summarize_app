@@ -13,8 +13,8 @@
 * 12 notifications - elixir interop with gleam and rust
 * 13 messages - elixir interop with erlang and rust
 * 14 moderation - python machine learning
-* 15 analytics - python interop with c
-* 16 admin - go interop with python
+* 15 admin - go interop with python
+* 16 analytics - python interop with c
 * 80 website - rust web server
 * 81 linux - rust file serving
 * 82 windows - rust windows updates
