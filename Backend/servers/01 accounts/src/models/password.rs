@@ -18,6 +18,7 @@ use std::{
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Password {
     password_hash: String,
+    // previous_hashes: Vec<String>
 }
 
 impl Password {
