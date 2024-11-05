@@ -9,8 +9,4 @@ func PageRoutes(router *gin.RouterGroup) {
 	router.POST("/pubkisher/information", RetrievePublisherInfo)
 	router.POST("/summarizer/information", RetrieveSummryInfo)
 	router.POST("/summary/information", RetrieveSummaryInfo)
-
-	// Request to update author information
-	// Request to update book information
-	// Request to update publisher information
 }
