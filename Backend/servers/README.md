@@ -18,6 +18,7 @@ rust, python, elixir, go,
 * 16 analytics - python interop with c
 * 17 external - rust
 * 18 flashcards - elixir interop with python
+* 19 quotes - go
 * 80 website - rust web server
 * 81 linux - rust file serving
 * 82 windows - rust windows updates
