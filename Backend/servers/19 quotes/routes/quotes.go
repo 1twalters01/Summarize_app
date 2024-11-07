@@ -4,9 +4,9 @@ import (
 )
 
 func PageRoutes(router *gin.RouterGroup) {
-	router.POST("/author/information", RetrieveAuthorInfo)
-	router.POST("/book/information", RetrieveBookInfo)
-	router.POST("/pubkisher/information", RetrievePublisherInfo)
-	router.POST("/summarizer/information", RetrieveSummryInfo)
-	router.POST("/summary/information", RetrieveSummaryInfo)
+	router.GET("/quotes/fetch-all", RetrieveAllQuotes)
+	router.POST("/quotes/fetch", RetrieveSpecificQuotes)
+	router.POST("/quotes/add", CreateNewQuote)
+	router.POST("/quotes/delete", DeleteQuote)
+	router.POST("/quotes/modify", ModifyQuote)
 }
