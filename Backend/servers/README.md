@@ -19,6 +19,7 @@ rust, python, elixir, go,
 * 17 external - rust
 * 18 flashcards - elixir interop with python
 * 19 quotes - go
+* 20 groups - rust
 * 80 website - rust web server
 * 81 linux - rust file serving
 * 82 windows - rust windows updates
