@@ -14,7 +14,7 @@ Authors
 Books
 | Field           | Type           | Description                | IS UNIQUE | NOT NULL | INDEX  |
 |-----------------|----------------|----------------------------|-----------|----------|--------|
-| book_id         | VARCHAR(100)   | The book's primary key     | True      | True     |  |
+| book_id         | VARCHAR(100)   | Primary key for the book   | True      | True     |  |
 | format_ids      | INT[]          | Foreign key book formats   | False     | True     |  |
 | Author_ids      | INT[]          | Author foreign key         | False     | False    |  |
 | co-author_ids   | INT[]          | Author foreign key         | False     | False    |  |
@@ -27,7 +27,7 @@ Books
 | isbn            | INT            | Book's ISBN number         | True      | False    |  |
 | isbn_13         | INT            | Book's ISBN-13 number      | True      | False    |  |
 | synopsis        | TEXT           | Book synopsis              | False     | False    |  |
-| links           | VARCHAR(100)[] | Links to buy book          | True      | False    |  |
+| links           | TEXT[]         | Links to buy book          | True      | False    |  |
 
 Formats
 | Field           | Type           | Description                | IS UNIQUE | NOT NULL | INDEX  |
