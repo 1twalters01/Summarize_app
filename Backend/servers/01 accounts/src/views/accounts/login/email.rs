@@ -1,16 +1,17 @@
 use actix_protobuf::{ProtoBuf, ProtoBufResponseBuilder};
-use actix_web::{HttpResponse, Responder, Result};
+use actix_web::{http::StatusCode, HttpResponse, Responder, Result};
 
 use crate::{
+    generated::protos::accounts::login::email::{
+        request::Request,
+        response::{response::ResponseField, Error, Response},
+    },
     models::user::User,
     queries::{
         postgres::user::get::from_email,
         redis::general::set_key_value_in_redis,
     },
-    generated::protos::accounts::login::email::{
-        request::Request,
-        response::{response::ResponseField, Error, Response},
-    },
+    services::response_service::ResponseService,
     utils::{
         database_connections::{
             create_pg_pool_connection, create_redis_client_connection,
@@ -21,20 +22,27 @@ use crate::{
 };
 
 pub async fn post_email(data: ProtoBuf<Request>) -> Result<impl Responder> {
-    // get request variable
+    // Get email var from posted data
     let Request { email } = data.0;
 
     // Validate the email from the request body
-    let validated_email = validate_email(&email);
-    if validated_email.is_err() {
-        let response: Response = Response {
-            response_field: Some(ResponseField::Error(Error::InvalidEmail as i32)),
-        };
-
-        return Ok(HttpResponse::UnprocessableEntity()
-            .content_type("application/x-protobuf; charset=utf-8")
-            .protobuf(response));
+    if validate_email(&email).is_err() {
+        return Ok(ResponseService::create_error_response(
+            AppError::LoginEmail(
+                error: login_email_response::Error::InvalidEmail,
+                status: StatusCode::UNPROCESSABLE_ENTITY,
+            )
+        ));
     }
+    // if validate_email(&email).is_err() {
+    //     let response: Response = Response {
+    //         response_field: Some(ResponseField::Error(Error::InvalidEmail as i32)),
+    //     };
+
+    //     return Ok(HttpResponse::UnprocessableEntity()
+    //         .content_type("application/x-protobuf; charset=utf-8")
+    //         .protobuf(response));
+    // }
 
     // try to get the user from postgres using the email
     let pool = create_pg_pool_connection().await;
