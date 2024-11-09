@@ -15,7 +15,7 @@ use crate::{
     utils::database_connections::create_pg_pool_connection,
 };
 
-pub async fn refresh_token(data: Json<AuthTokens>) -> Result<impl Responder> {
+pub async fn post_refresh_token(data: Json<AuthTokens>) -> Result<impl Responder> {
     let mut res_body: RefreshTokenResponseSchema = RefreshTokenResponseSchema::new();
     let refresh_token: String = match &data.refresh_token {
         None => {

@@ -65,12 +65,12 @@ pub async fn post_email(data: ProtoBuf<Request>) -> Result<impl Responder> {
             Some(user) => user,
         },
     };
-
-    // create a token
-    let token: String = generate_opaque_token_of_length(25);
-
+    
     // serialize the user
     let user_json = serde_json::to_string(&user).unwrap();
+    
+    // create a token
+    let token: String = generate_opaque_token_of_length(25);
 
     // save {key: token, value: user} to redis cache for 300 seconds
     let expiry_in_seconds: Option<i64> = Some(300);
