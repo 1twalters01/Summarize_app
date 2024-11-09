@@ -1,20 +1,19 @@
-use generated::protos::accounts::{
+use crate::generated::protos::accounts::{
     login::{
         email::response as login_email_response,
         password::response as login_password_response,
         totp::response as login_totp_response,
         // refresh::response as login_refresh_response,
     },
-    register::{
-        email::response as register_email_response,
-        verification::response as register_verification_response,
-        details::response as register_details_response,
-    },
     password_reset::{
         email::response as password_reset_email_response,
-        verification::response as password_reset_verification_response,
         password::response as password_reset_password_response,
-    }
+        verification::response as password_reset_verification_response,
+    },
+    register::{
+        details::response as register_details_response, email::response as register_email_response,
+        verification::response as register_verification_response,
+    },
 };
 
 pub enum AppError {
@@ -39,7 +38,7 @@ pub enum AppResponse {
     // Login
     LoginEmail(login_email_response::Response),
     LoginPassword(login_password_response::Response),
-    LoginTotp(login_refresh_response::Response),
+    LoginTotp(login_totp_response::Response),
     // LoginRefresh(login_refresh_response::Response),
 
     // Register

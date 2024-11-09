@@ -1,21 +1,18 @@
-use actix_protobuf::{ProtoBuf, ProtoBufResponseBuilder};
-use actix_web::{http::StatusCode, HttpResponse, Responder, Result};
+use actix_protobuf::ProtoBuf;
+use actix_web::{http::StatusCode, Responder, Result};
 
 use crate::{
+    datatypes::response_types::{AppError, AppResponse},
     generated::protos::accounts::login::email::{
         request::Request,
         response::{response::ResponseField, Error, Response},
     },
     models::user::User,
-    queries::{
-        postgres::user::get::from_email,
-        redis::general::set_key_value_in_redis,
+    services::{
+        cache_service::CacheService, response_service::ResponseService, user_service::UserService,
     },
-    services::response_service::ResponseService,
     utils::{
-        database_connections::{
-            create_pg_pool_connection, create_redis_client_connection,
-        },
+        database_connections::{create_pg_pool_connection, create_redis_client_connection},
         tokens::generate_opaque_token_of_length,
         validations::validate_email,
     },
@@ -25,82 +22,50 @@ pub async fn post_email(data: ProtoBuf<Request>) -> Result<impl Responder> {
     // Get email var from posted data
     let Request { email } = data.0;
 
-    // Validate the email from the request body
+    // Validate email
     if validate_email(&email).is_err() {
         return Ok(ResponseService::create_error_response(
-            AppError::LoginEmail(
-                error: login_email_response::Error::InvalidEmail,
-                status: StatusCode::UNPROCESSABLE_ENTITY,
-            )
+            AppError::LoginEmail(Error::InvalidEmail),
+            StatusCode::UNPROCESSABLE_ENTITY,
         ));
     }
-    // if validate_email(&email).is_err() {
-    //     let response: Response = Response {
-    //         response_field: Some(ResponseField::Error(Error::InvalidEmail as i32)),
-    //     };
 
-    //     return Ok(HttpResponse::UnprocessableEntity()
-    //         .content_type("application/x-protobuf; charset=utf-8")
-    //         .protobuf(response));
-    // }
-
-    // try to get the user from postgres using the email
-    let pool = create_pg_pool_connection().await;
-    let user_result: Result<Option<User>, sqlx::Error> =
-        from_email(&pool, &email).await;
-
-    // if user does not exist or is none then return an error
-    let user: User = match user_result {
-        Err(err) => {
-            println!("error: {:?}", err);
-
-            let response: Response = Response {
-                response_field: Some(ResponseField::Error(Error::ServerError as i32)),
-            };
-            return Ok(HttpResponse::InternalServerError()
-                .content_type("application/x-protobuf; charset=utf-8")
-                .protobuf(response));
-        }
-        Ok(user_option) => match user_option {
-            None => {
-                let response: Response = Response {
-                    response_field: Some(ResponseField::Error(Error::UnregisteredEmail as i32)),
-                };
-                return Ok(HttpResponse::NotFound()
-                    .content_type("application/x-protobuf; charset=utf-8")
-                    .protobuf(response));
-            }
-            Some(user) => user,
+    // Get user from database
+    let user_service = UserService::new(create_pg_pool_connection().await);
+    let user: User = match user_service.get_user_from_email(&email).await {
+        Ok(Some(user)) => user,
+        Ok(None) => {
+            return Ok(ResponseService::create_error_response(
+                AppError::LoginEmail(Error::UnregisteredEmail),
+                StatusCode::NOT_FOUND,
+            ));
+        },
+        Err(_) => {
+            return Ok(ResponseService::create_error_response(
+                AppError::LoginEmail(Error::ServerError),
+                StatusCode::INTERNAL_SERVER_ERROR,
+            ));
         },
     };
-    
-    // serialize the user
-    let user_json = serde_json::to_string(&user).unwrap();
-    
-    // create a token
-    let token: String = generate_opaque_token_of_length(25);
 
     // save {key: token, value: user} to redis cache for 300 seconds
+    let token: String = generate_opaque_token_of_length(25);
     let expiry_in_seconds: Option<i64> = Some(300);
-    let con = create_redis_client_connection();
-    let set_redis_result = set_key_value_in_redis(con, &token, &user_json, expiry_in_seconds);
-
-    // if redis fails then return an error
-    if set_redis_result.is_err() {
-        let response: Response = Response {
-            response_field: Some(ResponseField::Error(Error::ServerError as i32)),
-        };
-        return Ok(HttpResponse::InternalServerError()
-            .content_type("application/x-protobuf; charset=utf-8")
-            .protobuf(response));
+    let mut cache_service = CacheService::new(create_redis_client_connection());
+    let cache_result = cache_service.store_token_for_user(&token, &user, expiry_in_seconds);
+    if cache_result.is_err() {
+        return Ok(ResponseService::create_error_response(
+            AppError::LoginEmail(Error::ServerError),
+            StatusCode::INTERNAL_SERVER_ERROR,
+        ));
     }
 
-    let response: Response = Response {
-        response_field: Some(ResponseField::Token(token)),
-    };
-    return Ok(HttpResponse::Ok()
-        .content_type("application/x-protobuf; charset=utf-8")
-        .protobuf(response));
+    return Ok(ResponseService::create_success_response(
+        AppResponse::LoginEmail(Response {
+            response_field: Some(ResponseField::Token(token)),
+        }),
+        StatusCode::OK,
+    ));
 }
 
 #[cfg(test)]
@@ -111,11 +76,8 @@ mod tests {
     use prost::Message;
     use std::env;
 
-    use crate::{
-        datatypes::auth::AccessToken,
-        middleware,
-    };
     use super::*;
+    use crate::{datatypes::auth::AccessToken, middleware};
 
     #[actix_web::test]
     async fn test_post_known_email_while_not_authenticated() {

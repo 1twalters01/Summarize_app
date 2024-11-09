@@ -1,10 +1,10 @@
 use crate::{
-    models::user::User,
     datatypes::auth::Claims,
     generated::protos::settings::profile::language::{
         request::{Language, Request},
         response::{response, Error, Response, Success},
     },
+    models::user::User,
     utils::{database_connections::create_pg_pool_connection, validations::validate_language},
 };
 

@@ -1,7 +1,5 @@
 use crate::{
-    models::{user::User, totp::Totp},
     datatypes::auth::Claims,
-    queries::redis::general::set_key_value_in_redis,
     generated::protos::settings::profile::{
         confirmation::{
             response as password_response, Error as PasswordError, Request as PasswordRequest,
@@ -15,10 +13,10 @@ use crate::{
             },
         },
     },
+    models::{totp::Totp, user::User},
+    queries::redis::general::set_key_value_in_redis,
     utils::{
-        database_connections::{
-            create_pg_pool_connection, create_redis_client_connection,
-        },
+        database_connections::{create_pg_pool_connection, create_redis_client_connection},
         tokens::generate_opaque_token_of_length,
         validations::{validate_password, validate_totp},
     },
@@ -104,8 +102,9 @@ pub async fn post_totp(
 
     // Save key: token, value: {token, uuid/jwt} to redis
     let expiry_in_seconds: Option<i64> = Some(300);
-    let con = create_redis_client_connection();
-    let set_redis_result = set_key_value_in_redis(con, &token, &token_object, expiry_in_seconds);
+    let mut con = create_redis_client_connection();
+    let set_redis_result =
+        set_key_value_in_redis(&mut con, &token, &token_object, expiry_in_seconds);
 
     // err handling
     if set_redis_result.is_err() {

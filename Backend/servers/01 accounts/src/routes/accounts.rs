@@ -1,11 +1,14 @@
-use crate::{views, middleware};
-use actix_web::web::{get, post, scope, ServiceConfig};
+use crate::{middleware, views};
+use actix_web::web::{post, scope, ServiceConfig};
 
 pub fn config(cfg: &mut ServiceConfig) {
     cfg.service(
         scope("/register")
             .wrap(middleware::authentication::not_authenticated::NotAuthenticated)
-            .route("/email", post().to(views::accounts::register::email::post_email))
+            .route(
+                "/email",
+                post().to(views::accounts::register::email::post_email),
+            )
             .route(
                 "/verify",
                 post().to(views::accounts::register::verification::post_verify),
@@ -22,13 +25,15 @@ pub fn config(cfg: &mut ServiceConfig) {
     .service(
         scope("/login")
             .wrap(middleware::authentication::not_authenticated::NotAuthenticated)
-            .route("/email", post().to(views::accounts::login::email::post_email))
+            .route(
+                "/email",
+                post().to(views::accounts::login::email::post_email),
+            )
             .route(
                 "/password",
                 post().to(views::accounts::login::password::post_password),
             )
-            .route("/totp", post().to(views::accounts::login::totp::post_totp))
-            // .route("/refresh-token", post().to(views::accounts::login::refresh::post_refresh_token)),
+            .route("/totp", post().to(views::accounts::login::totp::post_totp)), // .route("/refresh-token", post().to(views::accounts::login::refresh::post_refresh_token)),
     )
     .service(
         scope("/password-reset")

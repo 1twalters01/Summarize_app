@@ -2,23 +2,15 @@ use actix_protobuf::{ProtoBuf, ProtoBufResponseBuilder};
 use actix_web::{HttpResponse, Responder, Result};
 
 use crate::{
-    queries::{
-        postgres::user::get::from_email,
-        redis::general::set_key_value_in_redis,
-    },
-    models::user::User,
-    utils::email::{
-        compose::compose_password_reset_email_message,
-        handler::send_email,
-    },
     generated::protos::accounts::password_reset::email::{
         request,
         response::{self, response::ResponseField},
     },
+    models::user::User,
+    queries::{postgres::user::get::from_email, redis::general::set_key_value_in_redis},
+    utils::email::{compose::compose_password_reset_email_message, handler::send_email},
     utils::{
-        database_connections::{
-            create_pg_pool_connection, create_redis_client_connection,
-        },
+        database_connections::{create_pg_pool_connection, create_redis_client_connection},
         tokens::generate_opaque_token_of_length,
         validations::validate_email,
     },
@@ -41,8 +33,7 @@ pub async fn post_email(data: ProtoBuf<request::Request>) -> Result<impl Respond
 
     // Check if email is in postgres database
     let pool = create_pg_pool_connection().await;
-    let user_result: Result<Option<User>, sqlx::Error> =
-        from_email(&pool, email.as_str()).await;
+    let user_result: Result<Option<User>, sqlx::Error> = from_email(&pool, email.as_str()).await;
 
     // extract user or error
     let user: User = match user_result {
@@ -98,11 +89,11 @@ pub async fn post_email(data: ProtoBuf<request::Request>) -> Result<impl Respond
     }
 
     // add {key: token, value: UUID} to redis
-    let con = create_redis_client_connection();
+    let mut con = create_redis_client_connection();
     let expiry_in_seconds: Option<i64> = Some(300);
 
     let set_redis_result =
-        set_key_value_in_redis(con, &token_struct_json, &user_json, expiry_in_seconds);
+        set_key_value_in_redis(&mut con, &token_struct_json, &user_json, expiry_in_seconds);
 
     // if redis fails then return an error
     if set_redis_result.is_err() {

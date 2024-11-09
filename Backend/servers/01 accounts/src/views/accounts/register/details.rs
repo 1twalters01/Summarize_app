@@ -2,22 +2,17 @@ use actix_protobuf::{ProtoBuf, ProtoBufResponseBuilder};
 use actix_web::{HttpRequest, HttpResponse, Responder, Result};
 
 use crate::{
-    queries::{
-        postgres::user::insert::from_user,
-        redis::{
-            all::get_email_from_token_struct_in_redis,
-            general::delete_key_in_redis,
-        },
-    },
-    models::user::User,
     generated::protos::accounts::register::details::{
         request,
         response::{self, response::ResponseField},
     },
+    models::user::User,
+    queries::{
+        postgres::user::insert::from_user,
+        redis::{all::get_email_from_token_struct_in_redis, general::delete_key_in_redis},
+    },
     utils::{
-        database_connections::{
-            create_pg_pool_connection, create_redis_client_connection,
-        },
+        database_connections::{create_pg_pool_connection, create_redis_client_connection},
         validations::{
             validate_first_name, validate_last_name, validate_password, validate_username,
         },
@@ -47,7 +42,7 @@ pub async fn post_details(
     // get the email from redis using the token
     let mut con = create_redis_client_connection();
     let email: String =
-        match get_email_from_token_struct_in_redis(con, &verification_confirmation_token) {
+        match get_email_from_token_struct_in_redis(&mut con, &verification_confirmation_token) {
             // if error return error
             Err(err) => {
                 println!("error: {:#?}", err);
@@ -143,8 +138,7 @@ pub async fn post_details(
 
     // save details to the user to postgres
     let pool = create_pg_pool_connection().await;
-    let save_user_result: Result<(), sqlx::Error> =
-        from_user(&pool, user).await;
+    let save_user_result: Result<(), sqlx::Error> = from_user(&pool, user).await;
 
     // if error then return error
     if save_user_result.is_err() {

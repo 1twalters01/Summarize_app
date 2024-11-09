@@ -34,13 +34,10 @@ pub async fn ping_post_any_auth(data: Json<Message>) -> Result<impl Responder> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use serde_json::json;
     use actix_web::{test, web, App};
+    use serde_json::json;
 
-    use crate::{
-        models::user::User,
-        datatypes::auth::AccessToken,
-    };
+    use crate::{datatypes::auth::AccessToken, models::user::User};
 
     #[actix_web::test]
     async fn test_ping_get_any_auth_not_authenticated() {
@@ -187,4 +184,3 @@ mod tests {
         );
     }
 }
-

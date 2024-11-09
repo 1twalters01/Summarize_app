@@ -2,23 +2,15 @@ use actix_protobuf::{ProtoBuf, ProtoBufResponseBuilder};
 use actix_web::{HttpResponse, Responder, Result};
 
 use crate::{
-    queries::{
-        postgres::user::get::from_email,
-        redis::general::set_key_value_in_redis,
-    },
-    models::user::User,
-    utils::email::{
-        compose::compose_register_email_message,
-        handler::send_email,
-    },
     generated::protos::accounts::register::email::{
         request,
         response::{self, response::ResponseField},
     },
+    models::user::User,
+    queries::{postgres::user::get::from_email, redis::general::set_key_value_in_redis},
+    utils::email::{compose::compose_register_email_message, handler::send_email},
     utils::{
-        database_connections::{
-            create_pg_pool_connection, create_redis_client_connection,
-        },
+        database_connections::{create_pg_pool_connection, create_redis_client_connection},
         tokens::generate_opaque_token_of_length,
         validations::validate_email,
     },
@@ -41,8 +33,7 @@ pub async fn post_email(data: ProtoBuf<request::Request>) -> Result<impl Respond
 
     // try to get the user from postgres using the email
     let pool = create_pg_pool_connection().await;
-    let user_result: Result<Option<User>, sqlx::Error> =
-        from_email(&pool, &email).await;
+    let user_result: Result<Option<User>, sqlx::Error> = from_email(&pool, &email).await;
 
     match user_result {
         Err(err) => {
@@ -92,9 +83,9 @@ pub async fn post_email(data: ProtoBuf<request::Request>) -> Result<impl Respond
 
     // save {key: token, value: email} to redis cache for 300 seconds
     let expiry_in_seconds: Option<i64> = Some(300);
-    let con = create_redis_client_connection();
+    let mut con = create_redis_client_connection();
     let set_redis_result =
-        set_key_value_in_redis(con, &token_struct_json, &email, expiry_in_seconds);
+        set_key_value_in_redis(&mut con, &token_struct_json, &email, expiry_in_seconds);
 
     // if redis fails then return an error
     if set_redis_result.is_err() {

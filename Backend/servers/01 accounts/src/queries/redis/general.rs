@@ -1,7 +1,7 @@
 use redis::{Commands, Connection, RedisResult};
 
 pub fn set_key_value_in_redis(
-    mut con: Connection,
+    con: &mut Connection,
     key: &str,
     value: &str,
     expiry_in_seconds: Option<i64>,
@@ -18,4 +18,3 @@ pub fn set_key_value_in_redis(
 pub async fn delete_key_in_redis(mut con: Connection, key: &str) -> RedisResult<()> {
     con.del(key)
 }
-

@@ -1,19 +1,12 @@
 use argon2::{
+    password_hash::{rand_core::OsRng, PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
     Argon2,
-    password_hash::{
-        PasswordHash,
-        PasswordHasher,
-        PasswordVerifier,
-        rand_core::OsRng,
-        SaltString
-    },
 };
 use serde::{Deserialize, Serialize};
 use std::{
     io::{Error, ErrorKind},
     result::Result,
 };
-
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Password {
@@ -56,14 +49,13 @@ impl Password {
 fn validate_password(password: &str) -> Result<(), Error> {
     if password.len() < 8 {
         return Err(Error::new(
-                ErrorKind::InvalidInput,
-                "Password must be at least 8 characters long",
-                ));
+            ErrorKind::InvalidInput,
+            "Password must be at least 8 characters long",
+        ));
     }
 
     return Ok(());
 }
-
 
 fn hash_password(password: String) -> Password {
     // Argon2 with default params (Argon2id v19)

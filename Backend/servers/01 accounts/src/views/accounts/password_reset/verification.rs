@@ -3,13 +3,13 @@ use actix_web::{HttpRequest, HttpResponse, Responder, Result};
 use serde::Deserialize;
 
 use crate::{
-    queries::redis::{
-        all::get_user_json_from_token_struct_in_redis,
-        general::{delete_key_in_redis, set_key_value_in_redis},
-    },
     generated::protos::accounts::password_reset::verification::{
         request::Request,
         response::{self, response::ResponseField},
+    },
+    queries::redis::{
+        all::get_user_json_from_token_struct_in_redis,
+        general::{delete_key_in_redis, set_key_value_in_redis},
     },
     utils::{
         database_connections::create_redis_client_connection,
@@ -54,31 +54,30 @@ async fn password_reset_verification_functionality(
     let token_struct: (String, String) = (header_token, verification_token);
     let token_struct_json = serde_json::to_string(&token_struct).unwrap();
     let mut con = create_redis_client_connection();
-    let user_json: String = match get_user_json_from_token_struct_in_redis(con, &token_struct_json)
-    {
-        // if error return error
-        Err(err) => {
-            println!("error: {:#?}", err);
-            let response: response::Response = response::Response {
-                response_field: Some(ResponseField::Error(
-                    response::Error::InvalidCredentials as i32,
-                )),
-            };
-            return Ok(HttpResponse::UnprocessableEntity()
-                .content_type("application/x-protobuf; charset=utf-8")
-                .protobuf(response));
-        }
-        Ok(user_json) => user_json,
-    };
+    let user_json: String =
+        match get_user_json_from_token_struct_in_redis(&mut con, &token_struct_json) {
+            // if error return error
+            Err(err) => {
+                println!("error: {:#?}", err);
+                let response: response::Response = response::Response {
+                    response_field: Some(ResponseField::Error(
+                        response::Error::InvalidCredentials as i32,
+                    )),
+                };
+                return Ok(HttpResponse::UnprocessableEntity()
+                    .content_type("application/x-protobuf; charset=utf-8")
+                    .protobuf(response));
+            }
+            Ok(user_json) => user_json,
+        };
 
     // create a new token
     let password_reset_verification_token = generate_opaque_token_of_length(64);
 
     // add {key: token, value: email} to redis
-    con = create_redis_client_connection();
     let expiry_in_seconds: Option<i64> = Some(1800);
     let set_redis_result = set_key_value_in_redis(
-        con,
+        &mut con,
         &password_reset_verification_token,
         &user_json,
         expiry_in_seconds,

@@ -3,21 +3,16 @@ use actix_web::{web::Path, HttpRequest, HttpResponse, Responder, Result};
 use serde::Deserialize;
 
 use crate::{
-    queries::redis::{
-        all::get_email_from_token_struct_in_redis,
-        general::{
-            set_key_value_in_redis,
-            delete_key_in_redis,
-        },
-    },
     generated::protos::accounts::register::verification::{
         request,
         response::{self, response::ResponseField},
     },
+    queries::redis::{
+        all::get_email_from_token_struct_in_redis,
+        general::{delete_key_in_redis, set_key_value_in_redis},
+    },
     utils::{
-        database_connections::{
-            create_redis_client_connection,
-        },
+        database_connections::create_redis_client_connection,
         tokens::generate_opaque_token_of_length,
     },
 };
@@ -63,7 +58,7 @@ async fn register_verification_functionality(
 
     // Get email from token using redis
     let mut con = create_redis_client_connection();
-    let email: String = match get_email_from_token_struct_in_redis(con, &token_struct_json) {
+    let email: String = match get_email_from_token_struct_in_redis(&mut con, &token_struct_json) {
         // if error return error
         Err(err) => {
             println!("error: {:#?}", err);
@@ -83,10 +78,13 @@ async fn register_verification_functionality(
     let register_verification_token = generate_opaque_token_of_length(64);
 
     // add {key: token, value: email} to redis
-    con = create_redis_client_connection();
     let expiry_in_seconds: Option<i64> = Some(1800);
-    let set_redis_result =
-        set_key_value_in_redis(con, &register_verification_token, &email, expiry_in_seconds);
+    let set_redis_result = set_key_value_in_redis(
+        &mut con,
+        &register_verification_token,
+        &email,
+        expiry_in_seconds,
+    );
     if set_redis_result.is_err() {
         panic!("redis error, panic debug")
     }

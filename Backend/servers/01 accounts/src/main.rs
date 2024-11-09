@@ -2,16 +2,17 @@ use actix_cors::Cors;
 use actix_web::{App, HttpServer};
 use dotenv::dotenv;
 
-pub mod generated;
-pub mod routes;
-pub mod queries;
-pub mod views;
-pub mod models;
 pub mod datatypes;
+pub mod generated;
+pub mod middleware;
+pub mod models;
+pub mod queries;
+pub mod routes;
+pub mod services;
+pub mod utils;
+pub mod views;
 
 pub mod accounts;
-pub mod middleware;
-pub mod utils;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {

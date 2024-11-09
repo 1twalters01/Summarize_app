@@ -12,8 +12,8 @@ use std::{
 use tokio::time::sleep;
 
 use crate::{
-    utils::database_connections::create_redis_client_connection,
     queries::redis::general::set_key_value_in_redis,
+    utils::database_connections::create_redis_client_connection,
 };
 use redis::{Commands, Connection, ErrorKind, RedisResult};
 
@@ -67,7 +67,7 @@ where
 
         // query if ip is in cache
         let mut con = create_redis_client_connection();
-        let ip_result: Result<Option<i64>, String> = get_count_from_ip_in_redis(con, &ip);
+        let ip_result: Result<Option<i64>, String> = get_count_from_ip_in_redis(&mut con, &ip);
 
         // if ip_result is error then return fail
         if ip_result.is_err() {
@@ -87,9 +87,8 @@ where
             None => {
                 let count = 1;
 
-                con = create_redis_client_connection();
                 let expiry_in_seconds = Some(60);
-                match set_key_value_in_redis(con, &ip, &count.to_string(), expiry_in_seconds) {
+                match set_key_value_in_redis(&mut con, &ip, &count.to_string(), expiry_in_seconds) {
                     Ok(_) => {}
                     Err(_) => {
                         return Box::pin(async {
@@ -114,9 +113,8 @@ where
             Some(mut count) if count < limit => {
                 count += 1;
 
-                con = create_redis_client_connection();
                 let expiry_in_seconds = Some(60);
-                match set_key_value_in_redis(con, &ip, &count.to_string(), expiry_in_seconds) {
+                match set_key_value_in_redis(&mut con, &ip, &count.to_string(), expiry_in_seconds) {
                     Ok(_) => {}
                     Err(_) => {
                         return Box::pin(async {
@@ -153,7 +151,7 @@ where
     }
 }
 
-pub fn get_count_from_ip_in_redis(mut con: Connection, ip: &str) -> Result<Option<i64>, String> {
+pub fn get_count_from_ip_in_redis(con: &mut Connection, ip: &str) -> Result<Option<i64>, String> {
     let redis_result: RedisResult<String> = con.get(ip);
     match redis_result {
         Ok(res) => match res.parse::<i64>() {

@@ -1,10 +1,7 @@
 use crate::models::user::User;
 use sqlx::{Pool, Postgres};
 
-pub async fn from_user(
-    pool: &Pool<Postgres>,
-    user: User,
-) -> Result<(), sqlx::Error> {
+pub async fn from_user(pool: &Pool<Postgres>, user: User) -> Result<(), sqlx::Error> {
     let user_create_query = sqlx::query("INSERT INTO users(uuid, email, username, password, first_name, last_name) VALUES (($1), ($2), ($3), ($4), ($5), ($6));")
         .bind(user.get_uuid())
         .bind(user.get_email())
@@ -23,4 +20,3 @@ pub async fn from_user(
         return Ok(());
     }
 }
-

@@ -41,11 +41,7 @@ mod tests {
     use dotenv::dotenv;
     use serde_json::json;
 
-    use crate::{
-        models::user::User,
-        datatypes::auth::AccessToken,
-        middleware,
-    };
+    use crate::{datatypes::auth::AccessToken, middleware, models::user::User};
 
     #[actix_web::test]
     async fn test_ping_get_only_auth_not_authenticated() {

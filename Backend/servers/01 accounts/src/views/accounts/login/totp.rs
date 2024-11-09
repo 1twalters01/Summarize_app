@@ -2,11 +2,6 @@ use actix_protobuf::{ProtoBuf, ProtoBufResponseBuilder};
 use actix_web::{HttpRequest, HttpResponse, Responder, Result};
 
 use crate::{
-    queries::redis::{
-        all::get_user_remember_me_from_token_in_redis,
-        general::delete_key_in_redis,
-    },
-    models::user::User,
     datatypes::auth::AuthTokens,
     generated::protos::accounts::{
         auth_tokens,
@@ -15,10 +10,9 @@ use crate::{
             response::{self, response::ResponseField},
         },
     },
-    utils::{
-        database_connections::create_redis_client_connection,
-        validations::validate_totp,
-    },
+    models::user::User,
+    queries::redis::{all::get_user_remember_me_from_token_in_redis, general::delete_key_in_redis},
+    utils::{database_connections::create_redis_client_connection, validations::validate_totp},
 };
 
 pub async fn post_totp(
@@ -46,7 +40,7 @@ pub async fn post_totp(
     // Try to get TokenObject from redis
     let mut con = create_redis_client_connection();
     let (mut user, remember_me): (User, bool) =
-        match get_user_remember_me_from_token_in_redis(con, &login_password_token) {
+        match get_user_remember_me_from_token_in_redis(&mut con, &login_password_token) {
             // if error return error
             Err(err) => {
                 println!("err: {:#?}", err);

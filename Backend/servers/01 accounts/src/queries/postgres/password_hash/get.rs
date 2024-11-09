@@ -19,4 +19,3 @@ pub async fn all_previous_from_user(
         }
     }
 }
-

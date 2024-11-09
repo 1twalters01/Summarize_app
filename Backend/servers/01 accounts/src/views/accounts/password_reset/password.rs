@@ -2,22 +2,17 @@ use actix_protobuf::{ProtoBuf, ProtoBufResponseBuilder};
 use actix_web::{HttpRequest, HttpResponse, Responder, Result};
 
 use crate::{
-    queries::{
-        postgres::password_hash::update::from_user,
-        redis::{
-            all::get_user_from_token_in_redis,
-            general::delete_key_in_redis,
-        },
-    },
-    models::user::User,
     generated::protos::accounts::password_reset::password::{
         request,
         response::{self, response::ResponseField},
     },
+    models::user::User,
+    queries::{
+        postgres::password_hash::update::from_user,
+        redis::{all::get_user_from_token_in_redis, general::delete_key_in_redis},
+    },
     utils::{
-        database_connections::{
-            create_pg_pool_connection, create_redis_client_connection,
-        },
+        database_connections::{create_pg_pool_connection, create_redis_client_connection},
         validations::validate_password,
     },
 };
@@ -67,23 +62,24 @@ pub async fn post_password_reset(
 
     // get user from token in redis
     let mut con = create_redis_client_connection();
-    let mut user: User = match get_user_from_token_in_redis(con, &verification_confirmation_token) {
-        // if error return error
-        Err(err) => {
-            println!("error: {:#?}", err);
+    let mut user: User =
+        match get_user_from_token_in_redis(&mut con, &verification_confirmation_token) {
+            // if error return error
+            Err(err) => {
+                println!("error: {:#?}", err);
 
-            let response: response::Response = response::Response {
-                response_field: Some(ResponseField::Error(
-                    response::Error::InvalidCredentials as i32,
-                )),
-            };
+                let response: response::Response = response::Response {
+                    response_field: Some(ResponseField::Error(
+                        response::Error::InvalidCredentials as i32,
+                    )),
+                };
 
-            return Ok(HttpResponse::UnprocessableEntity()
-                .content_type("application/x-protobuf; charset=utf-8")
-                .protobuf(response));
-        }
-        Ok(email) => email,
-    };
+                return Ok(HttpResponse::UnprocessableEntity()
+                    .content_type("application/x-protobuf; charset=utf-8")
+                    .protobuf(response));
+            }
+            Ok(email) => email,
+        };
 
     // if change is not allowed then error
     let set_password_result = user.set_password(password);
@@ -99,8 +95,7 @@ pub async fn post_password_reset(
 
     // save change in postgres
     let pool = create_pg_pool_connection().await;
-    let update_result: Result<(), sqlx::Error> =
-        from_user(&pool, &user).await;
+    let update_result: Result<(), sqlx::Error> = from_user(&pool, &user).await;
 
     // if sql update error then return an error
     if update_result.is_err() {

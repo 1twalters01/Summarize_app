@@ -19,4 +19,3 @@ pub async fn from_user_and_refresh_token(
         return Ok(());
     }
 }
-

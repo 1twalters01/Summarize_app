@@ -32,14 +32,10 @@ pub async fn ping_post_not_auth(data: Json<Message>) -> Result<impl Responder> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use serde_json::json;
     use actix_web::{test, web, App};
+    use serde_json::json;
 
-    use crate::{
-        models::user::User,
-        datatypes::auth::AccessToken,
-        middleware,
-    };
+    use crate::{datatypes::auth::AccessToken, middleware, models::user::User};
 
     #[actix_web::test]
     async fn test_ping_get_not_auth_not_authenticated() {

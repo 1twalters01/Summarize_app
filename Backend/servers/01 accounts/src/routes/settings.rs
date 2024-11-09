@@ -21,7 +21,10 @@ pub fn config(cfg: &mut ServiceConfig) {
                 "/change-username/confirm",
                 post().to(settings::profile::username::post_confirmation),
             )
-            .route("/change-name", post().to(settings::profile::name::post_name))
+            .route(
+                "/change-name",
+                post().to(settings::profile::name::post_name),
+            )
             .route(
                 "/change-name/confirm",
                 post().to(settings::profile::name::post_confirmation),

@@ -18,4 +18,3 @@ pub fn create_redis_client_connection() -> Connection {
     let con = client.get_connection().unwrap();
     return con;
 }
-

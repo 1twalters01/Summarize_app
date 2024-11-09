@@ -2,18 +2,7 @@ use actix_protobuf::{ProtoBuf, ProtoBufResponseBuilder};
 use actix_web::{HttpRequest, HttpResponse, Responder, Result};
 
 use crate::{
-    queries::redis::{
-        all::get_user_from_token_in_redis,
-        general::{
-            delete_key_in_redis,
-            set_key_value_in_redis,
-        },
-    },
-    models::user::User,
-    datatypes::{
-        token_object::UserRememberMe,
-        auth::AuthTokens,
-    },
+    datatypes::{auth::AuthTokens, token_object::UserRememberMe},
     generated::protos::accounts::{
         auth_tokens,
         login::password::{
@@ -23,10 +12,14 @@ use crate::{
             },
         },
     },
+    models::user::User,
+    queries::redis::{
+        all::get_user_from_token_in_redis,
+        general::{delete_key_in_redis, set_key_value_in_redis},
+    },
     utils::{
         database_connections::create_redis_client_connection,
-        tokens::generate_opaque_token_of_length,
-        validations::validate_password,
+        tokens::generate_opaque_token_of_length, validations::validate_password,
     },
 };
 
@@ -46,7 +39,7 @@ pub async fn post_password(data: ProtoBuf<Request>, req: HttpRequest) -> Result<
 
     // try to get user from token in redis
     let mut con = create_redis_client_connection();
-    let user: User = match get_user_from_token_in_redis(con, &login_email_token) {
+    let user: User = match get_user_from_token_in_redis(&mut con, &login_email_token) {
         // if error return error
         Err(err) => {
             println!("Error, {:?}", err);
@@ -95,7 +88,7 @@ pub async fn post_password(data: ProtoBuf<Request>, req: HttpRequest) -> Result<
         let expiry_in_seconds: Option<i64> = Some(300);
         let mut con = create_redis_client_connection();
         let set_redis_result =
-            set_key_value_in_redis(con, &token, &token_object_json, expiry_in_seconds);
+            set_key_value_in_redis(&mut con, &token, &token_object_json, expiry_in_seconds);
 
         // if redis fails then return an error
         if set_redis_result.is_err() {
@@ -185,16 +178,15 @@ pub async fn post_password(data: ProtoBuf<Request>, req: HttpRequest) -> Result<
 
 #[cfg(test)]
 mod tests {
+    use super::*;
     use actix_web::{test, web, App};
     use bytes::Bytes;
     use dotenv::dotenv;
     use prost::Message;
     use std::env;
-    use super::*;
 
     use crate::{
         datatypes::auth::{AccessToken, Claims},
-        views::accounts::login::email::post_email,
         generated::protos::accounts::{
             auth_tokens::AuthTokens,
             login::email::{
@@ -205,6 +197,7 @@ mod tests {
             },
         },
         middleware,
+        views::accounts::login::email::post_email,
     };
 
     #[actix_web::test]
@@ -294,11 +287,8 @@ mod tests {
                             let validation = jsonwebtoken::Validation::default();
                             let decoding_key =
                                 jsonwebtoken::DecodingKey::from_secret(secret.as_ref());
-                            let decoded = jsonwebtoken::decode::<
-                                Claims,
-                            >(
-                                &access, &decoding_key, &validation
-                            );
+                            let decoded =
+                                jsonwebtoken::decode::<Claims>(&access, &decoding_key, &validation);
                             let user_uuid = env::var("TEST_UUID").unwrap();
                             if let Ok(token_data) = decoded {
                                 assert!(user_uuid == token_data.claims.sub);
@@ -407,10 +397,10 @@ mod tests {
                             let validation = jsonwebtoken::Validation::default();
                             let decoding_key =
                                 jsonwebtoken::DecodingKey::from_secret(secret.as_ref());
-                            let decoded = jsonwebtoken::decode::<
-                                crate::datatypes::auth::Claims,
-                            >(
-                                &access, &decoding_key, &validation
+                            let decoded = jsonwebtoken::decode::<crate::datatypes::auth::Claims>(
+                                &access,
+                                &decoding_key,
+                                &validation,
                             );
                             let user_uuid = env::var("TEST_UUID_WITH_TOTP").unwrap();
                             if let Ok(token_data) = decoded {

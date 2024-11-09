@@ -1,8 +1,8 @@
-use crate::models::user::User;
 use crate::datatypes::token_object::UserRememberMe;
+use crate::models::user::User;
 use redis::{Commands, Connection, RedisResult};
 
-pub fn get_user_from_token_in_redis(mut con: Connection, token: &str) -> Result<User, String> {
+pub fn get_user_from_token_in_redis(con: &mut Connection, token: &str) -> Result<User, String> {
     let redis_result: RedisResult<String> = con.get(token);
     let user_json: String = match redis_result {
         Ok(user_json) => user_json,
@@ -13,7 +13,7 @@ pub fn get_user_from_token_in_redis(mut con: Connection, token: &str) -> Result<
 }
 
 pub fn get_user_remember_me_from_token_in_redis(
-    mut con: Connection,
+    con: &mut Connection,
     token: &str,
 ) -> Result<UserRememberMe, String> {
     let redis_result: RedisResult<String> = con.get(token);
@@ -26,7 +26,7 @@ pub fn get_user_remember_me_from_token_in_redis(
 }
 
 pub fn get_email_from_token_struct_in_redis(
-    mut con: Connection,
+    con: &mut Connection,
     token_struct: &str,
 ) -> Result<String, String> {
     let redis_result: RedisResult<String> = con.get(token_struct);
@@ -38,7 +38,7 @@ pub fn get_email_from_token_struct_in_redis(
 }
 
 pub fn get_user_json_from_token_struct_in_redis(
-    mut con: Connection,
+    con: &mut Connection,
     token_struct: &str,
 ) -> Result<String, String> {
     let redis_result: RedisResult<String> = con.get(token_struct);
@@ -48,7 +48,7 @@ pub fn get_user_json_from_token_struct_in_redis(
     };
 }
 
-pub fn get_code_from_token_in_redis(mut con: Connection, token: &str) -> Result<String, String> {
+pub fn get_code_from_token_in_redis(con: &mut Connection, token: &str) -> Result<String, String> {
     let redis_result: RedisResult<String> = con.get(token);
     let code: String = match redis_result {
         Ok(code) => code,

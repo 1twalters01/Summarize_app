@@ -1,9 +1,4 @@
 use crate::{
-    queries::{
-        postgres::password_hash::get::all_previous_from_user,
-        redis::general::set_key_value_in_redis,
-    },
-    models::{password::Password, user::User},
     datatypes::auth::Claims,
     generated::protos::settings::profile::{
         confirmation::{
@@ -15,10 +10,13 @@ use crate::{
             response::{response, Error as MainError, Response as MainResponse},
         },
     },
+    models::{password::Password, user::User},
+    queries::{
+        postgres::password_hash::get::all_previous_from_user,
+        redis::general::set_key_value_in_redis,
+    },
     utils::{
-        database_connections::{
-            create_pg_pool_connection, create_redis_client_connection,
-        },
+        database_connections::{create_pg_pool_connection, create_redis_client_connection},
         tokens::generate_opaque_token_of_length,
         validations::validate_password,
     },
@@ -156,9 +154,9 @@ pub async fn post_password(
 
     // Save key: token, value: {jwt, email} to redis
     let expiry_in_seconds: Option<i64> = Some(300);
-    let con = create_redis_client_connection();
+    let mut con = create_redis_client_connection();
     let set_redis_result =
-        set_key_value_in_redis(con, &token, &token_object_json, expiry_in_seconds);
+        set_key_value_in_redis(&mut con, &token, &token_object_json, expiry_in_seconds);
 
     // err handling
     if set_redis_result.is_err() {

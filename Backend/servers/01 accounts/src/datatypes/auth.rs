@@ -1,12 +1,12 @@
-use std::env;
 use chrono::{Duration, Utc};
 use jsonwebtoken::{encode, EncodingKey, Header};
 use serde::{Deserialize, Serialize};
+use std::env;
 
 use crate::{
-    queries::postgres::refresh_token::insert::from_user_and_refresh_token,
-    models::user::User,
     accounts::schema::errors::AccountError,
+    models::user::User,
+    queries::postgres::refresh_token::insert::from_user_and_refresh_token,
     utils::{
         database_connections::create_pg_pool_connection, tokens::generate_opaque_token_of_length,
     },
@@ -35,12 +35,8 @@ impl AuthTokens {
 
             // save refresh token
             let pool = create_pg_pool_connection().await;
-            if let Err(err) = from_user_and_refresh_token(
-                &pool,
-                &user,
-                &refresh_token.as_ref().unwrap(),
-            )
-            .await
+            if let Err(err) =
+                from_user_and_refresh_token(&pool, &user, &refresh_token.as_ref().unwrap()).await
             {
                 let error: AccountError = AccountError {
                     is_error: true,
