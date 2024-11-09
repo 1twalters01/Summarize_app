@@ -2,8 +2,7 @@ use actix_protobuf::{ProtoBuf, ProtoBufResponseBuilder};
 use actix_web::{HttpRequest, HttpResponse, Responder, Result};
 
 use crate::{
-    datatypes::{auth::AuthTokens, token_object::UserRememberMe},
-    generated::protos::accounts::{
+    datatypes::{auth::AuthTokens, token_object::UserRememberMe}, generated::protos::accounts::{
         auth_tokens,
         login::password::{
             request::Request,
@@ -11,19 +10,17 @@ use crate::{
                 response::ResponseField, token::TokenField, Error, Response, Success, Token,
             },
         },
-    },
-    models::user::User,
-    queries::redis::{
+    }, models::user::User, queries::redis::{
         all::get_user_from_token_in_redis,
         general::{delete_key_in_redis, set_key_value_in_redis},
-    },
-    utils::{
+    }, services::cache_service::CacheService, utils::{
         database_connections::create_redis_client_connection,
         tokens::generate_opaque_token_of_length, validations::validate_password,
-    },
+    }
 };
 
 pub async fn post_password(data: ProtoBuf<Request>, req: HttpRequest) -> Result<impl Responder> {
+    // Get email token from header
     let login_email_token: String = req
         .headers()
         .get("Login-Email-Token")
@@ -39,6 +36,7 @@ pub async fn post_password(data: ProtoBuf<Request>, req: HttpRequest) -> Result<
 
     // try to get user from token in redis
     let mut con = create_redis_client_connection();
+    let mut cache_service = CacheService::new(create_redis_client_connection());
     let user: User = match get_user_from_token_in_redis(&mut con, &login_email_token) {
         // if error return error
         Err(err) => {

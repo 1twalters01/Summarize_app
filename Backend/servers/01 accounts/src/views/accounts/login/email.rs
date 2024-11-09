@@ -19,7 +19,7 @@ use crate::{
 };
 
 pub async fn post_email(data: ProtoBuf<Request>) -> Result<impl Responder> {
-    // Get email var from posted data
+    // Get email from posted data
     let Request { email } = data.0;
 
     // Validate email
