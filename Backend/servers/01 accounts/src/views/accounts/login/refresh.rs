@@ -27,7 +27,7 @@ pub async fn post_refresh_token(req: HttpRequest) -> Result<impl Responder> {
             Some(refresh_token) => refresh_token,
             None => {
                 return Ok(ResponseService::create_error_response(
-                    AppError::LoginRefresh(Error::NoRefreshToken),
+                    AppError::LoginRefresh(Error::RefreshTokenNotFound),
                     StatusCode::NOT_FOUND,
                 ));
             },

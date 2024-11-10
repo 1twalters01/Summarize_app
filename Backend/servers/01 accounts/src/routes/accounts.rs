@@ -33,7 +33,11 @@ pub fn config(cfg: &mut ServiceConfig) {
                 "/password",
                 post().to(views::accounts::login::password::post_password),
             )
-            .route("/totp", post().to(views::accounts::login::totp::post_totp)), // .route("/refresh-token", post().to(views::accounts::login::refresh::post_refresh_token)),
+            .route("/totp", post().to(views::accounts::login::totp::post_totp)), 
+            .route(
+                "/refresh-token",
+                post().to(views::accounts::login::refresh::post_refresh_token)
+            ),
     )
     .service(
         scope("/password-reset")

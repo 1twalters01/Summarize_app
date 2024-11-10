@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package accounts.login.refresh.response;
+
+message RefreshToken {
+    optional string refresh = 2;
+}
+
+enum Error {
+    REFRESH_TOKEN_NOT_FOUND = 0;
+    INVALID_REFRESH_TOKEN = 1;
+    USER_NOT_FOUND = 2;
+    TOO_MANY_REQUESTS = 3;
+    SERVER_ERROR = 4;
+}
+
+message Response {
+  oneof response_field {
+    Error error = 1;
+    RefreshToken token = 2;
+  }
+}
