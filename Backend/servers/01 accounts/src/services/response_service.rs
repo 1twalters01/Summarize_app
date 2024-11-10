@@ -1,5 +1,5 @@
 use actix_protobuf::ProtoBufResponseBuilder;
-use actix_web::{http::StatusCode, HttpResponse, Result};
+use actix_web::{http::StatusCode, HttpResponse, Responder, Result};
 
 use crate::{
     datatypes::response_types::{AppError, AppResponse},
@@ -26,7 +26,11 @@ use crate::{
 pub struct ResponseService;
 
 impl ResponseService {
-    pub fn create_error_response(error: AppError, status: StatusCode) -> Result<HttpResponse> {
+    pub fn create_error_response(
+        error: AppError,
+        status: StatusCode
+    ) -> Result<HttpResponse> {
+    // ) -> impl Responder {
         let response = match error {
             AppError::LoginEmail(err) => {
                 login_email_response::Response {
@@ -34,21 +38,21 @@ impl ResponseService {
                         err as i32,
                     )),
                 };
-            },
+            }
             AppError::LoginPassword(err) => {
                 login_password_response::Response {
                     response_field: Some(login_password_response::response::ResponseField::Error(
                         err as i32,
                     )),
                 };
-            },
+            }
             AppError::LoginTotp(err) => {
                 login_totp_response::Response {
                     response_field: Some(login_totp_response::response::ResponseField::Error(
                         err as i32,
                     )),
                 };
-            },
+            }
             // AppError::LoginRefresh(err) => {
             //     login_refresh_response::Response {
             //         response_field: Some(login_refresh_response::response::ResponseField::Error(err as i32)),
@@ -60,28 +64,28 @@ impl ResponseService {
                         err as i32,
                     )),
                 };
-            },
+            }
             AppError::RegisterVerification(err) => {
                 register_verification_response::Response {
                     response_field: Some(
                         register_verification_response::response::ResponseField::Error(err as i32),
                     ),
                 };
-            },
+            }
             AppError::RegisterDetails(err) => {
                 register_details_response::Response {
                     response_field: Some(
                         register_details_response::response::ResponseField::Error(err as i32),
                     ),
                 };
-            },
+            }
             AppError::PasswordResetEmail(err) => {
                 password_reset_email_response::Response {
                     response_field: Some(
                         password_reset_email_response::response::ResponseField::Error(err as i32),
                     ),
                 };
-            },
+            }
             AppError::PasswordResetVerification(err) => {
                 password_reset_verification_response::Response {
                     response_field: Some(
@@ -90,7 +94,7 @@ impl ResponseService {
                         ),
                     ),
                 };
-            },
+            }
             AppError::PasswordResetPassword(err) => {
                 password_reset_password_response::Response {
                     response_field: Some(
@@ -99,7 +103,7 @@ impl ResponseService {
                         ),
                     ),
                 };
-            },
+            }
         };
 
         HttpResponse::build(status)
@@ -111,6 +115,7 @@ impl ResponseService {
         response: AppResponse,
         status: StatusCode,
     ) -> Result<HttpResponse> {
+    // ) -> impl Responder {
         match response {
             AppResponse::LoginEmail(res) => HttpResponse::build(status)
                 .content_type("application/x-protobuf; charset=utf-8")

@@ -5,8 +5,8 @@ import LandingRoutes from './landing/LandingRoutes';
 import AccountRoutes from './accounts/AccountRoutes';
 import HomeRoutes from './home/HomeRoutes';
 import SettingsRoutes from './settings/SettingsRoutes';
-import SubscriptionsRoutes from './subscriptions/SubscriptionsRoutes';
-import SummaryRoutes from './summary/SummaryRoutes';
+// import SubscriptionsRoutes from './subscriptions/SubscriptionsRoutes';
+// import SummaryRoutes from './summary/SummaryRoutes';
 import { EmailContextProvider } from './accounts/context/EmailContext';
 
 const App = () => {

@@ -20,7 +20,7 @@ async fn main() -> std::io::Result<()> {
 
     HttpServer::new(|| {
         let cors = Cors::default()
-            .allowed_origin("http://127.0.0.1:8001")
+            .allowed_origin("http://127.0.0.1:8080")
             .allow_any_header()
             .allow_any_method()
             .expose_any_header();
@@ -31,7 +31,7 @@ async fn main() -> std::io::Result<()> {
             .configure(routes::accounts::config)
             .configure(routes::settings::config)
     })
-    .bind("127.0.0.1:8000")?
+    .bind("127.0.0.1:8001")?
     .run()
     .await
 }

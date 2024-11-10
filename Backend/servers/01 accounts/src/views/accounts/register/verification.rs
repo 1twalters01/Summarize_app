@@ -91,10 +91,10 @@ async fn register_verification_functionality(
 
     // delete old {key: token, value: email}
     con = create_redis_client_connection();
-    let delete_redis_result = delete_key_in_redis(con, &token_struct_json);
+    let delete_redis_result = delete_key_in_redis(&mut con, &token_struct_json);
 
     // if redis fails then return an error
-    if delete_redis_result.await.is_err() {
+    if delete_redis_result.is_err() {
         let response: response::Response = response::Response {
             response_field: Some(ResponseField::Error(
                 response::Error::IncorrectVerificationCode as i32,

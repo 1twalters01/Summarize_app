@@ -152,10 +152,10 @@ pub async fn post_details(
 
     // delete old {key: token, value: email}
     con = create_redis_client_connection();
-    let delete_redis_result = delete_key_in_redis(con, &verification_confirmation_token);
+    let delete_redis_result = delete_key_in_redis(&mut con, &verification_confirmation_token);
 
     // if redis fails then return an error
-    if delete_redis_result.await.is_err() {
+    if delete_redis_result.is_err() {
         let response: response::Response = response::Response {
             response_field: Some(ResponseField::Error(response::Error::ServerError as i32)),
         };

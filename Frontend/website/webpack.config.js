@@ -11,8 +11,8 @@ const data = {
     path: join(__dirname, "dist/main/javascript"),
     filename: "bundle.js",
   },
-  mode: "development",
-  // mode: "production",
+  // mode: "development",
+  mode: "production",
   resolve: {
     extensions: ['.ts', '.tsx', '.js', '.jsx'],
     fallback: {

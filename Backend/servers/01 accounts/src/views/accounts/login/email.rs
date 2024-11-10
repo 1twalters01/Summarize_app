@@ -22,6 +22,7 @@ pub async fn post_email(data: ProtoBuf<Request>) -> Result<impl Responder> {
     // Get email from posted data
     let Request { email } = data.0;
 
+
     // Validate email
     if validate_email(&email).is_err() {
         return Ok(ResponseService::create_error_response(
@@ -35,22 +36,25 @@ pub async fn post_email(data: ProtoBuf<Request>) -> Result<impl Responder> {
     let user: User = match user_service.get_user_from_email(&email).await {
         Ok(Some(user)) => user,
         Ok(None) => {
+            println!("No user found");
             return Ok(ResponseService::create_error_response(
                 AppError::LoginEmail(Error::UnregisteredEmail),
                 StatusCode::NOT_FOUND,
             ));
-        },
-        Err(_) => {
+        }
+        Err(err) => {
+            println!("{:#?}", err);
             return Ok(ResponseService::create_error_response(
                 AppError::LoginEmail(Error::ServerError),
                 StatusCode::INTERNAL_SERVER_ERROR,
             ));
-        },
+        }
     };
 
     // save {key: token, value: user} to redis cache for 300 seconds
     let token: String = generate_opaque_token_of_length(25);
     let expiry_in_seconds: Option<i64> = Some(300);
+
     let mut cache_service = CacheService::new(create_redis_client_connection());
     let cache_result = cache_service.store_token_for_user(&token, &user, expiry_in_seconds);
     if cache_result.is_err() {
@@ -80,7 +84,7 @@ mod tests {
     use crate::{datatypes::auth::AccessToken, middleware};
 
     #[actix_web::test]
-    async fn test_post_known_email_while_not_authenticated() {
+    async fn test_known_email_not_authenticated() {
         dotenv().ok();
 
         let mut app = test::init_service(
@@ -105,6 +109,7 @@ mod tests {
             .to_request();
 
         let resp = test::call_service(&mut app, request).await;
+        assert!(true==false);
         let response_buffer: Vec<u8> = test::read_body(resp).await.to_vec();
         let decoded: Response = Message::decode(&response_buffer[..]).unwrap();
 

@@ -7,6 +7,7 @@ pub async fn main_html() -> Result<impl Responder> {
     let data = Bytes::from(fs::read(&path).unwrap());
 
     Ok(HttpResponse::Ok()
+        // .content_type("text/javascript; charset=UTF-8")
         .content_type("text/html; charset=UTF-8")
         .body(data))
 }

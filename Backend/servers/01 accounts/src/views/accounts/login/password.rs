@@ -1,8 +1,9 @@
-use actix_protobuf::{ProtoBuf, ProtoBufResponseBuilder};
-use actix_web::{HttpRequest, HttpResponse, Responder, Result};
+use actix_protobuf::ProtoBuf;
+use actix_web::{http::StatusCode, HttpRequest, Responder, Result};
 
 use crate::{
-    datatypes::{auth::AuthTokens, token_object::UserRememberMe}, generated::protos::accounts::{
+    datatypes::{auth::AuthTokens, response_types::{AppError, AppResponse}, token_object::UserRememberMe},
+    generated::protos::accounts::{
         auth_tokens,
         login::password::{
             request::Request,
@@ -10,13 +11,13 @@ use crate::{
                 response::ResponseField, token::TokenField, Error, Response, Success, Token,
             },
         },
-    }, models::user::User, queries::redis::{
-        all::get_user_from_token_in_redis,
-        general::{delete_key_in_redis, set_key_value_in_redis},
-    }, services::cache_service::CacheService, utils::{
+    },
+    models::user::User,
+    services::{cache_service::CacheService, response_service::ResponseService},
+    utils::{
         database_connections::create_redis_client_connection,
         tokens::generate_opaque_token_of_length, validations::validate_password,
-    }
+    },
 };
 
 pub async fn post_password(data: ProtoBuf<Request>, req: HttpRequest) -> Result<impl Responder> {
@@ -29,150 +30,120 @@ pub async fn post_password(data: ProtoBuf<Request>, req: HttpRequest) -> Result<
         .unwrap()
         .to_string();
 
+    // Get user from token in redis
+    let mut cache_service = CacheService::new(create_redis_client_connection());
+    let cache_result = cache_service.get_user_from_token(&login_email_token);
+    let user: User = match cache_result {
+        Ok(Some(user)) => user,
+        Ok(None) => {
+            return Ok(ResponseService::create_error_response(
+                AppError::LoginPassword(Error::UserNotFound),
+                StatusCode::NOT_FOUND,
+            ));
+        }
+        Err(err) => {
+            println!("Error, {:?}", err);
+            return Ok(ResponseService::create_error_response(
+                AppError::LoginPassword(Error::InvalidCredentials),
+                StatusCode::UNPROCESSABLE_ENTITY,
+            ));
+        }
+    };
+
+    // Validate password
     let Request {
         password,
         remember_me,
     } = data.0;
 
-    // try to get user from token in redis
-    let mut con = create_redis_client_connection();
-    let mut cache_service = CacheService::new(create_redis_client_connection());
-    let user: User = match get_user_from_token_in_redis(&mut con, &login_email_token) {
-        // if error return error
-        Err(err) => {
-            println!("Error, {:?}", err);
-
-            let response: Response = Response {
-                response_field: Some(ResponseField::Error(Error::InvalidCredentials as i32)),
-            };
-            return Ok(HttpResponse::UnprocessableEntity()
-                .content_type("application/x-protobuf; charset=utf-8")
-                .protobuf(response));
-        }
-        Ok(user) => user,
-    };
-
-    // check if the entered password is a valid password
-    let validated_password = validate_password(&password);
-    if validated_password.is_err() {
-        let response: Response = Response {
-            response_field: Some(ResponseField::Error(Error::InvalidPassword as i32)),
-        };
-        return Ok(HttpResponse::UnprocessableEntity()
-            .content_type("application/x-protobuf; charset=utf-8")
-            .protobuf(response));
+    if validate_password(&password).is_err() {
+        return Ok(ResponseService::create_error_response(
+            AppError::LoginPassword(Error::InvalidPassword),
+            StatusCode::UNPROCESSABLE_ENTITY,
+        ));
     }
-    println!("password: {:#?}", password);
 
     // check if password is correct for the given user
-    let check_password: Result<(), std::io::Error> = user.check_password(&password);
-    if check_password.is_err() {
-        let response: Response = Response {
-            response_field: Some(ResponseField::Error(Error::IncorrectPassword as i32)),
-        };
-        return Ok(HttpResponse::Unauthorized()
-            .content_type("application/x-protobuf; charset=utf-8")
-            .protobuf(response));
+    if user.check_password(&password).is_err() {
+        return Ok(ResponseService::create_error_response(
+            AppError::LoginPassword(Error::IncorrectPassword),
+            StatusCode::UNAUTHORIZED,
+        ));
     }
 
     // see if account has a totp
+    let app_response: AppResponse;
     if user.is_totp_activated() == true {
-        // create a token and a serialized UserRememberMe{ remember_me: bool, token: String }
-        let token: String = generate_opaque_token_of_length(25);
-        let token_object: UserRememberMe = UserRememberMe { remember_me, user };
-        let token_object_json = serde_json::to_string(&token_object).unwrap();
-
         // save {key: token, value: UserRememberMe} to redis
+        let token: String = generate_opaque_token_of_length(25);
+        let user_remember_me_json = serde_json::to_string(&UserRememberMe {remember_me, user}).unwrap();
         let expiry_in_seconds: Option<i64> = Some(300);
-        let mut con = create_redis_client_connection();
-        let set_redis_result =
-            set_key_value_in_redis(&mut con, &token, &token_object_json, expiry_in_seconds);
 
-        // if redis fails then return an error
-        if set_redis_result.is_err() {
-            let response: Response = Response {
-                response_field: Some(ResponseField::Error(Error::ServerError as i32)),
-            };
-            return Ok(HttpResponse::FailedDependency()
-                .content_type("application/x-protobuf; charset=utf-8")
-                .protobuf(response));
+        let cache_result = cache_service.store_key_value(&token, &user_remember_me_json, expiry_in_seconds);
+        if cache_result.is_err() {
+            return Ok(ResponseService::create_error_response(
+                AppError::LoginPassword(Error::ServerError),
+                StatusCode::FAILED_DEPENDENCY,
+            ));
         }
 
-        // delete old token
-        con = create_redis_client_connection();
-        let delete_redis_result = delete_key_in_redis(con, &login_email_token);
-
-        // if redis fails then return an error
-        if delete_redis_result.await.is_err() {
-            let response: Response = Response {
-                response_field: Some(ResponseField::Error(Error::ServerError as i32)),
-            };
-            return Ok(HttpResponse::FailedDependency()
-                .content_type("application/x-protobuf; charset=utf-8")
-                .protobuf(response));
-        }
-
-        // return success
-        let response: Response = Response {
+        app_response = AppResponse::LoginPassword(Response {
             response_field: Some(ResponseField::Success(Success {
                 token: Some(Token {
                     token_field: Some(TokenField::Response(token)),
                 }),
                 requires_totp: true,
+            }))
+        });
+    } else {
+        // generate tokens
+        let auth_tokens: auth_tokens::AuthTokens = match AuthTokens::new(user, remember_me).await {
+            Ok(tokens) => auth_tokens::AuthTokens {
+                refresh: tokens.refresh_token,
+                access: tokens.access_token.to_string(),
+            },
+            Err(err) => {
+                println!("error: {:#?}", err);
+                return Ok(ResponseService::create_error_response(
+                    AppError::LoginPassword(Error::ServerError),
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                ));
+            }
+        };
+        println!("auth tokens: {:#?}", auth_tokens);
+
+        // update last login time
+
+        // create app response
+        app_response = AppResponse::LoginPassword(Response {
+            response_field: Some(ResponseField::Success(Success {
+                token: Some(Token {
+                    token_field: Some(TokenField::Tokens(auth_tokens)),
+                }),
+                requires_totp: false,
             })),
-        };
-        return Ok(HttpResponse::Ok()
-            .content_type("application/x-protobuf; charset=utf-8")
-            .protobuf(response));
+        });
     }
-    println!("inactive totp");
 
-    // update last login time
-    // generate tokens
-    let auth_tokens: auth_tokens::AuthTokens = match AuthTokens::new(user, remember_me).await {
-        Ok(tokens) => auth_tokens::AuthTokens {
-            refresh: tokens.refresh_token,
-            access: tokens.access_token.to_string(),
-        },
-        Err(err) => {
-            println!("error: {:#?}", err);
-            let response: Response = Response {
-                response_field: Some(ResponseField::Error(Error::ServerError as i32)),
-            };
-            return Ok(HttpResponse::InternalServerError()
-                .content_type("application/x-protobuf; charset=utf-8")
-                .protobuf(response));
-        }
-    };
-    println!("auth tokens: {:#?}", auth_tokens);
-
+    
     // delete old token
-    con = create_redis_client_connection();
-    let delete_redis_result = delete_key_in_redis(con, &login_email_token);
-
-    // if redis fails then return an error
-    if delete_redis_result.await.is_err() {
-        let response: Response = Response {
-            response_field: Some(ResponseField::Error(Error::ServerError as i32)),
-        };
-        return Ok(HttpResponse::InternalServerError()
-            .content_type("application/x-protobuf; charset=utf-8")
-            .protobuf(response));
+    let cache_result = cache_service.delete_key(&login_email_token);
+    if cache_result.is_err() {
+        return Ok(ResponseService::create_error_response(
+                AppError::LoginPassword(Error::ServerError),
+                StatusCode::FAILED_DEPENDENCY,
+                ));
     }
 
     // return success
-    let response: Response = Response {
-        response_field: Some(ResponseField::Success(Success {
-            token: Some(Token {
-                token_field: Some(TokenField::Tokens(auth_tokens)),
-            }),
-            requires_totp: false,
-        })),
-    };
-    return Ok(HttpResponse::Ok()
-        .content_type("application/x-protobuf; charset=utf-8")
-        .protobuf(response));
+    return Ok(ResponseService::create_success_response(
+        app_response,
+        StatusCode::OK,
+    ));
 }
+
+
+
 
 #[cfg(test)]
 mod tests {

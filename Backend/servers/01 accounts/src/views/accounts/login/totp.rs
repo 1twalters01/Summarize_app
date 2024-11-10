@@ -94,10 +94,10 @@ pub async fn post_totp(
 
     // delete old token from redis
     con = create_redis_client_connection();
-    let delete_redis_result = delete_key_in_redis(con, &login_password_token);
+    let delete_redis_result = delete_key_in_redis(&mut con, &login_password_token);
 
     // if redis fails then return an error
-    if delete_redis_result.await.is_err() {
+    if delete_redis_result.is_err() {
         let response: response::Response = response::Response {
             response_field: Some(ResponseField::Error(response::Error::ServerError as i32)),
         };
@@ -129,10 +129,10 @@ pub async fn post_totp(
 
     // delete old token
     con = create_redis_client_connection();
-    let delete_redis_result = delete_key_in_redis(con, &login_password_token);
+    let delete_redis_result = delete_key_in_redis(&mut con, &login_password_token);
 
     // if redis fails then return an error
-    if delete_redis_result.await.is_err() {
+    if delete_redis_result.is_err() {
         let response: response::Response = response::Response {
             response_field: Some(ResponseField::Error(response::Error::ServerError as i32)),
         };

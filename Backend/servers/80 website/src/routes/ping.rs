@@ -1,4 +1,4 @@
-use crate::{middleware, views::ping};
+use crate::views::ping;
 use actix_web::web::{self, ServiceConfig};
 
 /// A set of ping that serve as ping to hit when checking the health of the service.
@@ -23,5 +23,5 @@ pub fn config(cfg: &mut ServiceConfig) {
                 "/any_auth",
                 web::post().to(ping::optional_authentication::ping_post_any_auth),
             ),
-    )
+    );
 }

@@ -14,7 +14,10 @@ pub fn set_key_value_in_redis(
 
     Ok(())
 }
+pub fn get_key_from_value_in_redis(con: &mut Connection, key: &str) -> RedisResult<String> {
+    con.get(key)
+}
 
-pub async fn delete_key_in_redis(mut con: Connection, key: &str) -> RedisResult<()> {
+pub fn delete_key_in_redis(con: &mut Connection, key: &str) -> RedisResult<()> {
     con.del(key)
 }
