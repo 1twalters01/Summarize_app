@@ -37,19 +37,25 @@ pub async fn post_totp(
         digit6,
     } = data.0;
 
-    // Try to get TokenObject from redis
-    let mut con = create_redis_client_connection();
-    let (mut user, remember_me): (User, bool) =
-        match get_user_remember_me_from_token_in_redis(&mut con, &login_password_token) {
-            Ok(user_remember_me) => (user_remember_me.user, user_remember_me.remember_me),
-            Err(err) => {
-                println!("err: {:#?}", err);
-                return Ok(ResponseService::create_error_response(
-                    AppError::LoginTotp(Error::InvalidCredentials),
-                    StatusCode::UNPROCESSABLE_ENTITY,
-                ));
-            }
-        };
+    // Try to get user and remember_me from redis
+    let mut cache_service = CacheService::new(create_redis_client_connection());
+    let cache_result = cache_service.get_user_and_remember_me_from_token(&login_password_token);
+    let (mut user, remember_me): (User, bool) = match cache_result {
+        Ok(Some(user_and_remember_me)) => (user_remember_me.user, user_remember_me.remember_me),
+        Ok(None) => {
+            return Ok(ResponseService::create_error_response(
+                AppError::LoginTotp(Error::UserNotFound),
+                StatusCode::NOT_FOUND,
+            ));
+        }
+        Err(err) => {
+            println!("Error, {:?}", err);
+            return Ok(ResponseService::create_error_response(
+                AppError::LoginTotp(Error::InvalidCredentials),
+                StatusCode::UNPROCESSABLE_ENTITY,
+            ));
+        }
+    };
 
     // check if the entered totp is a valid totp
     if validate_totp(digit1, digit2, digit3, digit4, digit5, digit6).is_err() || user.is_totp_activated() == false {
@@ -91,7 +97,7 @@ pub async fn post_totp(
         return Ok(ResponseService::create_error_response(
                 AppError::LoginTotp(Error::ServerError),
                 StatusCode::FAILED_DEPENDENCY,
-                ));
+        ));
     }
 
     // return success

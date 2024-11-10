@@ -15,58 +15,75 @@ use crate::{
     utils::database_connections::create_pg_pool_connection,
 };
 
-pub async fn post_refresh_token(data: Json<AuthTokens>) -> Result<impl Responder> {
-    let mut res_body: RefreshTokenResponseSchema = RefreshTokenResponseSchema::new();
-    let refresh_token: String = match &data.refresh_token {
-        None => {
-            let error: AccountError = AccountError {
-                is_error: true,
-                error_message: Some(String::from("Internal server error")),
-            };
-            res_body.account_error = error;
-            return Ok(HttpResponse::Unauthorized()
-                .content_type("application/json; charset=utf-8")
-                .json(res_body));
-        }
-        Some(refresh_token) => refresh_token.to_string(),
-    };
-
-    let pool = create_pg_pool_connection().await;
-    let user: User =
-        match from_refresh_token(&pool, &refresh_token).await {
-            Ok(user) => match user {
-                Some(user) => user,
-                None => {
-                    let error: AccountError = AccountError {
-                        is_error: true,
-                        error_message: Some("invalid refresh token".to_string()),
-                    };
-                    res_body.account_error = error;
-                    return Ok(HttpResponse::UnprocessableEntity()
-                        .content_type("application/json; charset=utf-8")
-                        .json(res_body));
-                }
+pub async fn post_refresh_token(req: HttpRequest) -> Result<impl Responder> {
+    // Read refresh token from header if none then error
+    let refresh_token: String = match req
+        .headers()
+        .get("Refresh-Token")
+        .unwrap()
+        .to_str()
+        .unwrap()
+        .to_string() {
+            Some(refresh_token) => refresh_token,
+            None => {
+                return Ok(ResponseService::create_error_response(
+                    AppError::LoginRefresh(Error::NoRefreshToken),
+                    StatusCode::NOT_FOUND,
+                ));
             },
-            Err(err) => {
-                let error: AccountError = AccountError {
-                    is_error: true,
-                    error_message: Some(err.to_string()),
-                };
-                res_body.account_error = error;
-                return Ok(HttpResponse::UnprocessableEntity()
-                    .content_type("application/json; charset=utf-8")
-                    .json(res_body));
-            }
         };
 
-    let access_token = AccessToken::new(&user);
+    // Validate refresh token
+    if validate_refresh_token(&refresh_token).is_err() {
+        return Ok(ResponseService::create_error_response(
+            AppError::LoginRefresh(Error::InvalidRefreshToken),
+            StatusCode::UNAUTHORIZED,
+        ));
+    }
 
-    let auth_tokens: AuthTokens = AuthTokens {
-        refresh_token: Some(refresh_token),
-        access_token,
-    };
+    // try to Get user uuid from refresh token else fail
 
-    Ok(HttpResponse::Ok()
-        .content_type("application/json; charset=utf-8")
-        .json(auth_tokens))
+    // Create new access token for user
+    let auth_tokens = AccessToken::new(&user);
+
+    // Return token
+    return Ok(ResponseService::create_success_response(
+        AppResponse::LoginTotp(Response {
+            response_field: Some(ResponseField::Token(auth_tokens)),
+        }),
+        StatusCode::OK,
+    ));
 }
+
+
+
+
+
+//     let pool = create_pg_pool_connection().await;
+//     let user: User =
+//         match from_refresh_token(&pool, &refresh_token).await {
+//             Ok(user) => match user {
+//                 Some(user) => user,
+//                 None => {
+//                     let error: AccountError = AccountError {
+//                         is_error: true,
+//                         error_message: Some("invalid refresh token".to_string()),
+//                     };
+//                     res_body.account_error = error;
+//                     return Ok(HttpResponse::UnprocessableEntity()
+//                         .content_type("application/json; charset=utf-8")
+//                         .json(res_body));
+//                 }
+//             },
+//             Err(err) => {
+//                 let error: AccountError = AccountError {
+//                     is_error: true,
+//.                    error_message: Some(err.to_string()),
+//                 };
+//                 res_body.account_error = error;
+//                 return Ok(HttpResponse::UnprocessableEntity()
+//                     .content_type("application/json; charset=utf-8")
+//                     .json(res_body));
+//             }
+//         };
+
