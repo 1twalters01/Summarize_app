@@ -1,4 +1,4 @@
-use actix_web::{web::Json, HttpResponse, Responder, Result};
+use actix_web::{web::Json, Responder, Result};
 // use actix_protobuf::{ProtoBuf, ProtoBufResponseBuilder};
 
 
@@ -42,9 +42,25 @@ pub async fn post_refresh_token(req: HttpRequest) -> Result<impl Responder> {
     }
 
     // try to Get user uuid from refresh token else fail
+    let user_uuid = match get_user_uuid_from_refresh_token(refresh_token) {
+        Result<Option<Uuid>, String>>
+        Ok(Some(user_uuid)) => user_uuid,
+        Ok(None) => {
+            return Ok(ResponseService::create_error_response(
+                AppError::LoginRefresh(Error::UserNotFound),
+                StatusCode::NOT_FOUND,
+            ));
+        },
+        Error(err) => {
+            return Ok(ResponseService::create_error_response(
+                AppError::LoginRefresh(Error::ServerError),
+                StatusCode::INTERNAL_SERVER_ERROR,
+            ))
+        }
+    };
 
     // Create new access token for user
-    let auth_tokens = AccessToken::new(&user);
+    let auth_tokens = TokenService::generate_access_token(&user_uuid);
 
     // Return token
     return Ok(ResponseService::create_success_response(

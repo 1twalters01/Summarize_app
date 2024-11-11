@@ -1,15 +1,15 @@
-use crate::models::user::User;
+use UUID::Uuid;
 use sqlx::{Pool, Postgres};
 
-pub async fn from_user_and_refresh_token(
+pub async fn from_user_uuid_and_refresh_token(
     pool: &Pool<Postgres>,
-    user: &User,
+    user: &Uuid,
     refresh_token: &str,
 ) -> Result<(), sqlx::Error> {
     let save_refresh_token_query =
         sqlx::query("INSERT INTO auth WHERE refresh_token=($1), username=($2)")
             .bind(refresh_token)
-            .bind(user.get_uuid().to_string())
+            .bind(user_uuid.to_string())
             .execute(pool)
             .await;
 

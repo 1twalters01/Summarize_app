@@ -7,7 +7,7 @@ CREATE EXTENSION IF NOT EXISTS "pg_cron";
 
 ## Users
 CREATE TABLE IF NOT EXISTS users(
-    user_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     uuid UUID UNIQUE NOT NULL DEFAULT gen_random_uuid(),
     username VARCHAR(50) UNIQUE NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
@@ -76,7 +76,7 @@ CREATE TABLE IF NOT EXISTS totp_secrets(
 
 ## Refresh Tokens
 CREATE TABLE IF NOT EXISTS refresh_tokens(
-    user_id int UNIQUE NOT NULL,
+    user_id int NOT NULL,
     refresh_token VARCHAR UNIQUE NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     expires_at TIMESTAMP DEFAULT NOW() + INTERVAL '1 week'
@@ -90,7 +90,7 @@ SELECT cron.schedule(
 
 | Field           | Type           | Description                 | IS UNIQUE | NOT NULL | INDEX  |
 |-----------------|----------------|-----------------------------|-----------|----------|--------|
-| user_id         | INT            | Foreign key to user id      | True      | True     |  |
+| user_id         | INT            | Foreign key to user id      | False     | True     |  |
 | refresh_token   | VARCHAR(50)    | The refresh token           | True      | True     |  |
 | created_at      | TIMESTAMP      | The token's creation time   | False     | True     |  |
 | expires_at      | TIMESTAMP      | The token's expiration time | False     | True     |  |
@@ -110,6 +110,6 @@ SELECT cron.schedule(
 
 | Field           | Type           | Description                 | IS UNIQUE | NOT NULL | INDEX  |
 |-----------------|----------------|-----------------------------|-----------|----------|--------|
-| user_id         | INT            | Foreign key to user id      | True      | True     |  |
+| user_id         | INT            | Foreign key to user id      | False     | True     |  |
 | token           | VARCHAR(150)   | The token to be blacklist   | True      | True     |  |
 | expires_at      | TIMESTAMP      | The token's expiration time | False     | True     |  |
