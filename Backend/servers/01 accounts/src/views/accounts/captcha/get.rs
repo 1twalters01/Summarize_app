@@ -9,10 +9,7 @@ use crate::{
         all::get_code_from_token_in_redis,
         general::set_key_value_in_redis,
     },
-    accounts::schema::{
-        captcha::{CaptchaResponse, CaptchaResponseSchema, GetCaptchaResponseSchema},
-        errors::AccountError,
-    },
+    accounts::schema::captcha::{AccountError, CaptchaResponse, CaptchaResponseSchema, GetCaptchaResponseSchema},
     utils::{
         database_connections::create_redis_client_connection,
         tokens::generate_opaque_token_of_length,
