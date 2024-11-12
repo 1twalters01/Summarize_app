@@ -1,9 +1,11 @@
 use redis::{Connection, RedisError, RedisResult};
 
 use crate::{
+    datatypes::token_object::UserRememberMe,
     models::user::User,
-    datatypes::token_object::UserRememberMe
-    queries::redis::general::{delete_key_in_redis, get_key_from_value_in_redis, set_key_value_in_redis},
+    queries::redis::general::{
+        delete_key_in_redis, get_key_from_value_in_redis, set_key_value_in_redis,
+    },
 };
 
 pub struct CacheService {
@@ -24,10 +26,7 @@ impl CacheService {
         set_key_value_in_redis(&mut self.con, key, value, expiry_in_seconds)
     }
 
-    pub fn delete_key(
-        &mut self,
-        key: &str,
-    ) -> Result<(), RedisError> {
+    pub fn delete_key(&mut self, key: &str) -> Result<(), RedisError> {
         delete_key_in_redis(&mut self.con, key)
     }
 
@@ -52,10 +51,14 @@ impl CacheService {
         }
     }
 
-    pub fn get_user_and_remember_me_from_token(&mut self, token: &str) -> Result<Option<UserRememberMe>, String> {
+    pub fn get_user_and_remember_me_from_token(
+        &mut self,
+        token: &str,
+    ) -> Result<Option<UserRememberMe>, String> {
         let redis_result: RedisResult<String> = get_key_from_value_in_redis(&mut self.con, token);
         match redis_result {
-            Ok(user_and_remember_me_json) => match serde_json::from_str(&user_and_remember_me_json) {
+            Ok(user_and_remember_me_json) => match serde_json::from_str(&user_and_remember_me_json)
+            {
                 Ok(user_and_remember_me) => return Ok(user_and_remember_me),
                 Err(err) => return Err(err.to_string()),
             },

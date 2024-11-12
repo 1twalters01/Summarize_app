@@ -1,5 +1,16 @@
-use jsonwebtoken::{decode, DecodingKey, TokenData, Validation};
-use serde_json::{Serialize, Deserialize};
+use std::env;
+
+use chrono::{Duration, Utc};
+use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
+use serde::{Deserialize, Serialize};
+use uuid::Uuid;
+
+use crate::{
+    queries::postgres::refresh_token,
+    utils::{
+        database_connections::create_pg_pool_connection, tokens::generate_opaque_token_of_length,
+    },
+};
 
 pub struct TokenService;
 
@@ -32,26 +43,28 @@ impl TokenService {
         return access_token;
     }
 
-    pub fn generate_refresh_token(remember_me: bool) -> String {
+    pub fn generate_refresh_token(remember_me: bool) -> Option<String> {
         match remember_me {
             true => return None,
-            false => {
-                refresh_token = Some(generate_opaque_token_of_length(32));
-            }
+            false => return Some(generate_opaque_token_of_length(32)),
         }
     }
 
-    pub fn save_refresh_token_to_postgres(user_uuid: &Uuid) -> Result<(), String> {
+    pub async fn save_refresh_token_to_postgres(
+        user_uuid: &Uuid,
+        refresh_token: &str,
+    ) -> Result<(), String> {
         let pool = create_pg_pool_connection().await;
         let postgres_result = refresh_token::insert::from_user_uuid_and_refresh_token(
             &pool,
             &user_uuid,
-            &refresh_token.as_ref().unwrap()
-        ).await;
+            refresh_token,
+        )
+        .await;
 
         match postgres_result {
-            Ok() => return Ok(()),
-            Err(error) => return Err(err.to_string()),
+            Ok(_) => return Ok(()),
+            Err(err) => return Err(err.to_string()),
         };
     }
 
@@ -60,30 +73,27 @@ impl TokenService {
         let validation = Validation::default();
         let decoding_key = DecodingKey::from_secret(secret.as_ref());
 
-        if let Ok(auth_str) = auth_header.to_str() {
-            if auth_str.starts_with("Bearer ") {
-                let token = &auth_str[7..];
-
-                if let Ok(token_data) = decode::<Claims>(token, &decoding_key, &validation) {
-                    return Ok(token_data.claims);
-                }
+        if access_token.starts_with("Bearer ") {
+            let token = &access_token[7..];
+            match decode::<Claims>(token, &decoding_key, &validation) {
+                Ok(token_data) => return Ok(token_data.claims),
+                Err(err) => return Err(err.to_string()),
             }
         }
 
-        return Err(());
+        return Err("Invalid access token".to_string());
     }
 
-    pub fn get_user_uuid_from_refresh_token(refresh_token: &str) -> Result<Option<Uuid>, String>> {
+    pub async fn get_user_uuid_from_refresh_token(
+        refresh_token: &str,
+    ) -> Result<Option<Uuid>, String> {
         let pool = create_pg_pool_connection().await;
         let user_uuid_result: Result<Option<Uuid>, sqlx::Error> =
-            refresh_token::get::user_uuid_from_refresh_token(
-                &pool,
-                &refresh_token.as_ref().unwrap()
-            ).await;
+            refresh_token::get::user_uuid_from_refresh_token(&pool, &refresh_token).await;
 
         match user_uuid_result {
-            Ok(res) => res,
-            Err(err) => err.to_string(),
+            Ok(res) => Ok(res),
+            Err(err) => Err(err.to_string()),
         }
     }
 }

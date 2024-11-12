@@ -1,9 +1,9 @@
-use UUID::Uuid;
 use sqlx::{Pool, Postgres};
+use uuid::Uuid;
 
 pub async fn from_user_uuid_and_refresh_token(
     pool: &Pool<Postgres>,
-    user: &Uuid,
+    user_uuid: &Uuid,
     refresh_token: &str,
 ) -> Result<(), sqlx::Error> {
     let save_refresh_token_query =

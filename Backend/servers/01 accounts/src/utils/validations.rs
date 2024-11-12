@@ -50,6 +50,14 @@ pub fn validate_totp(
     return Ok(());
 }
 
+pub fn validate_refresh_token(refresh_token: &str) -> Result<(), String> {
+    if refresh_token.len() < 15 {
+        return Err("invalid refresh token".to_string());
+    }
+
+    return Ok(());
+}
+
 pub fn validate_username(username: &str) -> Result<(), String> {
     if username.len() >= 30 {
         return Err("Username is too long".to_string());

@@ -1,10 +1,10 @@
 use crate::{
-    datatypes::auth::Claims,
     generated::protos::settings::profile::theme::{
         request::{request::RequestField, Colour, Colours, Custom, Presets, Request},
         response::{response, Error, Response, Success},
     },
     models::user::User,
+    services::token_service::Claims,
     utils::{database_connections::create_pg_pool_connection, validations::validate_theme},
 };
 

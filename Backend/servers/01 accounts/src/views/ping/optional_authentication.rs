@@ -37,7 +37,7 @@ mod tests {
     use actix_web::{test, web, App};
     use serde_json::json;
 
-    use crate::{datatypes::auth::AccessToken, models::user::User};
+    use crate::{models::user::User, services::token_service::TokenService};
 
     #[actix_web::test]
     async fn test_ping_get_any_auth_not_authenticated() {
@@ -80,8 +80,8 @@ mod tests {
             Some("Lastname".to_string()),
         )
         .unwrap();
-        let token: String = AccessToken::new(&user).to_string();
-        let auth_token = String::from("Bearer ") + &token;
+        let access_token: String = TokenService::generate_access_token(&user.get_uuid());
+        let auth_token = String::from("Bearer ") + &access_token;
 
         let mut request = test::TestRequest::get()
             .uri("/ping/any_auth")
@@ -152,8 +152,8 @@ mod tests {
         let last_name = Some("Lastname".to_string());
 
         let user: User = User::new(username, email, password, first_name, last_name).unwrap();
-        let token = AccessToken::new(&user).to_string();
-        let auth_token = String::from("Bearer ") + &token;
+        let access_token: String = TokenService::generate_access_token(&user.get_uuid());
+        let auth_token = String::from("Bearer ") + &access_token;
 
         let data_text: String = String::from("Ping from test");
         let data: Message = Message {

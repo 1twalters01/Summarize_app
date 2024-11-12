@@ -1,6 +1,6 @@
 use crate::{
-    datatypes::auth::Claims,
     datatypes::ping::{DualMessage, Message},
+    services::token_service::Claims,
 };
 use actix_web::{web::Json, HttpMessage, HttpRequest, HttpResponse, Responder, Result};
 
@@ -10,7 +10,7 @@ pub async fn ping_get_only_auth(req: HttpRequest) -> Result<impl Responder> {
         message: String::from("Ping only authorized level from server"),
     };
 
-    let claims: Claims = req.extensions().get::<Claims>().unwrap().clone();
+    let claims = req.extensions().get::<Claims>().unwrap().clone();
     println!("Claims: {:#?}", claims);
 
     return Ok(HttpResponse::Ok()
@@ -41,7 +41,7 @@ mod tests {
     use dotenv::dotenv;
     use serde_json::json;
 
-    use crate::{datatypes::auth::AccessToken, middleware, models::user::User};
+    use crate::{middleware, models::user::User, services::token_service::TokenService};
 
     #[actix_web::test]
     async fn test_ping_get_only_auth_not_authenticated() {
@@ -80,8 +80,8 @@ mod tests {
         let last_name = Some("Lastname".to_string());
 
         let user: User = User::new(username, email, password, first_name, last_name).unwrap();
-        let token: String = AccessToken::new(&user).to_string();
-        let auth_token = String::from("Bearer ") + &token;
+        let access_token: String = TokenService::generate_access_token(&user.get_uuid());
+        let auth_token = String::from("Bearer ") + &access_token;
 
         let mut request = test::TestRequest::get()
             .uri("/ping/only_auth")
@@ -145,8 +145,8 @@ mod tests {
         let last_name = Some("Lastname".to_string());
 
         let user: User = User::new(username, email, password, first_name, last_name).unwrap();
-        let token: String = AccessToken::new(&user).to_string();
-        let auth_token = String::from("Bearer ") + &token;
+        let access_token: String = TokenService::generate_access_token(&user.get_uuid());
+        let auth_token = String::from("Bearer ") + &access_token;
 
         let data_text: String = String::from("Ping from test");
         let data: Message = Message {

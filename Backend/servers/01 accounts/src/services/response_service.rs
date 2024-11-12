@@ -1,5 +1,5 @@
 use actix_protobuf::ProtoBufResponseBuilder;
-use actix_web::{http::StatusCode, HttpResponse, Responder, Result};
+use actix_web::{http::StatusCode, HttpResponse, Result};
 
 use crate::{
     datatypes::response_types::{AppError, AppResponse},
@@ -8,7 +8,7 @@ use crate::{
             email::response as login_email_response,
             password::response as login_password_response,
             totp::response as login_totp_response,
-            // refresh::response as login_refresh_response,
+            refresh::response as login_refresh_response,
         },
         password_reset::{
             email::response as password_reset_email_response,
@@ -26,11 +26,8 @@ use crate::{
 pub struct ResponseService;
 
 impl ResponseService {
-    pub fn create_error_response(
-        error: AppError,
-        status: StatusCode
-    ) -> Result<HttpResponse> {
-    // ) -> impl Responder {
+    pub fn create_error_response(error: AppError, status: StatusCode) -> Result<HttpResponse> {
+        // ) -> impl Responder {
         let response = match error {
             AppError::LoginEmail(err) => {
                 login_email_response::Response {
@@ -53,11 +50,11 @@ impl ResponseService {
                     )),
                 };
             }
-            // AppError::LoginRefresh(err) => {
-            //     login_refresh_response::Response {
-            //         response_field: Some(login_refresh_response::response::ResponseField::Error(err as i32)),
-            //     };
-            // },
+            AppError::LoginRefresh(err) => {
+                login_refresh_response::Response {
+                    response_field: Some(login_refresh_response::response::ResponseField::Error(err as i32)),
+                };
+            },
             AppError::RegisterEmail(err) => {
                 register_email_response::Response {
                     response_field: Some(register_email_response::response::ResponseField::Error(
@@ -115,7 +112,7 @@ impl ResponseService {
         response: AppResponse,
         status: StatusCode,
     ) -> Result<HttpResponse> {
-    // ) -> impl Responder {
+        // ) -> impl Responder {
         match response {
             AppResponse::LoginEmail(res) => HttpResponse::build(status)
                 .content_type("application/x-protobuf; charset=utf-8")
@@ -124,6 +121,9 @@ impl ResponseService {
                 .content_type("application/x-protobuf; charset=utf-8")
                 .protobuf(res),
             AppResponse::LoginTotp(res) => HttpResponse::build(status)
+                .content_type("application/x-protobuf; charset=utf-8")
+                .protobuf(res),
+            AppResponse::LoginRefresh(res) => HttpResponse::build(status)
                 .content_type("application/x-protobuf; charset=utf-8")
                 .protobuf(res),
             AppResponse::RegisterEmail(res) => HttpResponse::build(status)

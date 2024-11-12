@@ -1,14 +1,12 @@
 use actix_web::{
     body::{BoxBody, EitherBody},
     dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform},
-    http::header::HeaderValue,
     Error, HttpResponse,
 };
 use futures_util::future::{ok, Ready};
-use jsonwebtoken::{decode, DecodingKey, TokenData, Validation};
-use std::{env, future::Future, pin::Pin, rc::Rc};
+use std::{future::Future, pin::Pin, rc::Rc};
 
-use crate::datatypes::auth::Claims;
+use crate::services::token_service::TokenService;
 
 pub struct NotAuthenticated;
 
@@ -51,9 +49,11 @@ where
         let svc = self.service.clone();
         Box::pin(async move {
             if let Some(auth_header) = req.headers().get("Authorization") {
-                if validate_auth_header(auth_header).is_ok() {
-                    let response = HttpResponse::Unauthorized().finish().map_into_right_body();
-                    return Ok(req.into_response(response));
+                if let Ok(auth_str) = auth_header.to_str() {
+                    if TokenService::get_claims_from_access_token(auth_str).is_ok() {
+                        let response = HttpResponse::Unauthorized().finish().map_into_right_body();
+                        return Ok(req.into_response(response));
+                    }
                 }
             }
 
@@ -61,22 +61,4 @@ where
             return Ok(res.map_into_left_body());
         })
     }
-}
-
-pub fn validate_auth_header(auth_header: &HeaderValue) -> Result<TokenData<Claims>, ()> {
-    let secret = env::var("JWT_SECRET").unwrap();
-    let validation = Validation::default();
-    let decoding_key = DecodingKey::from_secret(secret.as_ref());
-
-    if let Ok(auth_str) = auth_header.to_str() {
-        if auth_str.starts_with("Bearer ") {
-            let token = &auth_str[7..];
-
-            if let Ok(token_data) = decode::<Claims>(token, &decoding_key, &validation) {
-                return Ok(token_data);
-            }
-        }
-    }
-
-    return Err(());
 }

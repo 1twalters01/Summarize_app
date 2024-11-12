@@ -1,11 +1,11 @@
 use crate::{
-    datatypes::auth::Claims,
     generated::protos::settings::profile::confirmation::{
         response as confirmation_response, Error as PasswordError, Request as PasswordRequest,
         Response as PasswordResponse, Success as PasswordSuccess,
     },
     models::user::User,
     queries::postgres::user::delete::from_uuid,
+    services::token_service::Claims,
     utils::{database_connections::create_pg_pool_connection, validations::validate_password},
 };
 use actix_protobuf::{ProtoBuf, ProtoBufResponseBuilder};

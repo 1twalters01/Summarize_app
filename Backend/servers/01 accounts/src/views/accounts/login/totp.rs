@@ -1,17 +1,19 @@
-use actix_protobuf::{ProtoBuf, ProtoBufResponseBuilder};
-use actix_web::{HttpRequest, HttpResponse, Responder, Result};
+use actix_protobuf::ProtoBuf;
+use actix_web::{http::StatusCode, HttpRequest, Responder, Result};
 
 use crate::{
-    datatypes::auth::AuthTokens,
+    datatypes::response_types::{AppError, AppResponse},
     generated::protos::accounts::{
-        auth_tokens,
+        auth_tokens::AuthTokens,
         login::totp::{
             request,
-            response::{Error, Response, response::ResponseField},
+            response::{response::ResponseField, Error, Response},
         },
     },
     models::user::User,
-    queries::redis::{all::get_user_remember_me_from_token_in_redis, general::delete_key_in_redis},
+    services::{
+        cache_service::CacheService, response_service::ResponseService, token_service::TokenService,
+    },
     utils::{database_connections::create_redis_client_connection, validations::validate_totp},
 };
 
@@ -41,7 +43,9 @@ pub async fn post_totp(
     let mut cache_service = CacheService::new(create_redis_client_connection());
     let cache_result = cache_service.get_user_and_remember_me_from_token(&login_password_token);
     let (mut user, remember_me): (User, bool) = match cache_result {
-        Ok(Some(user_and_remember_me)) => (user_remember_me.user, user_remember_me.remember_me),
+        Ok(Some(user_and_remember_me)) => {
+            (user_and_remember_me.user, user_and_remember_me.remember_me)
+        }
         Ok(None) => {
             return Ok(ResponseService::create_error_response(
                 AppError::LoginTotp(Error::UserNotFound),
@@ -58,7 +62,9 @@ pub async fn post_totp(
     };
 
     // check if the entered totp is a valid totp
-    if validate_totp(digit1, digit2, digit3, digit4, digit5, digit6).is_err() || user.is_totp_activated() == false {
+    if validate_totp(digit1, digit2, digit3, digit4, digit5, digit6).is_err()
+        || user.is_totp_activated() == false
+    {
         return Ok(ResponseService::create_error_response(
             AppError::LoginTotp(Error::InvalidTotp),
             StatusCode::UNAUTHORIZED,
@@ -76,17 +82,12 @@ pub async fn post_totp(
     // update last login time
 
     // create auth tokens
-    let auth_tokens: auth_tokens::AuthTokens = match AuthTokens::new(user, remember_me).await {
-        Ok(tokens) => auth_tokens::AuthTokens {
-            refresh: tokens.refresh_token,
-            access: tokens.access_token.to_string(),
-        },
-        Err(err) => {
-            return Ok(ResponseService::create_error_response(
-                AppError::LoginTotp(Error::ServerError),
-                StatusCode::FAILED_DEPENDENCY,
-            ));
-        }
+    let refresh_token = TokenService::generate_refresh_token(remember_me);
+    let access_token = TokenService::generate_access_token(&user.get_uuid());
+
+    let auth_tokens = AuthTokens {
+        refresh: refresh_token,
+        access: access_token,
     };
     println!("auth tokens: {:#?}", auth_tokens);
 
@@ -95,8 +96,8 @@ pub async fn post_totp(
     let cache_result = cache_service.delete_key(&login_password_token);
     if cache_result.is_err() {
         return Ok(ResponseService::create_error_response(
-                AppError::LoginTotp(Error::ServerError),
-                StatusCode::FAILED_DEPENDENCY,
+            AppError::LoginTotp(Error::ServerError),
+            StatusCode::FAILED_DEPENDENCY,
         ));
     }
 

@@ -2,9 +2,12 @@ use actix_protobuf::ProtoBuf;
 use actix_web::{http::StatusCode, HttpRequest, Responder, Result};
 
 use crate::{
-    datatypes::{auth::AuthTokens, response_types::{AppError, AppResponse}, token_object::UserRememberMe},
+    datatypes::{
+        response_types::{AppError, AppResponse},
+        token_object::UserRememberMe,
+    },
     generated::protos::accounts::{
-        auth_tokens,
+        auth_tokens::AuthTokens,
         login::password::{
             request::Request,
             response::{
@@ -13,7 +16,9 @@ use crate::{
         },
     },
     models::user::User,
-    services::{cache_service::CacheService, response_service::ResponseService},
+    services::{
+        cache_service::CacheService, response_service::ResponseService, token_service::TokenService,
+    },
     utils::{
         database_connections::create_redis_client_connection,
         tokens::generate_opaque_token_of_length, validations::validate_password,
@@ -76,10 +81,12 @@ pub async fn post_password(data: ProtoBuf<Request>, req: HttpRequest) -> Result<
     if user.is_totp_activated() == true {
         // save {key: token, value: UserRememberMe} to redis
         let token: String = generate_opaque_token_of_length(25);
-        let user_remember_me_json = serde_json::to_string(&UserRememberMe {remember_me, user}).unwrap();
+        let user_remember_me_json =
+            serde_json::to_string(&UserRememberMe { remember_me, user }).unwrap();
         let expiry_in_seconds: Option<i64> = Some(300);
 
-        let cache_result = cache_service.store_key_value(&token, &user_remember_me_json, expiry_in_seconds);
+        let cache_result =
+            cache_service.store_key_value(&token, &user_remember_me_json, expiry_in_seconds);
         if cache_result.is_err() {
             return Ok(ResponseService::create_error_response(
                 AppError::LoginPassword(Error::ServerError),
@@ -93,24 +100,17 @@ pub async fn post_password(data: ProtoBuf<Request>, req: HttpRequest) -> Result<
                     token_field: Some(TokenField::Response(token)),
                 }),
                 requires_totp: true,
-            }))
+            })),
         });
     } else {
         // generate tokens
-        let auth_tokens: auth_tokens::AuthTokens = match AuthTokens::new(user, remember_me).await {
-            Ok(tokens) => auth_tokens::AuthTokens {
-                refresh: tokens.refresh_token,
-                access: tokens.access_token.to_string(),
-            },
-            Err(err) => {
-                println!("error: {:#?}", err);
-                return Ok(ResponseService::create_error_response(
-                    AppError::LoginPassword(Error::ServerError),
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                ));
-            }
+        let refresh_token = TokenService::generate_refresh_token(remember_me);
+        let access_token = TokenService::generate_access_token(&user.get_uuid());
+
+        let auth_tokens = AuthTokens {
+            refresh: refresh_token,
+            access: access_token,
         };
-        println!("auth tokens: {:#?}", auth_tokens);
 
         // update last login time
 
@@ -125,14 +125,13 @@ pub async fn post_password(data: ProtoBuf<Request>, req: HttpRequest) -> Result<
         });
     }
 
-    
     // delete old token
     let cache_result = cache_service.delete_key(&login_email_token);
     if cache_result.is_err() {
         return Ok(ResponseService::create_error_response(
-                AppError::LoginPassword(Error::ServerError),
-                StatusCode::FAILED_DEPENDENCY,
-                ));
+            AppError::LoginPassword(Error::ServerError),
+            StatusCode::FAILED_DEPENDENCY,
+        ));
     }
 
     // return success
@@ -141,9 +140,6 @@ pub async fn post_password(data: ProtoBuf<Request>, req: HttpRequest) -> Result<
         StatusCode::OK,
     ));
 }
-
-
-
 
 #[cfg(test)]
 mod tests {
@@ -155,7 +151,6 @@ mod tests {
     use std::env;
 
     use crate::{
-        datatypes::auth::{AccessToken, Claims},
         generated::protos::accounts::{
             auth_tokens::AuthTokens,
             login::email::{
@@ -166,6 +161,7 @@ mod tests {
             },
         },
         middleware,
+        services::token_service::Claims,
         views::accounts::login::email::post_email,
     };
 
@@ -366,11 +362,8 @@ mod tests {
                             let validation = jsonwebtoken::Validation::default();
                             let decoding_key =
                                 jsonwebtoken::DecodingKey::from_secret(secret.as_ref());
-                            let decoded = jsonwebtoken::decode::<crate::datatypes::auth::Claims>(
-                                &access,
-                                &decoding_key,
-                                &validation,
-                            );
+                            let decoded =
+                                jsonwebtoken::decode::<Claims>(&access, &decoding_key, &validation);
                             let user_uuid = env::var("TEST_UUID_WITH_TOTP").unwrap();
                             if let Ok(token_data) = decoded {
                                 assert!(user_uuid == token_data.claims.sub);
@@ -766,7 +759,7 @@ mod tests {
             Some("Lastname".to_string()),
         )
         .unwrap();
-        let access_token: String = AccessToken::new(&user).to_string();
+        let access_token: String = TokenService::generate_access_token(&user.get_uuid());
         let auth_token = String::from("Bearer ") + &access_token;
 
         let remember_me = false;
@@ -852,7 +845,7 @@ mod tests {
             Some("Lastname".to_string()),
         )
         .unwrap();
-        let access_token: String = AccessToken::new(&user).to_string();
+        let access_token: String = TokenService::generate_access_token(&user.get_uuid());
         let auth_token = String::from("Bearer ") + &access_token;
 
         let remember_me = false;
@@ -938,7 +931,7 @@ mod tests {
             Some("Lastname".to_string()),
         )
         .unwrap();
-        let access_token: String = AccessToken::new(&user).to_string();
+        let access_token: String = TokenService::generate_access_token(&user.get_uuid());
         let auth_token = String::from("Bearer ") + &access_token;
 
         let remember_me = false;
@@ -1024,7 +1017,7 @@ mod tests {
             Some("Lastname".to_string()),
         )
         .unwrap();
-        let access_token: String = AccessToken::new(&user).to_string();
+        let access_token: String = TokenService::generate_access_token(&user.get_uuid());
         let auth_token = String::from("Bearer ") + &access_token;
 
         let remember_me = false;
@@ -1110,7 +1103,7 @@ mod tests {
             Some("Lastname".to_string()),
         )
         .unwrap();
-        let access_token: String = AccessToken::new(&user).to_string();
+        let access_token: String = TokenService::generate_access_token(&user.get_uuid());
         let auth_token = String::from("Bearer ") + &access_token;
 
         let remember_me = false;
@@ -1196,7 +1189,7 @@ mod tests {
             Some("Lastname".to_string()),
         )
         .unwrap();
-        let access_token: String = AccessToken::new(&user).to_string();
+        let access_token: String = TokenService::generate_access_token(&user.get_uuid());
         let auth_token = String::from("Bearer ") + &access_token;
 
         let remember_me = false;

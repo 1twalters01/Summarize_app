@@ -22,7 +22,6 @@ pub async fn post_email(data: ProtoBuf<Request>) -> Result<impl Responder> {
     // Get email from posted data
     let Request { email } = data.0;
 
-
     // Validate email
     if validate_email(&email).is_err() {
         return Ok(ResponseService::create_error_response(
@@ -109,7 +108,7 @@ mod tests {
             .to_request();
 
         let resp = test::call_service(&mut app, request).await;
-        assert!(true==false);
+        assert!(true == false);
         let response_buffer: Vec<u8> = test::read_body(resp).await.to_vec();
         let decoded: Response = Message::decode(&response_buffer[..]).unwrap();
 

@@ -1,5 +1,4 @@
 use crate::{
-    datatypes::auth::Claims,
     generated::protos::settings::profile::{
         confirmation::{
             response as confirmation_response, Error as PasswordError, Request as PasswordRequest,
@@ -12,6 +11,7 @@ use crate::{
     },
     models::user::User,
     queries::{postgres::user::get::from_username, redis::general::set_key_value_in_redis},
+    services::token_service::Claims,
     utils::{
         database_connections::{create_pg_pool_connection, create_redis_client_connection},
         tokens::generate_opaque_token_of_length,
