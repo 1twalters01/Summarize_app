@@ -81,6 +81,7 @@ pub async fn post_password(data: ProtoBuf<Request>, req: HttpRequest) -> Result<
     if user.is_totp_activated() == true {
         // save {key: token, value: UserRememberMe} to redis
         let token: String = generate_opaque_token_of_length(25);
+        // Make this a (&User, bool) tuple instead of a struct
         let user_remember_me_json =
             serde_json::to_string(&UserRememberMe { remember_me, user }).unwrap();
         let expiry_in_seconds: Option<i64> = Some(300);

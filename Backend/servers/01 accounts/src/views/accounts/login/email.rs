@@ -40,14 +40,14 @@ pub async fn post_email(data: ProtoBuf<Request>) -> Result<impl Responder> {
                 AppError::LoginEmail(Error::UnregisteredEmail),
                 StatusCode::NOT_FOUND,
             ));
-        }
+        },
         Err(err) => {
             println!("{:#?}", err);
             return Ok(ResponseService::create_error_response(
                 AppError::LoginEmail(Error::ServerError),
                 StatusCode::INTERNAL_SERVER_ERROR,
             ));
-        }
+        },
     };
 
     // save {key: token, value: user} to redis cache for 300 seconds

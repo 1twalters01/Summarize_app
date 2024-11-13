@@ -51,7 +51,7 @@ async fn password_reset_verification_functionality(
     verification_token: String,
 ) -> Result<impl Responder> {
     // Get email from token using redis
-    let token_struct: (String, String) = (header_token, verification_token);
+    let token_struct: (&str, &str) = (&header_token, &verification_token);
     let token_struct_json = serde_json::to_string(&token_struct).unwrap();
     let mut con = create_redis_client_connection();
     let user_json: String =
@@ -59,14 +59,10 @@ async fn password_reset_verification_functionality(
             // if error return error
             Err(err) => {
                 println!("error: {:#?}", err);
-                let response: response::Response = response::Response {
-                    response_field: Some(ResponseField::Error(
-                        response::Error::InvalidCredentials as i32,
-                    )),
-                };
-                return Ok(HttpResponse::UnprocessableEntity()
-                    .content_type("application/x-protobuf; charset=utf-8")
-                    .protobuf(response));
+                return Ok(ResponseService::create_error_response(
+                    AppError::PasswordResetVerification(Error::InvalidCredentials),
+                    StatusCode::UNPROCESSABLE_ENTITY,
+                ));
             }
             Ok(user_json) => user_json,
         };
@@ -83,7 +79,10 @@ async fn password_reset_verification_functionality(
         expiry_in_seconds,
     );
     if set_redis_result.is_err() {
-        panic!("redis error, panic debug")
+        return Ok(ResponseService::create_error_response(
+            AppError::PasswordResetVerification(Error::ServerError),
+            StatusCode::INTERNAL_SERVER_ERROR,
+        ));
     }
 
     // delete old {key: token, value: email}
@@ -92,19 +91,17 @@ async fn password_reset_verification_functionality(
 
     // if redis fails then return an error
     if delete_redis_result.is_err() {
-        let response: response::Response = response::Response {
-            response_field: Some(ResponseField::Error(response::Error::ServerError as i32)),
-        };
-        return Ok(HttpResponse::InternalServerError()
-            .content_type("application/x-protobuf; charset=utf-8")
-            .protobuf(response));
+        return Ok(ResponseService::create_error_response(
+            AppError::PasswordResetVerification(Error::ServerError),
+            StatusCode::INTERNAL_SERVER_ERROR,
+        ));
     }
 
     // return ok
-    let response: response::Response = response::Response {
-        response_field: Some(ResponseField::Token(password_reset_verification_token)),
-    };
-    return Ok(HttpResponse::Ok()
-        .content_type("application/x-protobuf; charset=utf-8")
-        .protobuf(response));
+    return Ok(ResponseService::create_success_response(
+        AppResponse::PasswordResetVerification(Response {
+            response_field: Some(ResponseField::Token(password_reset_verification_token)),
+        }),
+        StatusCode::OK,
+    ));
 }

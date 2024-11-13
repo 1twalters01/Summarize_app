@@ -4,9 +4,12 @@ use actix_web::{HttpRequest, HttpResponse, Responder, Result};
 use crate::{
     generated::protos::accounts::register::details::{
         request,
-        response::{self, response::ResponseField},
+        response::{response::ResponseField, Error, Response},
     },
     models::user::User,
+    services::{
+        cache_service::CacheService, response_service::ResponseService, user_service::UserService,
+    },
     queries::{
         postgres::user::insert::from_user,
         redis::{all::get_email_from_token_struct_in_redis, general::delete_key_in_redis},
@@ -20,7 +23,7 @@ use crate::{
 };
 
 pub async fn post_details(
-    data: ProtoBuf<request::Request>,
+    data: ProtoBuf<Request>,
     req: HttpRequest,
 ) -> Result<impl Responder> {
     let request::Request {
@@ -46,92 +49,62 @@ pub async fn post_details(
             // if error return error
             Err(err) => {
                 println!("error: {:#?}", err);
-                let response: response::Response = response::Response {
-                    response_field: Some(ResponseField::Error(
-                        response::Error::InvalidCredentials as i32,
-                    )),
-                };
-
-                return Ok(HttpResponse::UnprocessableEntity()
-                    .content_type("application/x-protobuf; charset=utf-8")
-                    .protobuf(response));
+                return Ok(ResponseService::create_error_response(
+                    AppError::RegisterVerification(Error::InvalidCredentials),
+                    StatusCode::UNPROCESSABLE_ENTITY,
+                ));
             }
             Ok(email) => email,
         };
 
     if password != password_confirmation {
-        let response: response::Response = response::Response {
-            response_field: Some(ResponseField::Error(
-                response::Error::IncorrectPasswordConfirmation as i32,
-            )),
-        };
-        return Ok(HttpResponse::UnprocessableEntity()
-            .content_type("application/x-protobuf; charset=utf-8")
-            .protobuf(response));
+        return Ok(ResponseService::create_error_response(
+            AppError::RegisterVerification(Error::IncorrectPasswordConfirmation),
+            StatusCode::UNPROCESSABLE_ENTITY,
+        ));
     }
 
     // check if the username is already found in the database. If it is then return error
-    let validated_username = validate_username(&username);
-    if validated_username.is_err() {
-        let response: response::Response = response::Response {
-            response_field: Some(ResponseField::Error(
-                response::Error::InvalidUsername as i32,
-            )),
-        };
-        return Ok(HttpResponse::UnprocessableEntity()
-            .content_type("application/x-protobuf; charset=utf-8")
-            .protobuf(response));
+    if validate_username(&username).is_err() {
+        return Ok(ResponseService::create_error_response(
+            AppError::RegisterVerification(Error::InvalidUsername),
+            StatusCode::UNPROCESSABLE_ENTITY,
+        ));
     }
 
-    let validated_password = validate_password(&password);
-    if validated_password.is_err() {
-        let response: response::Response = response::Response {
-            response_field: Some(ResponseField::Error(
-                response::Error::InvalidPassword as i32,
-            )),
-        };
-        return Ok(HttpResponse::UnprocessableEntity()
-            .content_type("application/x-protobuf; charset=utf-8")
-            .protobuf(response));
+    if validate_password(&password).is_err() {
+        return Ok(ResponseService::create_error_response(
+            AppError::RegisterVerification(Error::InvalidPassword),
+            StatusCode::UNPROCESSABLE_ENTITY,
+        ));
     }
 
     if first_name.is_some() {
         let validated_first_name = validate_first_name(first_name.clone().unwrap());
-        if validated_first_name.is_err() {
-            let response: response::Response = response::Response {
-                response_field: Some(ResponseField::Error(
-                    response::Error::InvalidFirstName as i32,
-                )),
-            };
-            return Ok(HttpResponse::UnprocessableEntity()
-                .content_type("application/x-protobuf; charset=utf-8")
-                .protobuf(response));
+        if validate_first_name(first_name.clone().unwrap()).is_err() {
+            return Ok(ResponseService::create_error_response(
+                AppError::RegisterVerification(Error::InvalidFirstName),
+                StatusCode::UNPROCESSABLE_ENTITY,
+            ));
         }
     }
 
     if last_name.is_some() {
-        let validated_last_name = validate_last_name(last_name.clone().unwrap());
-        if validated_last_name.is_err() {
-            let response: response::Response = response::Response {
-                response_field: Some(ResponseField::Error(
-                    response::Error::InvalidLastName as i32,
-                )),
-            };
-            return Ok(HttpResponse::UnprocessableEntity()
-                .content_type("application/x-protobuf; charset=utf-8")
-                .protobuf(response));
+        if validate_last_name(last_name.clone().unwrap()).is_err() {
+            return Ok(ResponseService::create_error_response(
+                AppError::RegisterVerification(Error::InvalidLastName),
+                StatusCode::UNPROCESSABLE_ENTITY,
+            ));
         }
     }
 
     let create_user: Result<User, std::io::Error> =
         User::new(username, email, password, first_name, last_name);
     if create_user.is_err() {
-        let response: response::Response = response::Response {
-            response_field: Some(ResponseField::Error(response::Error::ServerError as i32)),
-        };
-        return Ok(HttpResponse::InternalServerError()
-            .content_type("application/x-protobuf; charset=utf-8")
-            .protobuf(response));
+        return Ok(ResponseService::create_error_response(
+            AppError::RegisterVerification(Error::ServerError),
+            StatusCode::INTERNAL_SERVER_ERROR,
+        ));
     }
 
     let user: User = create_user.unwrap();
@@ -142,12 +115,10 @@ pub async fn post_details(
 
     // if error then return error
     if save_user_result.is_err() {
-        let response: response::Response = response::Response {
-            response_field: Some(ResponseField::Error(response::Error::ServerError as i32)),
-        };
-        return Ok(HttpResponse::InternalServerError()
-            .content_type("application/x-protobuf; charset=utf-8")
-            .protobuf(response));
+        return Ok(ResponseService::create_error_response(
+            AppError::RegisterVerification(Error::ServerError),
+            StatusCode::INTERNAL_SERVER_ERROR,
+        ));
     }
 
     // delete old {key: token, value: email}
@@ -156,22 +127,19 @@ pub async fn post_details(
 
     // if redis fails then return an error
     if delete_redis_result.is_err() {
-        let response: response::Response = response::Response {
-            response_field: Some(ResponseField::Error(response::Error::ServerError as i32)),
-        };
-        return Ok(HttpResponse::InternalServerError()
-            .content_type("application/x-protobuf; charset=utf-8")
-            .protobuf(response));
+        return Ok(ResponseService::create_error_response(
+            AppError::RegisterVerification(Error::ServerError),
+            StatusCode::INTERNAL_SERVER_ERROR,
+        ));
     }
 
-    // return Ok
-    // create an auth token with remember me set to false and send it over as well?
-    let response: response::Response = response::Response {
-        response_field: Some(ResponseField::Success(response::Success {})),
-    };
-    return Ok(HttpResponse::Ok()
-        .content_type("application/x-protobuf; charset=utf-8")
-        .protobuf(response));
+    // return ok
+    return Ok(ResponseService::create_success_response(
+        AppResponse::RegisterDetails(Response {
+            response_field: Some(ResponseField::Success(response::Success {})),
+        }),
+        StatusCode::OK,
+    ));
 }
 
 #[cfg(test)]

@@ -3,8 +3,8 @@ use actix_web::{HttpRequest, HttpResponse, Responder, Result};
 
 use crate::{
     generated::protos::accounts::password_reset::password::{
-        request,
-        response::{self, response::ResponseField},
+        request::Request,
+        response::{response::ResponseField, Error, Response},
     },
     models::user::User,
     queries::{
@@ -18,7 +18,7 @@ use crate::{
 };
 
 pub async fn post_password_reset(
-    data: ProtoBuf<request::Request>,
+    data: ProtoBuf<Request>,
     req: HttpRequest,
 ) -> Result<impl Responder> {
     let verification_confirmation_token: String = req
@@ -36,28 +36,17 @@ pub async fn post_password_reset(
     } = data.0;
 
     if password != password_confirmation {
-        let response: response::Response = response::Response {
-            response_field: Some(ResponseField::Error(
-                response::Error::IncorrectPasswordConfirmation as i32,
-            )),
-        };
-
-        return Ok(HttpResponse::UnprocessableEntity()
-            .content_type("application/x-protobuf; charset=utf-8")
-            .protobuf(response));
+        return Ok(ResponseService::create_error_response(
+            AppError::PasswordResetPassword(Error::IncorrectPasswordConfirmation),
+            StatusCode::UNPROCESSABLE_ENTITY,
+        ));
     }
 
-    let validated_password = validate_password(&password);
-    if validated_password.is_err() {
-        let response: response::Response = response::Response {
-            response_field: Some(ResponseField::Error(
-                response::Error::InvalidPassword as i32,
-            )),
-        };
-
-        return Ok(HttpResponse::UnprocessableEntity()
-            .content_type("application/x-protobuf; charset=utf-8")
-            .protobuf(response));
+    if validate_password(&password).is_err() {
+        return Ok(ResponseService::create_error_response(
+            AppError::PasswordResetPassword(Error::InvalidPassword),
+            StatusCode::UNPROCESSABLE_ENTITY,
+        ));
     }
 
     // get user from token in redis
@@ -67,30 +56,21 @@ pub async fn post_password_reset(
             // if error return error
             Err(err) => {
                 println!("error: {:#?}", err);
-
-                let response: response::Response = response::Response {
-                    response_field: Some(ResponseField::Error(
-                        response::Error::InvalidCredentials as i32,
-                    )),
-                };
-
-                return Ok(HttpResponse::UnprocessableEntity()
-                    .content_type("application/x-protobuf; charset=utf-8")
-                    .protobuf(response));
-            }
+                return Ok(ResponseService::create_error_response(
+                    AppError::PasswordResetPassword(Error::InvalidCredentials),
+                    StatusCode::UNPROCESSABLE_ENTITY,
+                ));
+            },
             Ok(email) => email,
         };
 
     // if change is not allowed then error
     let set_password_result = user.set_password(password);
     if set_password_result.is_err() {
-        let response: response::Response = response::Response {
-            response_field: Some(ResponseField::Error(response::Error::ServerError as i32)),
-        };
-
-        return Ok(HttpResponse::InternalServerError()
-            .content_type("application/x-protobuf; charset=utf-8")
-            .protobuf(response));
+        return Ok(ResponseService::create_error_response(
+            AppError::PasswordResetPassword(Error::ServerError),
+            StatusCode::INTERNAL_SERVER_ERROR,
+        ));
     }
 
     // save change in postgres
@@ -99,13 +79,10 @@ pub async fn post_password_reset(
 
     // if sql update error then return an error
     if update_result.is_err() {
-        let response: response::Response = response::Response {
-            response_field: Some(ResponseField::Error(response::Error::ServerError as i32)),
-        };
-
-        return Ok(HttpResponse::InternalServerError()
-            .content_type("application/x-protobuf; charset=utf-8")
-            .protobuf(response));
+        return Ok(ResponseService::create_error_response(
+            AppError::PasswordResetPassword(Error::ServerError),
+            StatusCode::INTERNAL_SERVER_ERROR,
+        ));
     }
 
     con = create_redis_client_connection();
@@ -113,20 +90,17 @@ pub async fn post_password_reset(
 
     // if redis fails then return an error
     if delete_redis_result.is_err() {
-        let response: response::Response = response::Response {
-            response_field: Some(ResponseField::Error(response::Error::ServerError as i32)),
-        };
-        return Ok(HttpResponse::InternalServerError()
-            .content_type("application/x-protobuf; charset=utf-8")
-            .protobuf(response));
+        return Ok(ResponseService::create_error_response(
+            AppError::PasswordResetPassword(Error::ServerError),
+            StatusCode::INTERNAL_SERVER_ERROR,
+        ));
     }
 
-    // return success
-    let response: response::Response = response::Response {
-        response_field: Some(ResponseField::Success(response::Success {})),
-    };
-
-    return Ok(HttpResponse::Ok()
-        .content_type("application/x-protobuf; charset=utf-8")
-        .protobuf(response));
+    // return ok
+    return Ok(ResponseService::create_success_response(
+        AppResponse::PasswordResetPassword(Response {
+            response_field: Some(ResponseField::Success(response::Success {})),
+        }),
+        StatusCode::OK,
+    ));
 }

@@ -5,7 +5,10 @@ use serde::Deserialize;
 use crate::{
     generated::protos::accounts::register::verification::{
         request,
-        response::{self, response::ResponseField},
+        response::{response::ResponseField, Error, Response},
+    },
+    services::{
+        cache_service::CacheService, response_service::ResponseService, user_service::UserService,
     },
     queries::redis::{
         all::get_email_from_token_struct_in_redis,
@@ -52,7 +55,7 @@ async fn register_verification_functionality(
     verification_token: String,
 ) -> Result<impl Responder> {
     // Form RegisterToken struct
-    let token_struct: (String, String) = (header_token.clone(), verification_token.clone());
+    let token_struct: (&str, &str) = (&header_token, &verification_token);
     let token_struct_json = serde_json::to_string(&token_struct).unwrap();
     println!("schema: {:#?}", token_struct_json);
 
@@ -61,15 +64,10 @@ async fn register_verification_functionality(
     let email: String = match get_email_from_token_struct_in_redis(&mut con, &token_struct_json) {
         // if error return error
         Err(err) => {
-            println!("error: {:#?}", err);
-            let response: response::Response = response::Response {
-                response_field: Some(ResponseField::Error(
-                    response::Error::IncorrectVerificationCode as i32,
-                )),
-            };
-            return Ok(HttpResponse::UnprocessableEntity()
-                .content_type("application/x-protobuf; charset=utf-8")
-                .protobuf(response));
+            return Ok(ResponseService::create_error_response(
+                AppError::RegisterVerification(Error::IncorrectVerificationCode),
+                StatusCode::UNPROCESSABLE_ENTITY,
+            ));
         }
         Ok(email) => email,
     };
@@ -95,24 +93,19 @@ async fn register_verification_functionality(
 
     // if redis fails then return an error
     if delete_redis_result.is_err() {
-        let response: response::Response = response::Response {
-            response_field: Some(ResponseField::Error(
-                response::Error::IncorrectVerificationCode as i32,
-            )),
-        };
-        return Ok(HttpResponse::InternalServerError()
-            .content_type("application/x-protobuf; charset=utf-8")
-            .protobuf(response));
+        return Ok(ResponseService::create_error_response(
+            AppError::RegisterVerification(Error::IncorrectVerificationCode),
+            StatusCode::INTERNAL_SERVER_ERROR,
+        ));
     }
 
     // return ok
-    let response: response::Response = response::Response {
-        response_field: Some(ResponseField::Token(register_verification_token)),
-    };
-    println!("response: {:#?}", response);
-    return Ok(HttpResponse::Ok()
-        .content_type("application/x-protobuf; charset=utf-8")
-        .protobuf(response));
+    return Ok(ResponseService::create_success_response(
+        AppResponse::RegisterVerification(Response {
+            response_field: Some(ResponseField::Token(register_verification_token)),
+        }),
+        StatusCode::OK,
+    ));
 }
 
 #[cfg(test)]

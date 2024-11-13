@@ -7,9 +7,7 @@ use uuid::Uuid;
 
 use crate::{
     queries::postgres::refresh_token,
-    utils::{
-        database_connections::create_pg_pool_connection, tokens::generate_opaque_token_of_length,
-    },
+    utils::database_connections::create_pg_pool_connection,
 };
 
 pub struct TokenService;
@@ -21,6 +19,12 @@ pub struct Claims {
 }
 
 impl TokenService {
+    pub fn generate_opaque_token_of_length(length: i64) -> String {
+        let mut rng = thread_rng();
+        let bytes: Vec<u8> = (0..length).map(|_| rng.sample(Alphanumeric)).collect();
+        return String::from_utf8(bytes).unwrap();
+    }
+    
     pub fn generate_access_token(user_uuid: &Uuid) -> String {
         let now = Utc::now();
         let expiration = now
@@ -43,10 +47,10 @@ impl TokenService {
         return access_token;
     }
 
-    pub fn generate_refresh_token(remember_me: bool) -> Option<String> {
+    pub fn generate_refresh_token(&self, remember_me: bool) -> Option<String> {
         match remember_me {
             true => return None,
-            false => return Some(generate_opaque_token_of_length(32)),
+            false => return Some(self::generate_opaque_token_of_length(32)),
         }
     }
 
