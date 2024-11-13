@@ -12,6 +12,18 @@ use crate::generated::protos::accounts::{
         details::response as register_details_response, email::response as register_email_response,
         verification::response as register_verification_response,
     },
+    settings::{
+        profile::{
+            confirmation::response as confirmation_response,
+            email::response as change_email_response,
+            language::response as change_language_response,
+            name::response as change_name_response,
+            password::response as change_password_response,
+            theme::response as change_theme_response,
+            totp::response as change_totp_response,
+            username::response as change_username_response,
+        }
+    },
 };
 
 pub enum AppError {
@@ -30,6 +42,16 @@ pub enum AppError {
     PasswordResetEmail(password_reset_email_response::Error),
     PasswordResetVerification(password_reset_verification_response::Error),
     PasswordResetPassword(password_reset_password_response::Error),
+
+    // Settings
+    Confirmation(confirmation_response::Error),
+    Confirmation(change_email_response::Error),
+    ChangeLanguage(change_language_response::Error),
+    ChangeName(change_name_response::Error),
+    ChangePassword(change_password_response::Error),
+    ChangeTheme(change_theme_response::Error),
+    ChangeTotp(change_totp_response::Error),
+    ChangeUsername(change_username_response::Error),
 }
 
 pub enum AppResponse {
@@ -48,4 +70,14 @@ pub enum AppResponse {
     PasswordResetEmail(password_reset_email_response::Response),
     PasswordResetVerification(password_reset_verification_response::Response),
     PasswordResetPassword(password_reset_password_response::Response),
+
+    // Settings
+    Confirmation(confirmation_response::Response),
+    ChangeEmail(change_email_response::Response),
+    ChangeLanguage(change_language_response::Response),
+    ChangeName(change_name_response::Response),
+    ChangePassword(change_password_response::Response),
+    ChangeTheme(change_theme_response::Response),
+    ChangeTotp(change_totp_response::Response),
+    ChangeUsername(change_username_response::Response),
 }

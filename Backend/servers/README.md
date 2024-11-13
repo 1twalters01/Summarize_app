@@ -12,7 +12,7 @@ rust, python, elixir, go,
 * 10 libraries - go interop with rust
 * 11 recommendations - rust interop with python
 * 12 notifications - elixir interop with gleam and rust
-* 13 messages - elixir interop with erlang and rust
+* 13 messages - elixir interop with erlang and c
 * 14 moderation - python machine learning
 * 15 admin - go interop with c
 * 16 analytics - python interop with c
