@@ -2,10 +2,7 @@ use actix_protobuf::ProtoBuf;
 use actix_web::{http::StatusCode, HttpRequest, Responder, Result};
 
 use crate::{
-    datatypes::{
-        response_types::{AppError, AppResponse},
-        token_object::UserRememberMe,
-    },
+    datatypes::response_types::{AppError, AppResponse},
     generated::protos::accounts::{
         auth_tokens::AuthTokens,
         login::password::{
@@ -81,9 +78,8 @@ pub async fn post_password(data: ProtoBuf<Request>, req: HttpRequest) -> Result<
     if user.is_totp_activated() == true {
         // save {key: token, value: UserRememberMe} to redis
         let token: String = generate_opaque_token_of_length(25);
-        // Make this a (&User, bool) tuple instead of a struct
         let user_remember_me_json =
-            serde_json::to_string(&UserRememberMe { remember_me, user }).unwrap();
+            serde_json::to_string(&(user, remember_me)).unwrap();
         let expiry_in_seconds: Option<i64> = Some(300);
 
         let cache_result =

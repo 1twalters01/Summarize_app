@@ -2,10 +2,11 @@ use std::env;
 
 use chrono::{Duration, Utc};
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
-use serde::{Deserialize, Serialize};
+
 use uuid::Uuid;
 
 use crate::{
+    datatypes::token_types::Claims,
     queries::postgres::refresh_token,
     utils::database_connections::create_pg_pool_connection,
 };

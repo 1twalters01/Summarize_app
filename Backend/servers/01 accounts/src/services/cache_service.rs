@@ -44,7 +44,7 @@ impl CacheService {
         let redis_result: RedisResult<String> = get_key_from_value_in_redis(&mut self.con, token);
         match redis_result {
             Ok(user_json) => match serde_json::from_str(&user_json) {
-                Ok(user) => return Ok(user),
+                Ok((user, remember_me)) => return Ok(user, remember_me),
                 Err(err) => return Err(err.to_string()),
             },
             Err(err) => return Err(err.to_string()),

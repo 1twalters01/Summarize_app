@@ -3,21 +3,21 @@ use actix_web::{http::StatusCode, HttpRequest, Responder, Result};
 
 use crate::{
     datatypes::response_types::{AppError, AppResponse},
+    models::user::User,
     generated::protos::accounts::{
         auth_tokens::AuthTokens,
-        login::totp::{
-            request::Request,
+        login::biometrics::{
+            request,
             response::{response::ResponseField, Error, Response},
         },
     },
-    models::user::User,
     services::{
         cache_service::CacheService, response_service::ResponseService, token_service::TokenService,
     },
     utils::{database_connections::create_redis_client_connection, validations::validate_totp},
-};
+}
 
-pub async fn post_totp(
+pub async fn post_biometrics(
     data: ProtoBuf<Request>,
     req: HttpRequest,
 ) -> Result<impl Responder> {
@@ -28,7 +28,7 @@ pub async fn post_totp(
         .to_str()
         .unwrap()
         .to_string();
-
+    
     // Try to get user and remember_me status from redis
     let mut cache_service = CacheService::new(create_redis_client_connection());
     let cache_result = cache_service.get_user_and_remember_me_from_token(&login_password_token);
@@ -51,59 +51,27 @@ pub async fn post_totp(
         },
     };
 
-    // Get totp from request
-    let request::Request {
-        digit1,
-        digit2,
-        digit3,
-        digit4,
-        digit5,
-        digit6,
-    } = data.0;
+    // Get biometrics response from request
 
-    // check if the entered totp is a valid totp
-    if validate_totp(digit1, digit2, digit3, digit4, digit5, digit6).is_err()
-        || user.is_totp_activated() == false
-    {
-        return Ok(ResponseService::create_error_response(
-            AppError::LoginTotp(Error::InvalidTotp),
-            StatusCode::UNAUTHORIZED,
-        ));
-    }
+    // check if the entered sms response is valid
 
-    // check if totp is correct
-    if user.check_totp(digit1, digit2, digit3, digit4, digit5, digit6) == false {
-        return Ok(ResponseService::create_error_response(
-            AppError::LoginTotp(Error::IncorrectTotp),
-            StatusCode::UNAUTHORIZED,
-        ));
-    }
-
+    // check if biometrics response is correct
+    
     // update last login time
-
-    // create auth tokens
-    let refresh_token = TokenService::generate_refresh_token(remember_me);
-    let access_token = TokenService::generate_access_token(&user.get_uuid());
-
-    let auth_tokens = AuthTokens {
-        refresh: refresh_token,
-        access: access_token,
-    };
-    println!("auth tokens: {:#?}", auth_tokens);
 
     // delete old token
     let mut cache_service = CacheService::new(create_redis_client_connection());
     let cache_result = cache_service.delete_key(&login_password_token);
     if cache_result.is_err() {
         return Ok(ResponseService::create_error_response(
-            AppError::LoginTotp(Error::ServerError),
+            AppError::LoginSms(Error::ServerError),
             StatusCode::FAILED_DEPENDENCY,
         ));
     }
 
     // return success
     return Ok(ResponseService::create_success_response(
-        AppResponse::LoginTotp(Response {
+        AppResponse::LoginSms(Response {
             response_field: Some(ResponseField::Tokens(auth_tokens)),
         }),
         StatusCode::OK,
