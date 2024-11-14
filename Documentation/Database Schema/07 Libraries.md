@@ -2,7 +2,7 @@
 Libraries
 | Field            | Type           | Description                      | IS UNIQUE | NOT NULL |
 |------------------|----------------|----------------------------------|-----------|----------|
-| library_id       | INT            | Primary key of library           | True      | True     |
+| id               | INT            | Primary key of library           | True      | True     |
 | user_id          | INT            | Foreign key to owner             | False     | True     |
 | editors          | INT[]          | Users allowed to edit            | False     | False    |
 | library_name     | VARCHAR(100)   | Name of the library              | False     | True     |
@@ -11,6 +11,7 @@ Libraries
 | last_added       | DATETIME       | Last summary added time          | False     | False    |
 | is_public        | BOOLEAN        | Public status of library         | False     | True     |
 | viewer_ids       | INT[]          | Users that can view if private   | False     | False    |
+| follows          | Int            | Number of follows                | False     | True     |
 
 Library Entries
 | Field            | Type           | Description                      | IS UNIQUE | NOT NULL |

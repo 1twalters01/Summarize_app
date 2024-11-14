@@ -7,7 +7,9 @@ use crate::{
         response::{self, response::ResponseField},
     },
     models::user::User,
-    queries::{postgres::user::get::from_email, redis::general::set_key_value_in_redis},
+    services::{
+        cache_service::CacheService, token_service::TokenService, user_service::UserService
+    },
     utils::email::{compose::compose_password_reset_email_message, handler::send_email},
     utils::{
         database_connections::{create_pg_pool_connection, create_redis_client_connection},
@@ -27,38 +29,32 @@ pub async fn post_email(data: ProtoBuf<request::Request>) -> Result<impl Respond
     }
     println!("email: {:?}", email);
 
-    // Check if email is in postgres database
-    let pool = create_pg_pool_connection().await;
-    let user_result: Result<Option<User>, sqlx::Error> = from_email(&pool, email.as_str()).await;
-
-    // extract user or error
-    let user: User = match user_result {
-        Err(err) => {
-            println!("error: {:?}", err);
-
+    // Get user from database
+    let user_service = UserService::new(create_pg_pool_connection().await);
+    let user: User = match user_service.get_user_from_email(&email).await {
+        Ok(Some(user)) => user,
+        Ok(None) => {
+            println!("No user found");
             return Ok(ResponseService::create_error_response(
-                AppError::PasswordResetEmail(Error::UnregistServerErroreredEmail),
+                AppError::LoginEmail(Error::UnregisteredEmail),
+                StatusCode::NOT_FOUND,
+            ));
+        },
+        Err(err) => {
+            println!("{:#?}", err);
+            return Ok(ResponseService::create_error_response(
+                AppError::LoginEmail(Error::ServerError),
                 StatusCode::INTERNAL_SERVER_ERROR,
             ));
-        }
-        Ok(user_option) => match user_option {
-            None => {
-                return Ok(ResponseService::create_error_response(
-                    AppError::PasswordResetEmail(Error::UnregisteredEmail),
-                    StatusCode::NOT_FOUND,
-                ));
-            }
-            Some(user) => user,
         },
     };
-    println!("user: {:#?}", user);
 
     // get and serialize user
     let user_json: String = serde_json::to_string(&user).unwrap();
 
     // create a verify token, and a register email token
-    let verification_token = generate_opaque_token_of_length(8);
-    let header_token = generate_opaque_token_of_length(64);
+    let verification_token = TokenService::generate_opaque_token_of_length(8);
+    let header_token = TokenService::generate_opaque_token_of_length(64);
 
     // try to email the account a message containing the token
     let message = compose_password_reset_email_message(&verification_token, &header_token);

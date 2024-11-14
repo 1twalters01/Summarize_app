@@ -2,7 +2,7 @@
 Summaries
 | Field           | Type           | Description                | IS UNIQUE | NOT NULL |
 |-----------------|----------------|----------------------------|-----------|----------|
-| summary_id      | INT            | The summary's primary key  | True      | True     |
+| id              | INT            | The summary's primary key  | True      | True     |
 | book_id         | INT            | Foreign key to the book    | False     | True     |
 | user_id         | INT            | Summary author foreign key | False     | True     |
 | no_of_chapters  | INT            | Number of chapters         | False     | True     |

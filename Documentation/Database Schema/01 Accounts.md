@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS users(
 
 | Field           | Type           | Description                 | IS UNIQUE | NOT NULL | INDEX  |
 |-----------------|----------------|-----------------------------|-----------|----------|--------|
-| user_id         | INT            | Primary key (internal)      | True      | True     | True   |
+| id         | INT            | Primary key (internal)      | True      | True     | True   |
 | uuid            | UUID           | External identifier         | True      | True     | True   |
 | username        | VARCHAR(50)    | The user’s username         | True      | True     |  |
 | email           | VARCHAR(100)   | The user’s email            | True      | True     |  |
