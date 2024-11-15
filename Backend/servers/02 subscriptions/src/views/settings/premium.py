@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 from datetime import datetime
 from ...utils.encryption import decrypt, encrypt
 from ...utils.encryption import decrypt
-from ...utils.paypal import show_sub_details, suspend_sub, activate_sub, cancel_sub
+from ...services.paypal import show_sub_details, suspend_sub, activate_sub, cancel_sub
 import stripe
 import os
 

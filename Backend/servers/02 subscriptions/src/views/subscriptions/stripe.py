@@ -33,12 +33,6 @@ async def get_subscription_status(
     return is_subscribed[0] if is_subscribed else None
 
 
-def validate_stripe_customer_id(stripe_customer_id):
-    if stripe_customer_id.len() < 5:
-        return False
-    return True
-
-
 async def create_stripe_customer(request: Request, stripe_customer_id: str):
     headers = request.headers
     bearer: str | None = headers.get("bearer_token")

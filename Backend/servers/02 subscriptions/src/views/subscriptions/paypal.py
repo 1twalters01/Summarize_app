@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker, Session
 from dotenv import load_dotenv
-from ...utils.encryption import encrypt
+from ...services.encryption import encrypt
 import jwt
 import os
 
@@ -31,12 +31,6 @@ async def get_subscription_status(
     is_subscribed = db.execute(text(query), {"id": user_uuid}).fetchone()
     db.close()
     return is_subscribed[0] if is_subscribed else None
-
-
-def validate_paypal_customer_id(paypal_customer_id):
-    if paypal_customer_id.len() < 5:
-        return False
-    return True
 
 
 async def create_paypal_customer(request: Request, paypal_customer_id: str):
