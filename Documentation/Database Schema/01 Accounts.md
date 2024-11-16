@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS password_hashes(
     password_hash VARCHAR(255) NOT NULL,
     previous_hashes VARCHAR(255)[] NOT NULL,
     CONSTRAINT fk_users FOREIGN KEY (user_id)
-        REFERENCES users (user_id)
+        REFERENCES users (id)
         ON DELETE CASCADE
         ON UPDATE CASCADE
 );
@@ -60,7 +60,7 @@ CREATE TABLE IF NOT EXISTS totp_secrets(
     is_verified BOOLEAN NOT NULL,
     verified_at TIMESTAMP,
     CONSTRAINT fk_users FOREIGN KEY (user_id)
-        REFERENCES users (user_id)
+        REFERENCES users (id)
         ON DELETE CASCADE
         ON UPDATE CASCADE
 );
@@ -79,7 +79,11 @@ CREATE TABLE IF NOT EXISTS refresh_tokens(
     user_id int NOT NULL,
     refresh_token VARCHAR UNIQUE NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    expires_at TIMESTAMP DEFAULT NOW() + INTERVAL '1 week'
+    expires_at TIMESTAMP DEFAULT NOW() + INTERVAL '1 week',
+    CONSTRAINT fk_users FOREIGN KEY (user_id)
+        REFERENCES users (id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
 );
 
 SELECT cron.schedule(
@@ -99,7 +103,11 @@ SELECT cron.schedule(
 CREATE TABLE IF NOT EXISTS token_blacklist(
     user_id int UNIQUE NOT NULL,
     token VARCHAR(150) UNIQUE NOT NULL,
-    expires_at TIMESTAMP DEFAULT NOW() + INTERVAL '2 weeks'
+    expires_at TIMESTAMP DEFAULT NOW() + INTERVAL '2 weeks',
+    CONSTRAINT fk_users FOREIGN KEY (user_id)
+        REFERENCES users (id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
 );
 
 SELECT cron.schedule(
