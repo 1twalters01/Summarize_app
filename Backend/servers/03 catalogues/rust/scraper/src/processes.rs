@@ -20,10 +20,10 @@ pub async fn initialise_process() {
 
     println!("publishers: {:?}", publishers);
 
-    run_publishers_module(publishers).await;
-    run_authors_module().await;
-    run_books_modules().await;
-    run_genres_modules().await;
+    run_publishers_module(publishers).await.unwrap();
+    run_authors_module().await.unwrap();
+    run_books_modules().await.unwrap();
+    run_genres_modules().await.unwrap();
 }
 
 pub async fn continue_process() {

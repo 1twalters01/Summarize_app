@@ -1,8 +1,31 @@
 # Catalogues Tables
+Formats
+| Field           | Type           | Description                | IS UNIQUE | NOT NULL | INDEX  |
+|-----------------|----------------|----------------------------|-----------|----------|--------|
+| id              | INT            | Primary key for formats    | True      | True     |  |
+| format_name     | VARCHAR(30)    | Name of the format         | True      | True     |  |
+| description     | TEXT           | Description of the format  | False     | True     |  |
+
+Publishers
+| Field           | Type           | Description                | IS UNIQUE | NOT NULL | INDEX  |
+|-----------------|----------------|----------------------------|-----------|----------|--------|
+| id              | INT            | Primary key                | True      | True     |  |
+| publisher_name  | VARCHAR(100)   | Publisher name             | True      | True     |  |
+| publisher_house | INT            | Foreign key to publisher   | False     | False    |  |
+| sub_publisher   | INT            | Foreign key to publisher   | False     | False    |  |
+
+Genres
+| Field           | Type           | Description                | IS UNIQUE | NOT NULL | INDEX  |
+|-----------------|----------------|----------------------------|-----------|----------|--------|
+| id              | INT            | The genre's Primary key    | True      | True     |  |
+| genre_name      | VARCHAR(100)   | Genre name                 | True      | True     |  |
+| subgenre_ids    | INT[]          | Foreign key to genre       | False     | False    |  |
+| supergenre_ids  | INT[]          | Foreign key to genre       | False     | False    |  |
+
 Authors
 | Field           | Type           | Description                | IS UNIQUE | NOT NULL | INDEX  |
 |-----------------|----------------|----------------------------|-----------|----------|--------|
-| author_id       | INT            | Author's primary key       | True      | True     |  |
+| id              | INT            | Author's primary key       | True      | True     |  |
 | user_id         | INT            | Foreign key to user id     | True      | False    |  |
 | first_name      | VARCHAR(20)    | Author's first name        | False     | False    |  |
 | last_name       | VARCHAR(20)    | Author's last name         | False     | False    |  |
@@ -10,11 +33,12 @@ Authors
 | pen_name        | VARCHAR(20)    | Author's pen name          | False     | False    |  |
 | date_of_birth   | DATE           | Author's date of birth     | False     | False    |  |
 | date_of_death   | DATE           | Author's date of death     | False     | False    |  |
+| synopsis        | TEXT           | The author's information   | True      | True     |  |
 
 Books
 | Field           | Type           | Description                | IS UNIQUE | NOT NULL | INDEX  |
 |-----------------|----------------|----------------------------|-----------|----------|--------|
-| book_id         | VARCHAR(100)   | Primary key for the book   | True      | True     |  |
+| id              | VARCHAR(100)   | Primary key for the book   | True      | True     |  |
 | format_ids      | INT[]          | Foreign key book formats   | False     | True     |  |
 | Author_ids      | INT[]          | Author foreign key         | False     | False    |  |
 | co-author_ids   | INT[]          | Author foreign key         | False     | False    |  |
@@ -28,25 +52,3 @@ Books
 | isbn_13         | INT            | Book's ISBN-13 number      | True      | False    |  |
 | synopsis        | TEXT           | Book synopsis              | False     | False    |  |
 | links           | TEXT[]         | Links to buy book          | True      | False    |  |
-
-Formats
-| Field           | Type           | Description                | IS UNIQUE | NOT NULL | INDEX  |
-|-----------------|----------------|----------------------------|-----------|----------|--------|
-| format_id       | INT            | Primary key for formats    | True      | True     |  |
-| format_name     | VARCHAR(30)    | Name of the format         | True      | True     |  |
-| description     | TEXT           | Description of the format  | False     | True     |  |
-
-Publishers
-| Field           | Type           | Description                | IS UNIQUE | NOT NULL | INDEX  |
-|-----------------|----------------|----------------------------|-----------|----------|--------|
-| publisher_id    | INT            | Primary key                | True      | True     |  |
-| publisher_name  | VARCHAR(100)   | Publisher name             | True      | True     |  |
-| publisher_house | INT            | Foreign key to publisher   | False     | False    |  |
-
-Genres
-| Field           | Type           | Description                | IS UNIQUE | NOT NULL | INDEX  |
-|-----------------|----------------|----------------------------|-----------|----------|--------|
-| genre_id        | INT            | The genre's Primary key    | True      | True     |  |
-| genre_name      | VARCHAR(100)   | Genre name                 | True      | True     |  |
-| subgenre_ids    | INT[]          | Foreign key to genre       | False     | False    |  |
-| supergenre_ids  | INT[]          | Foreign key to genre       | False     | False    |  |
