@@ -1,9 +1,9 @@
 # Subscriptions Tables
 ## Payment Methods
-| Field              | Type              | Description                    | IS UNIQUE | NOT NULL | INDEX |
-|--------------------|-------------------|--------------------------------|-----------|----------|-------|
-| id                 | INT               | Primary key                    | True      | True     | True  |
-| payment_method     | VARCHAR(20)       | Payment method name            | True      | True     | False |
+| Field              | Type              | Description                    | UNIQUE | NOT NULL | INDEX |
+|--------------------|-------------------|--------------------------------|--------|----------|-------|
+| id                 | INT               | Primary key                    | True   | True     | True  |
+| payment_method     | VARCHAR(20)       | Payment method name            | True   | True     | False |
 
 CREATE TABLE IF NOT EXISTS payment_methods(
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -13,16 +13,16 @@ CREATE TABLE IF NOT EXISTS payment_methods(
 [comment]: # (methods: stripe, paypal)
 
 ## Subscribers
-| Field              | Type              | Description                    | IS UNIQUE | NOT NULL | Index |
-|--------------------|-------------------|--------------------------------|-----------|----------|-------|
-| user_id            | INT               | Foreign key to user id         | True      | True     | False |
-| customer_id        | VARCHAR(255)      | The id of the customer         | True      | False    | True  |
-| subscription_id    | VARCHAR(255)      | The id of the subscription     | True      | False    | True  |
-| payment_method_id  | INT               | Foreign key to method id       | True      | True     | False |
-| is_subscribed      | BOOLEAN           | Subscription status            | False     | True     | False |
-| has_trial          | BOOLEAN           | has a trial or not             | FALSE     | True     | False |
-| start_date         | TIMESTAMP         | Subscription start date        | False     | True     | False |
-| end_date           | TIMESTAMP         | Subscription end date          | False     | False    | False |
+| Field              | Type              | Description                    | UNIQUE | NOT NULL | Index |
+|--------------------|-------------------|--------------------------------|--------|----------|-------|
+| user_id            | INT               | Foreign key to user id         | True   | True     | False |
+| customer_id        | VARCHAR(255)      | The id of the customer         | True   | False    | True  |
+| subscription_id    | VARCHAR(255)      | The id of the subscription     | True   | False    | True  |
+| payment_method_id  | INT               | Foreign key to method id       | True   | True     | False |
+| is_subscribed      | BOOLEAN           | Subscription status            | False  | True     | False |
+| has_trial          | BOOLEAN           | has a trial or not             | False  | True     | False |
+| start_date         | TIMESTAMP         | Subscription start date        | False  | True     | False |
+| end_date           | TIMESTAMP         | Subscription end date          | False  | False    | False |
 
 CREATE TABLE IF NOT EXISTS subscribers(
     user_id INT UNIQUE NOT NULL,
@@ -47,15 +47,15 @@ CREATE INDEX idx_subscribers_customer_id ON subscribers (customer_id);
 CREATE INDEX idx_subscribers_subscription_id ON subscribers (subscription_id);
 
 ## Subscription History
-| Field              | Type              | Description                    | IS UNIQUE | NOT NULL | Index |
-|--------------------|-------------------|--------------------------------|-----------|----------|-------|
-| id                 | INT               | Primary key                    | True      | True     | True  |
-| user_id            | INT               | Foreign key to user id         | True      | True     | True  |
-| customer_id        | VARCHAR(255)      | The id of the customer         | False     | False    | False |
-| subscription_id    | VARCHAR(255)      | The id of the subscription     | False     | False    | False |
-| payment_method_id  | INT[]             | Foreign key to payment methods | False     | False    | False |
-| start_date         | TIMESTAMP         | Subscription start date        | False     | TRUE     | False |
-| end_date           | TIMESTAMP         | Subscription end date          | False     | False    | False |
+| Field              | Type              | Description                    | UNIQUE | NOT NULL | Index |
+|--------------------|-------------------|--------------------------------|--------|----------|-------|
+| id                 | INT               | Primary key                    | True   | True     | True  |
+| user_id            | INT               | Foreign key to user id         | True   | True     | True  |
+| customer_id        | VARCHAR(255)      | The id of the customer         | False  | False    | False |
+| subscription_id    | VARCHAR(255)      | The id of the subscription     | False  | False    | False |
+| payment_method_id  | INT[]             | Foreign key to payment methods | False  | False    | False |
+| start_date         | TIMESTAMP         | Subscription start date        | False  | TRUE     | False |
+| end_date           | TIMESTAMP         | Subscription end date          | False  | False    | False |
 
 CREATE TABLE IF NOT EXISTS subscription_history(
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,

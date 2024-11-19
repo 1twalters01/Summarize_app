@@ -1,10 +1,10 @@
 # Catalogues Tables
 ## Formats
-| Field               | Type           | Description                | IS UNIQUE | NOT NULL | INDEX |
-|---------------------|----------------|----------------------------|-----------|----------|-------|
-| id                  | INT            | Primary key for formats    | True      | True     | False |
-| format_name         | VARCHAR(30)    | Name of the format         | True      | True     | True  |
-| description         | TEXT           | Description of the format  | False     | True     | False |
+| Field               | Type           | Description                | UNIQUE | NOT NULL | INDEX |
+|---------------------|----------------|----------------------------|--------|----------|-------|
+| id                  | INT            | Primary key for formats    | True   | True     | False |
+| format_name         | VARCHAR(30)    | Name of the format         | True   | True     | True  |
+| description         | TEXT           | Description of the format  | False  | True     | False |
 
 CREATE TABLE IF NOT EXISTS formats(
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -14,10 +14,10 @@ CREATE TABLE IF NOT EXISTS formats(
 CREATE INDEX idx_formats_name ON formats (format_name);
 
 ## Publishers
-| Field               | Type           | Description                | IS UNIQUE | NOT NULL | INDEX |
-|---------------------|----------------|----------------------------|-----------|----------|-------|
-| id                  | INT            | Primary key                | True      | True     | True  |
-| publisher_name      | VARCHAR(100)   | Publisher name             | True      | True     | True  |
+| Field               | Type           | Description                | UNIQUE | NOT NULL | INDEX |
+|---------------------|----------------|----------------------------|--------|----------|-------|
+| id                  | INT            | Primary key                | True   | True     | True  |
+| publisher_name      | VARCHAR(100)   | Publisher name             | True   | True     | True  |
 
 CREATE TABLE IF NOT EXISTS publishers(
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -26,10 +26,10 @@ CREATE TABLE IF NOT EXISTS publishers(
 CREATE INDEX idx_publishers_name ON publishers (publisher_name);
 
 ## Genres
-| Field               | Type           | Description                | IS UNIQUE | NOT NULL | INDEX |
-|---------------------|----------------|----------------------------|-----------|----------|-------|
-| id                  | INT            | The genre's Primary key    | True      | True     | True  |
-| genre_name          | VARCHAR(100)   | Genre name                 | True      | True     | True  |
+| Field               | Type           | Description                | UNIQUE | NOT NULL | INDEX |
+|---------------------|----------------|----------------------------|--------|----------|-------|
+| id                  | INT            | The genre's Primary key    | True   | True     | True  |
+| genre_name          | VARCHAR(100)   | Genre name                 | True   | True     | True  |
 
 CREATE TABLE IF NOT EXISTS genres(
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -39,10 +39,10 @@ CREATE INDEX idx_genres_name ON genres (genre_name);
 
 ## Relationships
 ### Publisher relationships
-| Field               | Type           | Description                | IS UNIQUE | NOT NULL | INDEX |
-|---------------------|----------------|----------------------------|-----------|----------|-------|
-| parent_publisher_id | INT            | parent publisher id        | False     | True     | True  |
-| child_publisher_id  | INT            | child publisher id         | False     | True     | True  |
+| Field               | Type           | Description                | UNIQUE | NOT NULL | INDEX |
+|---------------------|----------------|----------------------------|--------|----------|-------|
+| parent_publisher_id | INT            | parent publisher id        | False  | True     | True  |
+| child_publisher_id  | INT            | child publisher id         | False  | True     | True  |
 
 CREATE TABLE publisher_relationships (
     parent_publisher_id INT NOT NULL,
@@ -61,10 +61,10 @@ CREATE INDEX idx_publisher_relationships_parent_id ON publisher_relationships (p
 CREATE INDEX idx_publisher_relationships_child_id ON publisher_relationships (child_publisher_id);
 
 ### Genre relationships
-| Field               | Type           | Description                | IS UNIQUE | NOT NULL | INDEX |
-|---------------------|----------------|----------------------------|-----------|----------|-------|
-| parent_genre_id     | INT            | parent genre id            | False     | True     | True  |
-| child_genre_id      | INT            | child genre id             | False     | True     | True  |
+| Field               | Type           | Description                | UNIQUE | NOT NULL | INDEX |
+|---------------------|----------------|----------------------------|--------|----------|-------|
+| parent_genre_id     | INT            | parent genre id            | False  | True     | True  |
+| child_genre_id      | INT            | child genre id             | False  | True     | True  |
 
 CREATE TABLE genre_relationships (
     parent_genre_id INT NOT NULL,
@@ -150,17 +150,17 @@ WHERE g1.genre_name = 'Mystery';
 ```
 
 ## Authors
-| Field               | Type           | Description                | IS UNIQUE | NOT NULL | INDEX |
-|---------------------|----------------|----------------------------|-----------|----------|-------|
-| id                  | INT            | Author's primary key       | True      | True     | False |
-| user_id             | INT            | Foreign key to user id     | True      | False    | False |
-| first_name          | VARCHAR(20)    | Author's first name        | False     | False    | True  |
-| last_name           | VARCHAR(20)    | Author's last name         | False     | False    | True  |
-| middle_name         | VARCHAR(20)    | Author's middle name       | False     | False    | False |
-| pen_name            | VARCHAR(20)    | Author's pen name          | False     | False    | True  |
-| date_of_birth       | DATE           | Author's date of birth     | False     | False    | False |
-| date_of_death       | DATE           | Author's date of death     | False     | False    | False |
-| information         | TEXT           | The author's information   | False     | False    | False |
+| Field               | Type           | Description                | UNIQUE | NOT NULL | INDEX |
+|---------------------|----------------|----------------------------|--------|----------|-------|
+| id                  | INT            | Author's primary key       | True   | True     | False |
+| user_id             | INT            | Foreign key to user id     | True   | False    | False |
+| first_name          | VARCHAR(20)    | Author's first name        | False  | False    | True  |
+| last_name           | VARCHAR(20)    | Author's last name         | False  | False    | True  |
+| middle_name         | VARCHAR(20)    | Author's middle name       | False  | False    | False |
+| pen_name            | VARCHAR(20)    | Author's pen name          | False  | False    | True  |
+| date_of_birth       | DATE           | Author's date of birth     | False  | False    | False |
+| date_of_death       | DATE           | Author's date of death     | False  | False    | False |
+| information         | TEXT           | The author's information   | False  | False    | False |
 
 CREATE TABLE IF NOT EXISTS authors(
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -183,18 +183,18 @@ CREATE INDEX idx_authors_pname ON authors (pen_name);
 
 ## Books
 ### Main table
-| Field               | Type           | Description                | IS UNIQUE | NOT NULL | INDEX |
-|---------------------|----------------|----------------------------|-----------|----------|-------|
-| id                  | VARCHAR(100)   | Primary key for the book   | True      | True     | True  |
-| publisher_id        | INT            | Publisher foreign key      | False     | False    | False |
-| title               | VARCHAR(100)   | The book's title           | False     | True     | True  |
-| subtitle            | VARCHAR(100)   | The book's subitile        | False     | False    | True  |
-| edition             | INT            | The book's edition         | False     | False    | False |
-| pages               | INT            | Pages in book              | False     | True     | False |
-| isbn                | INT            | Book's ISBN number         | True      | False    | True  |
-| isbn_13             | INT            | Book's ISBN-13 number      | True      | False    | True  |
-| synopsis            | TEXT           | Book synopsis              | False     | False    | False |
-| links               | VARCHAR(255)[] | Links to buy book          | True      | False    | False |
+| Field               | Type           | Description                | UNIQUE | NOT NULL | INDEX |
+|---------------------|----------------|----------------------------|--------|----------|-------|
+| id                  | VARCHAR(100)   | Primary key for the book   | True   | True     | True  |
+| publisher_id        | INT            | Publisher foreign key      | False  | False    | False |
+| title               | VARCHAR(100)   | The book's title           | False  | True     | True  |
+| subtitle            | VARCHAR(100)   | The book's subitile        | False  | False    | True  |
+| edition             | INT            | The book's edition         | False  | False    | False |
+| pages               | INT            | Pages in book              | False  | True     | False |
+| isbn                | INT            | Book's ISBN number         | True   | False    | True  |
+| isbn_13             | INT            | Book's ISBN-13 number      | True   | False    | True  |
+| synopsis            | TEXT           | Book synopsis              | False  | False    | False |
+| links               | VARCHAR(255)[] | Links to buy book          | True   | False    | False |
 
 CREATE TABLE IF NOT EXISTS books(
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -219,10 +219,10 @@ CREATE INDEX idx_books_isbn_13 ON authors (isbn_13);
 
 ## Book relationships
 ### Book - Format relationship
-| Field               | Type           | Description                | IS UNIQUE | NOT NULL | INDEX |
-|---------------------|----------------|----------------------------|-----------|----------|-------|
-| book_id             | INT            | Book foreign key           | False     | True     | True  |
-| format_id           | INT            | Format foreign key         | False     | True     | True  |
+| Field               | Type           | Description                | UNIQUE | NOT NULL | INDEX |
+|---------------------|----------------|----------------------------|--------|----------|-------|
+| book_id             | INT            | Book foreign key           | False  | True     | True  |
+| format_id           | INT            | Format foreign key         | False  | True     | True  |
 
 CREATE TABLE book_format_relationships (
     book_id INT NOT NULL,
@@ -241,10 +241,10 @@ CREATE INDEX idx_book_format_relationships_book_id ON book_format_relationships 
 CREATE INDEX idx_book_format_relationships_format_id ON book_format_relationships (format_id);
 
 ### Book - Genre relationship
-| Field               | Type           | Description                | IS UNIQUE | NOT NULL | INDEX |
-|---------------------|----------------|----------------------------|-----------|----------|-------|
-| book_id             | INT            | Book foreign key           | False     | True     | True  |
-| genre_id            | INT            | Genre foreign key          | False     | True     | True  |
+| Field               | Type           | Description                | UNIQUE | NOT NULL | INDEX |
+|---------------------|----------------|----------------------------|--------|----------|-------|
+| book_id             | INT            | Book foreign key           | False  | True     | True  |
+| genre_id            | INT            | Genre foreign key          | False  | True     | True  |
 
 CREATE TABLE book_genre_relationships (
     book_id INT NOT NULL,
@@ -263,10 +263,10 @@ CREATE INDEX idx_book_genre_relationships_book_id ON book_genre_relationships (b
 CREATE INDEX idx_book_genre_relationships_genre_id ON book_genre_relationships (genre_id);
 
 ### Book - Author relationship
-| Field               | Type           | Description                | IS UNIQUE | NOT NULL | INDEX |
-|---------------------|----------------|----------------------------|-----------|----------|-------|
-| book_id             | INT            | Book foreign key           | False     | True     | True  |
-| author_id           | INT            | Author foreign key         | False     | True     | True  |
+| Field               | Type           | Description                | UNIQUE | NOT NULL | INDEX |
+|---------------------|----------------|----------------------------|--------|----------|-------|
+| book_id             | INT            | Book foreign key           | False  | True     | True  |
+| author_id           | INT            | Author foreign key         | False  | True     | True  |
 
 CREATE TABLE book_author_relationships (
     book_id INT NOT NULL,
