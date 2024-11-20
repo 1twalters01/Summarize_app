@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS entity_types (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     entity_type VARCHAR(50) UNIQUE NOT NULL
 );
+CREATE INDEX idx_entity_types_entity_type ON entity_types (entity_type);
 
 ## Status
 | Field             | Type        | Description                | UNIQUE | NOT NULL | INDEX |
@@ -24,6 +25,7 @@ CREATE TABLE IF NOT EXISTS status (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     status VARCHAR(20) UNIQUE NOT NULL
 );
+CREATE INDEX idx_status_status ON status (status);
 
 ## Change Requests
 | Field             | Type        | Description                | UNIQUE | NOT NULL | INDEX |
@@ -61,6 +63,10 @@ CREATE TABLE IF NOT EXISTS change_requests (
         ON DELETE SET NULL
         ON UPDATE CASCADE
 );
+CREATE INDEX idx_change_requests_user_id ON change_requests (user_id);
+CREATE INDEX idx_change_requests_entity_type_id ON change_requests (entity_type_id);
+CREATE INDEX idx_change_requests_entity_id ON change_requests (entity_id);
+CREATE INDEX idx_change_requests_status_id ON change_requests (status_id);
 
 ## Fields
 | Field             | Type        | Description                | UNIQUE | NOT NULL | INDEX |
@@ -68,10 +74,11 @@ CREATE TABLE IF NOT EXISTS change_requests (
 | id                | INT         | Primary key                | True   | True     | True  |
 | field_name        | VARCHAR(50) | Name of field              | True   | True     | True  |
 
-CREATE TABLE IF NOT EXISTS status (
+CREATE TABLE IF NOT EXISTS fields (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     field_name VARCHAR(50) UNIQUE NOT NULL
 );
+CREATE INDEX idx_field_field_name ON fields (field_name);
 
 ## Change Request Details
 | Field             | Type        | Description                | UNIQUE | NOT NULL | INDEX |
@@ -93,3 +100,4 @@ CREATE TABLE IF NOT EXISTS change_request_details (
         ON DELETE CASCADE
         ON UPDATE CASCADE
 );
+CREATE INDEX idx_change_request_details_change_request_id ON change_request_details (change_request_id);
