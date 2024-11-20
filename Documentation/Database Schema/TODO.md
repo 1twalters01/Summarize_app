@@ -4,7 +4,7 @@
 [x] - 04 Change Requests
 [ ] - 05 Summaries
 [ ] - 06 History
-[ ] - 07 Libraries
+[x] - 07 Libraries
 [ ] - 08 Messages
 [ ] - 09 Analytics
 [ ] - 10 Externals

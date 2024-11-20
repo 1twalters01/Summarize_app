@@ -67,7 +67,7 @@ CREATE TABLE library_viewers (
         REFERENCES users (id)
         ON DELETE CASCADE
         ON UPDATE CASCADE,
-    UNIQUE (library_id, user_id) -- Prevent duplicate viewer entries
+    UNIQUE (library_id, user_id)
 );
 CREATE INDEX idx_library_viewers ON library_viewers (library_id, user_id);
 
@@ -123,26 +123,43 @@ CREATE TABLE entries (
 );
 CREATE INDEX idx_shelf_entries_library_summary ON entries (library_id, summary_id);
 
+# Owner Type
+| Field            | Type         | Description                      | IS UNIQUE | NOT NULL | INDEX |
+|------------------|--------------|----------------------------------|-----------|----------|-------|
+| id               | INT          | Primary key to collection        | True      | True     | True  |
+| owner_type       | VARCHAR(10)  | The owner's type                 | True      | True     | True  |
+
+CREATE TABLE owner_types (
+    id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    owner_type VARCHAR(10) UNIQUE NOT NULL,
+);
+CREATE INDEX idx_owner_types_owner_type ON owner_types (owner_type);
+
 ## Collections
 | Field            | Type         | Description                      | IS UNIQUE | NOT NULL | INDEX |
 |------------------|--------------|----------------------------------|-----------|----------|-------|
 | id               | INT          | Primary key to collection        | True      | True     | True  |
 | created_by       | INT          | User that created the collection | False     | True     | False |
-| owner_uuid       | UUID         | User or group that owns this     | False     | True     | False |
+| owner_id         | INT          | Owner ID                         | False     | True     | False |
+| owner_type       | INT          | Owner type foreign key           | False     | True     | True  |
 | time_created     | DATETIME     | Time of collection creation      | False     | True     | False |
 | last_modified    | DATETIME     | Time of last modification        | False     | False    | False |
 | last_modified_by | INT          | User that last modified this     | False     | True     | False |
 
-CREATE TABLE library_collections (
+CREATE TABLE collections (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    created_by INT NOT NULL, -- FK to users table
-    owner_id INT NOT NULL, -- FK to users table
-    name VARCHAR(100) NOT NULL, -- Collection name
-    description TEXT, -- Optional description
+    created_by INT NOT NULL,
+    owner_id INT NOT NULL,
+    owner_type INT NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    description TEXT,
     time_created TIMESTAMP DEFAULT NOW(),
     last_modified TIMESTAMP,
-    last_modified_by INT, -- FK to users table
-    CONSTRAINT fk_collection_owner FOREIGN KEY (owner_id) REFERENCES users (id) ON DELETE CASCADE,
+    last_modified_by INT,
+    CONSTRAINT fk_owner_type FOREIGN KEY (owner_type)
+        REFERENCES owner_types (id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
     CONSTRAINT fk_created_by FOREIGN KEY (created_by)
         REFERENCES users (id)
         ON DELETE CASCADE
@@ -160,10 +177,14 @@ CREATE TABLE library_collections (
 | collection_id    | INT          | Collection foreign key           | False     | True     | True  |
 
 CREATE TABLE library_collection_links (
-    library_id INT NOT NULL, -- FK to libraries table
-    collection_id INT NOT NULL, -- FK to library_collections table
-    CONSTRAINT fk_link_library FOREIGN KEY (library_id) REFERENCES libraries (id) ON DELETE CASCADE,
-    CONSTRAINT fk_link_collection FOREIGN KEY (collection_id) REFERENCES library_collections (id) ON DELETE CASCADE,
-    UNIQUE (library_id, collection_id) -- Prevent duplicate links
+    library_id INT NOT NULL,
+    collection_id INT NOT NULL,
+    CONSTRAINT fk_link_library FOREIGN KEY (library_id)
+        REFERENCES libraries (id)
+        ON DELETE CASCADE,
+    CONSTRAINT fk_link_collection FOREIGN KEY (collection_id)
+        REFERENCES library_collections (id)
+        ON DELETE CASCADE,
+    UNIQUE (library_id, collection_id)
 );
 CREATE INDEX idx_library_collection_links ON library_collection_links (collection_id, library_id);
