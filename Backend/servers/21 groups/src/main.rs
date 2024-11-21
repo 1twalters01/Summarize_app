@@ -26,7 +26,7 @@ async fn main() -> std::io::Result<()> {
             .wrap(cors)
             .configure(routes::ping::config)
     })
-    .bind("127.0.0.1:8020")?
+    .bind("127.0.0.1:8021")?
     .run()
     .await
 }

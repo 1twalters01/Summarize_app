@@ -1,0 +1,18 @@
+# global
+.env
+
+# rust
+/target
+/src/generated
+
+# elixir
+/_build/
+/cover/
+/deps/
+/doc/
+/.fetch
+erl_crash.dump
+*.ez
+/tmp/
+collaboration-*.tar
+
