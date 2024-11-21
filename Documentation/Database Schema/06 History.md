@@ -9,7 +9,9 @@
 | id              | INT            | Primary key                | True   | True     |
 | datatype        | VARCHAR(20)    | Datatype of entry          | True   | True     |
 
+```sql
 CREATE TYPE datatype_enum AS ENUM ('summary', 'book', 'author', 'publisher', 'library', 'user');
+```
 
 ### History Entries
 | Field           | Type           | Description                | UNIQUE | NOT NULL |
@@ -20,6 +22,7 @@ CREATE TYPE datatype_enum AS ENUM ('summary', 'book', 'author', 'publisher', 'li
 | datatype        | Enum           | datatype enum              | False  | True     |
 | time_added      | TIMESTAMP      | The time when added        | False  | True     |
 
+```sql
 CREATE TABLE IF NOT EXISTS history (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     user_id INT NOT NULL,
@@ -30,5 +33,6 @@ CREATE TABLE IF NOT EXISTS history (
 CREATE INDEX idx_history_user_id ON user_history (user_id);
 CREATE INDEX idx_history_datatype ON user_history (datatype);
 CREATE INDEX idx_history_time_added ON user_history (time_added);
+```
 
 ## Datalake

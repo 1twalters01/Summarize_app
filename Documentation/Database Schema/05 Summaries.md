@@ -11,6 +11,7 @@
 | Saves           | INT            | Times added to a library   | False  | True     | False |
 | Shares          | INT            | Times shared in a group    | False  | True     | False |
 
+```sql
 CREATE TABLE IF NOT EXISTS summaries (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     book_id INT NOT NULL,
@@ -23,6 +24,7 @@ CREATE TABLE IF NOT EXISTS summaries (
 );
 CREATE INDEX idx_summaries_book_id ON summaries (book_id);
 CREATE INDEX idx_summaries_user_id ON summaries (user_id);
+```
 
 ## Chapter links
 | Field           | Type           | Description                | UNIQUE | NOT NULL | INDEX |
@@ -30,6 +32,7 @@ CREATE INDEX idx_summaries_user_id ON summaries (user_id);
 | chapter_number  | INT            | Chapter number             | False  | True     | True  |
 | chapter_link    | Text           | Links to chapters          | True   | True     | False |
 
+```sql
 CREATE TABLE IF NOT EXISTS chapter_links (
     summary_id INT NOT NULL,
     chapter_number INT NOT NULL,
@@ -38,3 +41,4 @@ CREATE TABLE IF NOT EXISTS chapter_links (
 );
 CREATE INDEX idx_chapter_links_summary_id ON chapter_links (summary_id);
 CREATE INDEX idx_chapter_links_chapter_number ON chapter_links (chapter_number);
+```

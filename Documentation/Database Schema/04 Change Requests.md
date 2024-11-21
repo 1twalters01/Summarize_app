@@ -5,9 +5,9 @@
 | id                | INT         | Primary key                | True   | True     | True  |
 | entity_type       | VARCHAR(50) | The type entity modified   | True   | True     | True  |
 
-[comment]: # (datatypes: book, author, publisher, format)
-
+```sql
 CREATE TYPE entity_types_enum AS ENUM ('book', 'author', 'publisher', 'format');
+```
 
 ## Status
 | Field             | Type        | Description                | UNIQUE | NOT NULL | INDEX |
@@ -15,7 +15,9 @@ CREATE TYPE entity_types_enum AS ENUM ('book', 'author', 'publisher', 'format');
 | id                | INT         | Primary key                | True   | True     | True  |
 | status            | VARCHAR(20) | The status of the request  | True   | True     | True  |
 
+```sql
 CREATE TYPE status_enum AS ENUM ('pending', 'approved', 'rejected');
+```
 
 ## Change Requests
 | Field             | Type        | Description                | UNIQUE | NOT NULL | INDEX |
@@ -30,6 +32,7 @@ CREATE TYPE status_enum AS ENUM ('pending', 'approved', 'rejected');
 | status_id         | INT         | Change request status      | False  | True     | True  |
 | change_summary    | TEXT        | Change request Description | False  | False    | False |
 
+```sql
 CREATE TABLE IF NOT EXISTS change_requests (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     user_id INT NOT NULL,
@@ -57,6 +60,7 @@ CREATE INDEX idx_change_requests_user_id ON change_requests (user_id);
 CREATE INDEX idx_change_requests_entity_type_id ON change_requests (entity_type_id);
 CREATE INDEX idx_change_requests_entity_id ON change_requests (entity_id);
 CREATE INDEX idx_change_requests_status_id ON change_requests (status_id);
+```
 
 ## Fields
 | Field             | Type        | Description                | UNIQUE | NOT NULL | INDEX |
@@ -64,11 +68,13 @@ CREATE INDEX idx_change_requests_status_id ON change_requests (status_id);
 | id                | INT         | Primary key                | True   | True     | True  |
 | field_name        | VARCHAR(50) | Name of field              | True   | True     | True  |
 
+```sql
 CREATE TABLE IF NOT EXISTS fields (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     field_name VARCHAR(50) UNIQUE NOT NULL
 );
 CREATE INDEX idx_field_field_name ON fields (field_name);
+```
 
 ## Change Request Details
 | Field             | Type        | Description                | UNIQUE | NOT NULL | INDEX |
@@ -79,6 +85,7 @@ CREATE INDEX idx_field_field_name ON fields (field_name);
 | old_value         | TEXT        | Old value                  | False  | True     | False |
 | new_value         | TEXT        | New value                  | False  | True     | False |
 
+```sql
 CREATE TABLE IF NOT EXISTS change_request_details (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     change_request_id INT NOT NULL,
@@ -91,3 +98,4 @@ CREATE TABLE IF NOT EXISTS change_request_details (
         ON UPDATE CASCADE
 );
 CREATE INDEX idx_change_request_details_change_request_id ON change_request_details (change_request_id);
+```
