@@ -4,7 +4,7 @@ use crate::{
 };
 use pyo3::prelude::*;
 
-pub fn books(
+pub fn recommendations(
     book_id: String,
     genre_level: i32,
     recommendation_number: i32,
@@ -34,10 +34,10 @@ pub fn books(
         let py_recommendations = py_fun
             .call1((book_id, genre_level, recommendation_number))
             .map_err(|err| format!("Python function call failed: {:?}", err))
-            .unwrap()
-            .to_string();
+            .unwrap();
 
-        let books: Vec<Recommendation> = serde_json::from_str(&py_recommendations).unwrap();
+        // let books: Vec<Recommendation> = serde_json::from_str(&py_recommendations).unwrap();
+        let books: Vec<Recommendation> = py_recommendations.extract::<Vec<Recommendation>>().unwrap();
         let recommendations = books
             .into_iter()
             .map(|recommendation| BookRecommendation {

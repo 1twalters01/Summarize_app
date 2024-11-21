@@ -1,4 +1,25 @@
-import json
+import json, uuid
+from dataclasses import dataclass
+
+@dataclass
+class Book:
+    id: str
+    title: str
+    authors: list[str]
+    genres: list[str]
+
+    @staticmethod
+    def from_dict(obj_arr):
+        self = [
+            Book(
+                obj.get("id"),
+                obj.get("title"),
+                obj.get("authors"),
+                obj.get("genres")
+            ) for obj in obj_arr
+        ]
+
+        return self
 
 books_db = [
     {
@@ -45,15 +66,15 @@ def get_recommendations(book_id, genre_level=10, recommendation_number=15):
         recommendations += [
             book for book in books_db if genre in book["genres"] and book["id"] != book_id and book not in recommendations
         ]
-    # recommendations[:recommendation_number]
-    return json.dumps(recommendations[:recommendation_number], indent=4)
+
+    books = recommendations[:recommendation_number]
+    return Book.from_dict(books)
+    # return json.dumps(books, indent=4)
 
 if __name__ == "__main__":
     book_id = "2a9089f2-01c9-4f97-8f3e-69e3a5fcd04d"
     genre_level = 3
     recommendation_number = 3
     book = next((book for book in books_db if book["id"] == book_id), None)
-    print(book)
     recommendations = get_recommendations(book_id, genre_level, recommendation_number)
     print(recommendations)
-    # print(json.dumps(recommendations, indent=4))

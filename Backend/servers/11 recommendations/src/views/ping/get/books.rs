@@ -1,21 +1,22 @@
 use crate::{
-    generated::protos::recommendations::books::example::{
-        request::Request,
-        response::{response::ResponseField, BookRecommendation, Error, Response, Success},
+    generated::protos::recommendations::books::example::response::{
+        response::ResponseField,
+        BookRecommendation,
+        Error,
+        Response,
+        Success
     },
-    services::ping::get::recommendations,
+    services::ping::get::books::recommendations,
     utils::validations::{validate_book_id, validate_genre_level, validate_recommendation_number},
 };
-use actix_protobuf::{ProtoBuf, ProtoBufResponseBuilder};
+use actix_protobuf::ProtoBufResponseBuilder;
 use actix_web::{HttpResponse, Responder, Result};
 
-pub async fn post_book_id(data: ProtoBuf<Request>) -> Result<impl Responder> {
+pub async fn get_books() -> Result<impl Responder> {
     // get request variables
-    let Request {
-        book_id,
-        genre_level,
-        recommendation_number,
-    } = data.0;
+    let book_id = "2a9089f2-01c9-4f97-8f3e-69e3a5fcd04d".to_string();
+    let genre_level = 1;
+    let recommendation_number = 5;
 
     // Validate variables from the request body
     let validated_book_id = validate_book_id(&book_id);
@@ -52,7 +53,7 @@ pub async fn post_book_id(data: ProtoBuf<Request>) -> Result<impl Responder> {
     }
 
     let book_recommendations: Result<Vec<BookRecommendation>, ()> =
-        recommendations::books(book_id, genre_level, recommendation_number);
+        recommendations(book_id, genre_level, recommendation_number);
 
     match book_recommendations {
         Ok(recommendations) => {
@@ -85,12 +86,12 @@ mod tests {
         request::Request, response::Response,
     };
 
-    use super::post_book_id;
+    use super::*;
 
     #[actix_web::test]
     async fn test_invalid() {
         let mut app = test::init_service(App::new().service(
-            web::scope("/ping").route("/post_books", web::post().to(post_book_id)),
+            web::scope("/ping").route("/post_books", web::post().to(get_books)),
         ))
         .await;
 
@@ -125,3 +126,4 @@ mod tests {
         }
     }
 }
+
