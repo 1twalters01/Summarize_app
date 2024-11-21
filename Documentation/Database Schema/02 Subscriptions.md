@@ -5,8 +5,9 @@
 | id                | INT          | Primary key                    | True   | True     | True  |
 | payment_method    | VARCHAR(20)  | Payment method name            | True   | True     | False |
 
-
+```sql
 CREATE TYPE payment_method_enum AS ENUM ('stripe', 'paypal');
+```
 
 ## Subscribers
 | Field             | Type         | Description                    | UNIQUE | NOT NULL | Index |
@@ -20,6 +21,7 @@ CREATE TYPE payment_method_enum AS ENUM ('stripe', 'paypal');
 | start_date        | TIMESTAMP    | Subscription start date        | False  | True     | False |
 | end_date          | TIMESTAMP    | Subscription end date          | False  | False    | False |
 
+```sql
 CREATE TABLE IF NOT EXISTS subscribers(
     user_id INT UNIQUE NOT NULL,
     customer_id VARCHAR(255) UNIQUE,
@@ -37,6 +39,7 @@ CREATE TABLE IF NOT EXISTS subscribers(
 );
 CREATE INDEX idx_subscribers_customer_id ON subscribers (customer_id);
 CREATE INDEX idx_subscribers_subscription_id ON subscribers (subscription_id);
+```
 
 ## Subscription History
 | Field             | Type         | Description                    | UNIQUE | NOT NULL | Index |
@@ -49,6 +52,7 @@ CREATE INDEX idx_subscribers_subscription_id ON subscribers (subscription_id);
 | start_date        | TIMESTAMP    | Subscription start date        | False  | TRUE     | False |
 | end_date          | TIMESTAMP    | Subscription end date          | False  | False    | False |
 
+```sql
 CREATE TABLE IF NOT EXISTS subscription_history(
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     user_id INT NOT NULL,
@@ -68,3 +72,4 @@ CREATE TABLE IF NOT EXISTS subscription_history(
     CONSTRAINT check_date_validity CHECK (start_date < end_date)
 );
 CREATE INDEX idx_subscription_history_uid ON subscription_history (user_id);
+```
