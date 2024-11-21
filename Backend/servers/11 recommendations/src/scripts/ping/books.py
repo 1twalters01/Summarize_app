@@ -1,4 +1,3 @@
-import json, uuid
 from dataclasses import dataclass
 
 @dataclass
