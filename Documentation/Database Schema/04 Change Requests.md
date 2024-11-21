@@ -7,11 +7,7 @@
 
 [comment]: # (datatypes: book, author, publisher, format)
 
-CREATE TABLE IF NOT EXISTS entity_types (
-    id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    entity_type VARCHAR(50) UNIQUE NOT NULL
-);
-CREATE INDEX idx_entity_types_entity_type ON entity_types (entity_type);
+CREATE TYPE entity_types_enum AS ENUM ('book', 'author', 'publisher', 'format');
 
 ## Status
 | Field             | Type        | Description                | UNIQUE | NOT NULL | INDEX |
@@ -19,20 +15,14 @@ CREATE INDEX idx_entity_types_entity_type ON entity_types (entity_type);
 | id                | INT         | Primary key                | True   | True     | True  |
 | status            | VARCHAR(20) | The status of the request  | True   | True     | True  |
 
-[comment]: # (datatypes: pending, approved, rejected)
-
-CREATE TABLE IF NOT EXISTS status (
-    id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    status VARCHAR(20) UNIQUE NOT NULL
-);
-CREATE INDEX idx_status_status ON status (status);
+CREATE TYPE status_enum AS ENUM ('pending', 'approved', 'rejected');
 
 ## Change Requests
 | Field             | Type        | Description                | UNIQUE | NOT NULL | INDEX |
 |-------------------|-------------|----------------------------|--------|----------|-------|
 | id                | INT         | Primary key                | True   | True     | True  |
 | user_id           | INT         | The request submitter      | False  | True     | True  |
-| entity_type_id    | INT         | Entity type foreign key    | False  | True     | True  |
+| entity_type       | ENUM        | Entity type enum           | False  | True     | True  |
 | entity_id         | INT         | ID of item being changed   | False  | True     | True  |
 | submitted_at      | TIMESTAMP   | Time of submission         | False  | True     | False |
 | reviewed_at       | TIMESTAMP   | Time of review             | False  | True     | False |
@@ -43,12 +33,12 @@ CREATE INDEX idx_status_status ON status (status);
 CREATE TABLE IF NOT EXISTS change_requests (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     user_id INT NOT NULL,
-    entity_type_id INT NOT NULL,
+    entity_type entity_types_enum NOT NULL DEFAULT 'pending',
     entity_id INT NOT NULL,
     submitted_at TIMESTAMP NOT NULL DEFAULT NOW(),
     reviewed_at TIMESTAMP,
     admin_id INT,
-    status INT NOT NULL, -- default 'pending'
+    payment_method payment_method_enum NOT NULL DEFAULT 'pending',
     change_summary TEXT NOT NULL,
     CONSTRAINT fk_users FOREIGN KEY (user_id)
         REFERENCES users (id)

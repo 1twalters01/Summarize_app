@@ -5,12 +5,8 @@
 | id                | INT          | Primary key                    | True   | True     | True  |
 | payment_method    | VARCHAR(20)  | Payment method name            | True   | True     | False |
 
-CREATE TABLE IF NOT EXISTS payment_methods(
-    id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    payment_method VARCHAR(20) UNIQUE NOT NULL,
-);
 
-[comment]: # (methods: stripe, paypal)
+CREATE TYPE payment_method_enum AS ENUM ('stripe', 'paypal');
 
 ## Subscribers
 | Field             | Type         | Description                    | UNIQUE | NOT NULL | Index |
@@ -18,7 +14,7 @@ CREATE TABLE IF NOT EXISTS payment_methods(
 | user_id           | INT          | Foreign key to user id         | True   | True     | False |
 | customer_id       | VARCHAR(255) | The id of the customer         | True   | False    | True  |
 | subscription_id   | VARCHAR(255) | The id of the subscription     | True   | False    | True  |
-| payment_method_id | INT          | Foreign key to method id       | True   | True     | False |
+| payment_method    | ENUM         | Payment method Enum            | True   | True     | False |
 | is_subscribed     | BOOLEAN      | Subscription status            | False  | True     | False |
 | has_trial         | BOOLEAN      | has a trial or not             | False  | True     | False |
 | start_date        | TIMESTAMP    | Subscription start date        | False  | True     | False |
@@ -28,17 +24,13 @@ CREATE TABLE IF NOT EXISTS subscribers(
     user_id INT UNIQUE NOT NULL,
     customer_id VARCHAR(255) UNIQUE,
     subscription_id VARCHAR(255) UNIQUE,
-    payment_method_id INT NOT NULL,
+    payment_method payment_method_enum NOT NULL,
     is_subscribed BOOL NOT NULL DEFAULT FALSE,
     has_trial BOOL NOT NULL DEFAULT TRUE,
     start_date TIMESTAMP NOT NULL DEFAULT NOW(),
     end_date TIMESTAMP,
     CONSTRAINT fk_users FOREIGN KEY (user_id)
         REFERENCES users (id)
-        ON DELETE CASCADE
-        ON UPDATE CASCADE,
-    CONSTRAINT fk_methods FOREIGN KEY (payment_method_id)
-        REFERENCES payment_methods (id)
         ON DELETE CASCADE
         ON UPDATE CASCADE,
     CONSTRAINT check_date_validity CHECK (end_date IS NULL OR start_date < end_date)
