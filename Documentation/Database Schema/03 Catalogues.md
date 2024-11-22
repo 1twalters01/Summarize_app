@@ -6,6 +6,7 @@
 | format_name         | VARCHAR(30)    | Name of the format         | True   | True     | True  |
 | description         | TEXT           | Description of the format  | False  | True     | False |
 
+```sql
 CREATE TABLE IF NOT EXISTS formats(
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     format_name VARCHAR(30) UNIQUE NOT NULL,
@@ -19,6 +20,7 @@ CREATE INDEX idx_formats_name ON formats (format_name);
 | id                  | INT            | Primary key                | True   | True     | True  |
 | publisher_name      | VARCHAR(100)   | Publisher name             | True   | True     | True  |
 
+```sql
 CREATE TABLE IF NOT EXISTS publishers(
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     publisher_name VARCHAR(100) UNIQUE NOT NULL,
@@ -31,6 +33,7 @@ CREATE INDEX idx_publishers_name ON publishers (publisher_name);
 | id                  | INT            | The genre's Primary key    | True   | True     | True  |
 | genre_name          | VARCHAR(100)   | Genre name                 | True   | True     | True  |
 
+```sql
 CREATE TABLE IF NOT EXISTS genres(
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     genre_name VARCHAR(100) UNIQUE NOT NULL,
@@ -44,6 +47,7 @@ CREATE INDEX idx_genres_name ON genres (genre_name);
 | parent_publisher_id | INT            | parent publisher id        | False  | True     | True  |
 | child_publisher_id  | INT            | child publisher id         | False  | True     | True  |
 
+```sql
 CREATE TABLE publisher_relationships (
     parent_publisher_id INT NOT NULL,
     child_publisher_id INT NOT NULL,
@@ -66,6 +70,7 @@ CREATE INDEX idx_publisher_relationships_child_id ON publisher_relationships (ch
 | parent_genre_id     | INT            | parent genre id            | False  | True     | True  |
 | child_genre_id      | INT            | child genre id             | False  | True     | True  |
 
+```sql
 CREATE TABLE genre_relationships (
     parent_genre_id INT NOT NULL,
     child_genre_id INT NOT NULL,
@@ -84,7 +89,7 @@ CREATE INDEX idx_genre_relationships_child_id ON genre_relationships (child_genr
 
 ### Examples
 Find all subgenre ids for a genre:
-```md
+```sql
 SELECT g2.id AS sub_genre_id, g2.genre_name AS sub_genre_name
 FROM genre_relationships gr
 JOIN genres g1 ON gr.parent_genre_id = g1.id
@@ -93,7 +98,7 @@ WHERE g1.genre_name = 'Fiction';
 ```
 
 Find all ancestors of a particular genre:
-```md
+```sql
 WITH RECURSIVE genre_ancestors AS (
     SELECT parent_genre_id, child_genre_id
     FROM genre_relationships
@@ -109,7 +114,7 @@ JOIN genres g ON ga.parent_genre_id = g.id;
 ```
 
 Find all decendents of a particular genre:
-```md
+```sql
 WITH RECURSIVE genre_descendants AS (
     SELECT parent_genre_id, child_genre_id
     FROM genre_relationships
@@ -125,7 +130,7 @@ JOIN genres g ON gd.child_genre_id = g.id;
 ```
 
 Find all books under a specific genre and its sub-genres:
-```md
+```sql
 WITH RECURSIVE genre_descendants AS (
     SELECT parent_genre_id, child_genre_id
     FROM genre_relationships
@@ -142,7 +147,7 @@ JOIN books b ON bg.book_id = b.id;
 ```
 
 Count the number of sub-genres:
-```
+```sql
 SELECT COUNT(*) AS sub_genre_count
 FROM genre_relationships gr
 JOIN genres g1 ON gr.parent_genre_id = g1.id
@@ -162,6 +167,7 @@ WHERE g1.genre_name = 'Mystery';
 | date_of_death       | DATE           | Author's date of death     | False  | False    | False |
 | information         | TEXT           | The author's information   | False  | False    | False |
 
+```sql
 CREATE TABLE IF NOT EXISTS authors(
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     user_id int NOT NULL,
@@ -180,6 +186,7 @@ CREATE TABLE IF NOT EXISTS authors(
 CREATE INDEX idx_authors_fname ON authors (first_name);
 CREATE INDEX idx_authors_lname ON authors (last_name);
 CREATE INDEX idx_authors_pname ON authors (pen_name);
+```
 
 ## Books
 ### Main table
@@ -196,6 +203,7 @@ CREATE INDEX idx_authors_pname ON authors (pen_name);
 | synopsis            | TEXT           | Book synopsis              | False  | False    | False |
 | links               | VARCHAR(255)[] | Links to buy book          | True   | False    | False |
 
+```sql
 CREATE TABLE IF NOT EXISTS books(
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     publisher_id INT,
@@ -216,6 +224,7 @@ CREATE INDEX idx_books_title ON authors (title);
 CREATE INDEX idx_books_subtitle ON authors (subtitle);
 CREATE INDEX idx_books_isbn ON authors (isbn);
 CREATE INDEX idx_books_isbn_13 ON authors (isbn_13);
+```
 
 ## Book relationships
 ### Book - Format relationship
@@ -224,6 +233,7 @@ CREATE INDEX idx_books_isbn_13 ON authors (isbn_13);
 | book_id             | INT            | Book foreign key           | False  | True     | True  |
 | format_id           | INT            | Format foreign key         | False  | True     | True  |
 
+```sql
 CREATE TABLE book_format_relationships (
     book_id INT NOT NULL,
     format_id INT NOT NULL,
@@ -239,6 +249,7 @@ CREATE TABLE book_format_relationships (
 );
 CREATE INDEX idx_book_format_relationships_book_id ON book_format_relationships (book_id);
 CREATE INDEX idx_book_format_relationships_format_id ON book_format_relationships (format_id);
+```
 
 ### Book - Genre relationship
 | Field               | Type           | Description                | UNIQUE | NOT NULL | INDEX |
@@ -246,6 +257,7 @@ CREATE INDEX idx_book_format_relationships_format_id ON book_format_relationship
 | book_id             | INT            | Book foreign key           | False  | True     | True  |
 | genre_id            | INT            | Genre foreign key          | False  | True     | True  |
 
+```sql
 CREATE TABLE book_genre_relationships (
     book_id INT NOT NULL,
     genre_id INT NOT NULL,
@@ -261,6 +273,7 @@ CREATE TABLE book_genre_relationships (
 );
 CREATE INDEX idx_book_genre_relationships_book_id ON book_genre_relationships (book_id);
 CREATE INDEX idx_book_genre_relationships_genre_id ON book_genre_relationships (genre_id);
+```
 
 ### Book - Author relationship
 | Field               | Type           | Description                | UNIQUE | NOT NULL | INDEX |
@@ -268,6 +281,7 @@ CREATE INDEX idx_book_genre_relationships_genre_id ON book_genre_relationships (
 | book_id             | INT            | Book foreign key           | False  | True     | True  |
 | author_id           | INT            | Author foreign key         | False  | True     | True  |
 
+```sql
 CREATE TABLE book_author_relationships (
     book_id INT NOT NULL,
     author_id INT NOT NULL,
@@ -283,3 +297,4 @@ CREATE TABLE book_author_relationships (
 );
 CREATE INDEX idx_book_author_relationships_book_id ON book_author_relationships (book_id);
 CREATE INDEX idx_book_author_relationships_author_id ON book_author_relationships (author_id);
+```

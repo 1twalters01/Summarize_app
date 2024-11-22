@@ -20,6 +20,7 @@ CREATE EXTENSION IF NOT EXISTS "pg_cron";
 | is_staff           | BOOLEAN      | Is the user staff           | False  | True     | False |
 | is_superuser       | BOOLEAN      | Is the user a superuser     | False  | True     | False |
 
+```sql
 CREATE TABLE IF NOT EXISTS users(
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     uuid UUID UNIQUE NOT NULL DEFAULT gen_random_uuid(),
@@ -36,6 +37,7 @@ CREATE TABLE IF NOT EXISTS users(
 CREATE INDEX idx_users_email ON users (email);
 CREATE INDEX idx_users_username ON users (username);
 CREATE INDEX idx_users_uuid ON users (uuid);
+```
 
 ## Password History
 | Field              | Type         | Description                 | UNIQUE | NOT NULL | INDEX |
@@ -45,6 +47,7 @@ CREATE INDEX idx_users_uuid ON users (uuid);
 | password_hash      | VARCHAR(255) | The user's password hash    | False  | True     | False |
 | created_at         | TIMESTAMP    | The password creation time  | False  | True     | False |
 
+```sql
 CREATE TABLE IF NOT EXISTS password_history(
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     user_id INT UNIQUE NOT NULL,
@@ -55,13 +58,16 @@ CREATE TABLE IF NOT EXISTS password_history(
         ON DELETE CASCADE
         ON UPDATE CASCADE
 );
+```
 
 ### Example usage - Get the latest password
+```sql
 SELECT password_hash
 FROM password_history
 WHERE user_id = 1
 ORDER BY created_at DESC
 LIMIT 1;
+```
 
 ## Totp Secrets
 | Field              | Type         | Description                 | UNIQUE | NOT NULL | INDEX |
@@ -73,6 +79,7 @@ LIMIT 1;
 | is_verified        | BOOLEAN      | Is the totp verified?       | False  | True     | False |
 | verified_at        | TIMESTAMP    | Totp key verification time  | False  | False    | False |
 
+```sql
 CREATE TABLE IF NOT EXISTS totp_secrets(
     user_id int UNIQUE NOT NULL,
     encrypted_totp_key VARCHAR(100) NOT NULL,
@@ -85,6 +92,7 @@ CREATE TABLE IF NOT EXISTS totp_secrets(
         ON DELETE CASCADE
         ON UPDATE CASCADE
 );
+```
 
 ## Refresh Tokens
 | Field              | Type         | Description                 | UNIQUE | NOT NULL | INDEX |
@@ -94,6 +102,7 @@ CREATE TABLE IF NOT EXISTS totp_secrets(
 | created_at         | TIMESTAMP    | The token's creation time   | False  | True     | False |
 | expires_at         | TIMESTAMP    | The token's expiration time | False  | True     | False |
 
+```sql
 CREATE TABLE IF NOT EXISTS refresh_tokens(
     user_id int NOT NULL,
     refresh_token VARCHAR UNIQUE NOT NULL,
@@ -111,6 +120,7 @@ SELECT cron.schedule(
     '0 0 * * *',
     $$ DELETE FROM refresh_tokens WHERE expires_at < NOW(); $$
 );
+```
 
 ## Token Blacklist
 | Field              | Type         | Description                 | UNIQUE | NOT NULL | INDEX |
@@ -119,6 +129,7 @@ SELECT cron.schedule(
 | token              | VARCHAR(150) | The token to be blacklist   | True   | True     | True  |
 | expires_at         | TIMESTAMP    | The token's expiration time | False  | True     | False |
 
+```sql
 CREATE TABLE IF NOT EXISTS token_blacklist(
     user_id int UNIQUE NOT NULL,
     token VARCHAR(150) UNIQUE NOT NULL,
@@ -135,3 +146,4 @@ SELECT cron.schedule(
     '0 0 * * *',
     $$ DELETE FROM token_blacklist WHERE expires_at < NOW(); $$
 );
+```
