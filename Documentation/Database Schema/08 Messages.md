@@ -1,7 +1,4 @@
-# Messages Tables
-
-## Scylla
-
+# Messages Tables (Scylla)
 ### chat
 | Field                | Type         | Description                 | UNIQUE | NOT NULL | INDEX |
 |----------------------|--------------|-----------------------------|--------|----------|-------|
