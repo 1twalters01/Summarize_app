@@ -1,16 +1,16 @@
 # Flashcards Tables
 ## Decks
-| Field           | Type         | Description                   | UNIQUE | NOT NULL | Index |
-|-----------------|--------------|-------------------------------|--------|----------|-------|
-| id              | INT          | Deck primary key              | True   | True     | True  |
-| user_id         | INT          | Owner of the deck's id        | False  | True     | True  |
-| summary_id      | INT          | ID of associated summary      | True   | False    | True  |
-| book_id         | INT          | ID of associated book         | False  | False    | True  |
-| deck_name       | VARCHAR(100) | Name of the deck              | False  | True     | True  |
-| description     | TEXT         | Deck description              | False  | False    | False |
-| created_at      | TIMESTAMP    | The deck's creation time      | False  | True     | False |
-| last_modified   | TIMESTAMP    | Last modification time        | False  | True     | False |
-| is_public       | BOOLEAN      | Is flashcard public?          | False  | True     | True  |
+| Field            | Type         | Description                   | UNIQUE | NOT NULL | Index |
+|------------------|--------------|-------------------------------|--------|----------|-------|
+| id               | INT          | Deck primary key              | True   | True     | True  |
+| user_id          | INT          | Owner of the deck's id        | False  | True     | True  |
+| summary_id       | INT          | ID of associated summary      | True   | False    | True  |
+| book_id          | INT          | ID of associated book         | False  | False    | True  |
+| deck_name        | VARCHAR(100) | Name of the deck              | False  | True     | True  |
+| deck_description | TEXT         | Deck description              | False  | False    | False |
+| created_at       | TIMESTAMP    | The deck's creation time      | False  | True     | False |
+| last_modified    | TIMESTAMP    | Last modification time        | False  | True     | False |
+| is_public        | BOOLEAN      | Is flashcard public?          | False  | True     | True  |
 
 ```sql
 CREATE TABLE IF NOT EXISTS decks (
@@ -32,10 +32,10 @@ CREATE INDEX IF NOT EXISTS idx_deck_is_public on deck (is_public);
 ```
 
 ## Tags
-| Field           | Type         | Description                   | UNIQUE | NOT NULL | INDEX |
-|-----------------|--------------|-------------------------------|--------|----------|-------|
-| id              | INT          | Primary key                   | True   | True     | True  |
-| tag_name        | VARCHAR(30)  | Name of the tag               | True   | True     | True  |
+| Field            | Type         | Description                   | UNIQUE | NOT NULL | INDEX |
+|------------------|--------------|-------------------------------|--------|----------|-------|
+| id               | INT          | Primary key                   | True   | True     | True  |
+| tag_name         | VARCHAR(30)  | Name of the tag               | True   | True     | True  |
 
 ```sql
 CREATE TABLE IF NOT EXISTS tags (
@@ -45,10 +45,10 @@ CREATE TABLE IF NOT EXISTS tags (
 ```
 
 ## Deck Tags
-| Field           | Type         | Description                   | UNIQUE | NOT NULL | INDEX |
-|-----------------|--------------|-------------------------------|--------|----------|-------|
-| deck_id         | INT          | Foreign key to deck           | False  | True     | True  |
-| tag_id          | INT          | Foreign key to tag            | False  | True     | True  |
+| Field            | Type         | Description                   | UNIQUE | NOT NULL | INDEX |
+|------------------|--------------|-------------------------------|--------|----------|-------|
+| deck_id          | INT          | Foreign key to deck           | False  | True     | True  |
+| tag_id           | INT          | Foreign key to tag            | False  | True     | True  |
 
 ```sql
 CREATE TABLE IF NOT EXISTS deck_tag_relations (
@@ -68,10 +68,10 @@ CREATE INDEX IF NOT EXISTS idx_deck_tags ON deck_tags (deck_id, tag_id);
 ```
 
 ## Editors
-| Field           | Type         | Description                   | UNIQUE | NOT NULL | INDEX |
-|-----------------|--------------|-------------------------------|--------|----------|-------|
-| deck_id         | INT          | Foreign key to deck           | False  | True     | True  |
-| user_id         | INT          | Foreign key to user           | False  | True     | True  |
+| Field            | Type         | Description                   | UNIQUE | NOT NULL | INDEX |
+|------------------|--------------|-------------------------------|--------|----------|-------|
+| deck_id          | INT          | Foreign key to deck           | False  | True     | True  |
+| user_id          | INT          | Foreign key to user           | False  | True     | True  |
 
 ```sql
 CREATE TABL IF NOT EXISTSE deck_editors (
@@ -91,10 +91,10 @@ CREATE INDEX IF NOT EXISTS idx_deck_editors ON deck_editors (deck_id, user_id);
 ```
 
 ## Viewers
-| Field           | Type         | Description                   | UNIQUE | NOT NULL | INDEX |
-|-----------------|--------------|-------------------------------|--------|----------|-------|
-| deck_id         | INT          | Foreign key to deck           | False  | True     | True  |
-| user_id         | INT          | Foreign key to user           | False  | True     | True  |
+| Field            | Type         | Description                   | UNIQUE | NOT NULL | INDEX |
+|------------------|--------------|-------------------------------|--------|----------|-------|
+| deck_id          | INT          | Foreign key to deck           | False  | True     | True  |
+| user_id          | INT          | Foreign key to user           | False  | True     | True  |
 
 ```sql
 CREATE TABLE IF NOT EXISTS deck_viewers (
@@ -114,15 +114,15 @@ CREATE INDEX IF NOT EXISTS idx_deck_viewers ON deck_viewers (deck_id, user_id);
 ```
 
 ## Cards
-| Field           | Type         | Description                   | UNIQUE | NOT NULL | INDEX |
-|-----------------|--------------|-------------------------------|--------|----------|-------|
-| id              | INT          | Card primary key              | True   | True     | True  |
-| deck_id         | INT          | The deck the card is in       | False  | True     | True  |
-| place           | INT          | Place in deck                 | False  | True     | False |
-| question        | TEXT         | The front of the card         | False  | True     | False |
-| answer          | TEXT         | The back of the card          | False  | True     | False |
-| created_at      | TIMESTAMP    | The deck's creation time      | False  | True     | False |
-| last_modified   | TIMESTAMP    | Last modification time        | False  | True     | False |
+| Field            | Type         | Description                   | UNIQUE | NOT NULL | INDEX |
+|------------------|--------------|-------------------------------|--------|----------|-------|
+| id               | INT          | Card primary key              | True   | True     | True  |
+| deck_id          | INT          | The deck the card is in       | False  | True     | True  |
+| place            | INT          | Place in deck                 | False  | True     | False |
+| question         | TEXT         | The front of the card         | False  | True     | False |
+| answer           | TEXT         | The back of the card          | False  | True     | False |
+| created_at       | TIMESTAMP    | The deck's creation time      | False  | True     | False |
+| last_modified    | TIMESTAMP    | Last modification time        | False  | True     | False |
 
 ```sql
 CREATE TABLE IF NOT EXISTS cards (
@@ -139,14 +139,14 @@ CREATE INDEX IF NOT EXISTS idx_card_deck ON cards (deck_id);
 ```
 
 ## Progress
-| Field           | Type         | Description                   | UNIQUE | NOT NULL | INDEX |
-|-----------------|--------------|-------------------------------|--------|----------|-------|
-| id              | INT          | Primary key                   | True   | True     | True  |
-| user_id         | INT          | The user's progress           | False  | True     | True  |
-| card_id         | INT          | Associated card               | False  | True     | True  |
-| review_count    | INT          | Number of times reviewed      | False  | True     | True  |
-| last_reviewed   | TIMESTAMP    | Last review time              | False  | False    | False |
-| ease_factor     | FLOAT        | Spaced repetition ease factor | False  | True     | False |
+| Field            | Type         | Description                   | UNIQUE | NOT NULL | INDEX |
+|------------------|--------------|-------------------------------|--------|----------|-------|
+| id               | INT          | Primary key                   | True   | True     | True  |
+| user_id          | INT          | The user's progress           | False  | True     | True  |
+| card_id          | INT          | Associated card               | False  | True     | True  |
+| review_count     | INT          | Number of times reviewed      | False  | True     | True  |
+| last_reviewed    | TIMESTAMP    | Last review time              | False  | False    | False |
+| ease_factor      | FLOAT        | Spaced repetition ease factor | False  | True     | False |
 
 ```sql
 CREATE TABLE IF NOT EXISTS progress (
@@ -156,7 +156,7 @@ CREATE TABLE IF NOT EXISTS progress (
     review_count INT NOT NULL,
     last_review TIMESTAMP,
     ease_factor FLOAT NOT NULL,
-    Unique (user_id, card_id)
+    UNIQUE (user_id, card_id)
 );
 CREATE INDEX IF NOT EXISTS idx_progress_user ON progress (user_id);
 CREATE INDEX IF NOT EXISTS idx_progress_card ON progress (card_id);
