@@ -13,7 +13,7 @@
 | follows          | Int          | Number of follows                | False  | True     | False |
 
 ```sql
-CREATE TABLE libraries (
+CREATE TABLE IF NOT EXISTS libraries (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     user_id INT NOT NULL,
     library_name VARCHAR(100) NOT NULL,
@@ -27,8 +27,8 @@ CREATE TABLE libraries (
         ON DELETE CASCADE
         ON UPDATE CASCADE
 );
-CREATE INDEX idx_libraries_user ON libraries (user_id);
-CREATE INDEX idx_libraries_public ON libraries (is_public);
+CREATE INDEX IF NOT EXISTS idx_libraries_user ON libraries (user_id);
+CREATE INDEX IF NOT EXISTS idx_libraries_public ON libraries (is_public);
 ```
 
 ## Editors
@@ -38,7 +38,7 @@ CREATE INDEX idx_libraries_public ON libraries (is_public);
 | user_id          | INT          | Foreign key to user              | False  | True     | True  |
 
 ```sql
-CREATE TABLE library_editors (
+CREATE TABLE IF NOT EXISTS library_editors (
     library_id INT NOT NULL,
     user_id INT NOT NULL,
     CONSTRAINT fk_library FOREIGN KEY (library_id)
@@ -51,7 +51,7 @@ CREATE TABLE library_editors (
         ON UPDATE CASCADE,
     UNIQUE (library_id, user_id)
 );
-CREATE INDEX idx_library_editors ON library_editors (library_id, user_id);
+CREATE INDEX IF NOT EXISTS idx_library_editors ON library_editors (library_id, user_id);
 ```
 
 ## Viewers
@@ -61,7 +61,7 @@ CREATE INDEX idx_library_editors ON library_editors (library_id, user_id);
 | user_id          | INT          | Foreign key to user              | False  | True     | True  |
 
 ```sql
-CREATE TABLE library_viewers (
+CREATE TABLE IF NOT EXISTS library_viewers (
     library_id INT NOT NULL,
     user_id INT NOT NULL,
     CONSTRAINT fk_library FOREIGN KEY (library_id)
@@ -74,7 +74,7 @@ CREATE TABLE library_viewers (
         ON UPDATE CASCADE,
     UNIQUE (library_id, user_id)
 );
-CREATE INDEX idx_library_viewers ON library_viewers (library_id, user_id);
+CREATE INDEX IF NOT EXISTS idx_library_viewers ON library_viewers (library_id, user_id);
 ```
 
 ## Shelves
@@ -85,7 +85,7 @@ CREATE INDEX idx_library_viewers ON library_viewers (library_id, user_id);
 | name             | VARCHAR(20)  | Name of shelf                    | False  | True     | False |
 
 ```sql
-CREATE TABLE shelves (
+CREATE TABLE IF NOT EXISTS shelves (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     library_id INT NOT NULL,
     name VARCHAR(100) NOT NULL,
@@ -106,7 +106,7 @@ CREATE TABLE shelves (
 | date_added       | DATETIME     | Last summary added time          | False  | False    | False |
 
 ```sql
-CREATE TABLE entries (
+CREATE TABLE IF NOT EXISTS entries (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     summary_id INT NOT NULL,
     shelf_id INT,
@@ -130,7 +130,7 @@ CREATE TABLE entries (
         ON DELETE CASCADE
         ON UPDATE CASCADE
 );
-CREATE INDEX idx_shelf_entries_library_summary ON entries (library_id, summary_id);
+CREATE INDEX IF NOT EXISTS idx_shelf_entries_library_summary ON entries (library_id, summary_id);
 ```
 
 # Owner Type
@@ -140,11 +140,11 @@ CREATE INDEX idx_shelf_entries_library_summary ON entries (library_id, summary_i
 | owner_type       | VARCHAR(10)  | The owner's type                 | True   | True     | True  |
 
 ```sql
-CREATE TABLE owner_types (
+CREATE TABLE IF NOT EXISTS owner_types (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     owner_type VARCHAR(10) UNIQUE NOT NULL,
 );
-CREATE INDEX idx_owner_types_owner_type ON owner_types (owner_type);
+CREATE INDEX IF NOT EXISTS idx_owner_types_owner_type ON owner_types (owner_type);
 ```
 
 ## Collections
@@ -159,7 +159,7 @@ CREATE INDEX idx_owner_types_owner_type ON owner_types (owner_type);
 | last_modified_by | INT          | User that last modified this     | False  | True     | False |
 
 ```sql
-CREATE TABLE collections (
+CREATE TABLE IF NOT EXISTS collections (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     created_by INT NOT NULL,
     owner_id INT NOT NULL,
@@ -191,7 +191,7 @@ CREATE TABLE collections (
 | collection_id    | INT          | Collection foreign key           | False  | True     | True  |
 
 ```sql
-CREATE TABLE library_collection_links (
+CREATE TABLE IF NOT EXISTS library_collection_links (
     library_id INT NOT NULL,
     collection_id INT NOT NULL,
     CONSTRAINT fk_link_library FOREIGN KEY (library_id)
@@ -202,5 +202,5 @@ CREATE TABLE library_collection_links (
         ON DELETE CASCADE,
     UNIQUE (library_id, collection_id)
 );
-CREATE INDEX idx_library_collection_links ON library_collection_links (collection_id, library_id);
+CREATE INDEX IF NOT EXISTS idx_library_collection_links ON library_collection_links (collection_id, library_id);
 ```

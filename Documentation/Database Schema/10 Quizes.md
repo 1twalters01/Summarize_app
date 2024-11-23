@@ -12,7 +12,7 @@
 | is_public       | BOOLEAN      | Is quiz public?               | False  | True     | True  |
 
 ```sql
-CREATE TABLE quiz (
+CREATE TABLE IF NOT EXISTS quiz (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 )
 ```
@@ -24,7 +24,7 @@ CREATE TABLE quiz (
 | user_id         | INT          | Foreign key to user           | False  | True     | True  |
 
 ```sql
-CREATE TABLE quiz_editors (
+CREATE TABLE IF NOT EXISTS quiz_editors (
     quiz_id INT NOT NULL,
     user_id INT NOT NULL,
     CONSTRAINT fk_quiz FOREIGN KEY (quiz_id)
@@ -37,7 +37,7 @@ CREATE TABLE quiz_editors (
         ON UPDATE CASCADE,
     UNIQUE (quiz_id, user_id)
 );
-CREATE INDEX idx_quiz_editors ON quiz_editors (quiz_id, user_id);
+CREATE INDEX IF NOT EXISTS idx_quiz_editors ON quiz_editors (quiz_id, user_id);
 ```
 
 ## Viewers
@@ -47,7 +47,7 @@ CREATE INDEX idx_quiz_editors ON quiz_editors (quiz_id, user_id);
 | user_id         | INT          | Foreign key to user           | False  | True     | True  |
 
 ```sql
-CREATE TABLE quiz_viewers (
+CREATE TABLE IF NOT EXISTS quiz_viewers (
     quiz_id INT NOT NULL,
     user_id INT NOT NULL,
     CONSTRAINT fk_quiz FOREIGN KEY (quiz_id)
@@ -60,7 +60,7 @@ CREATE TABLE quiz_viewers (
         ON UPDATE CASCADE,
     UNIQUE (quiz_id, user_id)
 );
-CREATE INDEX idx_quiz_viewers ON quiz_viewers (quiz_id, user_id);
+CREATE INDEX IF NOT EXISTS idx_quiz_viewers ON quiz_viewers (quiz_id, user_id);
 ```
 
 ## Questions
@@ -75,7 +75,7 @@ CREATE INDEX idx_quiz_viewers ON quiz_viewers (quiz_id, user_id);
 | last_modified   | TIMESTAMP    | Last modification time        | False  | True     | False |
 
 ```sql
-CREATE TABLE questions (
+CREATE TABLE IF NOT EXISTS questions (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     quiz_id INT NOT NULL,
     place INT NOT NULL,
@@ -85,7 +85,7 @@ CREATE TABLE questions (
     last_modified TIMESTAMP NOT NULL,
     UNIQUE (quiz_id, place)
 );
-CREATE INDEX idx_question_quiz ON questions (quiz_id);
+CREATE INDEX IF NOT EXISTS idx_question_quiz ON questions (quiz_id);
 ```
 
 ## Progress
@@ -99,7 +99,7 @@ CREATE INDEX idx_question_quiz ON questions (quiz_id);
 | ease_factor     | FLOAT        | Spaced repetition ease factor | False  | True     | False |
 
 ```sql
-CREATE TABLE progress (
+CREATE TABLE IF NOT EXISTS progress (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     user_id INT NOT NULL,
     question_id INT NOT NULL,
@@ -108,7 +108,7 @@ CREATE TABLE progress (
     ease_factor FLOAT NOT NULL,
     Unique (user_id, question_id)
 );
-CREATE INDEX idx_progress_user ON progress (user_id);
-CREATE INDEX idx_progress_question ON progress (question_id);
-CREATE INDEX idx_progress_review_count ON progress (review_count);
+CREATE INDEX IF NOT EXISTS idx_progress_user ON progress (user_id);
+CREATE INDEX IF NOT EXISTS idx_progress_question ON progress (question_id);
+CREATE INDEX IF NOT EXISTS idx_progress_review_count ON progress (review_count);
 ```

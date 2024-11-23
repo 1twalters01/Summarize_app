@@ -56,10 +56,10 @@ CREATE TABLE IF NOT EXISTS change_requests (
         ON DELETE SET NULL
         ON UPDATE CASCADE
 );
-CREATE INDEX idx_change_requests_user_id ON change_requests (user_id);
-CREATE INDEX idx_change_requests_entity_type_id ON change_requests (entity_type_id);
-CREATE INDEX idx_change_requests_entity_id ON change_requests (entity_id);
-CREATE INDEX idx_change_requests_status_id ON change_requests (status_id);
+CREATE INDEX IF NOT EXISTS idx_change_requests_user_id ON change_requests (user_id);
+CREATE INDEX IF NOT EXISTS idx_change_requests_entity_type_id ON change_requests (entity_type_id);
+CREATE INDEX IF NOT EXISTS idx_change_requests_entity_id ON change_requests (entity_id);
+CREATE INDEX IF NOT EXISTS idx_change_requests_status_id ON change_requests (status_id);
 ```
 
 ## Fields
@@ -73,7 +73,7 @@ CREATE TABLE IF NOT EXISTS fields (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     field_name VARCHAR(50) UNIQUE NOT NULL
 );
-CREATE INDEX idx_field_field_name ON fields (field_name);
+CREATE INDEX IF NOT EXISTS idx_field_field_name ON fields (field_name);
 ```
 
 ## Change Request Details
@@ -97,5 +97,5 @@ CREATE TABLE IF NOT EXISTS change_request_details (
         ON DELETE CASCADE
         ON UPDATE CASCADE
 );
-CREATE INDEX idx_change_request_details_change_request_id ON change_request_details (change_request_id);
+CREATE INDEX IF NOT EXISTS idx_change_request_details_change_request_id ON change_request_details (change_request_id);
 ```

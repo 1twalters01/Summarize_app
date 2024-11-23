@@ -20,8 +20,8 @@ CREATE TABLE IF NOT EXISTS groups(
     created_by INT NOT NULL,
     last_active TIMESTAMP NOT NULL DEFAULT NOW()
 );
-CREATE INDEX idx_groups_uuid ON groups (uuid);
-CREATE INDEX idx_groups_name ON groups (group_name);
+CREATE INDEX IF NOT EXISTS idx_groups_uuid ON groups (uuid);
+CREATE INDEX IF NOT EXISTS idx_groups_name ON groups (group_name);
 ```
 
 ## group user relationship
@@ -38,9 +38,9 @@ CREATE TABLE IF NOT EXISTS group_user_relationships(
     user_role role_enum NOT NULL,
     PRIMARY KEY(group_id, user_id)
 );
-CREATE INDEX idx_group_user_relations_group ON group_user_relationships (group_id);
-CREATE INDEX idx_group_user_relations_user ON group_user_relationships (user_id);
-CREATE INDEX idx_group_user_relations_role ON group_user_relationships (user_role);
+CREATE INDEX IF NOT EXISTS idx_group_user_relations_group ON group_user_relationships (group_id);
+CREATE INDEX IF NOT EXISTS idx_group_user_relations_user ON group_user_relationships (user_id);
+CREATE INDEX IF NOT EXISTS idx_group_user_relations_role ON group_user_relationships (user_role);
 ```
 
 ## Group messages (scylla?)

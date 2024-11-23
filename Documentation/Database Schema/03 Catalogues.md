@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS formats(
     format_name VARCHAR(30) UNIQUE NOT NULL,
     description TEXT NOT NULL,
 );
-CREATE INDEX idx_formats_name ON formats (format_name);
+CREATE INDEX IF NOT EXISTS idx_formats_name ON formats (format_name);
 
 ## Publishers
 | Field               | Type           | Description                | UNIQUE | NOT NULL | INDEX |
@@ -25,7 +25,8 @@ CREATE TABLE IF NOT EXISTS publishers(
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     publisher_name VARCHAR(100) UNIQUE NOT NULL,
 );
-CREATE INDEX idx_publishers_name ON publishers (publisher_name);
+CREATE INDEX IF NOT EXISTS idx_publishers_name ON publishers (publisher_name);
+```
 
 ## Genres
 | Field               | Type           | Description                | UNIQUE | NOT NULL | INDEX |
@@ -38,7 +39,8 @@ CREATE TABLE IF NOT EXISTS genres(
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     genre_name VARCHAR(100) UNIQUE NOT NULL,
 );
-CREATE INDEX idx_genres_name ON genres (genre_name);
+CREATE INDEX IF NOT EXISTS idx_genres_name ON genres (genre_name);
+```
 
 ## Relationships
 ### Publisher relationships
@@ -61,8 +63,9 @@ CREATE TABLE publisher_relationships (
         ON DELETE CASCADE
         ON UPDATE CASCADE
 );
-CREATE INDEX idx_publisher_relationships_parent_id ON publisher_relationships (parent_publisher_id);
-CREATE INDEX idx_publisher_relationships_child_id ON publisher_relationships (child_publisher_id);
+CREATE INDEX IF NOT EXISTS idx_publisher_relationships_parent_id ON publisher_relationships (parent_publisher_id);
+CREATE INDEX IF NOT EXISTS idx_publisher_relationships_child_id ON publisher_relationships (child_publisher_id);
+```
 
 ### Genre relationships
 | Field               | Type           | Description                | UNIQUE | NOT NULL | INDEX |
@@ -84,8 +87,9 @@ CREATE TABLE genre_relationships (
         ON DELETE CASCADE
         ON UPDATE CASCADE
 );
-CREATE INDEX idx_genre_relationships_parent_id ON genre_relationships (parent_genre_id);
-CREATE INDEX idx_genre_relationships_child_id ON genre_relationships (child_genre_id);
+CREATE INDEX IF NOT EXISTS idx_genre_relationships_parent_id ON genre_relationships (parent_genre_id);
+CREATE INDEX IF NOT EXISTS idx_genre_relationships_child_id ON genre_relationships (child_genre_id);
+```
 
 ### Examples
 Find all subgenre ids for a genre:
@@ -183,9 +187,9 @@ CREATE TABLE IF NOT EXISTS authors(
         ON DELETE CASCADE
         ON UPDATE CASCADE
 );
-CREATE INDEX idx_authors_fname ON authors (first_name);
-CREATE INDEX idx_authors_lname ON authors (last_name);
-CREATE INDEX idx_authors_pname ON authors (pen_name);
+CREATE INDEX IF NOT EXISTS idx_authors_fname ON authors (first_name);
+CREATE INDEX IF NOT EXISTS idx_authors_lname ON authors (last_name);
+CREATE INDEX IF NOT EXISTS idx_authors_pname ON authors (pen_name);
 ```
 
 ## Books
@@ -220,10 +224,10 @@ CREATE TABLE IF NOT EXISTS books(
         ON DELETE CASCADE
         ON UPDATE CASCADE
 ); 
-CREATE INDEX idx_books_title ON authors (title);
-CREATE INDEX idx_books_subtitle ON authors (subtitle);
-CREATE INDEX idx_books_isbn ON authors (isbn);
-CREATE INDEX idx_books_isbn_13 ON authors (isbn_13);
+CREATE INDEX IF NOT EXISTS idx_books_title ON authors (title);
+CREATE INDEX IF NOT EXISTS idx_books_subtitle ON authors (subtitle);
+CREATE INDEX IF NOT EXISTS idx_books_isbn ON authors (isbn);
+CREATE INDEX IF NOT EXISTS idx_books_isbn_13 ON authors (isbn_13);
 ```
 
 ## Book relationships
@@ -247,8 +251,8 @@ CREATE TABLE book_format_relationships (
         ON DELETE CASCADE
         ON UPDATE CASCADE
 );
-CREATE INDEX idx_book_format_relationships_book_id ON book_format_relationships (book_id);
-CREATE INDEX idx_book_format_relationships_format_id ON book_format_relationships (format_id);
+CREATE INDEX IF NOT EXISTS idx_book_format_relationships_book_id ON book_format_relationships (book_id);
+CREATE INDEX IF NOT EXISTS idx_book_format_relationships_format_id ON book_format_relationships (format_id);
 ```
 
 ### Book - Genre relationship
@@ -271,8 +275,8 @@ CREATE TABLE book_genre_relationships (
         ON DELETE CASCADE
         ON UPDATE CASCADE
 );
-CREATE INDEX idx_book_genre_relationships_book_id ON book_genre_relationships (book_id);
-CREATE INDEX idx_book_genre_relationships_genre_id ON book_genre_relationships (genre_id);
+CREATE INDEX IF NOT EXISTS idx_book_genre_relationships_book_id ON book_genre_relationships (book_id);
+CREATE INDEX IF NOT EXISTS idx_book_genre_relationships_genre_id ON book_genre_relationships (genre_id);
 ```
 
 ### Book - Author relationship
@@ -295,6 +299,6 @@ CREATE TABLE book_author_relationships (
         ON DELETE CASCADE
         ON UPDATE CASCADE
 );
-CREATE INDEX idx_book_author_relationships_book_id ON book_author_relationships (book_id);
-CREATE INDEX idx_book_author_relationships_author_id ON book_author_relationships (author_id);
+CREATE INDEX IF NOT EXISTS idx_book_author_relationships_book_id ON book_author_relationships (book_id);
+CREATE INDEX IF NOT EXISTS idx_book_author_relationships_author_id ON book_author_relationships (author_id);
 ```

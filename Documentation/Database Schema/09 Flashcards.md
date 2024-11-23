@@ -13,7 +13,7 @@
 | is_public       | BOOLEAN      | Is flashcard public?          | False  | True     | True  |
 
 ```sql
-CREATE TABLE decks (
+CREATE TABLE IF NOT EXISTS decks (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     user_id INT NOT NULL,
     summary_id INT UNIQUE,
@@ -24,11 +24,11 @@ CREATE TABLE decks (
     last_modified TIMESTAMP NOT NULL,
     is_public NOT NULL,
 );
-CREATE INDEX idx_deck_users on deck (user_id);
-CREATE INDEX idx_deck_summary on deck (summary_id);
-CREATE INDEX idx_deck_book on deck (book_id);
-CREATE INDEX idx_deck_name on deck (deck_name);
-CREATE INDEX idx_deck_is_public on deck (is_public);
+CREATE INDEX IF NOT EXISTS idx_deck_users on deck (user_id);
+CREATE INDEX IF NOT EXISTS idx_deck_summary on deck (summary_id);
+CREATE INDEX IF NOT EXISTS idx_deck_book on deck (book_id);
+CREATE INDEX IF NOT EXISTS idx_deck_name on deck (deck_name);
+CREATE INDEX IF NOT EXISTS idx_deck_is_public on deck (is_public);
 ```
 
 ## Tags
@@ -38,7 +38,7 @@ CREATE INDEX idx_deck_is_public on deck (is_public);
 | tag_name        | VARCHAR(30)  | Name of the tag               | True   | True     | True  |
 
 ```sql
-CREATE TABLE tags (
+CREATE TABLE IF NOT EXISTS tags (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     tag_name VARCHAR(30) UNIQUE NOT NULL
 );
@@ -51,7 +51,7 @@ CREATE TABLE tags (
 | tag_id          | INT          | Foreign key to tag            | False  | True     | True  |
 
 ```sql
-CRATE TABLE deck_tag_relations (
+CREATE TABLE IF NOT EXISTS deck_tag_relations (
     deck_id INT NOT NULL,
     tag_id INT NOT NULL,
     CONSTRAINT fk_deck FOREIGN KEY (deck_id)
@@ -64,7 +64,7 @@ CRATE TABLE deck_tag_relations (
         ON UPDATE CASCADE,
     Unique (deck_id, tag_id);
 );
-CREATE INDEX idx_deck_tags ON deck_tags (deck_id, tag_id);
+CREATE INDEX IF NOT EXISTS idx_deck_tags ON deck_tags (deck_id, tag_id);
 ```
 
 ## Editors
@@ -74,7 +74,7 @@ CREATE INDEX idx_deck_tags ON deck_tags (deck_id, tag_id);
 | user_id         | INT          | Foreign key to user           | False  | True     | True  |
 
 ```sql
-CREATE TABLE deck_editors (
+CREATE TABL IF NOT EXISTSE deck_editors (
     deck_id INT NOT NULL,
     user_id INT NOT NULL,
     CONSTRAINT fk_deck FOREIGN KEY (deck_id)
@@ -87,7 +87,7 @@ CREATE TABLE deck_editors (
         ON UPDATE CASCADE,
     UNIQUE (deck_id, user_id)
 );
-CREATE INDEX idx_deck_editors ON deck_editors (deck_id, user_id);
+CREATE INDEX IF NOT EXISTS idx_deck_editors ON deck_editors (deck_id, user_id);
 ```
 
 ## Viewers
@@ -97,7 +97,7 @@ CREATE INDEX idx_deck_editors ON deck_editors (deck_id, user_id);
 | user_id         | INT          | Foreign key to user           | False  | True     | True  |
 
 ```sql
-CREATE TABLE deck_viewers (
+CREATE TABLE IF NOT EXISTS deck_viewers (
     deck_id INT NOT NULL,
     user_id INT NOT NULL,
     CONSTRAINT fk_deck FOREIGN KEY (deck_id)
@@ -110,7 +110,7 @@ CREATE TABLE deck_viewers (
         ON UPDATE CASCADE,
     UNIQUE (deck_id, user_id)
 );
-CREATE INDEX idx_deck_viewers ON deck_viewers (deck_id, user_id);
+CREATE INDEX IF NOT EXISTS idx_deck_viewers ON deck_viewers (deck_id, user_id);
 ```
 
 ## Cards
@@ -125,7 +125,7 @@ CREATE INDEX idx_deck_viewers ON deck_viewers (deck_id, user_id);
 | last_modified   | TIMESTAMP    | Last modification time        | False  | True     | False |
 
 ```sql
-CREATE TABLE cards (
+CREATE TABLE IF NOT EXISTS cards (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     deck_id INT NOT NULL,
     place INT NOT NULL,
@@ -135,7 +135,7 @@ CREATE TABLE cards (
     last_modified TIMESTAMP NOT NULL,
     UNIQUE (deck_id, place)
 );
-CREATE INDEX idx_card_deck ON cards (deck_id);
+CREATE INDEX IF NOT EXISTS idx_card_deck ON cards (deck_id);
 ```
 
 ## Progress
@@ -149,7 +149,7 @@ CREATE INDEX idx_card_deck ON cards (deck_id);
 | ease_factor     | FLOAT        | Spaced repetition ease factor | False  | True     | False |
 
 ```sql
-CREATE TABLE progress (
+CREATE TABLE IF NOT EXISTS progress (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     user_id INT NOT NULL,
     card_id INT NOT NULL,
@@ -158,7 +158,7 @@ CREATE TABLE progress (
     ease_factor FLOAT NOT NULL,
     Unique (user_id, card_id)
 );
-CREATE INDEX idx_progress_user ON progress (user_id);
-CREATE INDEX idx_progress_card ON progress (card_id);
-CREATE INDEX idx_progress_review_count ON progress (review_count);
+CREATE INDEX IF NOT EXISTS idx_progress_user ON progress (user_id);
+CREATE INDEX IF NOT EXISTS idx_progress_card ON progress (card_id);
+CREATE INDEX IF NOT EXISTS idx_progress_review_count ON progress (review_count);
 ```

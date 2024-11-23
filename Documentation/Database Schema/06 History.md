@@ -10,7 +10,7 @@
 | datatype        | VARCHAR(20)    | Datatype of entry          | True   | True     |
 
 ```sql
-CREATE TYPE datatype_enum AS ENUM ('summary', 'book', 'author', 'publisher', 'library', 'user');
+CREATE TYPE IF NOT EXISTS datatype_enum AS ENUM ('summary', 'book', 'author', 'publisher', 'library', 'user');
 ```
 
 ### History Entries
@@ -30,9 +30,9 @@ CREATE TABLE IF NOT EXISTS history (
     datatype datatype_enum NOT NULL,
     time_added TIMESTAMP NOT NULL DEFAULT NOW(),
 );
-CREATE INDEX idx_history_user_id ON user_history (user_id);
-CREATE INDEX idx_history_datatype ON user_history (datatype);
-CREATE INDEX idx_history_time_added ON user_history (time_added);
+CREATE INDEX IF NOT EXISTS idx_history_user_id ON user_history (user_id);
+CREATE INDEX IF NOT EXISTS idx_history_datatype ON user_history (datatype);
+CREATE INDEX IF NOT EXISTS idx_history_time_added ON user_history (time_added);
 ```
 
 ## Datalake

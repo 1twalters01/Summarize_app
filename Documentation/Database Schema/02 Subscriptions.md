@@ -37,8 +37,8 @@ CREATE TABLE IF NOT EXISTS subscribers(
         ON UPDATE CASCADE,
     CONSTRAINT check_date_validity CHECK (end_date IS NULL OR start_date < end_date)
 );
-CREATE INDEX idx_subscribers_customer_id ON subscribers (customer_id);
-CREATE INDEX idx_subscribers_subscription_id ON subscribers (subscription_id);
+CREATE INDEX IF NOT EXISTS idx_subscribers_customer_id ON subscribers (customer_id);
+CREATE INDEX IF NOT EXISTS idx_subscribers_subscription_id ON subscribers (subscription_id);
 ```
 
 ## Subscription History
@@ -71,5 +71,5 @@ CREATE TABLE IF NOT EXISTS subscription_history(
         ON UPDATE CASCADE,
     CONSTRAINT check_date_validity CHECK (start_date < end_date)
 );
-CREATE INDEX idx_subscription_history_uid ON subscription_history (user_id);
+CREATE INDEX IF NOT EXISTS idx_subscription_history_uid ON subscription_history (user_id);
 ```

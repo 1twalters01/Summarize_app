@@ -34,9 +34,9 @@ CREATE TABLE IF NOT EXISTS users(
     is_staff BOOLEAN NOT NULL DEFAULT FALSE,
     is_superuser BOOLEAN NOT NULL DEFAULT FALSE
 );
-CREATE INDEX idx_users_email ON users (email);
-CREATE INDEX idx_users_username ON users (username);
-CREATE INDEX idx_users_uuid ON users (uuid);
+CREATE INDEX IF NOT EXISTS idx_users_email ON users (email);
+CREATE INDEX IF NOT EXISTS idx_users_username ON users (username);
+CREATE INDEX IF NOT EXISTS idx_users_uuid ON users (uuid);
 ```
 
 ## Password History
@@ -139,7 +139,7 @@ CREATE TABLE IF NOT EXISTS token_blacklist(
         ON DELETE CASCADE
         ON UPDATE CASCADE
 );
-CREATE INDEX idx_blacklist_token ON token_blacklist (token);
+CREATE INDEX IF NOT EXISTS idx_blacklist_token ON token_blacklist (token);
 
 SELECT cron.schedule(
     'delete_expired_rows_token_blacklist',

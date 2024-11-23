@@ -22,8 +22,8 @@ CREATE TABLE IF NOT EXISTS summaries (
     saves INT NOT NULL,
     shares INT NOT NULL,
 );
-CREATE INDEX idx_summaries_book_id ON summaries (book_id);
-CREATE INDEX idx_summaries_user_id ON summaries (user_id);
+CREATE INDEX IF NOT EXISTS idx_summaries_book_id ON summaries (book_id);
+CREATE INDEX IF NOT EXISTS idx_summaries_user_id ON summaries (user_id);
 ```
 
 ## Chapter links
@@ -39,6 +39,6 @@ CREATE TABLE IF NOT EXISTS chapter_links (
     chapter_link TEXT UNIQUE NOT NULL,
     PRIMARY KEY(question_id, tag_id)
 );
-CREATE INDEX idx_chapter_links_summary_id ON chapter_links (summary_id);
-CREATE INDEX idx_chapter_links_chapter_number ON chapter_links (chapter_number);
+CREATE INDEX IF NOT EXISTS idx_chapter_links_summary_id ON chapter_links (summary_id);
+CREATE INDEX IF NOT EXISTS idx_chapter_links_chapter_number ON chapter_links (chapter_number);
 ```
