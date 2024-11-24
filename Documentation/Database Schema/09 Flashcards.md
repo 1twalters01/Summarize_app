@@ -11,6 +11,7 @@
 | created_at       | TIMESTAMP    | The deck's creation time      | False  | True     | False |
 | last_modified    | TIMESTAMP    | Last modification time        | False  | True     | False |
 | is_public        | BOOLEAN      | Is flashcard public?          | False  | True     | True  |
+| card_count       | INT          | Number of cards in deck       | False  | True     | True  |
 
 ```sql
 CREATE TABLE IF NOT EXISTS decks (
@@ -23,12 +24,14 @@ CREATE TABLE IF NOT EXISTS decks (
     created_at TIMESTAMP NOT NULL,
     last_modified TIMESTAMP NOT NULL,
     is_public NOT NULL,
+    card_count NOT NULL,
 );
 CREATE INDEX IF NOT EXISTS idx_deck_users on deck (user_id);
 CREATE INDEX IF NOT EXISTS idx_deck_summary on deck (summary_id);
 CREATE INDEX IF NOT EXISTS idx_deck_book on deck (book_id);
 CREATE INDEX IF NOT EXISTS idx_deck_name on deck (deck_name);
 CREATE INDEX IF NOT EXISTS idx_deck_is_public on deck (is_public);
+CREATE INDEX IF NOT EXISTS idx_deck_card_count on deck (card_count);
 ```
 
 ## Tags
