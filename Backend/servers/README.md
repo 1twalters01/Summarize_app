@@ -15,11 +15,12 @@ rust, python, elixir, go,
 * 13 messages - elixir interop with erlang and c
 * 14 moderation - python machine learning
 * 15 admin - go interop with c
-* 16 analytics - python interop with c
-* 17 external - rust
-* 18 flashcards - elixir interop with python
-* 19 quotes - go
-* 20 groups - rust
+* 16 flashcards - elixir interop with python
+* 17 quizes - rust and elixir backend with go reverse proxy
+* 18 quotes - go
+* 19 groups - rust
+* 20 external - rust
+* 20 analytics - python interop with c
 * 80 website - rust web server
 * 81 linux - rust file serving
 * 82 windows - rust windows updates
