@@ -72,7 +72,7 @@ CREATED TABLE read_receipts (
 | read_at              | TIMESTAMP    | Read time                   | False  | True     | True  |
 
 ```cql
-CREATED TABLE latest_read_receipts (
+CREATE TABLE latest_read_receipts (
     user_id UUID,
     chat_id UUID,
     last_read_message_id TIMEUUID,
