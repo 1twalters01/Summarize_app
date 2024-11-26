@@ -18,7 +18,6 @@ use crate::{
 };
 
 pub async fn post_email(data: ProtoBuf<Request>) -> Result<impl Responder> {
-    // Get and validate email
     let Request { email } = data.0;
     if validate_email(&email).is_err() {
         return Ok(ResponseService::create_error_response(
@@ -27,12 +26,10 @@ pub async fn post_email(data: ProtoBuf<Request>) -> Result<impl Responder> {
         ));
     }
 
-    // Get user from database
     let user_service = UserService::new(create_pg_pool_connection().await);
     let user = match user_service.get_user_from_email(&email).await {
         Ok(Some(user)) => user,
         Ok(None) => {
-            println!("No user found");
             return Ok(ResponseService::create_error_response(
                 AppError::LoginEmail(Error::UnregisteredEmail),
                 StatusCode::NOT_FOUND,
@@ -47,45 +44,49 @@ pub async fn post_email(data: ProtoBuf<Request>) -> Result<impl Responder> {
         }
     };
 
-    // save {key: token, value: user} to redis cache for 300 seconds
     let token_service = TokenService::new();
-    let mut cache_service = CacheService::new(create_redis_client_connection());
-
     let token: String = token_service.generate_opaque_token_of_length(25);
     let expiry_in_seconds: Option<i64> = Some(300);
+    let mut cache_service = CacheService::new(create_redis_client_connection());
     let cache_result = cache_service.store_token_for_user(&token, &user, expiry_in_seconds);
 
-    if cache_result.is_err() {
-        return Ok(ResponseService::create_error_response(
-            AppError::LoginEmail(Error::ServerError),
-            StatusCode::INTERNAL_SERVER_ERROR,
-        ));
+    match cache_result {
+        Ok(_) => {
+            return Ok(ResponseService::create_success_response(
+                AppResponse::LoginEmail(Response {
+                    response_field: Some(ResponseField::Token(token)),
+                }),
+                StatusCode::OK,
+            ));
+        }
+        Err(err) => {
+            println!("{:#?}", err);
+            return Ok(ResponseService::create_error_response(
+                AppError::LoginEmail(Error::ServerError),
+                StatusCode::INTERNAL_SERVER_ERROR,
+            ));
+        }
     }
-
-    return Ok(ResponseService::create_success_response(
-        AppResponse::LoginEmail(Response {
-            response_field: Some(ResponseField::Token(token)),
-        }),
-        StatusCode::OK,
-    ));
 }
 
 #[cfg(test)]
 mod tests {
-    use actix_web::{test, web, App};
+    use actix_http::Request as HttpRequest;
+    use actix_web::{dev::ServiceResponse, test, web, App, Error as ActixError};
     use bytes::Bytes;
     use dotenv::dotenv;
     use prost::Message;
     use std::env;
+    use uuid::Uuid;
 
     use super::*;
-    use crate::{middleware, models::user::User, services::token_service::TokenService};
+    use crate::{middleware, services::token_service::TokenService};
 
-    #[actix_web::test]
-    async fn test_known_email_not_authenticated() {
+    async fn initialise_service(
+    ) -> impl actix_web::dev::Service<HttpRequest, Response = ServiceResponse, Error = ActixError>
+    {
         dotenv().ok();
-
-        let mut app = test::init_service(
+        return test::init_service(
             App::new().service(
                 web::scope("/login")
                     .wrap(middleware::authentication::not_authenticated::NotAuthenticated)
@@ -93,295 +94,180 @@ mod tests {
             ),
         )
         .await;
+    }
+
+    fn email_to_bytes(email: String) -> Bytes {
+        let request_message = Request { email };
+        let mut request_buffer: Vec<u8> = Vec::new();
+        request_message.encode(&mut request_buffer).unwrap();
+        Bytes::from(request_buffer)
+    }
+
+    fn post_test_request(request: Bytes, auth_token: Option<String>) -> HttpRequest {
+        match auth_token {
+            None => {
+                return test::TestRequest::post()
+                    .uri("/login/email")
+                    .append_header(("Content-Type", "application/protobuf"))
+                    .set_payload(request)
+                    .to_request()
+            }
+            Some(token) => {
+                return test::TestRequest::post()
+                    .uri("/login/email")
+                    .append_header(("Content-Type", "application/protobuf"))
+                    .append_header(("Authorization", token))
+                    .set_payload(request)
+                    .to_request()
+            }
+        }
+    }
+
+    fn generate_auth_token() -> String {
+        let user_uuid = Uuid::new_v4();
+        let token_service = TokenService::from_uuid(&user_uuid);
+        let access_token: String = token_service.generate_access_token().unwrap();
+        String::from("Bearer ") + &access_token
+    }
+
+    #[actix_web::test]
+    async fn test_known_email_not_authenticated() {
+        let mut app = initialise_service().await;
 
         let email = env::var("TEST_EMAIL").unwrap();
-        let req_message = Request { email };
-
-        let mut request_buffer: Vec<u8> = Vec::new();
-        req_message.encode(&mut request_buffer).unwrap();
-
-        let request = test::TestRequest::post()
-            .uri("/login/email")
-            .append_header(("Content-Type", "application/protobuf"))
-            .set_payload(Bytes::from(request_buffer))
-            .to_request();
+        let request_bytes = email_to_bytes(email);
+        let request = post_test_request(request_bytes, None);
 
         let resp = test::call_service(&mut app, request).await;
-        assert!(true == false);
         let response_buffer: Vec<u8> = test::read_body(resp).await.to_vec();
         let decoded: Response = Message::decode(&response_buffer[..]).unwrap();
 
-        if let Some(response_field) = decoded.response_field {
-            if let ResponseField::Token(token) = response_field {
-                assert!(token.len() == 25);
-            } else if let ResponseField::Error(error) = response_field {
-                println!("error: {}", error);
-                panic!("Should be a token but instead is an error");
+        match decoded.response_field {
+            Some(ResponseField::Token(token)) => assert!(token.len() == 25),
+            Some(ResponseField::Error(err)) => {
+                println!("error: {}", err);
+                panic!("Error instead of Token")
             }
-        } else if decoded.response_field == None {
-            panic!("Should be a token but is instead None")
-        } else {
-            panic!("Error generating token");
+            None => panic!("None instead of Token"),
         }
     }
 
     #[actix_web::test]
-    async fn test_post_unknown_email_while_not_authenticated() {
-        let mut app = test::init_service(
-            App::new().service(
-                web::scope("/login")
-                    .wrap(middleware::authentication::not_authenticated::NotAuthenticated)
-                    .route("/email", web::post().to(post_email)),
-            ),
-        )
-        .await;
+    async fn test_unknown_email_while_not_authenticated() {
+        let mut app = initialise_service().await;
 
         let email = String::from("fakeEmail@fake.com");
-        let req_message = Request { email };
-
-        let mut request_buffer: Vec<u8> = Vec::new();
-        req_message.encode(&mut request_buffer).unwrap();
-
-        let request = test::TestRequest::post()
-            .uri("/login/email")
-            .append_header(("Content-Type", "application/protobuf"))
-            .set_payload(Bytes::from(request_buffer))
-            .to_request();
+        let request_bytes = email_to_bytes(email);
+        let request = post_test_request(request_bytes, None);
 
         let resp = test::call_service(&mut app, request).await;
         let response_buffer: Vec<u8> = test::read_body(resp).await.to_vec();
         let decoded: Response = Message::decode(&response_buffer[..]).unwrap();
-        println!("{:#?}", decoded);
 
-        if let Some(response_field) = decoded.response_field {
-            if let ResponseField::Token(token) = response_field {
+        match decoded.response_field {
+            Some(ResponseField::Token(token)) => {
                 println!("Token: {}", token);
-                panic!("Should be an error but instead is an token");
-            } else if let ResponseField::Error(error) = response_field {
-                assert!(error == Error::UnregisteredEmail as i32);
+                panic!("token instead of Error")
             }
-        } else if decoded.response_field == None {
-            panic!("Should be an error but is instead None")
-        } else {
-            panic!("Error generating token");
+            Some(ResponseField::Error(err)) => assert!(err == Error::UnregisteredEmail as i32),
+            None => panic!("None instead of Error"),
         }
     }
 
     #[actix_web::test]
     async fn test_post_invalid_email_while_not_authenticated() {
-        let mut app = test::init_service(
-            App::new().service(
-                web::scope("/login")
-                    .wrap(middleware::authentication::not_authenticated::NotAuthenticated)
-                    .route("/email", web::post().to(post_email)),
-            ),
-        )
-        .await;
+        let mut app = initialise_service().await;
 
         let email = String::from("invalid");
-        let req_message = Request { email };
-
-        let mut request_buffer: Vec<u8> = Vec::new();
-        req_message.encode(&mut request_buffer).unwrap();
-
-        let request = test::TestRequest::post()
-            .uri("/login/email")
-            .append_header(("Content-Type", "application/protobuf"))
-            .set_payload(Bytes::from(request_buffer))
-            .to_request();
+        let request_bytes = email_to_bytes(email);
+        let request = post_test_request(request_bytes, None);
 
         let resp = test::call_service(&mut app, request).await;
         let response_buffer: Vec<u8> = test::read_body(resp).await.to_vec();
         let decoded: Response = Message::decode(&response_buffer[..]).unwrap();
-        println!("{:#?}", decoded);
 
-        if let Some(response_field) = decoded.response_field {
-            if let ResponseField::Token(token) = response_field {
+        match decoded.response_field {
+            Some(ResponseField::Token(token)) => {
                 println!("Token: {}", token);
-                panic!("Should be an error but instead is an token");
-            } else if let ResponseField::Error(error) = response_field {
-                assert!(error == Error::InvalidEmail as i32);
+                panic!("token instead of Error")
             }
-        } else if decoded.response_field == None {
-            panic!("Should be an error but is instead None")
-        } else {
-            panic!("Error generating token");
+            Some(ResponseField::Error(err)) => assert!(err == Error::InvalidEmail as i32),
+            None => panic!("None instead of Error"),
         }
     }
 
     #[actix_web::test]
     async fn test_post_known_email_while_authenticated() {
-        dotenv().ok();
-
-        let mut app = test::init_service(
-            App::new().service(
-                web::scope("/login")
-                    .wrap(middleware::authentication::not_authenticated::NotAuthenticated)
-                    .route("/email", web::post().to(post_email)),
-            ),
-        )
-        .await;
+        let mut app = initialise_service().await;
 
         let email = env::var("TEST_EMAIL").unwrap();
-
-        let user: User = User::new(
-            "username".to_string(),
-            email.clone(),
-            "password123".to_string(),
-            Some("First".to_string()),
-            Some("Lastname".to_string()),
-        )
-        .unwrap();
-        let user_uuid = user.get_uuid();
-        let token_service = TokenService::from_uuid(&user_uuid);
-        let access_token: String = token_service.generate_access_token().unwrap();
-        let auth_token = String::from("Bearer ") + &access_token;
-
-        let req_message = Request { email };
-        let mut request_buffer: Vec<u8> = Vec::new();
-        req_message.encode(&mut request_buffer).unwrap();
-
-        let request = test::TestRequest::post()
-            .uri("/login/email")
-            .append_header(("Content-Type", "application/protobuf"))
-            .append_header(("Authorization", auth_token.clone()))
-            .set_payload(Bytes::from(request_buffer))
-            .to_request();
+        let request_bytes = email_to_bytes(email);
+        let request = post_test_request(request_bytes, Some(generate_auth_token()));
 
         let resp = test::call_service(&mut app, request).await;
         let response_buffer: Vec<u8> = test::read_body(resp).await.to_vec();
         let decoded: Response = Message::decode(&response_buffer[..]).unwrap();
-        println!("hi");
-        println!("{:#?}", decoded.response_field);
 
-        if let Some(response_field) = decoded.response_field {
-            if let ResponseField::Token(token) = response_field {
+        match decoded.response_field {
+            Some(ResponseField::Token(token)) => {
                 println!("Token: {}", token);
-                panic!("Should be None but is instead a token");
-            } else if let ResponseField::Error(error) = response_field {
-                println!("error: {}", error);
-                panic!("Should be None but is instead an error");
+                panic!("Token instead of None")
             }
-        } else if decoded.response_field == None {
-            assert!(true);
-        } else {
-            panic!("Error generating token");
+            Some(ResponseField::Error(err)) => {
+                println!("error: {}", err);
+                panic!("Error instead of None")
+            }
+            None => assert!(true),
         }
     }
 
     #[actix_web::test]
     async fn test_post_unknown_email_while_authenticated() {
-        let mut app = test::init_service(
-            App::new().service(
-                web::scope("/login")
-                    .wrap(middleware::authentication::not_authenticated::NotAuthenticated)
-                    .route("/email", web::post().to(post_email)),
-            ),
-        )
-        .await;
+        let mut app = initialise_service().await;
 
         let email = String::from("fakeEmail@fake.com");
-
-        let user: User = User::new(
-            "username".to_string(),
-            email.clone(),
-            "password123".to_string(),
-            Some("First".to_string()),
-            Some("Lastname".to_string()),
-        )
-        .unwrap();
-        let user_uuid = user.get_uuid();
-        let token_service = TokenService::from_uuid(&user_uuid);
-        let access_token: String = token_service.generate_access_token().unwrap();
-        let auth_token = String::from("Bearer ") + &access_token;
-
-        let req_message = Request { email };
-        let mut request_buffer: Vec<u8> = Vec::new();
-        req_message.encode(&mut request_buffer).unwrap();
-
-        let request = test::TestRequest::post()
-            .uri("/login/email")
-            .append_header(("Content-Type", "application/protobuf"))
-            .append_header(("Authorization", auth_token.clone()))
-            .set_payload(Bytes::from(request_buffer))
-            .to_request();
+        let request_bytes = email_to_bytes(email);
+        let request = post_test_request(request_bytes, Some(generate_auth_token()));
 
         let resp = test::call_service(&mut app, request).await;
         let response_buffer: Vec<u8> = test::read_body(resp).await.to_vec();
         let decoded: Response = Message::decode(&response_buffer[..]).unwrap();
-        println!("hi");
-        println!("{:#?}", decoded.response_field);
 
-        if let Some(response_field) = decoded.response_field {
-            if let ResponseField::Token(token) = response_field {
+        match decoded.response_field {
+            Some(ResponseField::Token(token)) => {
                 println!("Token: {}", token);
-                panic!("Should be None but is instead a token");
-            } else if let ResponseField::Error(error) = response_field {
-                println!("error: {}", error);
-                panic!("Should be None but is instead an error");
+                panic!("Token instead of None")
             }
-        } else if decoded.response_field == None {
-            assert!(true);
-        } else {
-            panic!("Error generating token");
+            Some(ResponseField::Error(err)) => {
+                println!("error: {}", err);
+                panic!("Error instead of None")
+            }
+            None => assert!(true),
         }
     }
 
     #[actix_web::test]
     async fn test_post_invalid_email_while_authenticated() {
-        let mut app = test::init_service(
-            App::new().service(
-                web::scope("/login")
-                    .wrap(middleware::authentication::not_authenticated::NotAuthenticated)
-                    .route("/email", web::post().to(post_email)),
-            ),
-        )
-        .await;
+        let mut app = initialise_service().await;
 
         let email = String::from("invalid");
-
-        let user: User = User::new(
-            "username".to_string(),
-            email.clone(),
-            "password123".to_string(),
-            Some("First".to_string()),
-            Some("Lastname".to_string()),
-        )
-        .unwrap();
-        let user_uuid = user.get_uuid();
-        let token_service = TokenService::from_uuid(&user_uuid);
-        let access_token: String = token_service.generate_access_token().unwrap();
-        let auth_token = String::from("Bearer ") + &access_token;
-
-        let req_message = Request { email };
-        let mut request_buffer: Vec<u8> = Vec::new();
-        req_message.encode(&mut request_buffer).unwrap();
-
-        let request = test::TestRequest::post()
-            .uri("/login/email")
-            .append_header(("Content-Type", "application/protobuf"))
-            .append_header(("Authorization", auth_token.clone()))
-            .set_payload(Bytes::from(request_buffer))
-            .to_request();
+        let request_bytes = email_to_bytes(email);
+        let request = post_test_request(request_bytes, Some(generate_auth_token()));
 
         let resp = test::call_service(&mut app, request).await;
         let response_buffer: Vec<u8> = test::read_body(resp).await.to_vec();
         let decoded: Response = Message::decode(&response_buffer[..]).unwrap();
-        println!("hi");
-        println!("{:#?}", decoded.response_field);
 
-        if let Some(response_field) = decoded.response_field {
-            if let ResponseField::Token(token) = response_field {
+        match decoded.response_field {
+            Some(ResponseField::Token(token)) => {
                 println!("Token: {}", token);
-                panic!("Should be None but is instead a token");
-            } else if let ResponseField::Error(error) = response_field {
-                println!("error: {}", error);
-                panic!("Should be None but is instead an error");
+                panic!("Token instead of None")
             }
-        } else if decoded.response_field == None {
-            assert!(true);
-        } else {
-            panic!("Error generating token");
+            Some(ResponseField::Error(err)) => {
+                println!("error: {}", err);
+                panic!("Error instead of None")
+            }
+            None => assert!(true),
         }
     }
 }

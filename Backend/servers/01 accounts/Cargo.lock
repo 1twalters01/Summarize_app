@@ -7,6 +7,7 @@ name = "accounts"
 version = "0.1.0"
 dependencies = [
  "actix-cors",
+ "actix-http",
  "actix-protobuf",
  "actix-web",
  "argon2",
