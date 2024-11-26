@@ -1,7 +1,6 @@
 use redis::{Connection, RedisError, RedisResult};
 
 use crate::{
-    datatypes::token_object::UserRememberMe,
     models::user::User,
     queries::redis::general::{
         delete_key_in_redis, get_key_from_value_in_redis, set_key_value_in_redis,
@@ -44,7 +43,7 @@ impl CacheService {
         let redis_result: RedisResult<String> = get_key_from_value_in_redis(&mut self.con, token);
         match redis_result {
             Ok(user_json) => match serde_json::from_str(&user_json) {
-                Ok((user, remember_me)) => return Ok(user, remember_me),
+                Ok(user) => return Ok(user),
                 Err(err) => return Err(err.to_string()),
             },
             Err(err) => return Err(err.to_string()),
@@ -54,7 +53,7 @@ impl CacheService {
     pub fn get_user_and_remember_me_from_token(
         &mut self,
         token: &str,
-    ) -> Result<Option<UserRememberMe>, String> {
+    ) -> Result<Option<(User, bool)>, String> {
         let redis_result: RedisResult<String> = get_key_from_value_in_redis(&mut self.con, token);
         match redis_result {
             Ok(user_and_remember_me_json) => match serde_json::from_str(&user_and_remember_me_json)

@@ -1,17 +1,19 @@
+use rand::{distributions::Alphanumeric, thread_rng, Rng};
 use std::env;
 
 use chrono::{Duration, Utc};
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
+use serde::{Deserialize, Serialize};
 
 use uuid::Uuid;
 
 use crate::{
-    datatypes::token_types::Claims,
-    queries::postgres::refresh_token,
-    utils::database_connections::create_pg_pool_connection,
+    queries::postgres::refresh_token, utils::database_connections::create_pg_pool_connection,
 };
 
-pub struct TokenService;
+pub struct TokenService<'a> {
+    user_uuid: Option<&'a Uuid>,
+}
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Claims {
@@ -19,14 +21,28 @@ pub struct Claims {
     pub exp: usize,
 }
 
-impl TokenService {
-    pub fn generate_opaque_token_of_length(length: i64) -> String {
+impl<'a> TokenService<'a> {
+    pub fn new() -> Self {
+        Self { user_uuid: None }
+    }
+
+    pub fn from_uuid(user_uuid: &'a Uuid) -> Self {
+        Self {
+            user_uuid: Some(user_uuid),
+        }
+    }
+
+    pub fn generate_opaque_token_of_length(&self, length: i64) -> String {
         let mut rng = thread_rng();
         let bytes: Vec<u8> = (0..length).map(|_| rng.sample(Alphanumeric)).collect();
         return String::from_utf8(bytes).unwrap();
     }
-    
-    pub fn generate_access_token(user_uuid: &Uuid) -> String {
+
+    pub fn generate_access_token(&self) -> Result<String, String> {
+        if self.user_uuid == None {
+            return Err(String::from("User UUID is None"));
+        }
+
         let now = Utc::now();
         let expiration = now
             .checked_add_signed(Duration::days(1))
@@ -34,7 +50,7 @@ impl TokenService {
             .timestamp() as usize;
 
         let claims = Claims {
-            sub: user_uuid.to_string(),
+            sub: self.user_uuid.unwrap().to_string(),
             exp: expiration,
         };
         let secret = env::var("JWT_SECRET").unwrap();
@@ -45,24 +61,25 @@ impl TokenService {
             &EncodingKey::from_secret(secret.as_ref()),
         )
         .unwrap();
-        return access_token;
+        return Ok(access_token);
     }
 
     pub fn generate_refresh_token(&self, remember_me: bool) -> Option<String> {
         match remember_me {
             true => return None,
-            false => return Some(self::generate_opaque_token_of_length(32)),
+            false => return Some(self.generate_opaque_token_of_length(32)),
         }
     }
 
-    pub async fn save_refresh_token_to_postgres(
-        user_uuid: &Uuid,
-        refresh_token: &str,
-    ) -> Result<(), String> {
+    pub async fn save_refresh_token_to_postgres(&self, refresh_token: &str) -> Result<(), String> {
+        if self.user_uuid == None {
+            return Err(String::from("User UUID is None"));
+        }
+
         let pool = create_pg_pool_connection().await;
         let postgres_result = refresh_token::insert::from_user_uuid_and_refresh_token(
             &pool,
-            &user_uuid,
+            self.user_uuid.unwrap(),
             refresh_token,
         )
         .await;

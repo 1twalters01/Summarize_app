@@ -11,10 +11,9 @@ use crate::{
     },
     models::user::User,
     queries::{postgres::user::get::from_username, redis::general::set_key_value_in_redis},
-    services::token_service::Claims,
+    services::token_service::{Claims, TokenService},
     utils::{
         database_connections::{create_pg_pool_connection, create_redis_client_connection},
-        tokens::generate_opaque_token_of_length,
         validations::{validate_password, validate_username},
     },
 };
@@ -108,7 +107,8 @@ pub async fn post_username(
     }
 
     // Generate token
-    let token: String = generate_opaque_token_of_length(25);
+    let token_service = TokenService::new();
+    let token: String = token_service.generate_opaque_token_of_length(25);
     let token_object: UsernameTokenObject = UsernameTokenObject {
         user_uuid,
         username,

@@ -1,23 +1,22 @@
-use actix_protobuf::{ProtoBuf, ProtoBufResponseBuilder};
-use actix_web::{web::Path, HttpRequest, HttpResponse, Responder, Result};
+use actix_protobuf::ProtoBuf;
+use actix_web::{http::StatusCode, web::Path, HttpRequest, Responder, Result};
 use serde::Deserialize;
 
 use crate::{
+    datatypes::response_types::{AppError, AppResponse},
     generated::protos::accounts::register::verification::{
         request,
         response::{response::ResponseField, Error, Response},
-    },
-    services::{
-        cache_service::CacheService, response_service::ResponseService, user_service::UserService,
     },
     queries::redis::{
         all::get_email_from_token_struct_in_redis,
         general::{delete_key_in_redis, set_key_value_in_redis},
     },
-    utils::{
-        database_connections::create_redis_client_connection,
-        tokens::generate_opaque_token_of_length,
+    services::{
+        cache_service::CacheService, response_service::ResponseService,
+        token_service::TokenService, user_service::UserService,
     },
+    utils::database_connections::create_redis_client_connection,
 };
 
 #[derive(Debug, Deserialize)]
@@ -63,7 +62,7 @@ async fn register_verification_functionality(
     let mut con = create_redis_client_connection();
     let email: String = match get_email_from_token_struct_in_redis(&mut con, &token_struct_json) {
         // if error return error
-        Err(err) => {
+        Err(_) => {
             return Ok(ResponseService::create_error_response(
                 AppError::RegisterVerification(Error::IncorrectVerificationCode),
                 StatusCode::UNPROCESSABLE_ENTITY,
@@ -73,7 +72,8 @@ async fn register_verification_functionality(
     };
 
     // create a new token
-    let register_verification_token = generate_opaque_token_of_length(64);
+    let token_service = TokenService::new();
+    let register_verification_token = token_service.generate_opaque_token_of_length(64);
 
     // add {key: token, value: email} to redis
     let expiry_in_seconds: Option<i64> = Some(1800);

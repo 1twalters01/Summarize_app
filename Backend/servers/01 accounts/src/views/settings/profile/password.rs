@@ -14,10 +14,9 @@ use crate::{
         postgres::password_hash::get::all_previous_from_user,
         redis::general::set_key_value_in_redis,
     },
-    services::token_service::Claims,
+    services::token_service::{Claims, TokenService},
     utils::{
         database_connections::{create_pg_pool_connection, create_redis_client_connection},
-        tokens::generate_opaque_token_of_length,
         validations::validate_password,
     },
 };
@@ -145,7 +144,8 @@ pub async fn post_password(
         .get_password_string();
 
     // Generate token
-    let token: String = generate_opaque_token_of_length(25);
+    let token_service = TokenService::new();
+    let token: String = token_service.generate_opaque_token_of_length(25);
     let token_object: PasswordTokenObject = PasswordTokenObject {
         user_uuid,
         password_hash,

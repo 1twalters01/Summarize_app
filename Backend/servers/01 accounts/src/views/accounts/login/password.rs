@@ -16,10 +16,7 @@ use crate::{
     services::{
         cache_service::CacheService, response_service::ResponseService, token_service::TokenService,
     },
-    utils::{
-        database_connections::create_redis_client_connection,
-        tokens::generate_opaque_token_of_length, validations::validate_password,
-    },
+    utils::{database_connections::create_redis_client_connection, validations::validate_password},
 };
 
 pub async fn post_password(data: ProtoBuf<Request>, req: HttpRequest) -> Result<impl Responder> {
@@ -73,13 +70,15 @@ pub async fn post_password(data: ProtoBuf<Request>, req: HttpRequest) -> Result<
         ));
     }
 
+    let user_uuid = user.get_uuid();
+    let token_service = TokenService::from_uuid(&user_uuid);
+
     // see if account has a totp
     let app_response: AppResponse;
     if user.is_totp_activated() == true {
         // save {key: token, value: UserRememberMe} to redis
-        let token: String = generate_opaque_token_of_length(25);
-        let user_remember_me_json =
-            serde_json::to_string(&(user, remember_me)).unwrap();
+        let token: String = token_service.generate_opaque_token_of_length(25);
+        let user_remember_me_json = serde_json::to_string(&(user, remember_me)).unwrap();
         let expiry_in_seconds: Option<i64> = Some(300);
 
         let cache_result =
@@ -101,8 +100,8 @@ pub async fn post_password(data: ProtoBuf<Request>, req: HttpRequest) -> Result<
         });
     } else {
         // generate tokens
-        let refresh_token = TokenService::generate_refresh_token(remember_me);
-        let access_token = TokenService::generate_access_token(&user.get_uuid());
+        let refresh_token = token_service.generate_refresh_token(remember_me);
+        let access_token = token_service.generate_access_token().unwrap();
 
         let auth_tokens = AuthTokens {
             refresh: refresh_token,
@@ -756,7 +755,9 @@ mod tests {
             Some("Lastname".to_string()),
         )
         .unwrap();
-        let access_token: String = TokenService::generate_access_token(&user.get_uuid());
+        let user_uuid = user.get_uuid();
+        let token_service = TokenService::from_uuid(&user_uuid);
+        let access_token: String = token_service.generate_access_token().unwrap();
         let auth_token = String::from("Bearer ") + &access_token;
 
         let remember_me = false;
@@ -842,7 +843,9 @@ mod tests {
             Some("Lastname".to_string()),
         )
         .unwrap();
-        let access_token: String = TokenService::generate_access_token(&user.get_uuid());
+        let user_uuid = user.get_uuid();
+        let token_service = TokenService::from_uuid(&user_uuid);
+        let access_token: String = token_service.generate_access_token().unwrap();
         let auth_token = String::from("Bearer ") + &access_token;
 
         let remember_me = false;
@@ -928,7 +931,9 @@ mod tests {
             Some("Lastname".to_string()),
         )
         .unwrap();
-        let access_token: String = TokenService::generate_access_token(&user.get_uuid());
+        let user_uuid = user.get_uuid();
+        let token_service = TokenService::from_uuid(&user_uuid);
+        let access_token: String = token_service.generate_access_token().unwrap();
         let auth_token = String::from("Bearer ") + &access_token;
 
         let remember_me = false;
@@ -1014,7 +1019,9 @@ mod tests {
             Some("Lastname".to_string()),
         )
         .unwrap();
-        let access_token: String = TokenService::generate_access_token(&user.get_uuid());
+        let user_uuid = user.get_uuid();
+        let token_service = TokenService::from_uuid(&user_uuid);
+        let access_token: String = token_service.generate_access_token().unwrap();
         let auth_token = String::from("Bearer ") + &access_token;
 
         let remember_me = false;
@@ -1100,7 +1107,9 @@ mod tests {
             Some("Lastname".to_string()),
         )
         .unwrap();
-        let access_token: String = TokenService::generate_access_token(&user.get_uuid());
+        let user_uuid = user.get_uuid();
+        let token_service = TokenService::from_uuid(&user_uuid);
+        let access_token: String = token_service.generate_access_token().unwrap();
         let auth_token = String::from("Bearer ") + &access_token;
 
         let remember_me = false;
@@ -1186,7 +1195,9 @@ mod tests {
             Some("Lastname".to_string()),
         )
         .unwrap();
-        let access_token: String = TokenService::generate_access_token(&user.get_uuid());
+        let user_uuid = user.get_uuid();
+        let token_service = TokenService::from_uuid(&user_uuid);
+        let access_token: String = token_service.generate_access_token().unwrap();
         let auth_token = String::from("Bearer ") + &access_token;
 
         let remember_me = false;

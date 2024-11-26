@@ -1,5 +1,5 @@
-use actix_protobuf::{ProtoBuf, ProtoBufResponseBuilder};
-use actix_web::{HttpResponse, Responder, Result};
+use actix_protobuf::ProtoBuf;
+use actix_web::{http::StatusCode, Responder, Result};
 
 use crate::{
     datatypes::response_types::{AppError, AppResponse},
@@ -7,21 +7,20 @@ use crate::{
         request::Request,
         response::{response::ResponseField, Error, Response},
     },
-    models::user::User,
     services::{
-        cache_service::CacheService, response_service::ResponseService, user_service::UserService,
+        cache_service::CacheService, response_service::ResponseService,
+        token_service::TokenService, user_service::UserService,
     },
     utils::{
         database_connections::{create_pg_pool_connection, create_redis_client_connection},
         email::{compose::compose_register_email_message, handler::send_email},
-        tokens::generate_opaque_token_of_length,
         validations::validate_email,
     },
 };
 
 pub async fn post_email(data: ProtoBuf<Request>) -> Result<impl Responder> {
     // Get email from posted data
-    let request::Request { email } = data.0;
+    let Request { email } = data.0;
 
     // Validate email
     if validate_email(&email).is_err() {
@@ -33,27 +32,28 @@ pub async fn post_email(data: ProtoBuf<Request>) -> Result<impl Responder> {
 
     // Ensure that no user exists for email
     let user_service = UserService::new(create_pg_pool_connection().await);
-    let user: User = match user_service.get_user_from_email(&email).await {
-        Ok(Some(user)) => {
+    let _ = match user_service.get_user_from_email(&email).await {
+        Ok(Some(_)) => {
             println!("No user found");
-            return Ok(ResponseService::create_error_response(
-                AppError::RegisterEmail(Error::UnregisteredEmail),
-                StatusCode::NOT_FOUND,
-            ));
-        },
-        Err(err) => {
-            println!("{:#?}", err);
             return Ok(ResponseService::create_error_response(
                 AppError::RegisterEmail(Error::RegisteredEmail),
                 StatusCode::CONFLICT,
             ));
-        },
+        }
+        Err(err) => {
+            println!("{:#?}", err);
+            return Ok(ResponseService::create_error_response(
+                AppError::RegisterEmail(Error::InvalidEmail),
+                StatusCode::UNPROCESSABLE_ENTITY,
+            ));
+        }
         Ok(None) => (),
     };
 
     // create a verify token, a register email token, and a register_email_token_tuple
-    let verification_token = generate_opaque_token_of_length(8);
-    let header_token = generate_opaque_token_of_length(64);
+    let token_service = TokenService::new();
+    let verification_token = token_service.generate_opaque_token_of_length(8);
+    let header_token = token_service.generate_opaque_token_of_length(64);
     let token_tuple: (&str, &str) = (&header_token, &verification_token);
 
     // try to email the account a message containing the token
@@ -64,7 +64,7 @@ pub async fn post_email(data: ProtoBuf<Request>) -> Result<impl Responder> {
     if message_result.is_err() {
         return Ok(ResponseService::create_error_response(
             AppError::RegisterEmail(Error::EmailFailedToSend),
-            StatusCode::INTERNAL_SERVICE_ERROR,
+            StatusCode::INTERNAL_SERVER_ERROR,
         ));
     }
 
@@ -73,14 +73,13 @@ pub async fn post_email(data: ProtoBuf<Request>) -> Result<impl Responder> {
     let expiry_in_seconds: Option<i64> = Some(300);
 
     let mut cache_service = CacheService::new(create_redis_client_connection());
-    let cache_result = cache_service.store_token_for_user(&token_tuple_json, &email, expiry_in_seconds);
+    let cache_result = cache_service.store_key_value(&token_tuple_json, &email, expiry_in_seconds);
     if cache_result.is_err() {
         return Ok(ResponseService::create_error_response(
-            AppError::LoginEmail(Error::ServerError),
+            AppError::RegisterEmail(Error::ServerError),
             StatusCode::INTERNAL_SERVER_ERROR,
         ));
     }
-       
 
     // return ok
     return Ok(ResponseService::create_success_response(

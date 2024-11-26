@@ -59,12 +59,13 @@ pub async fn post_refresh_token(req: HttpRequest) -> Result<impl Responder> {
     };
 
     // Create new access token for user
-    let auth_tokens = TokenService::generate_access_token(&user_uuid);
+    let token_service = TokenService::from_uuid(&user_uuid);
+    let access_token: String = token_service.generate_access_token().unwrap();
 
     // Return token
     return Ok(ResponseService::create_success_response(
         AppResponse::LoginRefresh(Response {
-            response_field: Some(ResponseField::Token(auth_tokens)),
+            response_field: Some(ResponseField::Token(access_token)),
         }),
         StatusCode::OK,
     ));

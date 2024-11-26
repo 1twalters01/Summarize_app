@@ -15,7 +15,7 @@ use crate::{
         cache_service::CacheService, response_service::ResponseService, token_service::TokenService,
     },
     utils::{database_connections::create_redis_client_connection, validations::validate_totp},
-}
+};
 
 pub async fn post_sms(
     data: ProtoBuf<Request>,

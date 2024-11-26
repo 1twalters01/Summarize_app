@@ -1,18 +1,19 @@
-use actix_protobuf::{ProtoBuf, ProtoBufResponseBuilder};
-use actix_web::{HttpRequest, HttpResponse, Responder, Result};
+use actix_protobuf::ProtoBuf;
+use actix_web::{http::StatusCode, HttpRequest, Responder, Result};
 
 use crate::{
+    datatypes::response_types::{AppError, AppResponse},
     generated::protos::accounts::register::details::{
-        request,
-        response::{response::ResponseField, Error, Response},
+        request::Request,
+        response::{response::ResponseField, Error, Response, Success},
     },
     models::user::User,
-    services::{
-        cache_service::CacheService, response_service::ResponseService, user_service::UserService,
-    },
     queries::{
         postgres::user::insert::from_user,
         redis::{all::get_email_from_token_struct_in_redis, general::delete_key_in_redis},
+    },
+    services::{
+        cache_service::CacheService, response_service::ResponseService, user_service::UserService,
     },
     utils::{
         database_connections::{create_pg_pool_connection, create_redis_client_connection},
@@ -22,11 +23,8 @@ use crate::{
     },
 };
 
-pub async fn post_details(
-    data: ProtoBuf<Request>,
-    req: HttpRequest,
-) -> Result<impl Responder> {
-    let request::Request {
+pub async fn post_details(data: ProtoBuf<Request>, req: HttpRequest) -> Result<impl Responder> {
+    let Request {
         username,
         password,
         password_confirmation,
@@ -50,7 +48,7 @@ pub async fn post_details(
             Err(err) => {
                 println!("error: {:#?}", err);
                 return Ok(ResponseService::create_error_response(
-                    AppError::RegisterVerification(Error::InvalidCredentials),
+                    AppError::RegisterDetails(Error::InvalidCredentials),
                     StatusCode::UNPROCESSABLE_ENTITY,
                 ));
             }
@@ -59,7 +57,7 @@ pub async fn post_details(
 
     if password != password_confirmation {
         return Ok(ResponseService::create_error_response(
-            AppError::RegisterVerification(Error::IncorrectPasswordConfirmation),
+            AppError::RegisterDetails(Error::IncorrectPasswordConfirmation),
             StatusCode::UNPROCESSABLE_ENTITY,
         ));
     }
@@ -67,23 +65,22 @@ pub async fn post_details(
     // check if the username is already found in the database. If it is then return error
     if validate_username(&username).is_err() {
         return Ok(ResponseService::create_error_response(
-            AppError::RegisterVerification(Error::InvalidUsername),
+            AppError::RegisterDetails(Error::InvalidUsername),
             StatusCode::UNPROCESSABLE_ENTITY,
         ));
     }
 
     if validate_password(&password).is_err() {
         return Ok(ResponseService::create_error_response(
-            AppError::RegisterVerification(Error::InvalidPassword),
+            AppError::RegisterDetails(Error::InvalidPassword),
             StatusCode::UNPROCESSABLE_ENTITY,
         ));
     }
 
-    if first_name.is_some() {
-        let validated_first_name = validate_first_name(first_name.clone().unwrap());
-        if validate_first_name(first_name.clone().unwrap()).is_err() {
+    if let Some(ref fname) = first_name {
+        if validate_first_name(&fname).is_err() {
             return Ok(ResponseService::create_error_response(
-                AppError::RegisterVerification(Error::InvalidFirstName),
+                AppError::RegisterDetails(Error::InvalidFirstName),
                 StatusCode::UNPROCESSABLE_ENTITY,
             ));
         }
@@ -92,7 +89,7 @@ pub async fn post_details(
     if last_name.is_some() {
         if validate_last_name(last_name.clone().unwrap()).is_err() {
             return Ok(ResponseService::create_error_response(
-                AppError::RegisterVerification(Error::InvalidLastName),
+                AppError::RegisterDetails(Error::InvalidLastName),
                 StatusCode::UNPROCESSABLE_ENTITY,
             ));
         }
@@ -102,7 +99,7 @@ pub async fn post_details(
         User::new(username, email, password, first_name, last_name);
     if create_user.is_err() {
         return Ok(ResponseService::create_error_response(
-            AppError::RegisterVerification(Error::ServerError),
+            AppError::RegisterDetails(Error::ServerError),
             StatusCode::INTERNAL_SERVER_ERROR,
         ));
     }
@@ -116,7 +113,7 @@ pub async fn post_details(
     // if error then return error
     if save_user_result.is_err() {
         return Ok(ResponseService::create_error_response(
-            AppError::RegisterVerification(Error::ServerError),
+            AppError::RegisterDetails(Error::ServerError),
             StatusCode::INTERNAL_SERVER_ERROR,
         ));
     }
@@ -128,7 +125,7 @@ pub async fn post_details(
     // if redis fails then return an error
     if delete_redis_result.is_err() {
         return Ok(ResponseService::create_error_response(
-            AppError::RegisterVerification(Error::ServerError),
+            AppError::RegisterDetails(Error::ServerError),
             StatusCode::INTERNAL_SERVER_ERROR,
         ));
     }
@@ -136,7 +133,7 @@ pub async fn post_details(
     // return ok
     return Ok(ResponseService::create_success_response(
         AppResponse::RegisterDetails(Response {
-            response_field: Some(ResponseField::Success(response::Success {})),
+            response_field: Some(ResponseField::Success(Success {})),
         }),
         StatusCode::OK,
     ));

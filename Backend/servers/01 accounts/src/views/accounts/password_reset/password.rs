@@ -1,16 +1,18 @@
-use actix_protobuf::{ProtoBuf, ProtoBufResponseBuilder};
-use actix_web::{HttpRequest, HttpResponse, Responder, Result};
+use actix_protobuf::ProtoBuf;
+use actix_web::{http::StatusCode, HttpRequest, Responder, Result};
 
 use crate::{
+    datatypes::response_types::{AppError, AppResponse},
     generated::protos::accounts::password_reset::password::{
         request::Request,
-        response::{response::ResponseField, Error, Response},
+        response::{response::ResponseField, Error, Response, Success},
     },
     models::user::User,
     queries::{
         postgres::password_hash::update::from_user,
         redis::{all::get_user_from_token_in_redis, general::delete_key_in_redis},
     },
+    services::response_service::ResponseService,
     utils::{
         database_connections::{create_pg_pool_connection, create_redis_client_connection},
         validations::validate_password,
@@ -30,7 +32,7 @@ pub async fn post_password_reset(
         .to_string();
     println!("verification token: {:?}", verification_confirmation_token);
 
-    let request::Request {
+    let Request {
         password,
         password_confirmation,
     } = data.0;
@@ -60,7 +62,7 @@ pub async fn post_password_reset(
                     AppError::PasswordResetPassword(Error::InvalidCredentials),
                     StatusCode::UNPROCESSABLE_ENTITY,
                 ));
-            },
+            }
             Ok(email) => email,
         };
 
@@ -99,7 +101,7 @@ pub async fn post_password_reset(
     // return ok
     return Ok(ResponseService::create_success_response(
         AppResponse::PasswordResetPassword(Response {
-            response_field: Some(ResponseField::Success(response::Success {})),
+            response_field: Some(ResponseField::Success(Success {})),
         }),
         StatusCode::OK,
     ));

@@ -14,10 +14,9 @@ use crate::{
     },
     models::{totp::Totp, user::User},
     queries::redis::general::set_key_value_in_redis,
-    services::token_service::Claims,
+    services::token_service::{Claims, TokenService},
     utils::{
         database_connections::{create_pg_pool_connection, create_redis_client_connection},
-        tokens::generate_opaque_token_of_length,
         validations::{validate_password, validate_totp},
     },
 };
@@ -97,7 +96,8 @@ pub async fn post_totp(
     };
 
     // Generate token
-    let token: String = generate_opaque_token_of_length(25);
+    let token_service = TokenService::new();
+    let token: String = token_service.generate_opaque_token_of_length(25);
     let token_object: String = user_uuid;
 
     // Save key: token, value: {token, uuid/jwt} to redis

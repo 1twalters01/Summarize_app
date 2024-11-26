@@ -11,10 +11,9 @@ use crate::{
     },
     models::user::User,
     queries::{postgres::user::get::from_email, redis::general::set_key_value_in_redis},
-    services::token_service::Claims,
+    services::token_service::{Claims, TokenService},
     utils::{
         database_connections::{create_pg_pool_connection, create_redis_client_connection},
-        tokens::generate_opaque_token_of_length,
         validations::{validate_email, validate_password},
     },
 };
@@ -108,7 +107,8 @@ pub async fn post_email(
     }
 
     // Generate token
-    let token: String = generate_opaque_token_of_length(25);
+    let token_service = TokenService::new();
+    let token: String = token_service.generate_opaque_token_of_length(25);
     let token_object: EmailTokenObject = EmailTokenObject { user_uuid, email };
     let token_object_json = serde_json::to_string(&token_object).unwrap();
 

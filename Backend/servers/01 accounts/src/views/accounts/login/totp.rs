@@ -17,10 +17,7 @@ use crate::{
     utils::{database_connections::create_redis_client_connection, validations::validate_totp},
 };
 
-pub async fn post_totp(
-    data: ProtoBuf<Request>,
-    req: HttpRequest,
-) -> Result<impl Responder> {
+pub async fn post_totp(data: ProtoBuf<Request>, req: HttpRequest) -> Result<impl Responder> {
     let login_password_token: String = req
         .headers()
         .get("Login-Password-Token")
@@ -33,26 +30,24 @@ pub async fn post_totp(
     let mut cache_service = CacheService::new(create_redis_client_connection());
     let cache_result = cache_service.get_user_and_remember_me_from_token(&login_password_token);
     let (mut user, remember_me): (User, bool) = match cache_result {
-        Ok(Some((user, remember_me))) => {
-            (user, remember_me)
-        },
+        Ok(Some((user, remember_me))) => (user, remember_me),
         Ok(None) => {
             return Ok(ResponseService::create_error_response(
                 AppError::LoginTotp(Error::UserNotFound),
                 StatusCode::NOT_FOUND,
             ));
-        },
+        }
         Err(err) => {
             println!("Error, {:?}", err);
             return Ok(ResponseService::create_error_response(
                 AppError::LoginTotp(Error::InvalidCredentials),
                 StatusCode::UNPROCESSABLE_ENTITY,
             ));
-        },
+        }
     };
 
     // Get totp from request
-    let request::Request {
+    let Request {
         digit1,
         digit2,
         digit3,
@@ -82,8 +77,11 @@ pub async fn post_totp(
     // update last login time
 
     // create auth tokens
-    let refresh_token = TokenService::generate_refresh_token(remember_me);
-    let access_token = TokenService::generate_access_token(&user.get_uuid());
+    let token_service = TokenService::new();
+    let refresh_token = token_service.generate_refresh_token(remember_me);
+    let user_uuid = user.get_uuid();
+    let token_service = TokenService::from_uuid(&user_uuid);
+    let access_token = token_service.generate_access_token().unwrap();
 
     let auth_tokens = AuthTokens {
         refresh: refresh_token,

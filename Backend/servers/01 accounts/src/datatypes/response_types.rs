@@ -1,28 +1,25 @@
-use crate::generated::protos::accounts::{
-    login::{
-        email::response as login_email_response, password::response as login_password_response,
-        refresh::response as login_refresh_response, totp::response as login_totp_response,
+use crate::generated::protos::{
+    accounts::{
+        login::{
+            email::response as login_email_response, password::response as login_password_response,
+            refresh::response as login_refresh_response, totp::response as login_totp_response,
+        },
+        password_reset::{
+            email::response as password_reset_email_response,
+            password::response as password_reset_password_response,
+            verification::response as password_reset_verification_response,
+        },
+        register::{
+            details::response as register_details_response,
+            email::response as register_email_response,
+            verification::response as register_verification_response,
+        },
     },
-    password_reset::{
-        email::response as password_reset_email_response,
-        password::response as password_reset_password_response,
-        verification::response as password_reset_verification_response,
-    },
-    register::{
-        details::response as register_details_response, email::response as register_email_response,
-        verification::response as register_verification_response,
-    },
-    settings::{
-        profile::{
-            confirmation::response as confirmation_response,
-            email::response as change_email_response,
-            language::response as change_language_response,
-            name::response as change_name_response,
-            password::response as change_password_response,
-            theme::response as change_theme_response,
-            totp::response as change_totp_response,
-            username::response as change_username_response,
-        }
+    settings::profile::{
+        confirmation as confirmation_response, email::response as change_email_response,
+        language::response as change_language_response, name::response as change_name_response,
+        password::response as change_password_response, theme::response as change_theme_response,
+        totp::response as change_totp_response, username::response as change_username_response,
     },
 };
 
@@ -45,7 +42,7 @@ pub enum AppError {
 
     // Settings
     Confirmation(confirmation_response::Error),
-    Confirmation(change_email_response::Error),
+    ChangeEmail(change_email_response::Error),
     ChangeLanguage(change_language_response::Error),
     ChangeName(change_name_response::Error),
     ChangePassword(change_password_response::Error),

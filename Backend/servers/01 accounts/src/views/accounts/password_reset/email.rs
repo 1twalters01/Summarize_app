@@ -1,19 +1,20 @@
-use actix_protobuf::{ProtoBuf, ProtoBufResponseBuilder};
-use actix_web::{HttpResponse, Responder, Result};
+use actix_protobuf::ProtoBuf;
+use actix_web::{http::StatusCode, Responder, Result};
 
 use crate::{
+    datatypes::response_types::{AppError, AppResponse},
     generated::protos::accounts::password_reset::email::{
         request,
-        response::{self, response::ResponseField},
+        response::{response::ResponseField, Error, Response},
     },
     models::user::User,
     services::{
-        cache_service::CacheService, token_service::TokenService, user_service::UserService
+        cache_service::CacheService, response_service::ResponseService,
+        token_service::TokenService, user_service::UserService,
     },
-    utils::email::{compose::compose_password_reset_email_message, handler::send_email},
     utils::{
         database_connections::{create_pg_pool_connection, create_redis_client_connection},
-        tokens::generate_opaque_token_of_length,
+        email::{compose::compose_password_reset_email_message, handler::send_email},
         validations::validate_email,
     },
 };
@@ -36,25 +37,23 @@ pub async fn post_email(data: ProtoBuf<request::Request>) -> Result<impl Respond
         Ok(None) => {
             println!("No user found");
             return Ok(ResponseService::create_error_response(
-                AppError::LoginEmail(Error::UnregisteredEmail),
+                AppError::PasswordResetEmail(Error::UnregisteredEmail),
                 StatusCode::NOT_FOUND,
             ));
-        },
+        }
         Err(err) => {
             println!("{:#?}", err);
             return Ok(ResponseService::create_error_response(
-                AppError::LoginEmail(Error::ServerError),
+                AppError::PasswordResetEmail(Error::ServerError),
                 StatusCode::INTERNAL_SERVER_ERROR,
             ));
-        },
+        }
     };
 
-    // get and serialize user
-    let user_json: String = serde_json::to_string(&user).unwrap();
-
     // create a verify token, and a register email token
-    let verification_token = TokenService::generate_opaque_token_of_length(8);
-    let header_token = TokenService::generate_opaque_token_of_length(64);
+    let token_service = TokenService::new();
+    let verification_token = token_service.generate_opaque_token_of_length(8);
+    let header_token = token_service.generate_opaque_token_of_length(64);
 
     // try to email the account a message containing the token
     let message = compose_password_reset_email_message(&verification_token, &header_token);
@@ -70,11 +69,12 @@ pub async fn post_email(data: ProtoBuf<request::Request>) -> Result<impl Respond
 
     // add {key: token, value: UUID} to redis
     let expiry_in_seconds: Option<i64> = Some(300);
-    let token_tuple: (&str, &str) = (header_token, verification_token);
+    let token_tuple: (&str, &str) = (&header_token, &verification_token);
     let token_tuple_json: String = serde_json::to_string(&token_tuple).unwrap();
 
     let mut cache_service = CacheService::new(create_redis_client_connection());
-    let cache_result = cache_service.store_token_for_user(&token_tuple_json, &user_json, expiry_in_seconds);
+    let cache_result =
+        cache_service.store_token_for_user(&token_tuple_json, &user, expiry_in_seconds);
     if cache_result.is_err() {
         return Ok(ResponseService::create_error_response(
             AppError::PasswordResetEmail(Error::ServerError),

@@ -7,22 +7,19 @@ use crate::{
         request::Request,
         response::{response::ResponseField, Error, Response},
     },
-    models::user::User,
     services::{
-        cache_service::CacheService, response_service::ResponseService, user_service::UserService,
+        cache_service::CacheService, response_service::ResponseService,
+        token_service::TokenService, user_service::UserService,
     },
     utils::{
         database_connections::{create_pg_pool_connection, create_redis_client_connection},
-        tokens::generate_opaque_token_of_length,
         validations::validate_email,
     },
 };
 
 pub async fn post_email(data: ProtoBuf<Request>) -> Result<impl Responder> {
-    // Get email from posted data
+    // Get and validate email
     let Request { email } = data.0;
-
-    // Validate email
     if validate_email(&email).is_err() {
         return Ok(ResponseService::create_error_response(
             AppError::LoginEmail(Error::InvalidEmail),
@@ -32,7 +29,7 @@ pub async fn post_email(data: ProtoBuf<Request>) -> Result<impl Responder> {
 
     // Get user from database
     let user_service = UserService::new(create_pg_pool_connection().await);
-    let user: User = match user_service.get_user_from_email(&email).await {
+    let user = match user_service.get_user_from_email(&email).await {
         Ok(Some(user)) => user,
         Ok(None) => {
             println!("No user found");
@@ -40,22 +37,24 @@ pub async fn post_email(data: ProtoBuf<Request>) -> Result<impl Responder> {
                 AppError::LoginEmail(Error::UnregisteredEmail),
                 StatusCode::NOT_FOUND,
             ));
-        },
+        }
         Err(err) => {
             println!("{:#?}", err);
             return Ok(ResponseService::create_error_response(
                 AppError::LoginEmail(Error::ServerError),
                 StatusCode::INTERNAL_SERVER_ERROR,
             ));
-        },
+        }
     };
 
     // save {key: token, value: user} to redis cache for 300 seconds
-    let token: String = generate_opaque_token_of_length(25);
-    let expiry_in_seconds: Option<i64> = Some(300);
-
+    let token_service = TokenService::new();
     let mut cache_service = CacheService::new(create_redis_client_connection());
+
+    let token: String = token_service.generate_opaque_token_of_length(25);
+    let expiry_in_seconds: Option<i64> = Some(300);
     let cache_result = cache_service.store_token_for_user(&token, &user, expiry_in_seconds);
+
     if cache_result.is_err() {
         return Ok(ResponseService::create_error_response(
             AppError::LoginEmail(Error::ServerError),
@@ -80,7 +79,7 @@ mod tests {
     use std::env;
 
     use super::*;
-    use crate::{datatypes::auth::AccessToken, middleware};
+    use crate::{middleware, models::user::User, services::token_service::TokenService};
 
     #[actix_web::test]
     async fn test_known_email_not_authenticated() {
@@ -233,8 +232,10 @@ mod tests {
             Some("Lastname".to_string()),
         )
         .unwrap();
-        let token: String = AccessToken::new(&user).to_string();
-        let auth_token = String::from("Bearer ") + &token;
+        let user_uuid = user.get_uuid();
+        let token_service = TokenService::from_uuid(&user_uuid);
+        let access_token: String = token_service.generate_access_token().unwrap();
+        let auth_token = String::from("Bearer ") + &access_token;
 
         let req_message = Request { email };
         let mut request_buffer: Vec<u8> = Vec::new();
@@ -289,8 +290,10 @@ mod tests {
             Some("Lastname".to_string()),
         )
         .unwrap();
-        let token: String = AccessToken::new(&user).to_string();
-        let auth_token = String::from("Bearer ") + &token;
+        let user_uuid = user.get_uuid();
+        let token_service = TokenService::from_uuid(&user_uuid);
+        let access_token: String = token_service.generate_access_token().unwrap();
+        let auth_token = String::from("Bearer ") + &access_token;
 
         let req_message = Request { email };
         let mut request_buffer: Vec<u8> = Vec::new();
@@ -345,8 +348,10 @@ mod tests {
             Some("Lastname".to_string()),
         )
         .unwrap();
-        let token: String = AccessToken::new(&user).to_string();
-        let auth_token = String::from("Bearer ") + &token;
+        let user_uuid = user.get_uuid();
+        let token_service = TokenService::from_uuid(&user_uuid);
+        let access_token: String = token_service.generate_access_token().unwrap();
+        let auth_token = String::from("Bearer ") + &access_token;
 
         let req_message = Request { email };
         let mut request_buffer: Vec<u8> = Vec::new();
