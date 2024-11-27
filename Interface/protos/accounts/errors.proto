@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package accounts.errors;
+
+enum Error {
+    INVALID_EMAIL = 0;
+    UNREGISTERED_EMAIL = 1;
+    TOO_MANY_REQUESTS = 2;
+    SERVER_ERROR = 3;
+}
+

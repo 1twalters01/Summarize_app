@@ -17,7 +17,7 @@ CREATE EXTENSION IF NOT EXISTS "pg_cron";
 | created_at         | TIMESTAMP    | The user's creation time    | False  | True     | False |
 | last_login         | TIMESTAMP    | The user's last login       | False  | False    | False |
 | is_author          | BOOLEAN      | Is the user an author       | False  | True     | False |
-| is_staff           | BOOLEAN      | Is the user staff           | False  | True     | False |
+| is_admin           | BOOLEAN      | Is the user staff           | False  | True     | False |
 | is_superuser       | BOOLEAN      | Is the user a superuser     | False  | True     | False |
 
 ```sql
