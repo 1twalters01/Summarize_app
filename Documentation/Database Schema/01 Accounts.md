@@ -107,7 +107,7 @@ CREATE TABLE IF NOT EXISTS refresh_tokens(
     user_id int NOT NULL,
     refresh_token VARCHAR UNIQUE NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    expires_at TIMESTAMP DEFAULT NOW() + INTERVAL '1 week',
+    expires_at TIMESTAMP DEFAULT NOW() + INTERVAL '2 week',
     CONSTRAINT fk_users FOREIGN KEY (user_id)
         REFERENCES users (id)
         ON DELETE CASCADE

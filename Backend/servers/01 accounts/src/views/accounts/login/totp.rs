@@ -74,8 +74,6 @@ pub async fn post_totp(data: ProtoBuf<Request>, req: HttpRequest) -> Result<impl
         ));
     }
 
-    // update last login time
-
     // create auth tokens
     let token_service = TokenService::new();
     let refresh_token = token_service.generate_refresh_token(remember_me);
@@ -83,11 +81,23 @@ pub async fn post_totp(data: ProtoBuf<Request>, req: HttpRequest) -> Result<impl
     let token_service = TokenService::from_uuid(&user_uuid);
     let access_token = token_service.generate_access_token().unwrap();
 
+
+    // If remember_me then save the refresh token
+
     let auth_tokens = AuthTokens {
         refresh: refresh_token,
         access: access_token,
     };
     println!("auth tokens: {:#?}", auth_tokens);
+
+    // update last login time
+    let pool = create_pg_pool_connection().await;
+    if update_login_time(&pool, chrono::Utc::now(), &user_uuid).await.is_err() {
+        return Ok(ResponseService::create_error_response(
+                AppError::LoginPassword(Error::ServerError),
+                StatusCode::INTERNAL_SERVER_ERROR    
+            ));
+    };
 
     // delete old token
     let mut cache_service = CacheService::new(create_redis_client_connection());
