@@ -2,8 +2,7 @@ use actix_protobuf::ProtoBuf;
 use actix_web::{http::StatusCode, HttpRequest, Responder, Result};
 
 use crate::{
-    datatypes::response_types::{AppError, AppResponse},
-    generated::protos::accounts::{
+    datatypes::response_types::{AppError, AppResponse}, generated::protos::accounts::{
         auth_tokens::AuthTokens,
         login::password::{
             request::Request,
@@ -11,16 +10,12 @@ use crate::{
                 response::ResponseField, token::TokenField, Error, Response, Success, Token,
             },
         },
-    },
-    models::user::User,
-    services::{
+    }, queries::postgres::user::update::update_login_time, services::{
         cache_service::CacheService, response_service::ResponseService, token_service::TokenService,
-    },
-    utils::{database_connections::create_redis_client_connection, validations::validate_password},
+    }, utils::{database_connections::{create_pg_pool_connection, create_redis_client_connection}, validations::validate_password}
 };
 
 pub async fn post_password(data: ProtoBuf<Request>, req: HttpRequest) -> Result<impl Responder> {
-    // Get email token from header
     let login_email_token: String = req
         .headers()
         .get("Login-Email-Token")
@@ -29,10 +24,9 @@ pub async fn post_password(data: ProtoBuf<Request>, req: HttpRequest) -> Result<
         .unwrap()
         .to_string();
 
-    // Get user from token in redis
     let mut cache_service = CacheService::new(create_redis_client_connection());
     let cache_result = cache_service.get_user_from_token(&login_email_token);
-    let user: User = match cache_result {
+    let user = match cache_result {
         Ok(Some(user)) => user,
         Ok(None) => {
             return Ok(ResponseService::create_error_response(
@@ -49,7 +43,6 @@ pub async fn post_password(data: ProtoBuf<Request>, req: HttpRequest) -> Result<
         }
     };
 
-    // Validate password
     let Request {
         password,
         remember_me,
@@ -60,10 +53,7 @@ pub async fn post_password(data: ProtoBuf<Request>, req: HttpRequest) -> Result<
             AppError::LoginPassword(Error::InvalidPassword),
             StatusCode::UNPROCESSABLE_ENTITY,
         ));
-    }
-
-    // check if password is correct for the given user
-    if user.check_password(&password).is_err() {
+    } else if user.check_password(&password).is_err() {
         return Ok(ResponseService::create_error_response(
             AppError::LoginPassword(Error::IncorrectPassword),
             StatusCode::UNAUTHORIZED,
@@ -72,15 +62,12 @@ pub async fn post_password(data: ProtoBuf<Request>, req: HttpRequest) -> Result<
 
     let user_uuid = user.get_uuid();
     let token_service = TokenService::from_uuid(&user_uuid);
-
-    // see if account has a totp
     let app_response: AppResponse;
+
     if user.is_totp_activated() == true {
-        // save {key: token, value: UserRememberMe} to redis
         let token: String = token_service.generate_opaque_token_of_length(25);
         let user_remember_me_json = serde_json::to_string(&(user, remember_me)).unwrap();
         let expiry_in_seconds: Option<i64> = Some(300);
-
         let cache_result =
             cache_service.store_key_value(&token, &user_remember_me_json, expiry_in_seconds);
         if cache_result.is_err() {
@@ -99,7 +86,6 @@ pub async fn post_password(data: ProtoBuf<Request>, req: HttpRequest) -> Result<
             })),
         });
     } else {
-        // generate tokens
         let refresh_token = token_service.generate_refresh_token(remember_me);
         let access_token = token_service.generate_access_token().unwrap();
 
@@ -109,6 +95,13 @@ pub async fn post_password(data: ProtoBuf<Request>, req: HttpRequest) -> Result<
         };
 
         // update last login time
+        let pool = create_pg_pool_connection().await;
+        if update_login_time(&pool, chrono::Utc::now(), &user_uuid).await.is_err() {
+            return Ok(ResponseService::create_error_response(
+                AppError::LoginPassword(Error::ServerError),
+                StatusCode::INTERNAL_SERVER_ERROR
+            ));
+        };
 
         // create app response
         app_response = AppResponse::LoginPassword(Response {

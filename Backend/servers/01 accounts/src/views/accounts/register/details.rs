@@ -130,6 +130,8 @@ pub async fn post_details(data: ProtoBuf<Request>, req: HttpRequest) -> Result<i
         ));
     }
 
+    // set created time
+
     // return ok
     return Ok(ResponseService::create_success_response(
         AppResponse::RegisterDetails(Response {
