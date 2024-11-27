@@ -94,15 +94,6 @@ pub async fn post_password(data: ProtoBuf<Request>, req: HttpRequest) -> Result<
             access: access_token,
         };
 
-        // update last login time
-        let pool = create_pg_pool_connection().await;
-        if update_login_time(&pool, chrono::Utc::now(), &user_uuid).await.is_err() {
-            return Ok(ResponseService::create_error_response(
-                AppError::LoginPassword(Error::ServerError),
-                StatusCode::INTERNAL_SERVER_ERROR
-            ));
-        };
-
         // create app response
         app_response = AppResponse::LoginPassword(Response {
             response_field: Some(ResponseField::Success(Success {
@@ -112,6 +103,15 @@ pub async fn post_password(data: ProtoBuf<Request>, req: HttpRequest) -> Result<
                 requires_totp: false,
             })),
         });
+
+        // update last login time
+        let pool = create_pg_pool_connection().await;
+        if update_login_time(&pool, chrono::Utc::now(), &user_uuid).await.is_err() {
+            return Ok(ResponseService::create_error_response(
+                    AppError::LoginPassword(Error::ServerError),
+                    StatusCode::INTERNAL_SERVER_ERROR
+                    ));
+        };
     }
 
     // delete old token
@@ -149,6 +149,7 @@ mod tests {
                 },
             },
         },
+        models::user::User,
         middleware,
         services::token_service::Claims,
         views::accounts::login::email::post_email,
