@@ -89,6 +89,8 @@ pub async fn post_password(data: ProtoBuf<Request>, req: HttpRequest) -> Result<
         let refresh_token = token_service.generate_refresh_token(remember_me);
         let access_token = token_service.generate_access_token().unwrap();
 
+        // If remember_me then save the refresh token
+
         let auth_tokens = AuthTokens {
             refresh: refresh_token,
             access: access_token,
