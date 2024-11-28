@@ -2,6 +2,9 @@ from fastapi import Request, status
 from fastapi.responses import JSONResponse
 from .classes import Genre
 import jwt
+from sqlalchemy import Engine
+from ....queries.user.get import get_admin_status
+from ....utils.database_connections import create_pg_connection
 
 async def post_force_genre_modification(request: Request, genre: Genre):
     # Admin modify Genre information [POST]
@@ -19,6 +22,20 @@ async def post_force_genre_modification(request: Request, genre: Genre):
     user_uuid = decoded_jwt["sub"]
 
     # Check if user is admin
+    conn = create_pg_connection()
+    if type(conn) is str:
+        return JSONResponse(
+            content={"error": conn},
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+    elif type(conn) is Engine:
+        if get_admin_status(conn, user_uuid) == False:
+            response = {"error", "not admin"}
+            return JSONResponse(
+                content=response,
+                status_code=status.HTTP_401_UNAUTHORIZED
+            )
+        
     # save key: uuid&genresModifyForce, value: genre id
     # return success
     pass

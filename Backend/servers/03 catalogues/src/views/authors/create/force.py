@@ -22,7 +22,7 @@ async def post_force_author_creation(request: Request, author: Author):
     decoded_jwt = jwt.decode(encoded_jwt, "secret", algorithms=["HS256"])
     user_uuid = decoded_jwt["sub"]
 
-    # Check if user is admin
+    # Check if user is admin, move to middleware later
     conn = create_pg_connection()
     if type(conn) is str:
         return JSONResponse(
