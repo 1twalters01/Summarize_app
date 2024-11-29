@@ -1,4 +1,5 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+from .middleware.authentication import is_authenticated
 
 from .views.authors.get import get_authors
 
@@ -20,7 +21,12 @@ router.add_api_route("/author", get_authors, methods=["GET"])
 # Create
 router.add_api_route("/author/creation/request", post_request_author_creation, methods=["POST"])
 router.add_api_route("/author/creation/request/confirmation", post_request_author_creation_confirmation, methods=["POST"])
-router.add_api_route("/author/creation/force", post_force_author_creation, methods=["POST"])
+router.add_api_route(
+    path = "/author/creation/force",
+    endpoint = post_force_author_creation,
+    methods=["POST"],
+    dependencies = [Depends(is_authenticated)]
+)
 router.add_api_route("/author/creation/force/confirmation", post_force_author_creation_confirmation, methods=["POST"])
 router.add_api_route("/author/creation/force/manually", post_force_author_creation_manually, methods=["POST"])
 router.add_api_route("/author/creation/force/manually/confirmation", post_force_author_creation_manually_confirmation, methods=["POST"])
