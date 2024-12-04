@@ -1,5 +1,4 @@
 // Choose summary to be read
-// is this even needed?
 
 async pub fn post_summary_selector(data: Protobuf<request>) -> Result<impl Responder> {
     // get request variables

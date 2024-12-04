@@ -1,0 +1,1 @@
+// highlight locations and highlight types

@@ -3,7 +3,7 @@ use actix_web::web::{get, post, scope, ServiceConfig};
 
 pub fn config(cfg: &mut ServiceConfig) {
     cfg.service(
-        scope("upload")
+        scope("/upload")
         .wrap(middleware::authentication)
         .route(
             "/from_file",
@@ -11,7 +11,7 @@ pub fn config(cfg: &mut ServiceConfig) {
         )
     )
     .service(
-        scope("get")
+        scope("/get")
         .wrap(middleware::authentication)
         .route(
             "/summary",
@@ -39,7 +39,7 @@ pub fn config(cfg: &mut ServiceConfig) {
         )
     )
     .service(
-        scope("publish")
+        scope("/publish")
         .wrap(middleware::authentication)
         .route(
             "/toggle",
