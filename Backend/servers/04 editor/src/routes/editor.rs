@@ -3,6 +3,47 @@ use actix_web::web::{get, post, scope, ServiceConfig};
 
 pub fn config(cfg: &mut ServiceConfig) {
     cfg.service(
-        scope()
+        scope("upload")
+        .wrap(middleware::authentication)
+        .route(
+            "/from_file",
+            post().to(views::editor::upload::file),
+        )
+    )
+    .service(
+        scope("get")
+        .wrap(middleware::authentication)
+        .route(
+            "/summary",
+            post().to(views::editor::get::summary),
+        )
+        .route(
+            "/chapter",
+            post().to(views::editor::get::chapter),
+        )
+    )
+    .service(
+        scope("/save")
+        .wrap(middleware::authentication)
+        .route(
+            "/",
+            post().to(views::editor::save::save),
+        )
+        .route(
+            "/autosave",
+            post().to(views::editor::save::autosave)
+        )
+        .route(
+            "/metadata",
+            post().to(views::editor::save::metadata),
+        )
+    )
+    .service(
+        scope("publish")
+        .wrap(middleware::authentication)
+        .route(
+            "/toggle",
+            post().to(views::editor::publish::publish),
+        )
     )
 }
