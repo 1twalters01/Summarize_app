@@ -5,14 +5,18 @@ import (
 
 func HistoryRoutes(router *gin.RouterGroup) {
 	// Add to history
+	router.POST("/history/add", AddHistoryItem)
 
 	// delete uuid list from history instead of all the other deletes
+	router.POST("/history/delete/uuids", DeleteFromUUID)
 	// delete publishers from history
 	// delete authors from history
 	// delete summarizers from history
 	// delete summaries from history
 	// delete days from history
+	router.POST("/history/delete/days", DeleteFromRange)
 	// delete all history
+	router.POST("/history/delete/all")
 
 	// Get detailed view
 
