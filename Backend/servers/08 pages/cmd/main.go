@@ -7,9 +7,9 @@ import (
 func main() {
     r := gin.Default()
 
-    r.GET("/", func(c*gin.Context) {
-        c.String(200, "Hello World")
-    })
+    config.LoadConfig()
+
+    routes.PagesRoutes(r)
 
     r.Run(":8008")
 }

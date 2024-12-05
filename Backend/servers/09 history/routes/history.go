@@ -16,7 +16,7 @@ func HistoryRoutes(router *gin.RouterGroup) {
 	// delete days from history
 	router.POST("/history/delete/days", DeleteFromRange)
 	// delete all history
-	router.POST("/history/delete/all")
+	router.POST("/history/delete/all", DeleteAllHistory)
 
 	// Get detailed view
 
