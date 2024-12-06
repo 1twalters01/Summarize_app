@@ -1,5 +1,5 @@
 # Languages
-rust, python, elixir, go, 
+* 00 reverse proxy - rust tcp dive
 * 01 accounts - rust fundamentals
 * 02 subscriptions - python fundamentals
 * 03 catalogues - python interop with rust
