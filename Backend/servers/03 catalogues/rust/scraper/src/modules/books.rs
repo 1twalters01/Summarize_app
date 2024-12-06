@@ -9,7 +9,9 @@ pub async fn run_books_module(author_vec: Vec<String>) -> Result<(), Error> {
     validate_author_vec(&author_vec).unwrap()
 
     /* Scrape book info
-    book title, subtitle and edition
+    title
+    subtitle
+    edition
     book formats
     authors
     co-authors

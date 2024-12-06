@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
+// Use chrono instead of system time
 
 pub struct Publisher {
     pub publisher: String,
@@ -8,11 +8,13 @@ pub struct Publisher {
 
 #[derive(Serialize, Deserialize)]
 pub struct Author {
-    pub uuid: Uuid,
     pub first_name: String,
     pub last_name: Option<String>,
     pub middle_names: Vec<String>,
-    pub genres: Vec<String>,
+    pub pen_names: Vec<String>,
+    pub date_of_birth: SystemTime,
+    pub date_of_death: SystemTime,
+    pub information: String,
 }
 
 #[derive(Serialize, Deserialize)]

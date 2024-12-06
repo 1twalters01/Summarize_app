@@ -21,25 +21,19 @@ func HistoryRoutes(router *gin.RouterGroup) {
 	router.POST("/history/get/cached/summarizers", GetCachedSummarizers)
 	router.POST("/history/get/cached/publishers", GetCachedPublishers)
 
+	router.POST("/history/get", GetHistory)
+
 	// Get last n to m authors
 	// Get last n to m books
 	// Get last n to m summaries
 	// Get last n to m summarizers
 	// Get last n to m publishers
 
-	router.POST("/history/get", GetHistory)
-
-	// Get last read books from author
 	router.POST("/history/get/from_author/books", )
-	// Get last read summaries from author
 	router.POST("/history/get/from_author/books", )
-	// Get last read authors from publisher
 	router.POST("/history/get/from_publisher/authors", )
-	// Get last read books from publisher
 	router.POST("/history/get/from_publisher/books", )
-	// Get last read summaries from publisher
 	router.POST("/history/get/from_publisher/summaries", )
-	// Get last read summaries from summarizer
 	router.POST("/history/get/from_summarizer/summaries", )
 
 }
