@@ -14,18 +14,12 @@ func HistoryRoutes(router *gin.RouterGroup) {
 	router.POST("/history/delete/days", DeleteFromRange)
 	router.POST("/history/delete/all", DeleteAllHistory)
 
-	// Get all (cached)
-	router.POST("/history/get/cached/all", )
-	// Get authors (cached)
-	router.POST("/history/get/cached/authors", )
-	// Get books (cached)
-	router.POST("/history/get/cached/books", )
-	// Get summaries (cached)
-	router.POST("/history/get/cached/summaries", )
-	// Get sumarizers (cached)
-	router.POST("/history/get/cached/summarizers", )
-	// Get publishers (cached)
-	router.POST("/history/get/cached/publishers", )
+	router.POST("/history/get/cached/all", GetCachedHistory)
+	router.POST("/history/get/cached/authors", GetCachedAuthors)
+	router.POST("/history/get/cached/books", GetCachedBooks)
+	router.POST("/history/get/cached/summaries", GetCachedSummaries)
+	router.POST("/history/get/cached/summarizers", GetCachedSummarizers)
+	router.POST("/history/get/cached/publishers", GetCachedPublishers)
 
 	// Get last n to m authors
 	// Get last n to m books
