@@ -7,4 +7,7 @@ import (
 )
 
 func DeleteAllHistory(c *gin.Context) {
+	// Get user uuid
+	// Delete all history items where user_uuid = user uuid (will need a join)
+	// return
 }
