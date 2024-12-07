@@ -1,7 +1,7 @@
 // download the summary to one of many formats
 
 async pub fn post_download_summary(data: Protobuf<request>) -> Result<impl Responder> {
-    // get request variables
+    // get request variables, format is an enum of the different types allowed
     let Request { summary_id, format } = data.0;
 
     // Validate the variables from the request body
@@ -28,7 +28,7 @@ async pub fn post_download_summary(data: Protobuf<request>) -> Result<impl Respo
             .protobuf(response));
     }
     
-    // Check redis for the summary_id for downloads
+    // Check cache for the summary_id for downloads
     // error if error
     // if uncussessful then
         // check pg for summary s3 address

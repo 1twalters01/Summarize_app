@@ -3,43 +3,63 @@ use actix_web::web::{get, post, scope, ServiceConfig};
 
 pub fn config(cfg: &mut ServiceConfig) {
     cfg.service(
-        scope("/save")
+        scope("/notes/save")
         .wrap(middleware::authentication)
         .route(
             "/audionotes",
-            post().to(views::reader::notes::save::audionote),
+            post().to(views::reader::notes::save::save_audionote),
         )
         .route(
             "/highlights",
-            post().to(views::reader::notes::save::highlight),
+            post().to(views::reader::notes::save::save_highlight),
         )
         .route(
             "/quotes",
-            post().to(views::reader::notes::save::audionote),
+            post().to(views::reader::notes::save::save_audionote),
         )
         .route(
             "/notes",
-            post().to(views::reader::notes::save::text),
+            post().to(views::reader::notes::save::save_text),
         )
     )
     .service(
-        scope("/load")
+        scope("/notes/load")
         .wrap(middleware::authentication)
         .route(
             "/audionotes",
-            post().to(views::reader::notes::save::audionote),
+            post().to(views::reader::notes::load::load_audionotes),
         )
         .route(
             "/highlights",
-            post().to(views::reader::notes::save::highlight),
+            post().to(views::reader::notes::load::load_highlights),
         )
         .route(
             "/quotes",
-            post().to(views::reader::notes::save::audionote),
+            post().to(views::reader::notes::load::load_audionotes),
         )
         .route(
             "/notes",
-            post().to(views::reader::notes::save::text),
+            post().to(views::reader::notes::load::load_texts),
+        )
+    )
+    .service(
+        scope("/notes/delete")
+        .wrap(middleware::authentication)
+        .route(
+            "/audionotes",
+            post().to(views::reader::notes::delete::delete_audionote),
+        )
+        .route(
+            "/highlights",
+            post().to(views::reader::notes::delete::delete_highlight),
+        )
+        .route(
+            "/quotes",
+            post().to(views::reader::notes::delete::delete_audionote),
+        )
+        .route(
+            "/notes",
+            post().to(views::reader::notes::delete::delete_text),
         )
     )
     .service(
@@ -59,18 +79,6 @@ pub fn config(cfg: &mut ServiceConfig) {
         .wrap(middleware::authentication)
         .route(
             "/get-status",
-            post().to(views::reader::place::ruler)
-        )
-        .route(
-            "/toggle-account",
-            post().to(views::reader::place::ruler)
-        )   
-        .route(
-            "/toggle-device-type",
-            post().to(views::reader::place::ruler)
-        )
-        .route(
-            "/toggle-device",
             post().to(views::reader::place::ruler)
         )
     )

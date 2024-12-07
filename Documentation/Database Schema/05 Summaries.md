@@ -29,6 +29,7 @@ CREATE INDEX IF NOT EXISTS idx_summaries_user_id ON summaries (user_id);
 ## Chapter links
 | Field           | Type           | Description                | UNIQUE | NOT NULL | INDEX |
 |-----------------|----------------|----------------------------|--------|----------|-------|
+| summary_id      | INT            | Summary id foreign key     | False  | True     | True  |
 | chapter_number  | INT            | Chapter number             | False  | True     | True  |
 | chapter_link    | Text           | Links to chapters          | True   | True     | False |
 

@@ -16,6 +16,11 @@ async pub fn post_summary_selector(data: Protobuf<request>) -> Result<impl Respo
             .protobuf(response));
     }
 
-    // load chapter to cache
+    // Check that summary is public else if user is a reader
+        // if no to both then error unauthorised
+    // Check if summary is already in cache
+        // if true then extend time and then return ok
+    // get summary chapters from s3 else error
+    // save summary in cache else error
     // return ok
 }
