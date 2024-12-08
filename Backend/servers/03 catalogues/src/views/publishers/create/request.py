@@ -3,18 +3,16 @@ from fastapi.responses import JSONResponse
 from .classes import Publisher
 import jwt
 
+
 async def post_request_publisher_creation(request: Request, publisher: Publisher):
     # Request new Publisher to be added [POST]
-    
+
     # Get user uuid
-    bearer: str|None = request.headers.get("bearer_token")
+    bearer: str | None = request.headers.get("bearer_token")
     if bearer == None:
         response = {"error", "no token"}
-        return JSONResponse(
-            content=response,
-            status_code=status.HTTP_400_BAD_REQUEST
-        )
-    
+        return JSONResponse(content=response, status_code=status.HTTP_400_BAD_REQUEST)
+
     encoded_jwt = bearer[:7]
     decoded_jwt = jwt.decode(encoded_jwt, "secret", algorithms=["HS256"])
     user_uuid = decoded_jwt["sub"]
@@ -23,19 +21,17 @@ async def post_request_publisher_creation(request: Request, publisher: Publisher
     # Save key: user_uuid, value: publisher info to redis (or similar)
     # return success
     pass
-    
+
+
 async def post_request_publisher_creation_confirmation(request: Request):
     # Admin add new Publisher [POST]
 
     # Get user uuid
-    bearer: str|None = request.headers.get("bearer_token")
+    bearer: str | None = request.headers.get("bearer_token")
     if bearer == None:
         response = {"error", "no token"}
-        return JSONResponse(
-            content=response,
-            status_code=status.HTTP_400_BAD_REQUEST
-        )
-    
+        return JSONResponse(content=response, status_code=status.HTTP_400_BAD_REQUEST)
+
     encoded_jwt = bearer[:7]
     decoded_jwt = jwt.decode(encoded_jwt, "secret", algorithms=["HS256"])
     user_uuid = decoded_jwt["sub"]
@@ -45,4 +41,3 @@ async def post_request_publisher_creation_confirmation(request: Request):
     # Add user and publisher creation request to request database to be approved by admin
     # return success
     pass
-

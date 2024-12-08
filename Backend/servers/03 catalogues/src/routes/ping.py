@@ -1,7 +1,7 @@
 from fastapi import APIRouter
-from .views.optional_authentication import get_any_auth, post_any_auth
-from .views.requires_authentication import get_only_auth, post_only_auth
-from .views.no_authentication import get_not_auth, post_not_auth
+from src.views.ping.optional_authentication import get_any_auth, post_any_auth
+from src.views.ping.requires_authentication import get_only_auth, post_only_auth
+from src.views.ping.no_authentication import get_not_auth, post_not_auth
 
 router = APIRouter()
 

@@ -41,4 +41,5 @@ def save_subscriber(
         raise Exception(f"Failed to add to db with error: {e}")
     finally:
         db.close()
+    # if error then return x else return y
 

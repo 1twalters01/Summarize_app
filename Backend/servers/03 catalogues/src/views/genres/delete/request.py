@@ -3,6 +3,7 @@ from fastapi.responses import JSONResponse
 from .classes import Genre
 import jwt
 
+
 async def post_request_genre_deletion(request: Request, genre: Genre):
     # Request Genre information to be deleted [POST]
 
@@ -10,9 +11,7 @@ async def post_request_genre_deletion(request: Request, genre: Genre):
     bearer: str | None = request.headers.get("bearer_token")
     if bearer == None:
         response = {"error", "no token"}
-        return JSONResponse(
-            content=response, status_code=status.HTTP_400_BAD_REQUEST
-        )
+        return JSONResponse(content=response, status_code=status.HTTP_400_BAD_REQUEST)
 
     encoded_jwt = bearer[7:]
     decoded_jwt = jwt.decode(encoded_jwt, "secret", algorithms=["HS256"])
@@ -23,6 +22,7 @@ async def post_request_genre_deletion(request: Request, genre: Genre):
     # return success
     pass
 
+
 async def post_request_genre_deletion_confirmation(request: Request):
     # Confirm genre deletion
 
@@ -30,9 +30,7 @@ async def post_request_genre_deletion_confirmation(request: Request):
     bearer: str | None = request.headers.get("bearer_token")
     if bearer == None:
         response = {"error", "no token"}
-        return JSONResponse(
-            content=response, status_code=status.HTTP_400_BAD_REQUEST
-        )
+        return JSONResponse(content=response, status_code=status.HTTP_400_BAD_REQUEST)
 
     encoded_jwt = bearer[7:]
     decoded_jwt = jwt.decode(encoded_jwt, "secret", algorithms=["HS256"])

@@ -1,8 +1,10 @@
 from pydantic import BaseModel
 
+
 class Genre(BaseModel):
     genre: str
-    definition: str # A definition to ensure it is the correct one
+    definition: str  # A definition to ensure it is the correct one
+
 
 class DetailedGenre(BaseModel):
     genre: str
