@@ -1,64 +1,26 @@
-from fastapi import Depends, Request, status
+from fastapi import Request, status
 from fastapi.responses import JSONResponse
-from sqlalchemy import create_engine, text
-from sqlalchemy.orm import sessionmaker, Session
-from dotenv import load_dotenv
-from ...services.encryption import encrypt
-import jwt
-import os
-
-load_dotenv()
-
-
-def get_pg_db() -> Session | None:
-    DATABASE_URL = os.getenv("PG_URL")
-    if DATABASE_URL == None:
-        return None
-    try:
-        engine = create_engine(DATABASE_URL)
-        SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-        db = SessionLocal()
-        return db
-    except:
-        return None
-
-
-async def get_subscription_status(
-    user_uuid: str, db: Session = Depends(get_pg_db)
-) -> bool | None:
-    # get is_subscribed in users from user_uuid
-    query = "SELECT s.is_subscribed FROM subscribers s JOIN users ON s.userID=u.userID WHERE u.userID=:id"
-    is_subscribed = db.execute(text(query), {"id": user_uuid}).fetchone()
-    db.close()
-    return is_subscribed[0] if is_subscribed else None
+from sqlalchemy import text
+from src.queries.subscriptions.get import get_subscription_status
+from src.services.encryption_service import EncryptionService
+from src.utils.database_connections import get_pg_db
+from src.utils.validations import validate_paypal_customer_id
 
 
 async def create_paypal_customer(request: Request, paypal_customer_id: str):
-    headers = request.headers
-    bearer: str | None = headers.get("bearer_token")
-    match bearer:
+    user_uuid = request.state.user_uuid
+
+    # get user_uuid
+    is_subscribed: bool | None = get_subscription_status(user_uuid)
+    match is_subscribed:
         case None:
-            response = {"error", "no token"}
+            response = {"error", "Invalid token"}
             return JSONResponse(
                 content=response, status_code=status.HTTP_400_BAD_REQUEST
             )
-        case bearer:
-            encoded_jwt = bearer[7:]
-    decoded_jwt = jwt.decode(encoded_jwt, "secret", algorithms=["HS256"])
-
-    # get claims from token
-    print(decoded_jwt)
-    user_uuid = decoded_jwt["sub"]
-
-    # get user_uuid
-    is_subscribed: bool | None = await get_subscription_status(user_uuid)
-    if is_subscribed == None:
-        response = {"error", "Invalid token"}
-        return JSONResponse(content=response, status_code=status.HTTP_400_BAD_REQUEST)
-
-    if is_subscribed == True:
-        response = {"error": "Customer already exists"}
-        return JSONResponse(content=response, status_code=status.HTTP_409_CONFLICT)
+        case True:
+            response = {"error": "Customer already exists"}
+            return JSONResponse(content=response, status_code=status.HTTP_409_CONFLICT)
 
     # Validate stripe_customer_ID
     if validate_paypal_customer_id(paypal_customer_id) == False:
@@ -67,7 +29,8 @@ async def create_paypal_customer(request: Request, paypal_customer_id: str):
 
     # set new customer
     try:
-        encrypted_customer_id = encrypt(paypal_customer_id)
+        encryption_service = EncryptionService()
+        encrypted_customer_id = encryption_service.encrypt(paypal_customer_id)
         db = get_pg_db()
         if db == None:
             response = {"error": "Server error"}

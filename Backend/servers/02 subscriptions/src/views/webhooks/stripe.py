@@ -25,6 +25,7 @@ class StripeEvent(BaseModel):
     data: StripeData
     type: str
 
+
 def get_pg_db() -> Session | None:
     DATABASE_URL = os.getenv("PG_URL")
     if DATABASE_URL == None:
@@ -37,9 +38,12 @@ def get_pg_db() -> Session | None:
     except:
         return None
 
+
 def get_uuid_from_customer_id(customer_id: str, db: Session = Depends(get_pg_db)):
     query = "SELECT u.uuid FROM users u JOIN subscribers s ON s.userID=u.userID WHERE customer_id=:encrypted_customer_id"
-    result = db.execute(text(query), {"encrypted_costomer_id": encrypt(customer_id)}).fetchone()
+    result = db.execute(
+        text(query), {"encrypted_costomer_id": encrypt(customer_id)}
+    ).fetchone()
     if result == None:
         return None
 
@@ -86,9 +90,7 @@ async def stripe_webhook(event: StripeEvent):
         email = db.execute(text(query), {"user_uuid": user_uuid}).fetchone()
         if email == None:
             response = {"success": False}
-            return JSONResponse(
-                content=response, status_code=status.HTTP_404_NOT_FOUND
-            )
+            return JSONResponse(content=response, status_code=status.HTTP_404_NOT_FOUND)
         # Email user with email
         response = {"success": True}
         return JSONResponse(content=response, status_code=status.HTTP_200_OK)
@@ -113,9 +115,7 @@ async def stripe_webhook(event: StripeEvent):
         trial_status = db.execute(text(query), {"user_uuid": user_uuid}).fetchone()
         if trial_status == None:
             response = {"success": False}
-            return JSONResponse(
-                content=response, status_code=status.HTTP_404_NOT_FOUND
-            )
+            return JSONResponse(content=response, status_code=status.HTTP_404_NOT_FOUND)
 
         if trial_status == False:
             end_date = datetime.now() + relativedelta(months=1, days=2)
@@ -125,11 +125,12 @@ async def stripe_webhook(event: StripeEvent):
         query = "UPDATE subscribers s SET s.customer_id=:customer_id, s.subscription_id=subscription_id, s.start_date=start_date, s.trial_status=False, s.end_date=end_date, s.subscribed=true, payment_method=stripe JOIN users u ON u.userID=s.userID WHERE u.uuid=user_uuid"
         db.execute(
             text(query),
-            {"customer_id": customer_id,
-             "subscription_id": subscription_id,
-             "start_date":start_date,
-             "end_date": end_date,
-            }
+            {
+                "customer_id": customer_id,
+                "subscription_id": subscription_id,
+                "start_date": start_date,
+                "end_date": end_date,
+            },
         )
         response = {"success": True}
         return JSONResponse(content=response, status_code=status.HTTP_200_OK)

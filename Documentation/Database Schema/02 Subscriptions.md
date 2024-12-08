@@ -6,7 +6,7 @@
 | payment_method    | VARCHAR(20)  | Payment method name            | True   | True     | False |
 
 ```sql
-CREATE TYPE payment_method_enum AS ENUM ('stripe', 'paypal');
+CREATE TYPE payment_method_enum AS ENUM ('stripe', 'paypal', 'none');
 ```
 
 ## Subscribers
