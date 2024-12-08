@@ -1,0 +1,2 @@
+
+// is user an admin
