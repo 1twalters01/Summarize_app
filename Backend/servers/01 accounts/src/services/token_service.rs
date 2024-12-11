@@ -119,3 +119,20 @@ impl<'a> TokenService<'a> {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use dotenv::dotenv;
+
+    use super::*;
+
+    #[test]
+    fn test_generate_access_token() {
+        dotenv().ok();
+        let uuid: Uuid = Uuid::new_v4();
+        let token_service = TokenService::from_uuid(&uuid);
+        let access_token = token_service.generate_access_token();
+        println!("access token: {:#?}", access_token);
+        assert!(1 == 2);
+    }
+}

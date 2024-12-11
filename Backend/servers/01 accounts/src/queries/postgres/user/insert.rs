@@ -15,15 +15,17 @@ pub async fn from_user(pool: &Pool<Postgres>, user: User) -> Result<(), sqlx::Er
         Err(err) => {
             println!("err: {:#?}", err);
             return Err(err);
-        },
+        }
         Ok(res) => {
             let user_id: i32 = res.get("id");
             // join for u.id where u.uuid = user.get_uuid()
-            let password_create_query = sqlx::query("INSERT INTO password_history(user_id, password_hash) VALUES (($1), ($2));")
-                .bind(user_id)
-                .bind(user.get_password())
-                .execute(pool)
-                .await;
+            let password_create_query = sqlx::query(
+                "INSERT INTO password_history(user_id, password_hash) VALUES (($1), ($2));",
+            )
+            .bind(user_id)
+            .bind(user.get_password())
+            .execute(pool)
+            .await;
             if let Err(err) = password_create_query {
                 println!("err: {:#?}", err);
                 return Err(err);

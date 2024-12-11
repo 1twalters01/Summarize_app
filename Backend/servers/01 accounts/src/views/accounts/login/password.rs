@@ -2,7 +2,8 @@ use actix_protobuf::ProtoBuf;
 use actix_web::{http::StatusCode, HttpRequest, Responder, Result};
 
 use crate::{
-    datatypes::response_types::{AppError, AppResponse}, generated::protos::accounts::{
+    datatypes::response_types::{AppError, AppResponse},
+    generated::protos::accounts::{
         auth_tokens::AuthTokens,
         login::password::{
             request::Request,
@@ -10,9 +11,15 @@ use crate::{
                 response::ResponseField, token::TokenField, Error, Response, Success, Token,
             },
         },
-    }, queries::postgres::user::update::update_login_time, services::{
+    },
+    queries::postgres::user::update::update_login_time,
+    services::{
         cache_service::CacheService, response_service::ResponseService, token_service::TokenService,
-    }, utils::{database_connections::{create_pg_pool_connection, create_redis_client_connection}, validations::validate_password}
+    },
+    utils::{
+        database_connections::{create_pg_pool_connection, create_redis_client_connection},
+        validations::validate_password,
+    },
 };
 
 pub async fn post_password(data: ProtoBuf<Request>, req: HttpRequest) -> Result<impl Responder> {
@@ -108,11 +115,14 @@ pub async fn post_password(data: ProtoBuf<Request>, req: HttpRequest) -> Result<
 
         // update last login time
         let pool = create_pg_pool_connection().await;
-        if update_login_time(&pool, chrono::Utc::now(), &user_uuid).await.is_err() {
+        if update_login_time(&pool, chrono::Utc::now(), &user_uuid)
+            .await
+            .is_err()
+        {
             return Ok(ResponseService::create_error_response(
-                    AppError::LoginPassword(Error::ServerError),
-                    StatusCode::INTERNAL_SERVER_ERROR
-                    ));
+                AppError::LoginPassword(Error::ServerError),
+                StatusCode::INTERNAL_SERVER_ERROR,
+            ));
         };
     }
 
@@ -151,8 +161,8 @@ mod tests {
                 },
             },
         },
-        models::user::User,
         middleware,
+        models::user::User,
         services::token_service::Claims,
         views::accounts::login::email::post_email,
     };

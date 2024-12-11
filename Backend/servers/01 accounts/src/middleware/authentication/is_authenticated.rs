@@ -3,6 +3,7 @@ use actix_web::{
     dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform},
     Error, HttpMessage, HttpResponse,
 };
+use chrono::Utc;
 use futures_util::future::{ok, Ready};
 use std::{future::Future, pin::Pin, rc::Rc};
 
@@ -51,9 +52,12 @@ where
             if let Some(auth_header) = req.headers().get("Authorization") {
                 if let Ok(auth_str) = auth_header.to_str() {
                     if let Ok(claims) = TokenService::get_claims_from_access_token(auth_str) {
-                        req.extensions_mut().insert(claims);
-                        let res = svc.call(req).await?;
-                        return Ok(res.map_into_left_body());
+                        let now = Utc::now().timestamp() as usize;
+                        if claims.exp >= now {
+                            req.extensions_mut().insert(claims);
+                            let res = svc.call(req).await?;
+                            return Ok(res.map_into_left_body());
+                        }
                     }
                 }
             }

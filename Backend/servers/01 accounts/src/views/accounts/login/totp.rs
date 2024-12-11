@@ -2,15 +2,23 @@ use actix_protobuf::ProtoBuf;
 use actix_web::{http::StatusCode, HttpRequest, Responder, Result};
 
 use crate::{
-    datatypes::response_types::{AppError, AppResponse}, generated::protos::accounts::{
+    datatypes::response_types::{AppError, AppResponse},
+    generated::protos::accounts::{
         auth_tokens::AuthTokens,
         login::totp::{
             request::Request,
             response::{response::ResponseField, Error, Response},
         },
-    }, models::user::User, queries::postgres::user::update::update_login_time, services::{
+    },
+    models::user::User,
+    queries::postgres::user::update::update_login_time,
+    services::{
         cache_service::CacheService, response_service::ResponseService, token_service::TokenService,
-    }, utils::{database_connections::{create_pg_pool_connection, create_redis_client_connection}, validations::validate_totp}
+    },
+    utils::{
+        database_connections::{create_pg_pool_connection, create_redis_client_connection},
+        validations::validate_totp,
+    },
 };
 
 pub async fn post_totp(data: ProtoBuf<Request>, req: HttpRequest) -> Result<impl Responder> {
@@ -77,7 +85,6 @@ pub async fn post_totp(data: ProtoBuf<Request>, req: HttpRequest) -> Result<impl
     let token_service = TokenService::from_uuid(&user_uuid);
     let access_token = token_service.generate_access_token().unwrap();
 
-
     // If remember_me then save the refresh token
 
     let auth_tokens = AuthTokens {
@@ -88,11 +95,14 @@ pub async fn post_totp(data: ProtoBuf<Request>, req: HttpRequest) -> Result<impl
 
     // update last login time
     let pool = create_pg_pool_connection().await;
-    if update_login_time(&pool, chrono::Utc::now(), &user_uuid).await.is_err() {
+    if update_login_time(&pool, chrono::Utc::now(), &user_uuid)
+        .await
+        .is_err()
+    {
         return Ok(ResponseService::create_error_response(
-                AppError::LoginTotp(Error::ServerError),
-                StatusCode::INTERNAL_SERVER_ERROR    
-            ));
+            AppError::LoginTotp(Error::ServerError),
+            StatusCode::INTERNAL_SERVER_ERROR,
+        ));
     };
 
     // delete old token
