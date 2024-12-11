@@ -45,7 +45,7 @@ impl<'a> TokenService<'a> {
 
         let now = Utc::now();
         let expiration = now
-            .checked_add_signed(Duration::days(1))
+            .checked_sub_signed(Duration::days(1))
             .unwrap()
             .timestamp() as usize;
 
