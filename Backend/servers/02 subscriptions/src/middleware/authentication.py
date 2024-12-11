@@ -10,6 +10,7 @@ def is_authenticated(request: Request):
     try:
         encoded_jwt = bearer[:7]
         decoded_jwt = jwt.decode(encoded_jwt, "secret", algorithms=["HS256"])
+        # Check expiration date as well
         user_uuid = decoded_jwt["sub"]
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token has expired")
