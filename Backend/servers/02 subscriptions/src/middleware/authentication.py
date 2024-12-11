@@ -8,6 +8,7 @@ load_dotenv()
 
 SECRET_KEY = str(os.getenv("JWT_SECRET"))
 
+
 def is_authenticated(request: Request):
     bearer: str | None = request.headers.get("bearer_token")
     if not bearer:
@@ -26,4 +27,3 @@ def is_authenticated(request: Request):
         raise HTTPException(status_code=401, detail="Invalid token")
 
     request.state.user_uuid = user_uuid
-

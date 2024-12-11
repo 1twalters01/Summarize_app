@@ -42,4 +42,3 @@ def save_subscriber(
     finally:
         db.close()
     # if error then return x else return y
-
