@@ -45,7 +45,7 @@ impl<'a> TokenService<'a> {
 
         let now = Utc::now();
         let expiration = now
-            .checked_add_signed(Duration::days(1))
+            .checked_sub_signed(Duration::days(1))
             .unwrap()
             .timestamp() as usize;
 
@@ -133,6 +133,6 @@ mod tests {
         let token_service = TokenService::from_uuid(&uuid);
         let access_token = token_service.generate_access_token();
         println!("access token: {:#?}", access_token);
-        // assert!(1 == 2); # An error allows you to print in a test
+        assert!(1 == 2);
     }
 }
