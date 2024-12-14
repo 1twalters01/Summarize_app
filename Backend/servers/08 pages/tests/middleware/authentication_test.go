@@ -1,19 +1,36 @@
 // authentication test
 
-package authentication_middleware_test
+package middleware_test
 
 import (
-    "net/http"
+	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
-	"time"
+    "time"
 
-    "pages/middleware"
+	"pages/middleware"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/assert"
 )
+
+func TestMain(m *testing.M) {
+	// Load the test .env file
+	err := godotenv.Load("../../.env")
+	if err != nil {
+		panic("Error loading test .env file")
+	}
+
+	// Run tests
+	os.Exit(m.Run())
+}
+
+func TestSecretKeyFromEnv(t *testing.T) {
+	secretKey := os.Getenv("JWT_SECRET")
+	assert.NotEmpty(t, secretKey, "JWT_SECRET should be loaded from .env")
+}
 
 func generateTestJWT(secret string, userID string) string {
     claims := jwt.MapClaims{
