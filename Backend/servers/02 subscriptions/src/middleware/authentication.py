@@ -20,7 +20,7 @@ def is_authenticated(request: Request):
             decoded_jwt = jwt.decode(encoded_jwt, SECRET_KEY, algorithms=["HS256"])
             user_uuid = decoded_jwt["sub"]
         else:
-            raise HTTPException(status_code=401, detail="Invalid token")
+            raise HTTPException(status_code=401, detail="Authorization token must be prefixed with 'Bearer '")
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token has expired")
     except jwt.InvalidTokenError:

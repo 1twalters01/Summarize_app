@@ -1,15 +1,15 @@
 package main
 
 import (
-    "github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin"
 )
 
 func main() {
-    r := gin.Default()
+	r := gin.Default()
 
-    config.LoadConfig()
+	config.LoadConfig()
 
-    routes.PagesRoutes(r)
+	routes.PagesRoutes(r)
 
-    r.Run(":8008")
+	r.Run(":8008")
 }
