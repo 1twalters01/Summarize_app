@@ -23,17 +23,11 @@ func HistoryRoutes(router *gin.RouterGroup) {
 
 	router.POST("/history/get", GetHistory)
 
-	// Get last n to m authors
-	// Get last n to m books
-	// Get last n to m summaries
-	// Get last n to m summarizers
-	// Get last n to m publishers
-
-	router.POST("/history/get/from_author/books", )
-	router.POST("/history/get/from_author/books", )
-	router.POST("/history/get/from_publisher/authors", )
-	router.POST("/history/get/from_publisher/books", )
-	router.POST("/history/get/from_publisher/summaries", )
-	router.POST("/history/get/from_summarizer/summaries", )
+	router.POST("/history/get/from_author/books", FromAuthorGetBooks)
+	router.POST("/history/get/from_author/summaries", FromAuthorGetSummaries)
+	router.POST("/history/get/from_publisher/authors", FromPublisherGetAuthors)
+	router.POST("/history/get/from_publisher/books", FromPublisherGetBooks)
+	router.POST("/history/get/from_publisher/summaries", FromPublisherGetSummaries)
+	router.POST("/history/get/from_summarizer/summaries", FromSummarizerGetSummaries)
 
 }

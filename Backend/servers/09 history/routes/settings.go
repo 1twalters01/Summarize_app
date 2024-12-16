@@ -4,7 +4,7 @@ import (
 )
 
 func SettingsRoutes(router *gin.RouterGroup) {
-	// Toggle record history
-	// post history duration (infinite or x days recorded)
-	// share (private, friends, all)
+	router.POST("/settings/history/record-history", ToggleHistory)
+	router.POST("/settings/history/duration", HistoryDuration)
+	router.POST("/settings/history/share", HistoryShareStatus)
 }
