@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-func RetrievePublisherInformation(c *gin.Context) {
+func ExamplePublisherInformation(c *gin.Context) {
 	var publisher_name services.PublisherNameInput
 	err := c.ShouldBindJSON(&publisher_name)
 	if err != nil {

@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-func RetrieveAuthorInformation(c *gin.Context) {
+func ExampleAuthorInformation(c *gin.Context) {
 	var author_name services.AuthorNameInput
 	err := c.ShouldBindJSON(&author_name)
 	if err != nil {

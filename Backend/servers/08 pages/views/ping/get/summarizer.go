@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-func RetrieveSummarizerInformation(c *gin.Context) {
+func ExampleSummarizerInformation(c *gin.Context) {
 	var summarizer_name services.SummarizerNameInput
 	err := c.ShouldBindJSON(&summarizer_name)
 	if err != nil {

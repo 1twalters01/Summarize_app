@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-func RetrieveBookInformation(c *gin.Context) {
+func ExampleBookInformation(c *gin.Context) {
 	var book_name services.BookNameInput
 	err := c.ShouldBindJSON(&book_name)
 	if err != nil {
