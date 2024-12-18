@@ -67,7 +67,7 @@ func AuthenticationMiddleware() gin.HandlerFunc {
 
 		// Set claims to context (if needed)
 		if claims, ok := token.Claims.(jwt.MapClaims); ok {
-			c.Set("userID", claims["user_id"])
+			c.Set("user_uuid", claims["user_uuid"])
 		} else {
 			c.JSON(
                 http.StatusUnauthorized,
