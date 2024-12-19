@@ -1,5 +1,4 @@
 // authentication middleware
-// authentication middleware
 
 package middleware
 
