@@ -1,10 +1,15 @@
-use crate::{middleware, views};
+use crate::{
+    middleware::authentication::authentication::{
+        Authenticated, AuthenticationMiddlewareFactory, NotAuthenticated,
+    },
+    views,
+};
 use actix_web::web::{post, scope, ServiceConfig};
 
 pub fn config(cfg: &mut ServiceConfig) {
     cfg.service(
         scope("/register")
-            .wrap(middleware::authentication::not_authenticated::NotAuthenticated)
+            .wrap(AuthenticationMiddlewareFactory::<NotAuthenticated>::new())
             .route(
                 "/email",
                 post().to(views::accounts::register::email::post_email),
@@ -24,7 +29,7 @@ pub fn config(cfg: &mut ServiceConfig) {
     )
     .service(
         scope("/login")
-            .wrap(middleware::authentication::not_authenticated::NotAuthenticated)
+            .wrap(AuthenticationMiddlewareFactory::<NotAuthenticated>::new())
             .route(
                 "/email",
                 post().to(views::accounts::login::email::post_email),
@@ -33,7 +38,11 @@ pub fn config(cfg: &mut ServiceConfig) {
                 "/password",
                 post().to(views::accounts::login::password::post_password),
             )
-            .route("/totp", post().to(views::accounts::login::totp::post_totp))
+            .route("/totp", post().to(views::accounts::login::totp::post_totp)),
+    )
+    .service(
+        scope("/login")
+            .wrap(AuthenticationMiddlewareFactory::<Authenticated>::new())
             .route(
                 "/refresh-token",
                 post().to(views::accounts::login::refresh::post_refresh_token),
@@ -41,7 +50,7 @@ pub fn config(cfg: &mut ServiceConfig) {
     )
     .service(
         scope("/password-reset")
-            .wrap(middleware::authentication::not_authenticated::NotAuthenticated)
+            .wrap(AuthenticationMiddlewareFactory::<NotAuthenticated>::new())
             .route(
                 "/email",
                 post().to(views::accounts::password_reset::email::post_email),

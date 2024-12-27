@@ -6,13 +6,13 @@ use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation}
 use uuid::Uuid;
 
 use crate::{
-    datatypes::claims::Claims, queries::postgres::refresh_token, utils::database_connections::create_pg_pool_connection,
+    datatypes::claims::Claims, queries::postgres::refresh_token,
+    utils::database_connections::create_pg_pool_connection,
 };
 
 pub struct TokenService<'a> {
     user_uuid: Option<&'a Uuid>,
 }
-
 
 impl<'a> TokenService<'a> {
     pub fn new() -> Self {
@@ -38,7 +38,7 @@ impl<'a> TokenService<'a> {
 
         let now = Utc::now();
         let expiration = now
-            .checked_add_signed(Duration::days(1))
+            .checked_add_signed(Duration::minutes(30))
             .unwrap()
             .timestamp() as usize;
 
@@ -57,14 +57,15 @@ impl<'a> TokenService<'a> {
         return Ok(access_token);
     }
 
-    pub fn generate_refresh_token(&self, remember_me: bool) -> Option<String> {
-        match remember_me {
-            true => return None,
-            false => return Some(self.generate_opaque_token_of_length(32)),
-        }
+    pub fn generate_refresh_token(&self) -> String {
+        self.generate_opaque_token_of_length(32)
     }
 
-    pub async fn save_refresh_token_to_postgres(&self, refresh_token: &str) -> Result<(), String> {
+    pub async fn save_refresh_token_to_postgres(
+        &self,
+        refresh_token: &str,
+        remember_me: bool,
+    ) -> Result<(), String> {
         if self.user_uuid == None {
             return Err(String::from("User UUID is None"));
         }
@@ -74,6 +75,7 @@ impl<'a> TokenService<'a> {
             &pool,
             self.user_uuid.unwrap(),
             refresh_token,
+            remember_me,
         )
         .await;
 

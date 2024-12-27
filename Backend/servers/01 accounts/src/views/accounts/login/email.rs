@@ -48,7 +48,8 @@ pub async fn post_email(data: ProtoBuf<Request>) -> Result<impl Responder> {
     let token: String = token_service.generate_opaque_token_of_length(25);
     let expiry_in_seconds: Option<i64> = Some(300);
     let mut cache_service = CacheService::new(create_redis_client_connection());
-    let cache_result = cache_service.store_token_for_user_uuid(&token, &user_uuid, expiry_in_seconds);
+    let cache_result =
+        cache_service.store_token_for_user_uuid(&token, &user_uuid, expiry_in_seconds);
 
     match cache_result {
         Ok(_) => {

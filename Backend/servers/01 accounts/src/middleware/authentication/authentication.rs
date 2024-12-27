@@ -18,12 +18,12 @@ impl AuthenticationBehaviour for NotAuthenticated {
     fn is_request_allowed(auth_header: Option<&str>) -> Result<(), &str> {
         if let Some(auth_str) = auth_header {
             if TokenService::get_claims_from_access_token(auth_str).is_ok() {
-                return Err("Authenticated")
+                return Err("Authenticated");
             } else {
-                return Err("Invalid token claims")
+                return Err("Invalid token claims");
             }
         } else {
-            return Ok(())
+            return Ok(());
         }
     }
 }
@@ -35,15 +35,15 @@ impl AuthenticationBehaviour for Authenticated {
             if let Ok(claims) = TokenService::get_claims_from_access_token(auth_str) {
                 let now = Utc::now().timestamp() as usize;
                 if claims.exp >= now {
-                    return Ok(())
+                    return Ok(());
                 } else {
-                    return Err("Invalid or expired token")
+                    return Err("Invalid or expired token");
                 }
             } else {
-                return Err("Invalid token claims")
+                return Err("Invalid token claims");
             }
         }
-        return Err("No authentication header")
+        return Err("No authentication header");
     }
 }
 impl Authenticated {
@@ -151,7 +151,7 @@ where
                 .json(serde_json::json!({
                     "error": is_request_allowed.err()
                 }))
-            .map_into_right_body();
+                .map_into_right_body();
             return Ok(req.into_response(response));
         })
     }

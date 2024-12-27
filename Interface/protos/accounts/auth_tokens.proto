@@ -4,5 +4,5 @@ package accounts.auth_tokens;
 
 message AuthTokens {
     string access = 1;
-    optional string refresh = 2;
+    string refresh = 2;
 }

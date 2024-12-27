@@ -1,4 +1,5 @@
 use crate::{
+    datatypes::claims::Claims,
     generated::protos::settings::profile::{
         confirmation::{
             response as confirmation_response, Error as PasswordError, Request as PasswordRequest,
@@ -9,7 +10,6 @@ use crate::{
             response::{response, Error as MainError, Response as MainResponse},
         },
     },
-    datatypes::claims::Claims,
     models::{password::Password, user::User},
     queries::{
         postgres::password_hash::get::all_previous_from_user,

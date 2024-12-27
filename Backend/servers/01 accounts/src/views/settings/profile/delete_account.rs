@@ -1,9 +1,9 @@
 use crate::{
+    datatypes::claims::Claims,
     generated::protos::settings::profile::confirmation::{
         response as confirmation_response, Error as PasswordError, Request as PasswordRequest,
         Response as PasswordResponse, Success as PasswordSuccess,
     },
-    datatypes::claims::Claims,
     models::user::User,
     queries::postgres::user::delete::from_uuid,
     utils::{database_connections::create_pg_pool_connection, validations::validate_password},

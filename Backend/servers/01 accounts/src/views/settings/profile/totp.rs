@@ -1,4 +1,5 @@
 use crate::{
+    datatypes::claims::Claims,
     generated::protos::settings::profile::{
         confirmation::{
             response as password_response, Error as PasswordError, Request as PasswordRequest,
@@ -12,7 +13,6 @@ use crate::{
             },
         },
     },
-    datatypes::claims::Claims,
     models::{totp::Totp, user::User},
     queries::redis::general::set_key_value_in_redis,
     services::token_service::TokenService,

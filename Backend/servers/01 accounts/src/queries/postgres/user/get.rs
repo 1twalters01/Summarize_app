@@ -1,9 +1,15 @@
-use crate::models::{totp::{Totp, TotpFields}, user::User};
+use crate::models::{
+    totp::{Totp, TotpFields},
+    user::User,
+};
 use chrono::{DateTime, Utc};
 use sqlx::{Pool, Postgres, Row};
 use uuid::Uuid;
 
-pub async fn uuid_from_email(pool: &Pool<Postgres>, email: &str) -> Result<Option<Uuid>, sqlx::Error> {
+pub async fn uuid_from_email(
+    pool: &Pool<Postgres>,
+    email: &str,
+) -> Result<Option<Uuid>, sqlx::Error> {
     let uuid_select_query = sqlx::query("Select uuid from users WHERE email=($1)")
         .bind(email)
         .fetch_all(pool)
@@ -22,8 +28,12 @@ pub async fn uuid_from_email(pool: &Pool<Postgres>, email: &str) -> Result<Optio
     }
 }
 
-pub async fn password_hash_from_uuid(pool: &Pool<Postgres>, uuid: &Uuid) -> Result<Option<String>, sqlx::Error> {
-    let uuid_select_query = sqlx::query("
+pub async fn password_hash_from_uuid(
+    pool: &Pool<Postgres>,
+    uuid: &Uuid,
+) -> Result<Option<String>, sqlx::Error> {
+    let uuid_select_query = sqlx::query(
+        "
         SELECT ph.password_hash
         FROM password_history ph
         INNER Join users u
@@ -31,10 +41,11 @@ pub async fn password_hash_from_uuid(pool: &Pool<Postgres>, uuid: &Uuid) -> Resu
         WHERE u.uuid=($1)
         ORDER BY ph.created_at DESC
         LIMIT 1
-    ")
-        .bind(uuid)
-        .fetch_one(pool)
-        .await;
+    ",
+    )
+    .bind(uuid)
+    .fetch_one(pool)
+    .await;
 
     match uuid_select_query {
         Err(err) => return Err(err),
@@ -49,17 +60,22 @@ pub async fn password_hash_from_uuid(pool: &Pool<Postgres>, uuid: &Uuid) -> Resu
     }
 }
 
-pub async fn totp_activation_status_from_uuid(pool: &Pool<Postgres>, uuid: &Uuid) -> Result<bool, sqlx::Error> {
-    let uuid_select_query = sqlx::query("
+pub async fn totp_activation_status_from_uuid(
+    pool: &Pool<Postgres>,
+    uuid: &Uuid,
+) -> Result<bool, sqlx::Error> {
+    let uuid_select_query = sqlx::query(
+        "
         SELECT ts.is_activated
         FROM totp_secrets ts
         INNER Join users u
         ON ts.user_id = u.id
         WHERE u.uuid=($1)
-    ")
-        .bind(uuid)
-        .fetch_one(pool)
-        .await;
+    ",
+    )
+    .bind(uuid)
+    .fetch_one(pool)
+    .await;
 
     match uuid_select_query {
         Err(err) => return Err(err),
@@ -74,17 +90,22 @@ pub async fn totp_activation_status_from_uuid(pool: &Pool<Postgres>, uuid: &Uuid
     }
 }
 
-pub async fn totp_from_uuid(pool: &Pool<Postgres>, uuid: &Uuid) -> Result<Option<Totp>, sqlx::Error> {
-    let uuid_select_query = sqlx::query("
+pub async fn totp_from_uuid(
+    pool: &Pool<Postgres>,
+    uuid: &Uuid,
+) -> Result<Option<Totp>, sqlx::Error> {
+    let uuid_select_query = sqlx::query(
+        "
         SELECT ts.encrypted_totp_key, last_updated, ts.is_activated, ts.is_verified, ts.verified_at
         FROM totp_secrets ts
         INNER Join users u
         ON ts.user_id = u.id
         WHERE u.uuid=($1)
-    ")
-        .bind(uuid)
-        .fetch_one(pool)
-        .await;
+    ",
+    )
+    .bind(uuid)
+    .fetch_one(pool)
+    .await;
 
     match uuid_select_query {
         Err(err) => return Err(err),
@@ -100,10 +121,14 @@ pub async fn totp_from_uuid(pool: &Pool<Postgres>, uuid: &Uuid) -> Result<Option
                 if let Some(last_updated) = last_updated {
                     totp_fields = Some(TotpFields {
                         key: encrypted_key,
-                        last_updated: last_updated
+                        last_updated: last_updated,
                     });
-                } else { totp_fields = None }
-            } else { totp_fields = None }
+                } else {
+                    totp_fields = None
+                }
+            } else {
+                totp_fields = None
+            }
 
             let totp: Totp;
             let is_activated: Option<bool> = res.get("is_activated");
@@ -115,11 +140,10 @@ pub async fn totp_from_uuid(pool: &Pool<Postgres>, uuid: &Uuid) -> Result<Option
                     return Ok(Some(totp));
                 }
             }
-            return Ok(None)
+            return Ok(None);
         }
     }
 }
-
 
 pub async fn from_email(pool: &Pool<Postgres>, email: &str) -> Result<Option<User>, sqlx::Error> {
     let user_select_query = sqlx::query("Select * from users WHERE email=($1)")

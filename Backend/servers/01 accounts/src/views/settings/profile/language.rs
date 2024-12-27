@@ -1,9 +1,9 @@
 use crate::{
+    datatypes::claims::Claims,
     generated::protos::settings::profile::language::{
         request::{Language, Request},
         response::{response, Error, Response, Success},
     },
-    datatypes::claims::Claims,
     models::user::User,
     utils::{database_connections::create_pg_pool_connection, validations::validate_language},
 };

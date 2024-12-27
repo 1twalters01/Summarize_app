@@ -21,8 +21,18 @@ pub struct TotpFields {
 }
 
 impl Totp {
-    pub fn from_all(activated: bool, verified: bool, verified_at: Option<DateTime<Utc>>, fields: Option<TotpFields>) -> Self {
-         return Totp { activated, verified, verified_at, fields }
+    pub fn from_all(
+        activated: bool,
+        verified: bool,
+        verified_at: Option<DateTime<Utc>>,
+        fields: Option<TotpFields>,
+    ) -> Self {
+        return Totp {
+            activated,
+            verified,
+            verified_at,
+            fields,
+        };
     }
 
     pub fn new() -> Self {

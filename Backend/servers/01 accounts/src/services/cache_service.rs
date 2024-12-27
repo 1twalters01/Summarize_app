@@ -78,11 +78,12 @@ impl CacheService {
     ) -> Result<Option<(Uuid, bool)>, String> {
         let redis_result: RedisResult<String> = get_key_from_value_in_redis(&mut self.con, token);
         match redis_result {
-            Ok(user_uuid_and_remember_me_json) => match serde_json::from_str(&user_uuid_and_remember_me_json)
-            {
-                Ok(user_uuid_and_remember_me) => return Ok(user_uuid_and_remember_me),
-                Err(err) => return Err(err.to_string()),
-            },
+            Ok(user_uuid_and_remember_me_json) => {
+                match serde_json::from_str(&user_uuid_and_remember_me_json) {
+                    Ok(user_uuid_and_remember_me) => return Ok(user_uuid_and_remember_me),
+                    Err(err) => return Err(err.to_string()),
+                }
+            }
             Err(err) => return Err(err.to_string()),
         }
     }

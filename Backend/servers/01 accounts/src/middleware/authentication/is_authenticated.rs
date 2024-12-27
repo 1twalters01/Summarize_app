@@ -64,28 +64,28 @@ where
                                 .json(serde_json::json!({
                                     "error": "Invalid or expired token"
                                 }))
-                            .map_into_right_body();
+                                .map_into_right_body();
                         }
                     } else {
                         response = HttpResponse::Unauthorized()
                             .json(serde_json::json!({
                                 "error": "Invalid token claims"
                             }))
-                        .map_into_right_body();
+                            .map_into_right_body();
                     }
                 } else {
                     response = HttpResponse::Unauthorized()
                         .json(serde_json::json!({
                             "error": "Invalid authorization header"
                         }))
-                    .map_into_right_body();
+                        .map_into_right_body();
                 }
             } else {
                 response = HttpResponse::Unauthorized()
-                .json(serde_json::json!({
-                    "error": "Authorization header is missing"
-                }))
-                .map_into_right_body();
+                    .json(serde_json::json!({
+                        "error": "Authorization header is missing"
+                    }))
+                    .map_into_right_body();
             }
 
             Ok(req.into_response(response))
