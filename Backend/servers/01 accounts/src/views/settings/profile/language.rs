@@ -3,8 +3,8 @@ use crate::{
         request::{Language, Request},
         response::{response, Error, Response, Success},
     },
+    datatypes::claims::Claims,
     models::user::User,
-    services::token_service::Claims,
     utils::{database_connections::create_pg_pool_connection, validations::validate_language},
 };
 

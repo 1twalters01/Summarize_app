@@ -9,9 +9,10 @@ use crate::{
             response::{response, Error as MainError, Response as MainResponse},
         },
     },
+    datatypes::claims::Claims,
     models::user::User,
     queries::{postgres::user::get::from_email, redis::general::set_key_value_in_redis},
-    services::token_service::{Claims, TokenService},
+    services::token_service::TokenService,
     utils::{
         database_connections::{create_pg_pool_connection, create_redis_client_connection},
         validations::{validate_email, validate_password},

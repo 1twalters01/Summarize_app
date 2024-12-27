@@ -12,9 +12,10 @@ use crate::{
             },
         },
     },
+    datatypes::claims::Claims,
     models::{totp::Totp, user::User},
     queries::redis::general::set_key_value_in_redis,
-    services::token_service::{Claims, TokenService},
+    services::token_service::TokenService,
     utils::{
         database_connections::{create_pg_pool_connection, create_redis_client_connection},
         validations::{validate_password, validate_totp},

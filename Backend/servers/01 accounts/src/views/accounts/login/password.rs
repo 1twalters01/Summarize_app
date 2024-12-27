@@ -182,8 +182,8 @@ mod tests {
             },
         },
         middleware,
+        datatypes::claims::Claims,
         models::user::User,
-        services::token_service::Claims,
         views::accounts::login::email::post_email,
     };
 

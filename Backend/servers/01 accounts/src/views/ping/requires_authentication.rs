@@ -1,7 +1,8 @@
-use crate::{
-    datatypes::ping::{DualMessage, Message},
-    services::token_service::Claims,
+use crate::datatypes::{
+    claims::Claims,
+    ping::{DualMessage, Message},
 };
+
 use actix_web::{web::Json, HttpMessage, HttpRequest, HttpResponse, Responder, Result};
 
 /// A get route function that requires the user to be authenticated

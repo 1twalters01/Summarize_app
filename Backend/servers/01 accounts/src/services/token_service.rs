@@ -3,23 +3,16 @@ use std::env;
 
 use chrono::{Duration, Utc};
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
-use serde::{Deserialize, Serialize};
-
 use uuid::Uuid;
 
 use crate::{
-    queries::postgres::refresh_token, utils::database_connections::create_pg_pool_connection,
+    datatypes::claims::Claims, queries::postgres::refresh_token, utils::database_connections::create_pg_pool_connection,
 };
 
 pub struct TokenService<'a> {
     user_uuid: Option<&'a Uuid>,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct Claims {
-    pub sub: String,
-    pub exp: usize,
-}
 
 impl<'a> TokenService<'a> {
     pub fn new() -> Self {

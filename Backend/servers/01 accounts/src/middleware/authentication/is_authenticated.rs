@@ -49,6 +49,8 @@ where
     fn call(&self, req: ServiceRequest) -> Self::Future {
         let svc = self.service.clone();
         Box::pin(async move {
+            let response: HttpResponse<EitherBody<B>>;
+
             if let Some(auth_header) = req.headers().get("Authorization") {
                 if let Ok(auth_str) = auth_header.to_str() {
                     if let Ok(claims) = TokenService::get_claims_from_access_token(auth_str) {
@@ -57,12 +59,35 @@ where
                             req.extensions_mut().insert(claims);
                             let res = svc.call(req).await?;
                             return Ok(res.map_into_left_body());
+                        } else {
+                            response = HttpResponse::Unauthorized()
+                                .json(serde_json::json!({
+                                    "error": "Invalid or expired token"
+                                }))
+                            .map_into_right_body();
                         }
+                    } else {
+                        response = HttpResponse::Unauthorized()
+                            .json(serde_json::json!({
+                                "error": "Invalid token claims"
+                            }))
+                        .map_into_right_body();
                     }
+                } else {
+                    response = HttpResponse::Unauthorized()
+                        .json(serde_json::json!({
+                            "error": "Invalid authorization header"
+                        }))
+                    .map_into_right_body();
                 }
+            } else {
+                response = HttpResponse::Unauthorized()
+                .json(serde_json::json!({
+                    "error": "Authorization header is missing"
+                }))
+                .map_into_right_body();
             }
 
-            let response = HttpResponse::Unauthorized().finish().map_into_right_body();
             Ok(req.into_response(response))
         })
     }
