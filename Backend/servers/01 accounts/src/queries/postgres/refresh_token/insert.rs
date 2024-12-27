@@ -8,9 +8,14 @@ pub async fn from_user_uuid_and_refresh_token(
 ) -> Result<(), sqlx::Error> {
     // Join for r.user_id = u.id where u.uuid = user_uuid
     let save_refresh_token_query =
-        sqlx::query("INSERT INTO refresh_tokens WHERE refresh_token=($1), username=($2)")
+        sqlx::query("
+            INSERT INTO refresh_tokens (user_id, refresh_token)
+            SELECT id, $1
+            FROM user u
+            WHERE uuid=($2)
+        ")
             .bind(refresh_token)
-            .bind(user_uuid.to_string())
+            .bind(user_uuid)
             .execute(pool)
             .await;
 

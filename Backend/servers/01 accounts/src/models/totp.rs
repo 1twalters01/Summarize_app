@@ -1,3 +1,4 @@
+use chrono::{DateTime, Utc};
 use data_encoding::BASE32;
 use hmac::{Hmac, Mac};
 use rand::Rng;
@@ -7,19 +8,24 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Totp {
+    pub activated: bool,
     pub verified: bool,
-    pub verified_at: Option<SystemTime>,
+    pub verified_at: Option<DateTime<Utc>>,
     pub fields: Option<TotpFields>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TotpFields {
     pub key: String,
-    pub last_updated: SystemTime,
+    pub last_updated: DateTime<Utc>,
 }
 
 impl Totp {
-    pub fn new() -> Totp {
+    pub fn from_all(activated: bool, verified: bool, verified_at: Option<DateTime<Utc>>, fields: Option<TotpFields>) -> Self {
+         return Totp { activated, verified, verified_at, fields }
+    }
+
+    pub fn new() -> Self {
         let mut rng = rand::thread_rng();
 
         let key_length: usize = rng.gen_range(21..=30);
@@ -32,10 +38,11 @@ impl Totp {
 
         let fields = Some(TotpFields {
             key: totp_url,
-            last_updated: SystemTime::now(),
+            last_updated: Utc::now(),
         });
 
         Totp {
+            activated: false,
             verified: false,
             verified_at: None,
             fields,
@@ -44,6 +51,7 @@ impl Totp {
 
     pub fn from_key(url: String) -> Totp {
         let mut totp = Totp {
+            activated: false,
             verified: false,
             verified_at: None,
             fields: None,
@@ -136,7 +144,7 @@ impl Totp {
         }
 
         self.verified = true;
-        self.verified_at = Some(SystemTime::now());
+        self.verified_at = Some(Utc::now());
         return Ok(());
     }
 
@@ -151,19 +159,19 @@ impl Totp {
         }
     }
 
-    pub fn get_last_updated(&self) -> Option<SystemTime> {
+    pub fn get_last_updated(&self) -> Option<DateTime<Utc>> {
         match self.fields.clone() {
             Some(fields) => return Some(fields.last_updated),
             None => return None,
         }
     }
 
-    pub fn get_verified_at(&self) -> Option<SystemTime> {
+    pub fn get_verified_at(&self) -> Option<DateTime<Utc>> {
         return self.verified_at;
     }
 
     pub fn set_url(&mut self, key: String) {
-        let now = SystemTime::now();
+        let now = Utc::now();
 
         if self.verified == false {
             self.verified = true;

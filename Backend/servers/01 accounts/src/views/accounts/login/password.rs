@@ -1,9 +1,9 @@
 use actix_protobuf::ProtoBuf;
 use actix_web::{http::StatusCode, HttpRequest, Responder, Result};
+use uuid::Uuid;
 
 use crate::{
-    datatypes::response_types::{AppError, AppResponse},
-    generated::protos::accounts::{
+    datatypes::response_types::{AppError, AppResponse}, generated::protos::accounts::{
         auth_tokens::AuthTokens,
         login::password::{
             request::Request,
@@ -11,15 +11,12 @@ use crate::{
                 response::ResponseField, token::TokenField, Error, Response, Success, Token,
             },
         },
-    },
-    queries::postgres::user::update::update_login_time,
-    services::{
-        cache_service::CacheService, response_service::ResponseService, token_service::TokenService,
-    },
-    utils::{
+    }, models::password::Password, queries::postgres::user::update::update_login_time, services::{
+        cache_service::CacheService, response_service::ResponseService, token_service::TokenService, user_service::UserService,
+    }, utils::{
         database_connections::{create_pg_pool_connection, create_redis_client_connection},
         validations::validate_password,
-    },
+    }
 };
 
 pub async fn post_password(data: ProtoBuf<Request>, req: HttpRequest) -> Result<impl Responder> {
@@ -31,16 +28,31 @@ pub async fn post_password(data: ProtoBuf<Request>, req: HttpRequest) -> Result<
         .unwrap()
         .to_string();
 
+    let user_uuid: Uuid;
     let mut cache_service = CacheService::new(create_redis_client_connection());
-    let cache_result = cache_service.get_user_from_token(&login_email_token);
-    let user = match cache_result {
-        Ok(Some(user)) => user,
+    let cache_result = cache_service.get_user_uuid_from_token(&login_email_token);
+    let (stored_password, totp_activation_status): (Password, bool) = match cache_result {
+        Ok(Some(uuid)) => {
+            user_uuid = uuid;
+            let user_service = UserService::new(create_pg_pool_connection().await);
+            let totp_activation_status = user_service.get_totp_activation_status_from_uuid(&user_uuid).await.expect("invalid uuid");
+            let password_option = user_service.get_password_from_uuid(&user_uuid).await.expect("invalid uuid");
+            match password_option {
+                Some(password) => (password, totp_activation_status),
+                None => {
+                    return Ok(ResponseService::create_error_response(
+                        AppError::LoginPassword(Error::ServerError),
+                        StatusCode::NOT_FOUND,
+                    ));
+                }
+            }
+        },
         Ok(None) => {
             return Ok(ResponseService::create_error_response(
                 AppError::LoginPassword(Error::UserNotFound),
                 StatusCode::NOT_FOUND,
             ));
-        }
+        },
         Err(err) => {
             println!("Error, {:?}", err);
             return Ok(ResponseService::create_error_response(
@@ -60,23 +72,22 @@ pub async fn post_password(data: ProtoBuf<Request>, req: HttpRequest) -> Result<
             AppError::LoginPassword(Error::InvalidPassword),
             StatusCode::UNPROCESSABLE_ENTITY,
         ));
-    } else if user.check_password(&password).is_err() {
+    } else if stored_password.check_password(&password).is_err() {
         return Ok(ResponseService::create_error_response(
             AppError::LoginPassword(Error::IncorrectPassword),
             StatusCode::UNAUTHORIZED,
         ));
     }
 
-    let user_uuid = user.get_uuid();
     let token_service = TokenService::from_uuid(&user_uuid);
     let app_response: AppResponse;
 
-    if user.is_totp_activated() == true {
+    if totp_activation_status == true {
         let token: String = token_service.generate_opaque_token_of_length(25);
-        let user_remember_me_json = serde_json::to_string(&(user, remember_me)).unwrap();
+        let user_uuid_and_remember_me_json = serde_json::to_string(&(user_uuid, remember_me)).unwrap();
         let expiry_in_seconds: Option<i64> = Some(300);
         let cache_result =
-            cache_service.store_key_value(&token, &user_remember_me_json, expiry_in_seconds);
+            cache_service.store_key_value(&token, &user_uuid_and_remember_me_json, expiry_in_seconds);
         if cache_result.is_err() {
             return Ok(ResponseService::create_error_response(
                 AppError::LoginPassword(Error::ServerError),
@@ -95,8 +106,17 @@ pub async fn post_password(data: ProtoBuf<Request>, req: HttpRequest) -> Result<
     } else {
         let refresh_token = token_service.generate_refresh_token(remember_me);
         let access_token = token_service.generate_access_token().unwrap();
-
+        
         // If remember_me then save the refresh token
+        if let Some(ref refresh_token) = refresh_token {
+            let save_result = token_service.save_refresh_token_to_postgres(&refresh_token).await;
+            if save_result.is_err() {
+                return Ok(ResponseService::create_error_response(
+                    AppError::LoginPassword(Error::ServerError),
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                ));
+            }
+        }
 
         let auth_tokens = AuthTokens {
             refresh: refresh_token,

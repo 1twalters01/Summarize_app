@@ -27,7 +27,7 @@ pub async fn post_email(data: ProtoBuf<Request>) -> Result<impl Responder> {
     }
 
     let user_service = UserService::new(create_pg_pool_connection().await);
-    let user = match user_service.get_user_from_email(&email).await {
+    let user_uuid: uuid::Uuid = match user_service.get_user_uuid_from_email(&email).await {
         Ok(Some(user)) => user,
         Ok(None) => {
             return Ok(ResponseService::create_error_response(
@@ -48,7 +48,7 @@ pub async fn post_email(data: ProtoBuf<Request>) -> Result<impl Responder> {
     let token: String = token_service.generate_opaque_token_of_length(25);
     let expiry_in_seconds: Option<i64> = Some(300);
     let mut cache_service = CacheService::new(create_redis_client_connection());
-    let cache_result = cache_service.store_token_for_user(&token, &user, expiry_in_seconds);
+    let cache_result = cache_service.store_token_for_user_uuid(&token, &user_uuid, expiry_in_seconds);
 
     match cache_result {
         Ok(_) => {

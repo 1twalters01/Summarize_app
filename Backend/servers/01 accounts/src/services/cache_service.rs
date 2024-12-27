@@ -1,4 +1,5 @@
 use redis::{Connection, RedisError, RedisResult};
+use uuid::Uuid;
 
 use crate::{
     models::user::User,
@@ -29,6 +30,16 @@ impl CacheService {
         delete_key_in_redis(&mut self.con, key)
     }
 
+    pub fn store_token_for_user_uuid(
+        &mut self,
+        token: &str,
+        user_uuid: &Uuid,
+        expiry_in_seconds: Option<i64>,
+    ) -> Result<(), RedisError> {
+        let user_json = serde_json::to_string(&user_uuid).unwrap();
+        set_key_value_in_redis(&mut self.con, token, &user_json, expiry_in_seconds)
+    }
+
     pub fn store_token_for_user(
         &mut self,
         token: &str,
@@ -37,6 +48,17 @@ impl CacheService {
     ) -> Result<(), RedisError> {
         let user_json = serde_json::to_string(&user).unwrap();
         set_key_value_in_redis(&mut self.con, token, &user_json, expiry_in_seconds)
+    }
+
+    pub fn get_user_uuid_from_token(&mut self, token: &str) -> Result<Option<Uuid>, String> {
+        let redis_result: RedisResult<String> = get_key_from_value_in_redis(&mut self.con, token);
+        match redis_result {
+            Ok(user_uuid_json) => match serde_json::from_str(&user_uuid_json) {
+                Ok(user_uuid) => return Ok(user_uuid),
+                Err(err) => return Err(err.to_string()),
+            },
+            Err(err) => return Err(err.to_string()),
+        }
     }
 
     pub fn get_user_from_token(&mut self, token: &str) -> Result<Option<User>, String> {
@@ -50,15 +72,15 @@ impl CacheService {
         }
     }
 
-    pub fn get_user_and_remember_me_from_token(
+    pub fn get_user_uuid_and_remember_me_from_token(
         &mut self,
         token: &str,
-    ) -> Result<Option<(User, bool)>, String> {
+    ) -> Result<Option<(Uuid, bool)>, String> {
         let redis_result: RedisResult<String> = get_key_from_value_in_redis(&mut self.con, token);
         match redis_result {
-            Ok(user_and_remember_me_json) => match serde_json::from_str(&user_and_remember_me_json)
+            Ok(user_uuid_and_remember_me_json) => match serde_json::from_str(&user_uuid_and_remember_me_json)
             {
-                Ok(user_and_remember_me) => return Ok(user_and_remember_me),
+                Ok(user_uuid_and_remember_me) => return Ok(user_uuid_and_remember_me),
                 Err(err) => return Err(err.to_string()),
             },
             Err(err) => return Err(err.to_string()),
