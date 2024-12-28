@@ -1,6 +1,6 @@
 use crate::{
     models::{password::Password, totp::Totp, user::User},
-    queries::postgres::user,
+    queries::postgres::{password_hash, user},
 };
 use sqlx::{Pool, Postgres};
 use uuid::Uuid;
@@ -51,6 +51,16 @@ impl UserService {
             Ok(None) => return Ok(None),
             Err(err) => return Err(err),
         }
+    }
+
+    pub async fn update_password_for_uuid(
+        &self,
+        password: &str,
+        uuid: &Uuid,
+    ) -> Result<(), sqlx::Error> {
+        let password_struct = Password::from_password(password).unwrap();
+        let password_hash = password_struct.get_password_hash_str();
+        password_hash::update::from_user_uuid(&self.pool, uuid, password_hash).await
     }
 
     pub async fn get_totp_activation_status_from_uuid(

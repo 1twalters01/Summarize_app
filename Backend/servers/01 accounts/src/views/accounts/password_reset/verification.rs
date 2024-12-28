@@ -60,7 +60,7 @@ async fn password_reset_verification_functionality(
                 AppError::PasswordResetVerification(Error::ServerError),
                 StatusCode::NOT_FOUND,
             ));
-        },
+        }
         Err(err) => {
             println!("Error, {:?}", err);
             return Ok(ResponseService::create_error_response(
@@ -91,7 +91,7 @@ async fn password_reset_verification_functionality(
     // delete old {key: token, value: email}
     cache_result = cache_service.delete_key(&token_tuple_json);
     if cache_result.is_err() {
-            return Ok(ResponseService::create_error_response(
+        return Ok(ResponseService::create_error_response(
             AppError::PasswordResetVerification(Error::ServerError),
             StatusCode::INTERNAL_SERVER_ERROR,
         ));

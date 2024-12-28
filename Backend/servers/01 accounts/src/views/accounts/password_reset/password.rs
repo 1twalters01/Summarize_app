@@ -1,5 +1,6 @@
 use actix_protobuf::ProtoBuf;
 use actix_web::{http::StatusCode, HttpRequest, Responder, Result};
+use uuid::Uuid;
 
 use crate::{
     datatypes::response_types::{AppError, AppResponse},
@@ -7,12 +8,9 @@ use crate::{
         request::Request,
         response::{response::ResponseField, Error, Response, Success},
     },
-    models::user::User,
-    queries::{
-        postgres::password_hash::update::from_user,
-        redis::{all::get_user_from_token_in_redis, general::delete_key_in_redis},
+    services::{
+        cache_service::CacheService, response_service::ResponseService, user_service::UserService,
     },
-    services::response_service::ResponseService,
     utils::{
         database_connections::{create_pg_pool_connection, create_redis_client_connection},
         validations::validate_password,
@@ -31,6 +29,25 @@ pub async fn post_password_reset(
         .unwrap()
         .to_string();
     println!("verification token: {:?}", verification_confirmation_token);
+
+    // get user from token in redis
+    let mut cache_service = CacheService::new(create_redis_client_connection());
+    let cache_result = cache_service.get_user_uuid_from_token(&verification_confirmation_token);
+    let user_uuid: Uuid = match cache_result {
+        Ok(Some(user_uuid)) => user_uuid,
+        Ok(None) => {
+            return Ok(ResponseService::create_error_response(
+                AppError::PasswordResetPassword(Error::InvalidCredentials),
+                StatusCode::NOT_FOUND,
+            ));
+        }
+        Err(_) => {
+            return Ok(ResponseService::create_error_response(
+                AppError::PasswordResetPassword(Error::InvalidCredentials),
+                StatusCode::UNPROCESSABLE_ENTITY,
+            ));
+        }
+    };
 
     let Request {
         password,
@@ -51,47 +68,21 @@ pub async fn post_password_reset(
         ));
     }
 
-    // get user from token in redis
-    let mut con = create_redis_client_connection();
-    let mut user: User =
-        match get_user_from_token_in_redis(&mut con, &verification_confirmation_token) {
-            // if error return error
-            Err(err) => {
-                println!("error: {:#?}", err);
-                return Ok(ResponseService::create_error_response(
-                    AppError::PasswordResetPassword(Error::InvalidCredentials),
-                    StatusCode::UNPROCESSABLE_ENTITY,
-                ));
-            }
-            Ok(email) => email,
-        };
-
     // if change is not allowed then error
-    let set_password_result = user.set_password(password);
-    if set_password_result.is_err() {
+    let user_service = UserService::new(create_pg_pool_connection().await);
+    let user_result = user_service
+        .update_password_for_uuid(&password, &user_uuid)
+        .await;
+    if user_result.is_err() {
         return Ok(ResponseService::create_error_response(
             AppError::PasswordResetPassword(Error::ServerError),
             StatusCode::INTERNAL_SERVER_ERROR,
         ));
     }
 
-    // save change in postgres
-    let pool = create_pg_pool_connection().await;
-    let update_result: Result<(), sqlx::Error> = from_user(&pool, &user).await;
-
-    // if sql update error then return an error
-    if update_result.is_err() {
-        return Ok(ResponseService::create_error_response(
-            AppError::PasswordResetPassword(Error::ServerError),
-            StatusCode::INTERNAL_SERVER_ERROR,
-        ));
-    }
-
-    con = create_redis_client_connection();
-    let delete_redis_result = delete_key_in_redis(&mut con, &verification_confirmation_token);
-
-    // if redis fails then return an error
-    if delete_redis_result.is_err() {
+    // delete used token
+    let cache_result = cache_service.delete_key(&verification_confirmation_token);
+    if cache_result.is_err() {
         return Ok(ResponseService::create_error_response(
             AppError::PasswordResetPassword(Error::ServerError),
             StatusCode::INTERNAL_SERVER_ERROR,
