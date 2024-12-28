@@ -1,6 +1,7 @@
 use actix_protobuf::ProtoBuf;
 use actix_web::{http::StatusCode, HttpRequest, Responder, Result};
 use serde::Deserialize;
+use uuid::Uuid;
 
 use crate::{
     datatypes::response_types::{AppError, AppResponse},
@@ -8,11 +9,9 @@ use crate::{
         request::Request,
         response::{response::ResponseField, Error, Response},
     },
-    queries::redis::{
-        all::get_user_json_from_token_struct_in_redis,
-        general::{delete_key_in_redis, set_key_value_in_redis},
+    services::{
+        cache_service::CacheService, response_service::ResponseService, token_service::TokenService,
     },
-    services::{response_service::ResponseService, token_service::TokenService},
     utils::database_connections::create_redis_client_connection,
 };
 
@@ -50,21 +49,26 @@ async fn password_reset_verification_functionality(
     verification_token: String,
 ) -> Result<impl Responder> {
     // Get email from token using redis
-    let token_struct: (&str, &str) = (&header_token, &verification_token);
-    let token_struct_json = serde_json::to_string(&token_struct).unwrap();
-    let mut con = create_redis_client_connection();
-    let user_json: String =
-        match get_user_json_from_token_struct_in_redis(&mut con, &token_struct_json) {
-            // if error return error
-            Err(err) => {
-                println!("error: {:#?}", err);
-                return Ok(ResponseService::create_error_response(
-                    AppError::PasswordResetVerification(Error::InvalidCredentials),
-                    StatusCode::UNPROCESSABLE_ENTITY,
-                ));
-            }
-            Ok(user_json) => user_json,
-        };
+    let token_tuple: (&str, &str) = (&header_token, &verification_token);
+    let token_tuple_json = serde_json::to_string(&token_tuple).unwrap();
+    let mut cache_service = CacheService::new(create_redis_client_connection());
+    let cache_result = cache_service.get_user_uuid_from_token(&token_tuple_json);
+    let user_uuid: Uuid = match cache_result {
+        Ok(Some(uuid)) => uuid,
+        Ok(None) => {
+            return Ok(ResponseService::create_error_response(
+                AppError::PasswordResetVerification(Error::ServerError),
+                StatusCode::NOT_FOUND,
+            ));
+        },
+        Err(err) => {
+            println!("Error, {:?}", err);
+            return Ok(ResponseService::create_error_response(
+                AppError::PasswordResetVerification(Error::InvalidCredentials),
+                StatusCode::UNPROCESSABLE_ENTITY,
+            ));
+        }
+    };
 
     // create a new token
     let token_service = TokenService::new();
@@ -72,13 +76,12 @@ async fn password_reset_verification_functionality(
 
     // add {key: token, value: email} to redis
     let expiry_in_seconds: Option<i64> = Some(1800);
-    let set_redis_result = set_key_value_in_redis(
-        &mut con,
+    let mut cache_result = cache_service.store_token_for_user_uuid(
         &password_reset_verification_token,
-        &user_json,
+        &user_uuid,
         expiry_in_seconds,
     );
-    if set_redis_result.is_err() {
+    if cache_result.is_err() {
         return Ok(ResponseService::create_error_response(
             AppError::PasswordResetVerification(Error::ServerError),
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -86,12 +89,9 @@ async fn password_reset_verification_functionality(
     }
 
     // delete old {key: token, value: email}
-    con = create_redis_client_connection();
-    let delete_redis_result = delete_key_in_redis(&mut con, &token_struct_json);
-
-    // if redis fails then return an error
-    if delete_redis_result.is_err() {
-        return Ok(ResponseService::create_error_response(
+    cache_result = cache_service.delete_key(&token_tuple_json);
+    if cache_result.is_err() {
+            return Ok(ResponseService::create_error_response(
             AppError::PasswordResetVerification(Error::ServerError),
             StatusCode::INTERNAL_SERVER_ERROR,
         ));

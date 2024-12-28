@@ -1,4 +1,3 @@
-use crate::models::user::User;
 use sqlx::{Pool, Postgres, Row};
 
 pub async fn from_all(

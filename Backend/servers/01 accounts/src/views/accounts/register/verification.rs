@@ -49,13 +49,13 @@ async fn register_verification_functionality(
     verification_token: String,
 ) -> Result<impl Responder> {
     // Form RegisterToken struct
-    let token_struct: (&str, &str) = (&header_token, &verification_token);
-    let token_struct_json = serde_json::to_string(&token_struct).unwrap();
-    println!("schema: {:#?}", token_struct_json);
+    let token_tuple: (&str, &str) = (&header_token, &verification_token);
+    let token_tuple_json = serde_json::to_string(&token_tuple).unwrap();
+    println!("schema: {:#?}", token_tuple_json);
 
     // Get email from token using redis
     let mut cache_service = CacheService::new(create_redis_client_connection());
-    let cache_result = cache_service.get_email_from_token_struct_json(&token_struct_json);
+    let cache_result = cache_service.get_email_from_token_struct_json(&token_tuple_json);
     let email: String = match cache_result {
         Err(_) => {
             return Ok(ResponseService::create_error_response(
@@ -79,7 +79,7 @@ async fn register_verification_functionality(
     }
 
     // delete old key
-    cache_result = cache_service.delete_key(&token_struct_json);
+    cache_result = cache_service.delete_key(&token_tuple_json);
     if cache_result.is_err() {
         return Ok(ResponseService::create_error_response(
             AppError::RegisterVerification(Error::IncorrectVerificationCode),

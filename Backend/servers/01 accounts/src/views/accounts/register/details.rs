@@ -7,7 +7,6 @@ use crate::{
         request::Request,
         response::{response::ResponseField, Error, Response, Success},
     },
-    queries::redis::general::delete_key_in_redis,
     services::{
         cache_service::CacheService, response_service::ResponseService, user_service::UserService,
     },
@@ -91,13 +90,15 @@ pub async fn post_details(data: ProtoBuf<Request>, req: HttpRequest) -> Result<i
     }
 
     let user_service = UserService::new(create_pg_pool_connection().await);
-    let user_result = user_service.save_new_user(
-        &username,
-        &email,
-        first_name.as_ref().map(|s| s.as_str()),
-        last_name.as_ref().map(|s| s.as_str()),
-        &password,
-    ).await;
+    let user_result = user_service
+        .save_new_user(
+            &username,
+            &email,
+            first_name.as_ref().map(|s| s.as_str()),
+            last_name.as_ref().map(|s| s.as_str()),
+            &password,
+        )
+        .await;
     if user_result.is_err() {
         return Ok(ResponseService::create_error_response(
             AppError::RegisterDetails(Error::ServerError),
