@@ -36,4 +36,3 @@ pub async fn verify_captcha(data: web::Json<CaptchaResponse>) -> Result<impl Res
             .json(res_body));
     }
 }
-

@@ -116,7 +116,7 @@ impl ResponseService {
             }
             AppError::CaptchaGet(err) => {
                 captcha_get_response::Response {
-                    response_field
+                    response_field:
                 }
             }
             AppError::CaptchaVerification(err) => {

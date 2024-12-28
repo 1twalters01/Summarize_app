@@ -25,7 +25,6 @@ pub async fn get_captcha() -> Result<impl Responder> {
         .add_chars(6)
         .apply_filter(Noise::new(0.4))
         .apply_filter(Dots::new(10));
-
     let image_data = captcha.as_png().unwrap();
 
     // get answer for captcha
@@ -61,7 +60,7 @@ pub async fn get_captcha() -> Result<impl Responder> {
     body.extend_from_slice(&image_data);
     body.extend_from_slice(b"\r\n");
 
-    // Add text part
+    // Add header token part
     body.extend_from_slice(format!("--{}\r\n", boundary).as_bytes());
     body.extend_from_slice(b"Content-Disposition: form-data; name=\"text\"\r\n");
     body.extend_from_slice(b"Content-Type: text/plain\r\n\r\n");
@@ -72,7 +71,7 @@ pub async fn get_captcha() -> Result<impl Responder> {
     body.extend_from_slice(format!("--{}--\r\n", boundary).as_bytes());
 
     return Ok(HttpResponse::Ok()
-        .content_type("application/json; charset=utf-8")
-        .json(body));
+        .content_type(format!("multipart/form-data; boundary={}", boundary))
+        .body(body))
 }
 
