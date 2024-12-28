@@ -14,6 +14,10 @@ use crate::generated::protos::{
             email::response as register_email_response,
             verification::response as register_verification_response,
         },
+        captcha::{
+            get::response as captcha_get_response,
+            verification::response as captcha_verification_response,
+        }
     },
     settings::profile::{
         confirmation as confirmation_response, email::response as change_email_response,
@@ -39,6 +43,10 @@ pub enum AppError {
     PasswordResetEmail(password_reset_email_response::Error),
     PasswordResetVerification(password_reset_verification_response::Error),
     PasswordResetPassword(password_reset_password_response::Error),
+
+    // Captch
+    CaptchaGet(captcha_get_response::Error),
+    CaptchaVerification(captcha_verification_response::Error)
 
     // Settings
     Confirmation(confirmation_response::Error),
@@ -67,6 +75,10 @@ pub enum AppResponse {
     PasswordResetEmail(password_reset_email_response::Response),
     PasswordResetVerification(password_reset_verification_response::Response),
     PasswordResetPassword(password_reset_password_response::Response),
+
+    // Captch
+    CaptchaGet(captcha_get_response::Response),
+    CaptchaVerification(captcha_verification_response::Response,)
 
     // Settings
     Confirmation(confirmation_response::Response),

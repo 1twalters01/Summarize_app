@@ -20,6 +20,10 @@ use crate::{
                 email::response as register_email_response,
                 verification::response as register_verification_response,
             },
+            captcha::{
+                get::response as captcha_get_response,
+                verification::response as captcha_verification_response,
+            },
         },
         settings::profile::{
             confirmation as confirmation_response, email::response as change_email_response,
@@ -109,6 +113,16 @@ impl ResponseService {
                         ),
                     ),
                 };
+            }
+            AppError::CaptchaGet(err) => {
+                captcha_get_response::Response {
+                    response_field
+                }
+            }
+            AppError::CaptchaVerification(err) => {
+                captcha_verification_response::Response {
+                    response_field
+                }
             }
             AppError::Confirmation(err) => {
                 confirmation_response::Response {
@@ -206,6 +220,12 @@ impl ResponseService {
                 .content_type("application/x-protobuf; charset=utf-8")
                 .protobuf(res),
             AppResponse::PasswordResetPassword(res) => HttpResponse::build(status)
+                .content_type("application/x-protobuf; charset=utf-8")
+                .protobuf(res),
+            AppResponse::CaptchaGet(res) => HttpResponse::build(status)
+                .content_type("application/x-protobuf; charset=utf-8")
+                .protobuf(res),
+            AppResponse::CaptchaResponse(res) => HttpResponse::build(status)
                 .content_type("application/x-protobuf; charset=utf-8")
                 .protobuf(res),
             AppResponse::Confirmation(res) => HttpResponse::build(status)
