@@ -46,8 +46,10 @@ pub async fn created_at_and_expires_at_from_refresh_token(
 
             let created_at: Option<DateTime<Utc>> = res.get("created_at");
             let expires_at: Option<DateTime<Utc>> = res.get("expires_at");
-            return Ok(Some((created_at.expect("invalid"), expires_at.expect("invalid"))));
+            return Ok(Some((
+                created_at.expect("invalid"),
+                expires_at.expect("invalid"),
+            )));
         }
     }
 }
-

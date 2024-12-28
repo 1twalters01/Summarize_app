@@ -7,11 +7,7 @@ use crate::{
         request::Request,
         response::{response::ResponseField, Error, Response, Success},
     },
-    models::user::User,
-    queries::{
-        postgres::user::insert::from_user,
-        redis::{all::get_email_from_token_struct_in_redis, general::delete_key_in_redis},
-    },
+    queries::redis::general::delete_key_in_redis,
     services::{
         cache_service::CacheService, response_service::ResponseService, user_service::UserService,
     },
@@ -24,14 +20,6 @@ use crate::{
 };
 
 pub async fn post_details(data: ProtoBuf<Request>, req: HttpRequest) -> Result<impl Responder> {
-    let Request {
-        username,
-        password,
-        password_confirmation,
-        first_name,
-        last_name,
-    } = data.0;
-
     let verification_confirmation_token: String = req
         .headers()
         .get("Register-Verification-Token")
@@ -41,31 +29,38 @@ pub async fn post_details(data: ProtoBuf<Request>, req: HttpRequest) -> Result<i
         .to_string();
 
     // get the email from redis using the token
-    let mut con = create_redis_client_connection();
-    let email: String =
-        match get_email_from_token_struct_in_redis(&mut con, &verification_confirmation_token) {
-            // if error return error
-            Err(err) => {
-                println!("error: {:#?}", err);
-                return Ok(ResponseService::create_error_response(
-                    AppError::RegisterDetails(Error::InvalidCredentials),
-                    StatusCode::UNPROCESSABLE_ENTITY,
-                ));
-            }
-            Ok(email) => email,
-        };
+    let mut cache_service = CacheService::new(create_redis_client_connection());
+    let cache_result = cache_service.get_email_from_token(&verification_confirmation_token);
+    let email: String = match cache_result {
+        // if error return error
+        Err(err) => {
+            println!("error: {:#?}", err);
+            return Ok(ResponseService::create_error_response(
+                AppError::RegisterDetails(Error::InvalidCredentials),
+                StatusCode::UNPROCESSABLE_ENTITY,
+            ));
+        }
+        Ok(email) => email,
+    };
 
-    if password != password_confirmation {
+    let Request {
+        username,
+        password,
+        password_confirmation,
+        first_name,
+        last_name,
+    } = data.0;
+
+    if validate_username(&username).is_err() {
         return Ok(ResponseService::create_error_response(
-            AppError::RegisterDetails(Error::IncorrectPasswordConfirmation),
+            AppError::RegisterDetails(Error::InvalidUsername),
             StatusCode::UNPROCESSABLE_ENTITY,
         ));
     }
 
-    // check if the username is already found in the database. If it is then return error
-    if validate_username(&username).is_err() {
+    if password != password_confirmation {
         return Ok(ResponseService::create_error_response(
-            AppError::RegisterDetails(Error::InvalidUsername),
+            AppError::RegisterDetails(Error::IncorrectPasswordConfirmation),
             StatusCode::UNPROCESSABLE_ENTITY,
         ));
     }
@@ -95,23 +90,15 @@ pub async fn post_details(data: ProtoBuf<Request>, req: HttpRequest) -> Result<i
         }
     }
 
-    let create_user: Result<User, std::io::Error> =
-        User::new(username, email, password, first_name, last_name);
-    if create_user.is_err() {
-        return Ok(ResponseService::create_error_response(
-            AppError::RegisterDetails(Error::ServerError),
-            StatusCode::INTERNAL_SERVER_ERROR,
-        ));
-    }
-
-    let user: User = create_user.unwrap();
-
-    // save details to the user to postgres
-    let pool = create_pg_pool_connection().await;
-    let save_user_result: Result<(), sqlx::Error> = from_user(&pool, user).await;
-
-    // if error then return error
-    if save_user_result.is_err() {
+    let user_service = UserService::new(create_pg_pool_connection().await);
+    let user_result = user_service.save_new_user(
+        &username,
+        &email,
+        first_name.as_ref().map(|s| s.as_str()),
+        last_name.as_ref().map(|s| s.as_str()),
+        &password,
+    ).await;
+    if user_result.is_err() {
         return Ok(ResponseService::create_error_response(
             AppError::RegisterDetails(Error::ServerError),
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -119,11 +106,8 @@ pub async fn post_details(data: ProtoBuf<Request>, req: HttpRequest) -> Result<i
     }
 
     // delete old {key: token, value: email}
-    con = create_redis_client_connection();
-    let delete_redis_result = delete_key_in_redis(&mut con, &verification_confirmation_token);
-
-    // if redis fails then return an error
-    if delete_redis_result.is_err() {
+    let cache_result = cache_service.delete_key(&verification_confirmation_token);
+    if cache_result.is_err() {
         return Ok(ResponseService::create_error_response(
             AppError::RegisterDetails(Error::ServerError),
             StatusCode::INTERNAL_SERVER_ERROR,

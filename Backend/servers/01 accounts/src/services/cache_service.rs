@@ -40,6 +40,15 @@ impl CacheService {
         set_key_value_in_redis(&mut self.con, token, &user_json, expiry_in_seconds)
     }
 
+    pub fn store_token_for_email(
+        &mut self,
+        token: &str,
+        email: &str,
+        expiry_in_seconds: Option<i64>,
+    ) -> Result<(), RedisError> {
+        set_key_value_in_redis(&mut self.con, token, &email, expiry_in_seconds)
+    }
+
     pub fn store_token_for_user(
         &mut self,
         token: &str,
@@ -84,6 +93,26 @@ impl CacheService {
                     Err(err) => return Err(err.to_string()),
                 }
             }
+            Err(err) => return Err(err.to_string()),
+        }
+    }
+
+    pub fn get_email_from_token_struct_json(
+        &mut self,
+        token_struct_json: &str,
+    ) -> Result<String, String> {
+        let redis_result: RedisResult<String> =
+            get_key_from_value_in_redis(&mut self.con, token_struct_json);
+        match redis_result {
+            Ok(email) => return Ok(email),
+            Err(err) => return Err(err.to_string()),
+        }
+    }
+
+    pub fn get_email_from_token(&mut self, token: &str) -> Result<String, String> {
+        let redis_result: RedisResult<String> = get_key_from_value_in_redis(&mut self.con, token);
+        match redis_result {
+            Ok(email) => return Ok(email),
             Err(err) => return Err(err.to_string()),
         }
     }

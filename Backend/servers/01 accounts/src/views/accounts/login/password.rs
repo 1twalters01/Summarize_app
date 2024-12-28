@@ -189,7 +189,8 @@ mod tests {
     use std::env;
 
     use crate::{
-        datatypes::claims::Claims, generated::protos::accounts::{
+        datatypes::claims::Claims,
+        generated::protos::accounts::{
             auth_tokens::AuthTokens,
             login::email::{
                 request::Request as EmailRequest,
@@ -197,7 +198,11 @@ mod tests {
                     response::ResponseField as EmailResponseField, Response as EmailResponse,
                 },
             },
-        }, middleware, models::user::User, queries::postgres::refresh_token, views::accounts::login::email::post_email
+        },
+        middleware,
+        models::user::User,
+        queries::postgres::refresh_token,
+        views::accounts::login::email::post_email,
     };
 
     #[actix_web::test]
@@ -277,7 +282,13 @@ mod tests {
                         TokenField::Tokens(AuthTokens { access, refresh }) => {
                             // get expiration timestamp of refresh token
                             let pool = create_pg_pool_connection().await;
-                            let (created_at, expires_at): (DateTime<Utc>, DateTime<Utc>) = refresh_token::get::created_at_and_expires_at_from_refresh_token(&pool, &refresh).await.unwrap().expect("Invalid token");
+                            let (created_at, expires_at): (DateTime<Utc>, DateTime<Utc>) =
+                                refresh_token::get::created_at_and_expires_at_from_refresh_token(
+                                    &pool, &refresh,
+                                )
+                                .await
+                                .unwrap()
+                                .expect("Invalid token");
                             // if expiration token more than 2 days
                             if expires_at - created_at != TimeDelta::days(1) {
                                 println!("requires totp: {}", requires_totp);
@@ -392,7 +403,13 @@ mod tests {
                         }
                         TokenField::Tokens(AuthTokens { access, refresh }) => {
                             let pool = create_pg_pool_connection().await;
-                            let (created_at, expires_at): (DateTime<Utc>, DateTime<Utc>) = refresh_token::get::created_at_and_expires_at_from_refresh_token(&pool, &refresh).await.unwrap().expect("Invalid token");
+                            let (created_at, expires_at): (DateTime<Utc>, DateTime<Utc>) =
+                                refresh_token::get::created_at_and_expires_at_from_refresh_token(
+                                    &pool, &refresh,
+                                )
+                                .await
+                                .unwrap()
+                                .expect("Invalid token");
 
                             if expires_at - created_at != TimeDelta::days(7) {
                                 println!("requires totp: {}", requires_totp);

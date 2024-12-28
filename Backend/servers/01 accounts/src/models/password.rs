@@ -15,8 +15,8 @@ pub struct Password {
 }
 
 impl Password {
-    pub fn from_password(password: String) -> Result<Self, Error> {
-        match validate_password(&password) {
+    pub fn from_password(password: &str) -> Result<Self, Error> {
+        match validate_password(password) {
             Ok(_) => return Ok(hash_password(password)),
             Err(err) => return Err(err),
         }
@@ -26,12 +26,16 @@ impl Password {
         return Ok(Password { password_hash });
     }
 
-    pub fn get_password_string(&self) -> String {
+    pub fn get_password_hash_str(&self) -> &str {
+        return &self.password_hash;
+    }
+
+    pub fn get_password_hash_string(&self) -> String {
         return self.password_hash.clone();
     }
 
-    pub fn set_password(&mut self, password: String) -> Result<(), Error> {
-        match validate_password(&password) {
+    pub fn set_password(&mut self, password: &str) -> Result<(), Error> {
+        match validate_password(password) {
             Ok(_) => {
                 *self = hash_password(password);
 
@@ -57,7 +61,7 @@ fn validate_password(password: &str) -> Result<(), Error> {
     return Ok(());
 }
 
-fn hash_password(password: String) -> Password {
+fn hash_password(password: &str) -> Password {
     // Argon2 with default params (Argon2id v19)
     let argon2 = Argon2::default();
     let salt = SaltString::generate(&mut OsRng);

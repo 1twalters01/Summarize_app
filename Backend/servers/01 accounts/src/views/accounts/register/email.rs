@@ -19,10 +19,7 @@ use crate::{
 };
 
 pub async fn post_email(data: ProtoBuf<Request>) -> Result<impl Responder> {
-    // Get email from posted data
     let Request { email } = data.0;
-
-    // Validate email
     if validate_email(&email).is_err() {
         return Ok(ResponseService::create_error_response(
             AppError::RegisterEmail(Error::InvalidEmail),
@@ -30,11 +27,11 @@ pub async fn post_email(data: ProtoBuf<Request>) -> Result<impl Responder> {
         ));
     }
 
-    // Ensure that no user exists for email
+    // Check if email is in use
     let user_service = UserService::new(create_pg_pool_connection().await);
     let _ = match user_service.get_user_from_email(&email).await {
         Ok(Some(_)) => {
-            println!("No user found");
+            println!("Email is in use");
             return Ok(ResponseService::create_error_response(
                 AppError::RegisterEmail(Error::RegisteredEmail),
                 StatusCode::CONFLICT,

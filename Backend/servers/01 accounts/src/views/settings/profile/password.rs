@@ -140,9 +140,9 @@ pub async fn post_password(
     }
 
     // hash password
-    let password_hash = Password::from_password(password)
+    let password_hash = Password::from_password(&password)
         .unwrap()
-        .get_password_string();
+        .get_password_hash_string();
 
     // Generate token
     let token_service = TokenService::new();

@@ -8,13 +8,8 @@ use crate::{
         request,
         response::{response::ResponseField, Error, Response},
     },
-    queries::redis::{
-        all::get_email_from_token_struct_in_redis,
-        general::{delete_key_in_redis, set_key_value_in_redis},
-    },
     services::{
-        cache_service::CacheService, response_service::ResponseService,
-        token_service::TokenService, user_service::UserService,
+        cache_service::CacheService, response_service::ResponseService, token_service::TokenService,
     },
     utils::database_connections::create_redis_client_connection,
 };
@@ -59,9 +54,9 @@ async fn register_verification_functionality(
     println!("schema: {:#?}", token_struct_json);
 
     // Get email from token using redis
-    let mut con = create_redis_client_connection();
-    let email: String = match get_email_from_token_struct_in_redis(&mut con, &token_struct_json) {
-        // if error return error
+    let mut cache_service = CacheService::new(create_redis_client_connection());
+    let cache_result = cache_service.get_email_from_token_struct_json(&token_struct_json);
+    let email: String = match cache_result {
         Err(_) => {
             return Ok(ResponseService::create_error_response(
                 AppError::RegisterVerification(Error::IncorrectVerificationCode),
@@ -71,28 +66,21 @@ async fn register_verification_functionality(
         Ok(email) => email,
     };
 
-    // create a new token
     let token_service = TokenService::new();
     let register_verification_token = token_service.generate_opaque_token_of_length(64);
-
-    // add {key: token, value: email} to redis
     let expiry_in_seconds: Option<i64> = Some(1800);
-    let set_redis_result = set_key_value_in_redis(
-        &mut con,
+    let mut cache_result = cache_service.store_token_for_email(
         &register_verification_token,
         &email,
         expiry_in_seconds,
     );
-    if set_redis_result.is_err() {
+    if cache_result.is_err() {
         panic!("redis error, panic debug")
     }
 
-    // delete old {key: token, value: email}
-    con = create_redis_client_connection();
-    let delete_redis_result = delete_key_in_redis(&mut con, &token_struct_json);
-
-    // if redis fails then return an error
-    if delete_redis_result.is_err() {
+    // delete old key
+    cache_result = cache_service.delete_key(&token_struct_json);
+    if cache_result.is_err() {
         return Ok(ResponseService::create_error_response(
             AppError::RegisterVerification(Error::IncorrectVerificationCode),
             StatusCode::INTERNAL_SERVER_ERROR,

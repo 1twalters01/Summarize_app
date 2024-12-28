@@ -1,13 +1,19 @@
 use crate::models::user::User;
 use sqlx::{Pool, Postgres, Row};
 
-pub async fn from_user(pool: &Pool<Postgres>, user: User) -> Result<(), sqlx::Error> {
-    let user_create_query = sqlx::query("INSERT INTO users(uuid, username, email, first_name, last_name) VALUES (($1), ($2), ($3), ($4), ($5));")
-        .bind(user.get_uuid())
-        .bind(user.get_username())
-        .bind(user.get_email())
-        .bind(user.get_first_name())
-        .bind(user.get_last_name())
+pub async fn from_all(
+    pool: &Pool<Postgres>,
+    username: &str,
+    email: &str,
+    first_name: Option<&str>,
+    last_name: Option<&str>,
+    password_hash: &str,
+) -> Result<(), sqlx::Error> {
+    let user_create_query = sqlx::query("INSERT INTO users(username, email, first_name, last_name) VALUES (($1), ($2), ($3), ($4)) RETURNING id;")
+        .bind(username)
+        .bind(email)
+        .bind(first_name)
+        .bind(last_name)
         .fetch_one(pool)
         .await;
 
@@ -23,7 +29,7 @@ pub async fn from_user(pool: &Pool<Postgres>, user: User) -> Result<(), sqlx::Er
                 "INSERT INTO password_history(user_id, password_hash) VALUES (($1), ($2));",
             )
             .bind(user_id)
-            .bind(user.get_password())
+            .bind(password_hash)
             .execute(pool)
             .await;
             if let Err(err) = password_create_query {

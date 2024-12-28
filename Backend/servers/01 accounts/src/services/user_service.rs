@@ -14,6 +14,27 @@ impl UserService {
         Self { pool }
     }
 
+    pub async fn save_new_user(
+        &self,
+        username: &str,
+        email: &str,
+        first_name: Option<&str>,
+        last_name: Option<&str>,
+        password: &str,
+    ) -> Result<(), sqlx::Error> {
+        let password_struct = Password::from_password(password).unwrap();
+        let password_hash = password_struct.get_password_hash_str();
+        user::insert::from_all(
+            &self.pool,
+            username,
+            email,
+            first_name,
+            last_name,
+            password_hash,
+        )
+        .await
+    }
+
     pub async fn get_user_uuid_from_email(&self, email: &str) -> Result<Option<Uuid>, sqlx::Error> {
         user::get::uuid_from_email(&self.pool, &email).await
     }

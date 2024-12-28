@@ -43,7 +43,7 @@ impl User {
         first_name: Option<String>,
         last_name: Option<String>,
     ) -> Result<Self, Error> {
-        match Password::from_password(password) {
+        match Password::from_password(&password) {
             Ok(password) => {
                 let user = Self {
                     uuid: Uuid::new_v4(),
@@ -151,12 +151,12 @@ impl User {
         return self.email.to_owned();
     }
 
-    pub fn get_password(&self) -> String {
-        return self.password.get_password_string();
+    pub fn get_password_hash(&self) -> String {
+        return self.password.get_password_hash_string();
     }
 
     pub fn set_password(&mut self, password: String) -> Result<(), Error> {
-        return Password::set_password(&mut self.password, password);
+        return Password::set_password(&mut self.password, &password);
     }
 
     pub fn check_password(&self, password: &str) -> Result<(), Error> {
