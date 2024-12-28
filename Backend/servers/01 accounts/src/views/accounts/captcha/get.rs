@@ -65,13 +65,13 @@ pub async fn get_captcha() -> Result<impl Responder> {
     body.extend_from_slice(format!("--{}\r\n", boundary).as_bytes());
     body.extend_from_slice(b"Content-Disposition: form-data; name=\"text\"\r\n");
     body.extend_from_slice(b"Content-Type: text/plain\r\n\r\n");
-    body.extend_from_slice(answer.as_bytes());
+    body.extend_from_slice(token.as_bytes());
     body.extend_from_slice(b"\r\n");
 
     // End the multipart body
     body.extend_from_slice(format!("--{}--\r\n", boundary).as_bytes());
 
-    return Ok(HttpResponse::Unauthorized()
+    return Ok(HttpResponse::Ok()
         .content_type("application/json; charset=utf-8")
         .json(body));
 }
