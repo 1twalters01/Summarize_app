@@ -7,7 +7,10 @@ enum Error {
     SERVER_ERROR = 1;
 }
 
-message Success {}
+message Success {
+    bytes image_data = 1;
+    string token = 2;
+}
 
 message Response {
   oneof response_field {

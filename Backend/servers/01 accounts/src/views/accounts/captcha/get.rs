@@ -9,7 +9,10 @@ use crate::{
         all::get_code_from_token_in_redis,
         general::set_key_value_in_redis,
     },
-    accounts::schema::captcha::{AccountError, CaptchaResponse, CaptchaResponseSchema, GetCaptchaResponseSchema},
+    services::{
+        cache_service::CacheService, response_service::ResponseService,
+        token_service::TokenService, user_service::UserService,
+    },
     utils::{
         database_connections::create_redis_client_connection,
         tokens::generate_opaque_token_of_length,
@@ -17,17 +20,12 @@ use crate::{
 };
 
 pub async fn get_captcha() -> Result<impl Responder> {
-    let mut res_body: GetCaptchaResponseSchema = GetCaptchaResponseSchema::new();
-
-    // generate captcha
-    let mut captcha = Captcha::new();
-    captcha
+    // generate captcha - find a better (more up to date) library or do it myself
+    let mut captcha = Captcha::new()
         .add_chars(6)
         .apply_filter(Noise::new(0.4))
         .apply_filter(Dots::new(10));
-    let image_data = captcha.as_png().unwrap();
-
-    // get answer for captcha
+    let image_data = captcha.as_png().unwrap(); // as bytes
     let answer: String = captcha.chars_as_string();
 
     // generate 64 bit token
@@ -40,15 +38,13 @@ pub async fn get_captcha() -> Result<impl Responder> {
 
     // if redis fails then return an error
     if set_redis_result.is_err() {
-        res_body.account_error = AccountError {
-            is_error: true,
-            error_message: Some(String::from("Server error")),
-        };
-        return Ok(HttpResponse::FailedDependency()
-            .content_type("application/json; charset=utf-8")
-            .json(res_body));
+        return Ok(ResponseService::create_error_response(
+            AppError::CaptchaGet(Error::ServerError),
+            StatusCode::INTERNAL_SERVER_ERROR,
+        ));
     }
 
+    /* ----------------------------------------- Version 1 ----------------------------------------- */
     // create body that will be used for multipart
     let mut body = Vec::new();
     let boundary = "BOUNDARY";
@@ -73,5 +69,20 @@ pub async fn get_captcha() -> Result<impl Responder> {
     return Ok(HttpResponse::Ok()
         .content_type(format!("multipart/form-data; boundary={}", boundary))
         .body(body))
+    
+
+    /* ----------------------------------------- Version 1 ----------------------------------------- */
+    // Make this a protobuf. ImageData, Token. Have height and width as well?
+    let response = CaptchaResponse {
+        image_data: image_data.clone(),
+        token: token.clone(),
+    };
+
+    return Ok(ResponseService::create_success_response(
+        AppResponse::CaptchaGet(Response {
+            response_field: Some(ResponseField::Success(response)),
+        }),
+        StatusCode::OK,
+    ));
 }
 
