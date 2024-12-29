@@ -116,13 +116,21 @@ impl ResponseService {
             }
             AppError::CaptchaGet(err) => {
                 captcha_get_response::Response {
-                    response_field:
-                }
+                    response_field: Some(
+                        captcha_get_response::response::ResponseField::Error(
+                            err as i32,
+                        ),
+                    ),
+                };
             }
             AppError::CaptchaVerification(err) => {
                 captcha_verification_response::Response {
-                    response_field
-                }
+                    response_field: Some(
+                        captcha_verification_response::response::ResponseField::Error(
+                            err as i32,
+                        ),
+                    ),
+                };
             }
             AppError::Confirmation(err) => {
                 confirmation_response::Response {

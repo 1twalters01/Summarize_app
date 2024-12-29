@@ -10,8 +10,7 @@ enum Error {
     SERVER_ERROR = 4;
 }
 
-message Success {
-}
+message Success {}
 
 message Response {
   oneof response_field {
