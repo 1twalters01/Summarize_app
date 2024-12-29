@@ -30,14 +30,14 @@ pub async fn get_captcha() -> Result<impl Responder> {
 
     // generate 64 bit token
     let token = generate_opaque_token_of_length(64);
-
-    // save { key: token, value: answer } to redis
     let expiry_in_seconds: Option<i64> = Some(300);
-    let con = create_redis_client_connection();
-    let set_redis_result = set_key_value_in_redis(con, &token, &answer, expiry_in_seconds);
+    let mut cache_service = CacheService::new(create_redis_client_connection());
+    let cache_result =
+        cache_service.store_answer_for_token_uuid(&answer, &token, expiry_in_seconds);
 
     // if redis fails then return an error
-    if set_redis_result.is_err() {
+    if cache_result.is_err() {
+        println!("{:#?}", cache_result.err());
         return Ok(ResponseService::create_error_response(
             AppError::CaptchaGet(Error::ServerError),
             StatusCode::INTERNAL_SERVER_ERROR,

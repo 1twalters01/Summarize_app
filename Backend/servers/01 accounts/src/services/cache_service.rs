@@ -30,6 +30,16 @@ impl CacheService {
         delete_key_in_redis(&mut self.con, key)
     }
 
+    pub fn store_answer_for_token(
+        &mut self,
+        answer: &str,
+        token: &str,
+        expiry_in_seconds: Option<i64>,
+    ) -> Result<(), RedisError> {
+        set_key_value_in_redis(&mut self.con, token, answer, expiry_in_seconds)
+    }
+
+    // Flip these name and parameters to store_user_uuid_for_token
     pub fn store_token_for_user_uuid(
         &mut self,
         token: &str,
@@ -39,7 +49,7 @@ impl CacheService {
         let user_json = serde_json::to_string(&user_uuid).unwrap();
         set_key_value_in_redis(&mut self.con, token, &user_json, expiry_in_seconds)
     }
-
+    // Flip to store_email_token
     pub fn store_token_for_email(
         &mut self,
         token: &str,
@@ -49,6 +59,7 @@ impl CacheService {
         set_key_value_in_redis(&mut self.con, token, &email, expiry_in_seconds)
     }
 
+    // store_user_for_token
     pub fn store_token_for_user(
         &mut self,
         token: &str,
