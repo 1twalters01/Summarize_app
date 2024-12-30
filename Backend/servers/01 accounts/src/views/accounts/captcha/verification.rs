@@ -3,15 +3,28 @@ use captcha::{
     filters::{Dots, Noise},
     Captcha,
 };
+use crate::{
+    datatypes::response_types::{AppError, AppResponse},
+    generated::protos::accounts::captcha::verification::{
+        request::Request,
+        response::{response::ResponseField, Error, Response, Success},
+    },
+    services::{
+        cache_service::CacheService,
+        responose_service::ResponseService,
+    },
+}
 
 pub async fn verify_captcha(data: web::Json<CaptchaResponse>) -> Result<impl Responder> {
     let CaptchaResponse { token, response } = data.into_inner();
     let mut res_body: CaptchaResponseSchema = CaptchaResponseSchema::new();
 
     // Retrieve the solution from the session or database
-    let con = create_redis_client_connection();
-    let solution: String = match get_code_from_token_in_redis(con, &token) {
-        // if error return error
+    let mut cache_service = CacheService::new(create_redis_client_connection());
+    let cache_result =
+        cache_service.get_answer_from_token(&token);
+    let solution = match cache_result {
+        Ok(solution) => solution,
         Err(err) => {
             let error: AccountError = AccountError {
                 is_error: true,
@@ -22,17 +35,19 @@ pub async fn verify_captcha(data: web::Json<CaptchaResponse>) -> Result<impl Res
                 .content_type("application/json; charset=utf-8")
                 .json(res_body));
         }
-        Ok(solution) => solution,
-    };
+    }
 
     if response == solution {
-        res_body.success = true;
-        return Ok(HttpResponse::UnprocessableEntity()
-            .content_type("application/json; charset=utf-8")
-            .json(res_body));
+        return Ok(ResponseService::create_success_response(
+            AppResponse::CaptchaVerification(Response {
+                response_field: Some(ResponseField::Success(Success {})),
+            }),
+            StatusCode::OK,
+        ));
     } else {
-        return Ok(HttpResponse::Unauthorized()
-            .content_type("application/json; charset=utf-8")
-            .json(res_body));
+        return Ok(ResponseService::create_error_response(
+            AppError::CaptchaGet(Error::IncorrectCaptcha),
+            StatusCode::UNAUTHORIZED,
+        ));
     }
 }

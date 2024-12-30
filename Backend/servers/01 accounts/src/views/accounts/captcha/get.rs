@@ -5,6 +5,11 @@ use captcha::{
 };
 
 use crate::{
+    datatypes::response_types::{AppError, AppResponse},
+    generated::protos::accounts::captcha::get::{
+        request::Request,
+        response::{response::ResponseField, Error, Response, Success},
+    },
     queries::redis::{
         all::get_code_from_token_in_redis,
         general::set_key_value_in_redis,
@@ -33,7 +38,7 @@ pub async fn get_captcha() -> Result<impl Responder> {
     let expiry_in_seconds: Option<i64> = Some(300);
     let mut cache_service = CacheService::new(create_redis_client_connection());
     let cache_result =
-        cache_service.store_answer_for_token_uuid(&answer, &token, expiry_in_seconds);
+        cache_service.store_answer_for_token(&answer, &token, expiry_in_seconds);
 
     // if redis fails then return an error
     if cache_result.is_err() {
