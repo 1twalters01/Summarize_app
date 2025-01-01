@@ -38,6 +38,7 @@ pub async fn verify_captcha(data: web::Json<CaptchaResponse>) -> Result<impl Res
     }
 
     if response == solution {
+        // Save that captcha was successful for given ip for x mins
         return Ok(ResponseService::create_success_response(
             AppResponse::CaptchaVerification(Response {
                 response_field: Some(ResponseField::Success(Success {})),

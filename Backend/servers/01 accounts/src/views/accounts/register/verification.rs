@@ -24,6 +24,8 @@ pub async fn post_verify(
     data: ProtoBuf<request::Request>,
     req: HttpRequest,
 ) -> Result<impl Responder> {
+    // Check if ip has verified captcha
+    
     let request::Request { verification_code } = data.0;
     let register_email_token: String = req
         .headers()

@@ -21,6 +21,8 @@ pub async fn post_password_reset(
     data: ProtoBuf<Request>,
     req: HttpRequest,
 ) -> Result<impl Responder> {
+    // Check if ip has verified captcha
+    
     let verification_confirmation_token: String = req
         .headers()
         .get("Password-Reset-Verification-Token")

@@ -26,6 +26,8 @@ use crate::{
 };
 
 pub async fn post_password(data: ProtoBuf<Request>, req: HttpRequest) -> Result<impl Responder> {
+    // Check if ip has verified captcha
+    
     let login_email_token: String = req
         .headers()
         .get("Login-Email-Token")
