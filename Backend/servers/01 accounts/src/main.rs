@@ -12,8 +12,6 @@ pub mod services;
 pub mod utils;
 pub mod views;
 
-pub mod accounts;
-
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     dotenv().ok();
