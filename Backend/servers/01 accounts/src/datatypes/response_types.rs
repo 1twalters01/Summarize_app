@@ -46,7 +46,7 @@ pub enum AppError {
 
     // Captch
     CaptchaGet(captcha_get_response::Error),
-    CaptchaVerification(captcha_verification_response::Error)
+    CaptchaVerification(captcha_verification_response::Error),
 
     // Settings
     Confirmation(confirmation_response::Error),
@@ -78,7 +78,7 @@ pub enum AppResponse {
 
     // Captch
     CaptchaGet(captcha_get_response::Response),
-    CaptchaVerification(captcha_verification_response::Response,)
+    CaptchaVerification(captcha_verification_response::Response),
 
     // Settings
     Confirmation(confirmation_response::Response),

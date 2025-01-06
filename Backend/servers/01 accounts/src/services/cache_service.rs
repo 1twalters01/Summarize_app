@@ -44,10 +44,10 @@ impl CacheService {
         answer: &str,
     ) -> Result<String, RedisError> {
         let redis_result: RedisResult<String> =
-            get_key_from_value_in_redis(&mut self.con, token_struct_json);
+            get_key_from_value_in_redis(&mut self.con, answer);
         match redis_result {
             Ok(answer) => return Ok(answer),
-            Err(err) => return Err(err.to_string()),
+            Err(err) => return Err(err),
         }
     }
 

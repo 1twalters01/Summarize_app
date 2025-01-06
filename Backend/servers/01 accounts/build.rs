@@ -33,8 +33,8 @@ fn main() {
         "/accounts/password_reset/password/request.proto",
         "/accounts/password_reset/password/response.proto",
         "/accounts/captcha/get/response.proto",
-        "/accounts/captcha/verify/request.proto",
-        "/accounts/captcha/verify/response.proto",
+        "/accounts/captcha/verification/request.proto",
+        "/accounts/captcha/verification/response.proto",
     ]);
     let filename_vec = &protobuf_location_vec
         .into_iter()

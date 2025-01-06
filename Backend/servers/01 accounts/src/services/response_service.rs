@@ -233,10 +233,7 @@ impl ResponseService {
             AppResponse::CaptchaGet(res) => HttpResponse::build(status)
                 .content_type("application/x-protobuf; charset=utf-8")
                 .protobuf(res),
-            // AppResponse::CaptchaGet(res) => HttpResponse::build(status)
-            //     .content_type(format!("multipart/form-data; boundary={}", boundary))
-            //     .body(body),
-            AppResponse::CaptchaResponse(res) => HttpResponse::build(status)
+            AppResponse::CaptchaVerification(res) => HttpResponse::build(status)
                 .content_type("application/x-protobuf; charset=utf-8")
                 .protobuf(res),
             AppResponse::Confirmation(res) => HttpResponse::build(status)
