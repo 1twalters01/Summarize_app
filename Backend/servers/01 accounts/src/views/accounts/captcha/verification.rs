@@ -1,8 +1,5 @@
-use actix_web::{web, HttpResponse, Responder, Result};
-use captcha::{
-    filters::{Dots, Noise},
-    Captcha,
-};
+use actix_protobuf::ProtoBuf;
+use actix_web::{http::StatusCode, HttpRequest, Responder, Result};
 use crate::{
     datatypes::response_types::{AppError, AppResponse},
     generated::protos::accounts::captcha::verification::{
@@ -11,33 +8,36 @@ use crate::{
     },
     services::{
         cache_service::CacheService,
-        responose_service::ResponseService,
-    },
-}
+        response_service::ResponseService,
+    }, utils::database_connections::create_redis_client_connection,
+};
 
-pub async fn verify_captcha(data: web::Json<CaptchaResponse>) -> Result<impl Responder> {
-    let CaptchaResponse { token, response } = data.into_inner();
-    let mut res_body: CaptchaResponseSchema = CaptchaResponseSchema::new();
+pub async fn verify_captcha(data: ProtoBuf<Request>, req: HttpRequest) -> Result<impl Responder> {
+    let captcha_verification_token: String = req
+        .headers()
+        .get("Captcha-Verification-Token")
+        .unwrap()
+        .to_str()
+        .unwrap()
+        .to_string();
 
-    // Retrieve the solution from the session or database
+    let Request { input_solution } = data.0;
+
+    // Retrieve the stored_solution from the session or database
     let mut cache_service = CacheService::new(create_redis_client_connection());
     let cache_result =
-        cache_service.get_answer_from_token(&token);
-    let solution = match cache_result {
-        Ok(solution) => solution,
-        Err(err) => {
-            let error: AccountError = AccountError {
-                is_error: true,
-                error_message: Some(err),
-            };
-            res_body.account_error = error;
-            return Ok(HttpResponse::UnprocessableEntity()
-                .content_type("application/json; charset=utf-8")
-                .json(res_body));
+        cache_service.get_answer_from_token(&captcha_verification_token);
+    let stored_solution = match cache_result {
+        Ok(stored_solution) => stored_solution,
+        Err(_) => {
+            return Ok(ResponseService::create_error_response(
+                AppError::CaptchaVerification(Error::IncorrectCaptcha),
+                StatusCode::UNPROCESSABLE_ENTITY,
+            ));
         }
-    }
+    };
 
-    if response == solution {
+    if input_solution == stored_solution {
         // Save that captcha was successful for given ip for x mins
         // Or just create a jwt (or something else) with an expiry date
         return Ok(ResponseService::create_success_response(
@@ -48,7 +48,7 @@ pub async fn verify_captcha(data: web::Json<CaptchaResponse>) -> Result<impl Res
         ));
     } else {
         return Ok(ResponseService::create_error_response(
-            AppError::CaptchaGet(Error::IncorrectCaptcha),
+            AppError::CaptchaVerification(Error::IncorrectCaptcha),
             StatusCode::UNAUTHORIZED,
         ));
     }

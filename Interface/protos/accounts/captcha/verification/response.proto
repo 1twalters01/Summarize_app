@@ -1,10 +1,11 @@
 syntax = "proto3";
 
-package accounts.captcha.verify.request;
+package accounts.captcha.verification.response;
 
 enum Error {
     TOO_MANY_REQUESTS = 0;
     SERVER_ERROR = 1;
+    INCORRECT_CAPTCHA = 2;
 }
 
 message Success {}

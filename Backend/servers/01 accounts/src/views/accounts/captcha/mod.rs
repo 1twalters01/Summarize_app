@@ -1,2 +1,2 @@
 pub mod get;
-// pub mod verification;
+pub mod verification;
