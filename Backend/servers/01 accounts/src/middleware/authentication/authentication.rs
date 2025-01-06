@@ -7,7 +7,7 @@ use chrono::Utc;
 use futures_util::future::{ok, Ready};
 use std::{any::TypeId, future::Future, pin::Pin, rc::Rc};
 
-use crate::{datatypes::claims::Claims, services::token_service::TokenService};
+use crate::{datatypes::claims::UserClaims, services::token_service::TokenService};
 
 pub trait AuthenticationBehaviour {
     fn is_request_allowed(auth_header: Option<&str>) -> Result<(), &str>;
@@ -47,7 +47,7 @@ impl AuthenticationBehaviour for Authenticated {
     }
 }
 impl Authenticated {
-    fn get_claims(auth_header: Option<&str>) -> Result<Claims, String> {
+    fn get_claims(auth_header: Option<&str>) -> Result<UserClaims, String> {
         if let Some(auth_str) = auth_header {
             match TokenService::get_claims_from_access_token(auth_str) {
                 Ok(claims) => return Ok(claims),

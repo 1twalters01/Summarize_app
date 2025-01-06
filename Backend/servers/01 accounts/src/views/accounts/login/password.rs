@@ -191,7 +191,7 @@ mod tests {
     use std::env;
 
     use crate::{
-        datatypes::claims::Claims,
+        datatypes::claims::UserClaims,
         generated::protos::accounts::{
             auth_tokens::AuthTokens,
             login::email::{
@@ -307,7 +307,7 @@ mod tests {
                             let decoding_key =
                                 jsonwebtoken::DecodingKey::from_secret(secret.as_ref());
                             let decoded =
-                                jsonwebtoken::decode::<Claims>(&access, &decoding_key, &validation);
+                                jsonwebtoken::decode::<UserClaims>(&access, &decoding_key, &validation);
                             let user_uuid = env::var("TEST_UUID").unwrap();
                             if let Ok(token_data) = decoded {
                                 assert!(user_uuid == token_data.claims.sub);
@@ -428,7 +428,7 @@ mod tests {
                             let decoding_key =
                                 jsonwebtoken::DecodingKey::from_secret(secret.as_ref());
                             let decoded =
-                                jsonwebtoken::decode::<Claims>(&access, &decoding_key, &validation);
+                                jsonwebtoken::decode::<UserClaims>(&access, &decoding_key, &validation);
                             let user_uuid = env::var("TEST_UUID_WITH_TOTP").unwrap();
                             if let Ok(token_data) = decoded {
                                 assert!(user_uuid == token_data.claims.sub);

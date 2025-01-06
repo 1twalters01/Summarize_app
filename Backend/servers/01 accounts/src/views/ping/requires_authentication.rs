@@ -1,5 +1,5 @@
 use crate::datatypes::{
-    claims::Claims,
+    claims::UserClaims,
     ping::{DualMessage, Message},
 };
 
@@ -11,8 +11,8 @@ pub async fn ping_get_only_auth(req: HttpRequest) -> Result<impl Responder> {
         message: String::from("Ping only authorized level from server"),
     };
 
-    let claims = req.extensions().get::<Claims>().unwrap().clone();
-    println!("Claims: {:#?}", claims);
+    let claims = req.extensions().get::<UserClaims>().unwrap().clone();
+    println!("UserClaims: {:#?}", claims);
 
     return Ok(HttpResponse::Ok()
         .content_type("application/json; charset=utf-8")

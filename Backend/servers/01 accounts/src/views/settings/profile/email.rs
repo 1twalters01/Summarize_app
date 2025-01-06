@@ -1,5 +1,5 @@
 use crate::{
-    datatypes::claims::Claims,
+    datatypes::claims::UserClaims,
     generated::protos::settings::profile::{
         confirmation::{
             response as confirmation_response, Error as PasswordError, Request as PasswordRequest,
@@ -50,7 +50,7 @@ pub async fn post_email(
     }
 
     // Validate user
-    let user_uuid: String = match req.extensions().get::<Claims>() {
+    let user_uuid: String = match req.extensions().get::<UserClaims>() {
         Some(claims) => claims.sub.clone(),
         None => {
             let response: MainResponse = MainResponse {
@@ -167,7 +167,7 @@ pub async fn post_confirmation(
     }
 
     // Validate user
-    let user_uuid: String = match req.extensions().get::<Claims>() {
+    let user_uuid: String = match req.extensions().get::<UserClaims>() {
         Some(claims) => claims.sub.clone(),
         None => {
             let response: PasswordResponse = PasswordResponse {

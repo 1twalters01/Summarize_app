@@ -1,5 +1,5 @@
 use crate::{
-    datatypes::claims::Claims,
+    datatypes::claims::UserClaims,
     generated::protos::settings::profile::language::{
         request::{Language, Request},
         response::{response, Error, Response, Success},
@@ -32,7 +32,7 @@ pub async fn post_language(
     }
 
     // Validate user
-    let user_uuid: String = match req.extensions().get::<Claims>() {
+    let user_uuid: String = match req.extensions().get::<UserClaims>() {
         Some(claims) => claims.sub.clone(),
         None => {
             let response: Response = Response {

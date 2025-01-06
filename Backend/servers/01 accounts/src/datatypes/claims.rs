@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::net::SocketAddr;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct Claims {
+pub struct UserClaims {
     pub sub: String,
     pub exp: usize,
 }
