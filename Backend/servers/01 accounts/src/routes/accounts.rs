@@ -1,10 +1,13 @@
 use crate::{
-    middleware::authentication::authentication::{
-        Authenticated, AuthenticationMiddlewareFactory, NotAuthenticated,
+    middleware::{
+        authentication::authentication::{
+            Authenticated, AuthenticationMiddlewareFactory, NotAuthenticated,
+        },
+        verified_captcha::IsVerified as VerificationMiddleware,
     },
     views,
 };
-use actix_web::web::{post, scope, ServiceConfig};
+use actix_web::web::{get, post, scope, ServiceConfig};
 
 pub fn config(cfg: &mut ServiceConfig) {
     cfg.service(
@@ -14,6 +17,7 @@ pub fn config(cfg: &mut ServiceConfig) {
                 "/email",
                 post().to(views::accounts::register::email::post_email),
             )
+            .wrap(VerificationMiddleware)
             .route(
                 "/verify",
                 post().to(views::accounts::register::verification::post_verify),
@@ -34,6 +38,7 @@ pub fn config(cfg: &mut ServiceConfig) {
                 "/email",
                 post().to(views::accounts::login::email::post_email),
             )
+            .wrap(VerificationMiddleware)
             .route(
                 "/password",
                 post().to(views::accounts::login::password::post_password),
@@ -55,6 +60,7 @@ pub fn config(cfg: &mut ServiceConfig) {
                 "/email",
                 post().to(views::accounts::password_reset::email::post_email),
             )
+            .wrap(VerificationMiddleware)
             .route(
                 "/verify",
                 post().to(views::accounts::password_reset::verification::post_verify),
@@ -67,12 +73,12 @@ pub fn config(cfg: &mut ServiceConfig) {
                 "/password",
                 post().to(views::accounts::password_reset::password::post_password_reset),
             ),
+    )
+    .service(
+        scope("/captcha")
+            .route("/get", get().to(views::accounts::captcha::get::get_captcha))
+            .route("/verify", post().to(views::accounts::captcha::verification::verify_captcha)),
     );
-    // .service(
-    //     scope("/captcha")
-    //         .route("/get", get().to(views::accounts::captcha::get_captcha))
-    //         .route("/verify", post().to(views::accounts::captcha::verification_captcha)),
-    // )
     // .service(
     //     scope("/oauth2")
     //         .wrap(middleware::authentication::not_authenticated::NotAuthenticated)

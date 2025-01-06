@@ -1,10 +1,13 @@
 use actix_web::{
     body::{BoxBody, EitherBody},
     dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform},
-    Error, HttpMessage, HttpResponse,
+    Error, HttpResponse,
 };
+use chrono::Utc;
 use futures_util::future::{ok, Ready};
-use std::{any::TypeId, future::Future, pin::Pin, rc::Rc};
+use std::{future::Future, pin::Pin, rc::Rc};
+
+use crate::services::token_service::TokenService;
 
 pub struct IsVerified;
 pub struct IsVerifiedMiddleware<S> {
@@ -30,7 +33,7 @@ where
     }
 }
 
-impl<S, B> Service<ServiceRequest> for IsAuthenticatedMiddleware<S>
+impl<S, B> Service<ServiceRequest> for IsVerifiedMiddleware<S>
 where
     S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error> + 'static,
     S::Future: 'static,
@@ -46,11 +49,54 @@ where
         let svc = self.service.clone();
         Box::pin(async move {
             let response: HttpResponse<EitherBody<B>>;
+
+            if let Some(captcha_header) = req.headers().get("Captcha") {
+                if let Ok(captcha_str) = captcha_header.to_str() {
+                    if let Ok(claims) = TokenService::get_claims_from_captcha_token(captcha_str) {
+                        let now = Utc::now().timestamp() as usize;
+                        if claims.exp < now {
+                            response = HttpResponse::Unauthorized()
+                                .json(serde_json::json!({
+                                    "error": "Invalid or expired token"
+                                }))
+                                .map_into_right_body();
+                        } else {
+                            let ip = req.peer_addr();
+                            if Some(claims.ip) != ip {
+                                let res = svc.call(req).await?;
+                                return Ok(res.map_into_left_body());
+                            } else {
+                                response = HttpResponse::Unauthorized()
+                                    .json(serde_json::json!({
+                                        "error": "Invalid ip address"
+                                    }))
+                                .map_into_right_body();
+                            }
+                        }
+                    } else {
+                        response = HttpResponse::Unauthorized()
+                            .json(serde_json::json!({
+                                "error": "Invalid token claims"
+                            }))
+                            .map_into_right_body();
+                    }
+                } else {
+                    response = HttpResponse::Unauthorized()
+                        .json(serde_json::json!({
+                            "error": "Invalid captcha header"
+                        }))
+                        .map_into_right_body();
+                }
+            } else {
+                response = HttpResponse::Unauthorized()
+                    .json(serde_json::json!({
+                        "error": "Captcha header is missing"
+                    }))
+                    .map_into_right_body();
+            }
+
+            Ok(req.into_response(response))
         })
 
-        if let Some(captcha_header) = req.headers().get("Captcha") {
-            if let Ok(captcha_str) = captcha_header.to_str() {
-            }
-        }
     }
 }

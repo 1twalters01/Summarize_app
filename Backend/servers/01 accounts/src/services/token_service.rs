@@ -6,7 +6,7 @@ use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation}
 use uuid::Uuid;
 
 use crate::{
-    datatypes::claims::Claims, queries::postgres::refresh_token,
+    datatypes::claims::{CaptchaClaims, Claims}, queries::postgres::refresh_token,
     utils::database_connections::create_pg_pool_connection,
 };
 
@@ -83,6 +83,16 @@ impl<'a> TokenService<'a> {
             Ok(_) => return Ok(()),
             Err(err) => return Err(err.to_string()),
         };
+    }
+
+    pub fn get_claims_from_captcha_token(captcha_token: &str) -> Result<CaptchaClaims, String> {
+        let secret = env::var("JWT_SECRET").unwrap();
+        let validation = Validation::default();
+        let decoding_key = DecodingKey::from_secret(secret.as_ref());
+        match decode::<CaptchaClaims>(captcha_token, &decoding_key, &validation) {
+            Ok(token_data) => return Ok(token_data.claims),
+            Err(err) => return Err(err.to_string()),
+        }
     }
 
     pub fn get_claims_from_access_token(access_token: &str) -> Result<Claims, String> {
