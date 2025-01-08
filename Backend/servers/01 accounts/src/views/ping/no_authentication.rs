@@ -32,7 +32,10 @@ pub async fn ping_post_not_auth(data: Json<Message>) -> Result<impl Responder> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{middleware, services::token_service::TokenService};
+    use crate::{
+        middleware::authentication::{AuthenticationMiddlewareFactory, NotAuthenticated},
+        services::token_service::TokenService
+    };
     use actix_http::Request as HttpRequest;
     use actix_web::{dev::ServiceResponse, test, web, App, Error as ActixError};
     use dotenv::dotenv;
@@ -46,7 +49,7 @@ mod tests {
         return test::init_service(
             App::new().service(
                 web::scope("/ping")
-                    .wrap(middleware::authentication::not_authenticated::NotAuthenticated)
+                    .wrap(AuthenticationMiddlewareFactory::<NotAuthenticated>::new())
                     .route("/get_not_auth", web::get().to(ping_get_not_auth))
                     .route("/post_not_auth", web::post().to(ping_post_not_auth)),
             ),

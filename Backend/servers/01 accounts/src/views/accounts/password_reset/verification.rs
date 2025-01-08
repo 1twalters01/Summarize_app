@@ -49,7 +49,7 @@ async fn password_reset_verification_functionality(
     verification_token: String,
 ) -> Result<impl Responder> {
     // Check if ip has verified captcha
-    
+
     // Get email from token using redis
     let token_tuple: (&str, &str) = (&header_token, &verification_token);
     let token_tuple_json = serde_json::to_string(&token_tuple).unwrap();

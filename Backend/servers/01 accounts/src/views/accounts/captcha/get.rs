@@ -1,7 +1,4 @@
-use actix_web::{
-    http::StatusCode,
-    Responder, Result
-};
+use actix_web::{http::StatusCode, Responder, Result};
 use captcha::{
     filters::{Dots, Noise},
     Captcha,
@@ -10,12 +7,10 @@ use captcha::{
 use crate::{
     datatypes::response_types::{AppError, AppResponse},
     generated::protos::accounts::captcha::get::response::{
-        response::ResponseField, Error, Response, Success as CaptchaResponse
+        response::ResponseField, Error, Response, Success as CaptchaResponse,
     },
     services::{
-        cache_service::CacheService,
-        response_service::ResponseService,
-        token_service::TokenService,
+        cache_service::CacheService, response_service::ResponseService, token_service::TokenService,
     },
     utils::database_connections::create_redis_client_connection,
 };
@@ -35,8 +30,7 @@ pub async fn get_captcha() -> Result<impl Responder> {
     let token = token_service.generate_opaque_token_of_length(64);
     let expiry_in_seconds: Option<i64> = Some(300);
     let mut cache_service = CacheService::new(create_redis_client_connection());
-    let cache_result =
-        cache_service.store_answer_for_token(&answer, &token, expiry_in_seconds);
+    let cache_result = cache_service.store_answer_for_token(&answer, &token, expiry_in_seconds);
     if cache_result.is_err() {
         println!("{:#?}", cache_result.err());
         return Ok(ResponseService::create_error_response(
@@ -70,7 +64,6 @@ pub async fn get_captcha() -> Result<impl Responder> {
     // return Ok(HttpResponse::Ok()
     //     .content_type(format!("multipart/form-data; boundary={}", boundary))
     //     .body(body));
-    
 
     /* ----------------------------------------- Version 1 ----------------------------------------- */
     // Make this a protobuf. ImageData, Token. Have height and width as well?
@@ -86,4 +79,3 @@ pub async fn get_captcha() -> Result<impl Responder> {
         StatusCode::OK,
     ));
 }
-

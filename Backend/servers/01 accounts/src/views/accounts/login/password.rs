@@ -27,7 +27,7 @@ use crate::{
 
 pub async fn post_password(data: ProtoBuf<Request>, req: HttpRequest) -> Result<impl Responder> {
     // Check if ip has verified captcha
-    
+
     let login_email_token: String = req
         .headers()
         .get("Login-Email-Token")
@@ -201,7 +201,7 @@ mod tests {
                 },
             },
         },
-        middleware,
+        middleware::authentication::{AuthenticationMiddlewareFactory, NotAuthenticated},
         models::user::User,
         queries::postgres::refresh_token,
         views::accounts::login::email::post_email,
@@ -214,7 +214,7 @@ mod tests {
         let mut app = test::init_service(
             App::new().service(
                 web::scope("/login")
-                    .wrap(middleware::authentication::not_authenticated::NotAuthenticated)
+                    .wrap(AuthenticationMiddlewareFactory::<NotAuthenticated>::new())
                     .route("/email", web::post().to(post_email))
                     .route("/password", web::post().to(post_password)),
             ),
@@ -306,8 +306,11 @@ mod tests {
                             let validation = jsonwebtoken::Validation::default();
                             let decoding_key =
                                 jsonwebtoken::DecodingKey::from_secret(secret.as_ref());
-                            let decoded =
-                                jsonwebtoken::decode::<UserClaims>(&access, &decoding_key, &validation);
+                            let decoded = jsonwebtoken::decode::<UserClaims>(
+                                &access,
+                                &decoding_key,
+                                &validation,
+                            );
                             let user_uuid = env::var("TEST_UUID").unwrap();
                             if let Ok(token_data) = decoded {
                                 assert!(user_uuid == token_data.claims.sub);
@@ -336,7 +339,7 @@ mod tests {
         let mut app = test::init_service(
             App::new().service(
                 web::scope("/login")
-                    .wrap(middleware::authentication::not_authenticated::NotAuthenticated)
+                    .wrap(AuthenticationMiddlewareFactory::<NotAuthenticated>::new())
                     .route("/email", web::post().to(post_email))
                     .route("/password", web::post().to(post_password)),
             ),
@@ -427,8 +430,11 @@ mod tests {
                             let validation = jsonwebtoken::Validation::default();
                             let decoding_key =
                                 jsonwebtoken::DecodingKey::from_secret(secret.as_ref());
-                            let decoded =
-                                jsonwebtoken::decode::<UserClaims>(&access, &decoding_key, &validation);
+                            let decoded = jsonwebtoken::decode::<UserClaims>(
+                                &access,
+                                &decoding_key,
+                                &validation,
+                            );
                             let user_uuid = env::var("TEST_UUID_WITH_TOTP").unwrap();
                             if let Ok(token_data) = decoded {
                                 assert!(user_uuid == token_data.claims.sub);
@@ -459,7 +465,7 @@ mod tests {
         let mut app = test::init_service(
             App::new().service(
                 web::scope("/login")
-                    .wrap(middleware::authentication::not_authenticated::NotAuthenticated)
+                    .wrap(AuthenticationMiddlewareFactory::<NotAuthenticated>::new())
                     .route("/email", web::post().to(post_email))
                     .route("/password", web::post().to(post_password)),
             ),
@@ -539,7 +545,7 @@ mod tests {
         let mut app = test::init_service(
             App::new().service(
                 web::scope("/login")
-                    .wrap(middleware::authentication::not_authenticated::NotAuthenticated)
+                    .wrap(AuthenticationMiddlewareFactory::<NotAuthenticated>::new())
                     .route("/email", web::post().to(post_email))
                     .route("/password", web::post().to(post_password)),
             ),
@@ -619,7 +625,7 @@ mod tests {
         let mut app = test::init_service(
             App::new().service(
                 web::scope("/login")
-                    .wrap(middleware::authentication::not_authenticated::NotAuthenticated)
+                    .wrap(AuthenticationMiddlewareFactory::<NotAuthenticated>::new())
                     .route("/email", web::post().to(post_email))
                     .route("/password", web::post().to(post_password)),
             ),
@@ -699,7 +705,7 @@ mod tests {
         let mut app = test::init_service(
             App::new().service(
                 web::scope("/login")
-                    .wrap(middleware::authentication::not_authenticated::NotAuthenticated)
+                    .wrap(AuthenticationMiddlewareFactory::<NotAuthenticated>::new())
                     .route("/email", web::post().to(post_email))
                     .route("/password", web::post().to(post_password)),
             ),
@@ -779,7 +785,7 @@ mod tests {
         let mut app = test::init_service(
             App::new().service(
                 web::scope("/login")
-                    .wrap(middleware::authentication::not_authenticated::NotAuthenticated)
+                    .wrap(AuthenticationMiddlewareFactory::<NotAuthenticated>::new())
                     .route("/email", web::post().to(post_email))
                     .route("/password", web::post().to(post_password)),
             ),
@@ -867,7 +873,7 @@ mod tests {
         let mut app = test::init_service(
             App::new().service(
                 web::scope("/login")
-                    .wrap(middleware::authentication::not_authenticated::NotAuthenticated)
+                    .wrap(AuthenticationMiddlewareFactory::<NotAuthenticated>::new())
                     .route("/email", web::post().to(post_email))
                     .route("/password", web::post().to(post_password)),
             ),
@@ -955,7 +961,7 @@ mod tests {
         let mut app = test::init_service(
             App::new().service(
                 web::scope("/login")
-                    .wrap(middleware::authentication::not_authenticated::NotAuthenticated)
+                    .wrap(AuthenticationMiddlewareFactory::<NotAuthenticated>::new())
                     .route("/email", web::post().to(post_email))
                     .route("/password", web::post().to(post_password)),
             ),
@@ -1043,7 +1049,7 @@ mod tests {
         let mut app = test::init_service(
             App::new().service(
                 web::scope("/login")
-                    .wrap(middleware::authentication::not_authenticated::NotAuthenticated)
+                    .wrap(AuthenticationMiddlewareFactory::<NotAuthenticated>::new())
                     .route("/email", web::post().to(post_email))
                     .route("/password", web::post().to(post_password)),
             ),
@@ -1131,7 +1137,7 @@ mod tests {
         let mut app = test::init_service(
             App::new().service(
                 web::scope("/login")
-                    .wrap(middleware::authentication::not_authenticated::NotAuthenticated)
+                    .wrap(AuthenticationMiddlewareFactory::<NotAuthenticated>::new())
                     .route("/email", web::post().to(post_email))
                     .route("/password", web::post().to(post_password)),
             ),
@@ -1219,7 +1225,7 @@ mod tests {
         let mut app = test::init_service(
             App::new().service(
                 web::scope("/login")
-                    .wrap(middleware::authentication::not_authenticated::NotAuthenticated)
+                    .wrap(AuthenticationMiddlewareFactory::<NotAuthenticated>::new())
                     .route("/email", web::post().to(post_email))
                     .route("/password", web::post().to(post_password)),
             ),

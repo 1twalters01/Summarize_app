@@ -70,7 +70,7 @@ where
                                     .json(serde_json::json!({
                                         "error": "Invalid ip address"
                                     }))
-                                .map_into_right_body();
+                                    .map_into_right_body();
                             }
                         }
                     } else {
@@ -97,6 +97,5 @@ where
 
             Ok(req.into_response(response))
         })
-
     }
 }

@@ -6,7 +6,8 @@ use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation}
 use uuid::Uuid;
 
 use crate::{
-    datatypes::claims::{CaptchaClaims, UserClaims}, queries::postgres::refresh_token,
+    datatypes::claims::{CaptchaClaims, UserClaims},
+    queries::postgres::refresh_token,
     utils::database_connections::create_pg_pool_connection,
 };
 

@@ -39,12 +39,8 @@ impl CacheService {
         set_key_value_in_redis(&mut self.con, token, answer, expiry_in_seconds)
     }
 
-    pub fn get_answer_from_token(
-        &mut self,
-        answer: &str,
-    ) -> Result<String, RedisError> {
-        let redis_result: RedisResult<String> =
-            get_key_from_value_in_redis(&mut self.con, answer);
+    pub fn get_answer_from_token(&mut self, answer: &str) -> Result<String, RedisError> {
+        let redis_result: RedisResult<String> = get_key_from_value_in_redis(&mut self.con, answer);
         match redis_result {
             Ok(answer) => return Ok(answer),
             Err(err) => return Err(err),

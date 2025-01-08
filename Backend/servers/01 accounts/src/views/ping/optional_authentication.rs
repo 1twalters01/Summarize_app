@@ -40,7 +40,7 @@ mod tests {
     use serde_json::json;
     use uuid::Uuid;
 
-    use crate::{middleware, services::token_service::TokenService};
+    use crate::services::token_service::TokenService;
 
     async fn initialise_service(
     ) -> impl actix_web::dev::Service<HttpRequest, Response = ServiceResponse, Error = ActixError>

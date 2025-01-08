@@ -1,10 +1,14 @@
-use crate::{middleware, views::settings};
+use crate::{
+    middleware::authentication::{Authenticated, AuthenticationMiddlewareFactory},
+    views::settings,
+};
 use actix_web::web::{post, scope, ServiceConfig};
 
 pub fn config(cfg: &mut ServiceConfig) {
     cfg.service(
         scope("/settings/profile")
-            .wrap(middleware::authentication::is_authenticated::IsAuthenticated)
+            // Add requires captcha token middleware as well?
+            .wrap(AuthenticationMiddlewareFactory::<Authenticated>::new())
             .route(
                 "/change-email",
                 post().to(settings::profile::email::post_email),

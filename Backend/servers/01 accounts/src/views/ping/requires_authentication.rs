@@ -44,7 +44,10 @@ mod tests {
     use serde_json::json;
     use uuid::Uuid;
 
-    use crate::{middleware, services::token_service::TokenService};
+    use crate::{
+        middleware::authentication::{Authenticated, AuthenticationMiddlewareFactory},
+        services::token_service::TokenService
+    };
 
     async fn initialise_service(
     ) -> impl actix_web::dev::Service<HttpRequest, Response = ServiceResponse, Error = ActixError>
@@ -53,7 +56,7 @@ mod tests {
         return test::init_service(
             App::new().service(
                 web::scope("/ping")
-                    .wrap(middleware::authentication::is_authenticated::IsAuthenticated)
+                    .wrap(AuthenticationMiddlewareFactory::<Authenticated>::new())
                     .route("/get_only_auth", web::get().to(ping_get_only_auth))
                     .route("/post_only_auth", web::post().to(ping_post_only_auth)),
             ),

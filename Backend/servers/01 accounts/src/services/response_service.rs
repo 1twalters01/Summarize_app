@@ -5,6 +5,10 @@ use crate::{
     datatypes::response_types::{AppError, AppResponse},
     generated::protos::{
         accounts::{
+            captcha::{
+                get::response as captcha_get_response,
+                verification::response as captcha_verification_response,
+            },
             login::{
                 email::response as login_email_response,
                 password::response as login_password_response,
@@ -19,10 +23,6 @@ use crate::{
                 details::response as register_details_response,
                 email::response as register_email_response,
                 verification::response as register_verification_response,
-            },
-            captcha::{
-                get::response as captcha_get_response,
-                verification::response as captcha_verification_response,
             },
         },
         settings::profile::{
@@ -116,19 +116,15 @@ impl ResponseService {
             }
             AppError::CaptchaGet(err) => {
                 captcha_get_response::Response {
-                    response_field: Some(
-                        captcha_get_response::response::ResponseField::Error(
-                            err as i32,
-                        ),
-                    ),
+                    response_field: Some(captcha_get_response::response::ResponseField::Error(
+                        err as i32,
+                    )),
                 };
             }
             AppError::CaptchaVerification(err) => {
                 captcha_verification_response::Response {
                     response_field: Some(
-                        captcha_verification_response::response::ResponseField::Error(
-                            err as i32,
-                        ),
+                        captcha_verification_response::response::ResponseField::Error(err as i32),
                     ),
                 };
             }

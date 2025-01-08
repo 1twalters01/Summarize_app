@@ -1,4 +1,9 @@
-use crate::{middleware, views::ping};
+use crate::{
+    middleware::authentication::{
+        Authenticated, AuthenticationMiddlewareFactory, NotAuthenticated,
+    },
+    views::ping,
+};
 use actix_web::web::{self, ServiceConfig};
 
 /// A set of ping that serve as ping to hit when checking the health of the service.
@@ -26,7 +31,7 @@ pub fn config(cfg: &mut ServiceConfig) {
     )
     .service(
         web::scope("/ping")
-            .wrap(middleware::authentication::is_authenticated::IsAuthenticated)
+            .wrap(AuthenticationMiddlewareFactory::<Authenticated>::new())
             .wrap(actix_web::middleware::Logger::default())
             .route(
                 "/only_auth",
@@ -39,7 +44,7 @@ pub fn config(cfg: &mut ServiceConfig) {
     )
     .service(
         web::scope("/ping")
-            .wrap(middleware::authentication::not_authenticated::NotAuthenticated)
+            .wrap(AuthenticationMiddlewareFactory::<NotAuthenticated>::new())
             .wrap(actix_web::middleware::Logger::default())
             .route(
                 "/not_auth",

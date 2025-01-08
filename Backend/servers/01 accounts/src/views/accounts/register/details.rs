@@ -20,7 +20,7 @@ use crate::{
 
 pub async fn post_details(data: ProtoBuf<Request>, req: HttpRequest) -> Result<impl Responder> {
     // Check if ip has verified captcha
-    
+
     let verification_confirmation_token: String = req
         .headers()
         .get("Register-Verification-Token")

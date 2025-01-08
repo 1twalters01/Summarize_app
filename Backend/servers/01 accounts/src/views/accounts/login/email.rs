@@ -81,7 +81,10 @@ mod tests {
     use uuid::Uuid;
 
     use super::*;
-    use crate::{middleware, services::token_service::TokenService};
+    use crate::{
+        middleware::authentication::{AuthenticationMiddlewareFactory, NotAuthenticated},
+        services::token_service::TokenService
+    };
 
     async fn initialise_service(
     ) -> impl actix_web::dev::Service<HttpRequest, Response = ServiceResponse, Error = ActixError>
@@ -90,7 +93,7 @@ mod tests {
         return test::init_service(
             App::new().service(
                 web::scope("/login")
-                    .wrap(middleware::authentication::not_authenticated::NotAuthenticated)
+                    .wrap(AuthenticationMiddlewareFactory::<NotAuthenticated>::new())
                     .route("/email", web::post().to(post_email)),
             ),
         )

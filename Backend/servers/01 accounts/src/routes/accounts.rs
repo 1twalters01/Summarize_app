@@ -1,8 +1,6 @@
 use crate::{
     middleware::{
-        authentication::authentication::{
-            Authenticated, AuthenticationMiddlewareFactory, NotAuthenticated,
-        },
+        authentication::{Authenticated, AuthenticationMiddlewareFactory, NotAuthenticated},
         verified_captcha::IsVerified as VerificationMiddleware,
     },
     views,
@@ -48,6 +46,7 @@ pub fn config(cfg: &mut ServiceConfig) {
     .service(
         scope("/login")
             .wrap(AuthenticationMiddlewareFactory::<Authenticated>::new())
+            .wrap(VerificationMiddleware)
             .route(
                 "/refresh-token",
                 post().to(views::accounts::login::refresh::post_refresh_token),
@@ -77,7 +76,10 @@ pub fn config(cfg: &mut ServiceConfig) {
     .service(
         scope("/captcha")
             .route("/get", get().to(views::accounts::captcha::get::get_captcha))
-            .route("/verify", post().to(views::accounts::captcha::verification::verify_captcha)),
+            .route(
+                "/verify",
+                post().to(views::accounts::captcha::verification::verify_captcha),
+            ),
     );
     // .service(
     //     scope("/oauth2")

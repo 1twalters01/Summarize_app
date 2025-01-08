@@ -25,7 +25,7 @@ use crate::{
 
 pub async fn post_totp(data: ProtoBuf<Request>, req: HttpRequest) -> Result<impl Responder> {
     // Check if ip has verified captcha
-    
+
     let login_password_token: String = req
         .headers()
         .get("Login-Password-Token")

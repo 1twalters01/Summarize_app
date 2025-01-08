@@ -159,6 +159,7 @@ where
 
 #[cfg(test)]
 mod tests {
+    use super::*;
     use crate::{middleware, services::token_service::TokenService};
     use actix_http::{Request as HttpRequest, StatusCode};
     use actix_web::{
@@ -177,11 +178,7 @@ mod tests {
             App::new()
                 .service(
                     web::scope("/not-authenticated")
-                        .wrap(
-                            middleware::authentication::authentication::AuthenticationMiddlewareFactory::<
-                                middleware::authentication::authentication::NotAuthenticated,
-                            >::new(),
-                        )
+                        .wrap(AuthenticationMiddlewareFactory::<NotAuthenticated>::new())
                         .route(
                             "/",
                             get().to(|| async {
@@ -191,11 +188,7 @@ mod tests {
                 )
                 .service(
                     web::scope("/authenticated")
-                        .wrap(
-                            middleware::authentication::authentication::AuthenticationMiddlewareFactory::<
-                                middleware::authentication::authentication::Authenticated,
-                            >::new(),
-                        )
+                        .wrap(AuthenticationMiddlewareFactory::<Authenticated>::new())
                         .route(
                             "/",
                             get().to(|| async {

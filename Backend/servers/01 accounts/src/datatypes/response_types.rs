@@ -1,5 +1,9 @@
 use crate::generated::protos::{
     accounts::{
+        captcha::{
+            get::response as captcha_get_response,
+            verification::response as captcha_verification_response,
+        },
         login::{
             email::response as login_email_response, password::response as login_password_response,
             refresh::response as login_refresh_response, totp::response as login_totp_response,
@@ -14,10 +18,6 @@ use crate::generated::protos::{
             email::response as register_email_response,
             verification::response as register_verification_response,
         },
-        captcha::{
-            get::response as captcha_get_response,
-            verification::response as captcha_verification_response,
-        }
     },
     settings::profile::{
         confirmation as confirmation_response, email::response as change_email_response,
@@ -27,6 +27,7 @@ use crate::generated::protos::{
     },
 };
 
+/// Error types for response service
 pub enum AppError {
     // Login
     LoginEmail(login_email_response::Error),
@@ -59,6 +60,7 @@ pub enum AppError {
     ChangeUsername(change_username_response::Error),
 }
 
+/// Success types for response service
 pub enum AppResponse {
     // Login
     LoginEmail(login_email_response::Response),
