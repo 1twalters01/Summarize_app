@@ -1,3 +1,2 @@
-pub mod details;
-pub mod email;
-pub mod verification;
+pub mod from_login;
+pub mod from_guest;

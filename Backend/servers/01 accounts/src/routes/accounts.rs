@@ -13,22 +13,42 @@ pub fn config(cfg: &mut ServiceConfig) {
             .wrap(AuthenticationMiddlewareFactory::<NotAuthenticated>::new())
             .route(
                 "/email",
-                post().to(views::accounts::register::email::post_email),
+                post().to(views::accounts::register::from_login::email::post_email),
             )
             .wrap(VerificationMiddleware)
             .route(
                 "/verify",
-                post().to(views::accounts::register::verification::post_verify),
+                post().to(views::accounts::register::from_login::verification::post_verify),
             )
             .route(
                 "/verify/{header_token}/{verification_code}",
-                post().to(views::accounts::register::verification::link_verify),
+                post().to(views::accounts::register::from_login::verification::link_verify),
             )
             .route(
                 "/details",
-                post().to(views::accounts::register::details::post_details),
+                post().to(views::accounts::register::from_login::details::post_details),
             ),
     )
+    // .service(
+    //     scope("/register/from-guest")
+    //     .route(
+    //         "/email",
+    //         post().to(views::accounts::register::from_guest::post_email),
+    //     )
+    //     .wrap(VerificationMiddleware)
+    //     .route(
+    //         "/verify",
+    //         post().to(views::accounts::register::from_guest::post_verify),
+    //     )
+    //     .route(
+    //         "/verify/{header_token}/{verification_code}",
+    //         post().to(views::accounts::register::from_guest::link_verify),
+    //     )
+    //     .route(
+    //         "/details",
+    //         post().to(views::accounts::register::::from_guest::details::post_details),
+    //     ),
+    // )
     .service(
         scope("/login")
             .wrap(AuthenticationMiddlewareFactory::<NotAuthenticated>::new())
