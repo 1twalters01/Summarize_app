@@ -1,3 +1,7 @@
+# Todo
+* tomorrow - refactor settings
+
+# CheckList
 1. [ ] User Management
     * [ ] User Registration - Endpoints for new users to sign up, including:
         * [x] form validations

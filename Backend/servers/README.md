@@ -26,3 +26,15 @@
 * 82 windows - rust windows updates
 * 83 ios - rust ios updates
 * 84 android - rust android updates
+
+# Required for mvp
+* 01 accounts - basic login (no oauth, guest, sms or bioauthentication), basic registration (no registering from guest), main settings (no sms or bioauthentication)
+* 02 subscriptions - all
+* 03 catalogues - basic
+* 04 editor - some
+* 05 reader - some
+* 07 search - basic capability
+* 08 pages - all
+* 09 history - basic
+* 10 libraries - basic
+* 11 recommendations - basic
