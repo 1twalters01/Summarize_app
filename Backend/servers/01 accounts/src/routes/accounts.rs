@@ -36,6 +36,7 @@ pub fn config(cfg: &mut ServiceConfig) {
                 "/email",
                 post().to(views::accounts::login::email::post_email),
             )
+            // .route("/guest", get().to(views::accounts::login::guest::get_guest))
             .wrap(VerificationMiddleware)
             .route(
                 "/password",

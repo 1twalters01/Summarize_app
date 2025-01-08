@@ -160,7 +160,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{middleware, services::token_service::TokenService};
+    use crate::services::token_service::TokenService;
     use actix_http::{Request as HttpRequest, StatusCode};
     use actix_web::{
         dev::{Service, ServiceResponse},

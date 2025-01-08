@@ -1,7 +1,7 @@
 1. [ ] User Management
     * [ ] User Registration - Endpoints for new users to sign up, including:
         * [x] form validations
-        * [ ] captcha verfication
+        * [x] captcha verfication
         * [x] email confirmation
         * [ ] phone number confirmation
     * [ ] User Login - Mechanisms for users to log in using:
@@ -23,9 +23,9 @@
         * [ ] login via email link
     * [ ] OAuth Connect
     * [ ] OpenID Connect
-    * [ ] Session Management - Secure handling of user sessions, including:
-        * [ ] session expiration
-        * [ ] session renewal
+    * [ x] Session Management - Secure handling of user sessions, including:
+        * [x] session expiration
+        * [x] session renewal
         * [ ] session invalidation
     * [x] Token-Based Authentication - Support for JWTs for stateless authentication
     * [ ] Single Sign-On (SSO) integration
@@ -37,10 +37,10 @@
 
 4. [ ] Security
     * [ ] Rate Limiting - To protect against brute force attacks
-    * [ ] CAPTCHA - To prevent automated abuse during:
-        * [ ] login
-        * [ ] registration
-        * [ ] password reset
+    * [x] CAPTCHA - To prevent automated abuse during:
+        * [x] login
+        * [x] registration
+        * [x] password reset
     * [ ] Audit Logging - Logging of security-related events such as:
         * [ ] Logins
         * [ ] Failed login attempts
