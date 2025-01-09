@@ -1,5 +1,8 @@
 use crate::{
-    datatypes::claims::UserClaims,
+    datatypes::{
+        claims::UserClaims,
+        response_types::{AppError, AppResponse},
+    },
     generated::protos::settings::profile::{
         confirmation::{
             response as confirmation_response, Error as PasswordError, Request as PasswordRequest,
@@ -7,12 +10,29 @@ use crate::{
         },
         email::{
             request::Request as MainRequest,
-            response::{response, Error as MainError, Response as MainResponse},
+            response::{response as email_response, Error as MainError, Response as MainResponse},
         },
     },
+    // generated::protos::settings::profile::{
+    //     confirmation::{
+    //         response as confirmation_response,
+    //         Error as PasswordError,
+    //         Request as PasswordRequest,
+    //         Response as PasswordResponse,
+    //         Success as PasswordSuccess,
+    //     },
+    //     email::{
+    //         request::Request,
+    //         response::{response::ResponseField, Error as EmailError, Response as EmailResponse},
+    //     },
+    // },
     models::user::User,
     queries::{postgres::user::get::from_email, redis::general::set_key_value_in_redis},
-    services::token_service::TokenService,
+    services::{
+        response_service::ResponseService,
+        token_service::TokenService,
+        user_service::UserService,
+    },
     utils::{
         database_connections::{create_pg_pool_connection, create_redis_client_connection},
         validations::{validate_email, validate_password},
@@ -39,73 +59,59 @@ pub async fn post_email(
     // validate email
     let validated_email = validate_email(&email);
     if validated_email.is_err() {
-        let response: MainResponse = MainResponse {
-            response_field: Some(response::ResponseField::Error(
-                MainError::InvalidCredentials as i32,
-            )),
-        };
-        return Ok(HttpResponse::UnprocessableEntity()
-            .content_type("application/x-protobuf; charset=utf-8")
-            .protobuf(response));
+        return Ok(ResponseService::create_error_response(
+            AppError::ChangeEmail(EmailError::InvalidCredentials),
+            StatusCode::UNPROCESSABLE_ENTITY,
+        ));
     }
 
     // Validate user
     let user_uuid: String = match req.extensions().get::<UserClaims>() {
         Some(claims) => claims.sub.clone(),
         None => {
-            let response: MainResponse = MainResponse {
-                response_field: Some(response::ResponseField::Error(
-                    MainError::InvalidCredentials as i32,
-                )),
-            };
-            return Ok(HttpResponse::InternalServerError()
-                .content_type("application/x-protobuf; charset=utf-8")
-                .protobuf(response));
+            return Ok(ResponseService::create_error_response(
+                AppError::ChangeEmail(EmailError::InvalidCredentials),
+                StatusCode::INTERNAL_SERVER_ERROR,
+            ));
         }
     };
     let user_result: Result<Option<User>, sqlx::Error> = User::from_uuid_str(&user_uuid).await;
     _ = match user_result {
         Err(_) => {
-            let response: MainResponse = MainResponse {
-                response_field: Some(response::ResponseField::Error(
-                    MainError::ServerError as i32,
-                )),
-            };
-            return Ok(HttpResponse::InternalServerError()
-                .content_type("application/x-protobuf; charset=utf-8")
-                .protobuf(response));
+            return Ok(ResponseService::create_error_response(
+                AppError::ChangeEmail(EmailError::ServerError),
+                StatusCode::INTERNAL_SERVER_ERROR,
+            ));
         }
         Ok(user) => match user {
             Some(user) => user,
             None => {
-                let response: MainResponse = MainResponse {
-                    response_field: Some(response::ResponseField::Error(
-                        MainError::InvalidCredentials as i32,
-                    )),
-                };
-                return Ok(HttpResponse::InternalServerError()
-                    .content_type("application/x-protobuf; charset=utf-8")
-                    .protobuf(response));
+                return Ok(ResponseService::create_error_response(
+                    AppError::ChangeEmail(EmailError::InvalidCredentials),
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                ));
             }
         },
     };
 
     // error if email is already taken
-    let pool = create_pg_pool_connection().await;
-    let user_result: Result<Option<User>, sqlx::Error> = from_email(&pool, &email).await;
-
-    let is_email_stored = (&user_result).as_ref().ok().is_some();
-    if is_email_stored == true {
-        let response: MainResponse = MainResponse {
-            response_field: Some(response::ResponseField::Error(
-                MainError::RegisteredEmail as i32,
-            )),
-        };
-
-        return Ok(HttpResponse::Conflict()
-            .content_type("application/x-protobuf; charset=utf-8")
-            .protobuf(response));
-    }
+    let user_service = UserService::new(create_pg_pool_connection().await);
+    match user_service.get_user_uuid_from_email(&email).await {
+        Ok(Some(user)) => {
+            return Ok(ResponseService::create_error_response(
+                AppError::ChangeEmail(EmailError::RegisteredEmail),
+                StatusCode::CONFLICT,
+            ));
+        },
+        Err(err) => {
+            println!("{:#?}", err);
+            return Ok(ResponseService::create_error_response(
+                AppError::ChangeEmail(EmailError::ServerError),
+                StatusCode::INTERNAL_SERVER_ERROR,
+            ));
+        }
+        _ => (),
+    };
 
     // Generate token
     let token_service = TokenService::new();
@@ -121,23 +127,19 @@ pub async fn post_email(
 
     // err handling
     if set_redis_result.is_err() {
-        let response: MainResponse = MainResponse {
-            response_field: Some(response::ResponseField::Error(
-                MainError::ServerError as i32,
-            )),
-        };
-        return Ok(HttpResponse::FailedDependency()
-            .content_type("application/x-protobuf; charset=utf-8")
-            .protobuf(response));
+        return Ok(ResponseService::create_error_response(
+            AppError::ChangeEmail(EmailError::ServerError),
+            StatusCode::FAILED_DEPENDENCY,
+        ));
     }
 
     // return token
-    let response: MainResponse = MainResponse {
-        response_field: Some(response::ResponseField::RequiresPassword(true)),
-    };
-    return Ok(HttpResponse::Ok()
-        .content_type("application/x-protobuf; charset=utf-8")
-        .protobuf(response));
+    return Ok(ResponseService::create_success_response(
+        AppResponse::ChangeEmail(EmailResponse {
+            response_field: Some(email_response::ResponseField::RequiresPassword(true)),
+        }),
+        StatusCode::OK,
+    ));
 }
 
 pub async fn post_confirmation(
