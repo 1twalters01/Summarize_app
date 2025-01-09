@@ -1,2 +1,3 @@
-pub mod totp;
+pub mod biometrics;
 pub mod confirmation;
+

@@ -27,23 +27,23 @@ pub fn config(cfg: &mut ServiceConfig) {
             )
             .route(
                 "/change-name",
-                post().to(settings::profile::name::post_name),
+                post().to(settings::profile::change_name::name::post_name),
             )
             .route(
                 "/change-name/confirm",
-                post().to(settings::profile::name::post_confirmation),
+                post().to(settings::profile::change_name::confirmation::post_confirmation),
             )
             .route(
                 "/change-password",
-                post().to(settings::profile::password::post_password),
+                post().to(settings::profile::change_password::password::post_password),
             )
             .route(
                 "/change-password/confirm",
-                post().to(settings::profile::password::post_confirmation),
+                post().to(settings::profile::change_password::confirmation::post_confirmation),
             )
             .route(
                 "/delete-account",
-                post().to(settings::profile::delete_account::post_delete),
+                post().to(settings::profile::delete_account::delete_account::post_delete),
             ),
     );
 }

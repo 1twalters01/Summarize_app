@@ -1,8 +1,10 @@
 pub mod change_email;
+pub mod change_language;
+pub mod change_name;
+pub mod change_password;
+pub mod change_theme;
 pub mod change_username;
 pub mod delete_account;
-pub mod language;
-pub mod name;
-pub mod password;
-pub mod theme;
-pub mod totp;
+// toggle_biometrics;
+// pub mod toggle_sms;
+pub mod toggle_totp;
