@@ -14,7 +14,7 @@ use crate::{
         },
     },
     models::password::Password,
-    queries::postgres::user::update::update_login_time,
+    queries::postgres::user::update::update_login_time_from_uuid,
     services::{
         cache_service::CacheService, response_service::ResponseService,
         token_service::TokenService, user_service::UserService,
@@ -153,7 +153,7 @@ pub async fn post_password(data: ProtoBuf<Request>, req: HttpRequest) -> Result<
 
         // update last login time
         let pool = create_pg_pool_connection().await;
-        if update_login_time(&pool, chrono::Utc::now(), &user_uuid)
+        if update_login_time_from_uuid(&pool, chrono::Utc::now(), &user_uuid)
             .await
             .is_err()
         {

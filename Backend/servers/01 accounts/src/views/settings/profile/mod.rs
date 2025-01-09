@@ -1,5 +1,5 @@
+pub mod change_email;
 pub mod delete_account;
-pub mod email;
 pub mod language;
 pub mod name;
 pub mod password;

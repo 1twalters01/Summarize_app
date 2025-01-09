@@ -46,7 +46,7 @@ mod tests {
 
     use crate::{
         middleware::authentication::{Authenticated, AuthenticationMiddlewareFactory},
-        services::token_service::TokenService
+        services::token_service::TokenService,
     };
 
     async fn initialise_service(

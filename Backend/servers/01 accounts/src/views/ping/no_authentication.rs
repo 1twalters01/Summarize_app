@@ -34,7 +34,7 @@ mod tests {
     use super::*;
     use crate::{
         middleware::authentication::{AuthenticationMiddlewareFactory, NotAuthenticated},
-        services::token_service::TokenService
+        services::token_service::TokenService,
     };
     use actix_http::Request as HttpRequest;
     use actix_web::{dev::ServiceResponse, test, web, App, Error as ActixError};

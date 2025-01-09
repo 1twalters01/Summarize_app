@@ -11,11 +11,11 @@ pub fn config(cfg: &mut ServiceConfig) {
             .wrap(AuthenticationMiddlewareFactory::<Authenticated>::new())
             .route(
                 "/change-email",
-                post().to(settings::profile::email::post_email),
+                post().to(settings::profile::change_email::email::post_email),
             )
             .route(
                 "/change-email/confirm",
-                post().to(settings::profile::email::post_confirmation),
+                post().to(settings::profile::change_email::confirmation::post_confirmation),
             )
             .route(
                 "/change-username",

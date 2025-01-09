@@ -83,7 +83,7 @@ mod tests {
     use super::*;
     use crate::{
         middleware::authentication::{AuthenticationMiddlewareFactory, NotAuthenticated},
-        services::token_service::TokenService
+        services::token_service::TokenService,
     };
 
     async fn initialise_service(

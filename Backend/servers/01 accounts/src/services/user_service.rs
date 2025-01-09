@@ -63,6 +63,14 @@ impl UserService {
         password_hash::update::from_user_uuid(&self.pool, uuid, password_hash).await
     }
 
+    pub async fn update_email_for_uuid(
+        &self,
+        email: &str,
+        uuid: &Uuid,
+    ) -> Result<(), sqlx::Error> {
+        user::update::update_email_from_uuid(&self.pool, email, uuid).await
+    }
+
     pub async fn get_totp_activation_status_from_uuid(
         &self,
         uuid: &Uuid,
