@@ -39,6 +39,10 @@ impl UserService {
         user::get::uuid_from_email(&self.pool, &email).await
     }
 
+    pub async fn get_user_uuid_from_username(&self, username: &str) -> Result<Option<Uuid>, sqlx::Error> {
+        user::get::uuid_from_username(&self.pool, &username).await
+    }
+
     pub async fn get_password_from_uuid(
         &self,
         uuid: &Uuid,

@@ -2,7 +2,7 @@ use redis::{Connection, RedisError, RedisResult};
 use uuid::Uuid;
 
 use crate::{
-    datatypes::settings_objects::EmailTokenObject, models::user::User, queries::redis::general::{
+    datatypes::settings_objects::{EmailTokenObject, UsernameTokenObject}, models::user::User, queries::redis::general::{
         delete_key_in_redis, get_key_from_value_in_redis, set_key_value_in_redis,
     }
 };
@@ -142,6 +142,16 @@ impl CacheService {
             Err(err) => return Err(err.to_string()),
         };
         let object: EmailTokenObject = serde_json::from_str(&object_json).unwrap();
+        return Ok(object);
+    }
+
+    pub fn get_username_object_from_token(mut self, token: &str) -> Result<UsernameTokenObject, String> {
+        let redis_result: RedisResult<String> = get_key_from_value_in_redis(&mut self.con, token);
+        let object_json: String = match redis_result {
+            Ok(object_json) => object_json,
+            Err(err) => return Err(err.to_string()),
+        };
+        let object: UsernameTokenObject = serde_json::from_str(&object_json).unwrap();
         return Ok(object);
     }
 }

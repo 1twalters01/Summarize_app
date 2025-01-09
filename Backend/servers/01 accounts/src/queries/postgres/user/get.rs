@@ -6,6 +6,28 @@ use chrono::{DateTime, Utc};
 use sqlx::{Pool, Postgres, Row};
 use uuid::Uuid;
 
+pub async fn uuid_from_username(
+    pool: &Pool<Postgres>,
+    username: &str,
+) -> Result<Option<Uuid>, sqlx::Error> {
+    let uuid_select_query = sqlx::query("Select uuid from users WHERE username=($1)")
+        .bind(username)
+        .fetch_all(pool)
+        .await;
+
+    match uuid_select_query {
+        Err(err) => return Err(err),
+        Ok(res) => {
+            if res.len() == 0 {
+                return Ok(None);
+            }
+
+            let uuid: Option<Uuid> = res[0].get("uuid");
+            return Ok(uuid);
+        }
+    }
+}
+
 pub async fn uuid_from_email(
     pool: &Pool<Postgres>,
     email: &str,
