@@ -73,7 +73,7 @@ pub async fn post_password_reset(
     // if change is not allowed then error
     let user_service = UserService::new(create_pg_pool_connection().await);
     let user_result = user_service
-        .update_password_for_uuid(&password, &user_uuid)
+        .update_password_hash_for_uuid(&password, &user_uuid)
         .await;
     if user_result.is_err() {
         return Ok(ResponseService::create_error_response(

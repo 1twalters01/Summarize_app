@@ -57,7 +57,7 @@ impl UserService {
         }
     }
 
-    pub async fn update_password_for_uuid(
+    pub async fn update_password_hash_for_uuid(
         &self,
         password: &str,
         uuid: &Uuid,

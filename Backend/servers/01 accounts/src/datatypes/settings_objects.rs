@@ -11,3 +11,9 @@ pub struct UsernameTokenObject {
     pub(crate) user_uuid: String,
     pub(crate) username: String,
 }
+
+#[derive(Serialize, Deserialize)]
+pub struct PasswordTokenObject {
+    pub(crate) user_uuid: String,
+    pub(crate) password_hash: String,
+}

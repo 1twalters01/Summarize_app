@@ -52,7 +52,7 @@ pub async fn post_email(req_body: ProtoBuf<Request>, req: HttpRequest) -> Result
             ));
         }
         Ok(user) => match user {
-            Some(user) => user,
+            Some(_) => (),
             None => {
                 return Ok(ResponseService::create_error_response(
                     AppError::ChangeEmail(Error::InvalidCredentials),

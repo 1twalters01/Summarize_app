@@ -4,7 +4,7 @@ use crate::{
         response_types::{AppError, AppResponse},
     },
     generated::protos::settings::profile::confirmation::{
-        response, Error, Request as PasswordRequest,
+        response, Error, Request,
         Response , Success,
     },
     models::user::User,
@@ -21,13 +21,13 @@ use actix_protobuf::ProtoBuf;
 use actix_web::{http::StatusCode, HttpMessage, HttpRequest, Responder, Result};
 
 pub async fn post_confirmation(
-    req_body: ProtoBuf<PasswordRequest>,
+    req_body: ProtoBuf<Request>,
     req: HttpRequest,
 ) -> Result<impl Responder> {
-    let PasswordRequest { password } = req_body.0;
-    let login_email_token: String = req
+    let Request { password } = req_body.0;
+    let login_password_token: String = req
         .headers()
-        .get("Change-Email-Token")
+        .get("Change-Password-Token")
         .unwrap()
         .to_str()
         .unwrap()
@@ -79,10 +79,10 @@ pub async fn post_confirmation(
         ));
     };
 
-    // Get email from redis
+    // Get password hash from redis
     let cache_service = CacheService::new(create_redis_client_connection());
-    let token_object_result = cache_service.get_email_object_from_token(&login_email_token);
-    let email: String = match token_object_result {
+    let token_object_result = cache_service.get_password_object_from_token(&login_password_token);
+    let password_hash: String = match token_object_result {
         // if error return error
         Err(err) => {
             println!("err: {:#?}", err);
@@ -92,7 +92,7 @@ pub async fn post_confirmation(
             ));
         },
         Ok(object) => match object.user_uuid == user_uuid_str {
-            true => object.email,
+            true => object.password_hash,
             false => {
                 return Ok(ResponseService::create_error_response(
                     AppError::Confirmation(Error::ServerError),
@@ -102,9 +102,9 @@ pub async fn post_confirmation(
         },
     };
 
-    // change email
+    // change password
     let user_service = UserService::new(create_pg_pool_connection().await);
-    let update_result: Result<(), sqlx::Error> = user_service.update_email_for_uuid(&email, &user.get_uuid()).await;
+    let update_result: Result<(), sqlx::Error> = user_service.update_password_hash_for_uuid(&password_hash, &user.get_uuid()).await;
 
     // if sql update error then return an error
     if update_result.is_err() {

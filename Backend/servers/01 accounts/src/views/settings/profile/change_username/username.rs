@@ -55,7 +55,7 @@ pub async fn post_username(
             ));
         },
         Ok(user) => match user {
-            Some(user) => user,
+            Some(_) => (),
             None => {
                 return Ok(ResponseService::create_error_response(
                     AppError::ChangeUsername(Error::InvalidCredentials),
