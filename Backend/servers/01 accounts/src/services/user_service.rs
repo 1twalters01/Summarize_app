@@ -75,6 +75,14 @@ impl UserService {
         user::update::update_email_from_uuid(&self.pool, email, uuid).await
     }
 
+    pub async fn update_language_for_uuid(
+        &self,
+        language: &str,
+        uuid: &Uuid,
+    ) -> Result<(), sqlx::Error> {
+        user::update::update_language_from_uuid(&self.pool, language, uuid).await
+    }
+
     pub async fn get_totp_activation_status_from_uuid(
         &self,
         uuid: &Uuid,
