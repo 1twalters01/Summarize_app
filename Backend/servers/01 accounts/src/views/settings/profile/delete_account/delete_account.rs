@@ -1,113 +1,85 @@
 use crate::{
-    datatypes::claims::UserClaims,
+    datatypes::{
+        claims::UserClaims,
+        response_types::{AppError, AppResponse},
+    },
     generated::protos::settings::profile::confirmation::{
-        response as confirmation_response, Error as PasswordError, Request as PasswordRequest,
-        Response as PasswordResponse, Success as PasswordSuccess,
+        response, Error, Request, Response, Success,
     },
     models::user::User,
-    queries::postgres::user::delete::from_uuid,
+    services::{response_service::ResponseService, user_service::UserService},
     utils::{database_connections::create_pg_pool_connection, validations::validate_password},
 };
-use actix_protobuf::{ProtoBuf, ProtoBufResponseBuilder};
-use actix_web::{HttpMessage, HttpRequest, HttpResponse, Responder, Result};
-use uuid::Uuid;
+use actix_protobuf::ProtoBuf;
+use actix_web::{http::StatusCode, HttpMessage, HttpRequest, Responder, Result};
 
-pub async fn post_delete(
-    req_body: ProtoBuf<PasswordRequest>,
-    req: HttpRequest,
-) -> Result<impl Responder> {
-    let PasswordRequest { password } = req_body.0;
+pub async fn post_delete(req_body: ProtoBuf<Request>, req: HttpRequest) -> Result<impl Responder> {
+    let Request { password } = req_body.0;
 
     // validate password
     let validated_password = validate_password(&password);
     if validated_password.is_err() {
-        let response: PasswordResponse = PasswordResponse {
-            response_field: Some(confirmation_response::ResponseField::Error(
-                PasswordError::InvalidCredentials as i32,
-            )),
-        };
-        return Ok(HttpResponse::UnprocessableEntity()
-            .content_type("application/x-protobuf; charset=utf-8")
-            .protobuf(response));
+        return Ok(ResponseService::create_error_response(
+            AppError::Confirmation(Error::InvalidCredentials),
+            StatusCode::UNPROCESSABLE_ENTITY,
+        ));
     }
 
     // Validate user
-    let user_uuid: String = match req.extensions().get::<UserClaims>() {
+    let user_uuid_str: String = match req.extensions().get::<UserClaims>() {
         Some(claims) => claims.sub.clone(),
         None => {
-            let response: PasswordResponse = PasswordResponse {
-                response_field: Some(confirmation_response::ResponseField::Error(
-                    PasswordError::InvalidCredentials as i32,
-                )),
-            };
-            return Ok(HttpResponse::InternalServerError()
-                .content_type("application/x-protobuf; charset=utf-8")
-                .protobuf(response));
+            return Ok(ResponseService::create_error_response(
+                AppError::Confirmation(Error::InvalidCredentials),
+                StatusCode::INTERNAL_SERVER_ERROR,
+            ));
         }
     };
-    let user_result: Result<Option<User>, sqlx::Error> = User::from_uuid_str(&user_uuid).await;
+    let user_result: Result<Option<User>, sqlx::Error> = User::from_uuid_str(&user_uuid_str).await;
     let user: User = match user_result {
         Err(_) => {
-            let response: PasswordResponse = PasswordResponse {
-                response_field: Some(confirmation_response::ResponseField::Error(
-                    PasswordError::ServerError as i32,
-                )),
-            };
-            return Ok(HttpResponse::InternalServerError()
-                .content_type("application/x-protobuf; charset=utf-8")
-                .protobuf(response));
+            return Ok(ResponseService::create_error_response(
+                AppError::Confirmation(Error::ServerError),
+                StatusCode::INTERNAL_SERVER_ERROR,
+            ));
         }
         Ok(user) => match user {
             Some(user) => user,
             None => {
-                let response: PasswordResponse = PasswordResponse {
-                    response_field: Some(confirmation_response::ResponseField::Error(
-                        PasswordError::InvalidCredentials as i32,
-                    )),
-                };
-                return Ok(HttpResponse::InternalServerError()
-                    .content_type("application/x-protobuf; charset=utf-8")
-                    .protobuf(response));
+                return Ok(ResponseService::create_error_response(
+                    AppError::Confirmation(Error::InvalidCredentials),
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                ));
             }
         },
     };
 
     // authenticate password
     if user.check_password(&password).is_err() {
-        let response: PasswordResponse = PasswordResponse {
-            response_field: Some(confirmation_response::ResponseField::Error(
-                PasswordError::IncorrectPassword as i32,
-            )),
-        };
-        return Ok(HttpResponse::Unauthorized()
-            .content_type("application/x-protobuf; charset=utf-8")
-            .protobuf(response));
+        return Ok(ResponseService::create_error_response(
+            AppError::Confirmation(Error::IncorrectPassword),
+            StatusCode::UNAUTHORIZED,
+        ));
     };
 
     // delete account
-    let pool = create_pg_pool_connection().await;
+    let user_service = UserService::new(create_pg_pool_connection().await);
     let delete_result: Result<(), sqlx::Error> =
-        from_uuid(&pool, &Uuid::parse_str(&user_uuid).unwrap()).await;
+        user_service.delete_user_from_uuid(&user.get_uuid()).await;
 
     // if sql delete error then return an error
     if delete_result.is_err() {
-        let response: PasswordResponse = PasswordResponse {
-            response_field: Some(confirmation_response::ResponseField::Error(
-                PasswordError::ServerError as i32,
-            )),
-        };
-        return Ok(HttpResponse::FailedDependency()
-            .content_type("application/x-protobuf; charset=utf-8")
-            .protobuf(response));
+        return Ok(ResponseService::create_error_response(
+            AppError::Confirmation(Error::ServerError),
+            StatusCode::FAILED_DEPENDENCY,
+        ));
     }
 
     // return ok
-    let response: PasswordResponse = PasswordResponse {
-        response_field: Some(confirmation_response::ResponseField::Success(
-            PasswordSuccess {},
-        )),
-    };
-    return Ok(HttpResponse::Ok()
-        .content_type("application/x-protobuf; charset=utf-8")
-        .protobuf(response));
+    return Ok(ResponseService::create_success_response(
+        AppResponse::Confirmation(Response {
+            response_field: Some(response::ResponseField::Success(Success {})),
+        }),
+        StatusCode::OK,
+    ));
 }

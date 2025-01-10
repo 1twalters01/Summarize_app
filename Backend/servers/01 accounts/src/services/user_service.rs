@@ -115,4 +115,8 @@ impl UserService {
     pub async fn get_user_from_email(&self, email: &str) -> Result<Option<User>, sqlx::Error> {
         user::get::from_email(&self.pool, &email).await
     }
+
+    pub async fn delete_user_from_uuid(&self, uuid: &Uuid) -> Result<(), sqlx::Error> {
+        user::delete::from_uuid(&self.pool, uuid).await
+    }
 }
