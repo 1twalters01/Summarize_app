@@ -103,7 +103,9 @@ pub async fn post_confirmation(
 
     // change name
     let user_service = UserService::new(create_pg_pool_connection().await);
-    let update_result: Result<(), sqlx::Error> = user_service.update_name_for_uuid(first_name.as_ref(), last_name.as_ref(), &user.get_uuid()).await;
+    let update_result: Result<(), sqlx::Error> = user_service
+        .update_name_for_uuid(first_name.as_ref(), last_name.as_ref(), &user.get_uuid())
+        .await;
 
     // if sql update error then return an error
     if update_result.is_err() {
@@ -116,10 +118,8 @@ pub async fn post_confirmation(
     // return ok
     return Ok(ResponseService::create_success_response(
         AppResponse::Confirmation(Response {
-            response_field: Some(response::ResponseField::Success(Success{})),
+            response_field: Some(response::ResponseField::Success(Success {})),
         }),
         StatusCode::OK,
     ));
 }
-
-

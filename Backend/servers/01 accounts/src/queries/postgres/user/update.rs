@@ -46,11 +46,11 @@ pub async fn update_name_from_uuid(
 ) -> Result<(), sqlx::Error> {
     let user_update_query =
         sqlx::query("UPDATE users SET first_name=($1), last_name=($2) WHERE uuid=($3);")
-        .bind(first_name)
-        .bind(last_name)
-        .bind(uuid)
-        .execute(pool)
-        .await;
+            .bind(first_name)
+            .bind(last_name)
+            .bind(uuid)
+            .execute(pool)
+            .await;
 
     if let Err(err) = user_update_query {
         return Err(err);

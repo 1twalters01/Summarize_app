@@ -1,5 +1,5 @@
 * change_password
-* change_theme
+* fix theme query theme
 * delete_account
 * toggle_biometrics
 * toggle_sms

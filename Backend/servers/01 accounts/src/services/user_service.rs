@@ -1,6 +1,7 @@
 use crate::{
+    generated::protos::settings::profile::theme::request::request::RequestField,
     models::{password::Password, totp::Totp, user::User},
-    queries::postgres::{password_hash, user},
+    queries::postgres::{password_hash, theme, user},
 };
 use sqlx::{Pool, Postgres};
 use uuid::Uuid;
@@ -74,8 +75,21 @@ impl UserService {
         user::update::update_email_from_uuid(&self.pool, email, uuid).await
     }
 
-    pub async fn update_name_for_uuid(&self, first_name: Option<&String>, last_name: Option<&String>, uuid: &Uuid) -> Result<(), sqlx::Error> {
+    pub async fn update_name_for_uuid(
+        &self,
+        first_name: Option<&String>,
+        last_name: Option<&String>,
+        uuid: &Uuid,
+    ) -> Result<(), sqlx::Error> {
         user::update::update_name_from_uuid(&self.pool, first_name, last_name, uuid).await
+    }
+
+    pub async fn update_theme_for_uuid(
+        &self,
+        theme: RequestField,
+        uuid: &Uuid,
+    ) -> Result<(), sqlx::Error> {
+        theme::update::update_theme_from_uuid(&self.pool, theme, uuid).await
     }
 
     pub async fn update_language_for_uuid(
