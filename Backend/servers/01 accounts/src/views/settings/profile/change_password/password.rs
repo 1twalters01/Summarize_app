@@ -11,9 +11,7 @@ use crate::{
     models::{password::Password, user::User},
     queries::postgres::password_hash::get::all_previous_from_user,
     services::{
-        cache_service::CacheService,
-        response_service::ResponseService,
-        token_service::TokenService,
+        cache_service::CacheService, response_service::ResponseService, token_service::TokenService,
     },
     utils::{
         database_connections::{create_pg_pool_connection, create_redis_client_connection},
@@ -35,7 +33,7 @@ pub async fn post_password(
     // error if password != password_confirmation
     if password != password_confirmation {
         return Ok(ResponseService::create_error_response(
-            AppError::ChangePassword(Error::InvalidCredentials),
+            AppError::ChangePassword(Error::PasswordsDoNotMatch),
             StatusCode::UNPROCESSABLE_ENTITY,
         ));
     }
@@ -44,7 +42,7 @@ pub async fn post_password(
     let validated_password = validate_password(&password);
     if validated_password.is_err() {
         return Ok(ResponseService::create_error_response(
-            AppError::ChangePassword(Error::InvalidCredentials),
+            AppError::ChangePassword(Error::InvalidPassword),
             StatusCode::UNPROCESSABLE_ENTITY,
         ));
     }
@@ -119,7 +117,8 @@ pub async fn post_password(
     // Save key: token, value: {jwt, email} to redis
     let expiry_in_seconds: Option<i64> = Some(300);
     let mut cache_service = CacheService::new(create_redis_client_connection());
-    let set_redis_result = cache_service.store_key_value(&token, &token_object_json, expiry_in_seconds);
+    let set_redis_result =
+        cache_service.store_key_value(&token, &token_object_json, expiry_in_seconds);
 
     // err handling
     if set_redis_result.is_err() {
@@ -137,4 +136,3 @@ pub async fn post_password(
         StatusCode::OK,
     ));
 }
-

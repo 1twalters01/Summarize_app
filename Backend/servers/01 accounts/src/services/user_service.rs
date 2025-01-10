@@ -39,7 +39,10 @@ impl UserService {
         user::get::uuid_from_email(&self.pool, &email).await
     }
 
-    pub async fn get_user_uuid_from_username(&self, username: &str) -> Result<Option<Uuid>, sqlx::Error> {
+    pub async fn get_user_uuid_from_username(
+        &self,
+        username: &str,
+    ) -> Result<Option<Uuid>, sqlx::Error> {
         user::get::uuid_from_username(&self.pool, &username).await
     }
 
@@ -67,12 +70,12 @@ impl UserService {
         password_hash::update::from_user_uuid(&self.pool, uuid, password_hash).await
     }
 
-    pub async fn update_email_for_uuid(
-        &self,
-        email: &str,
-        uuid: &Uuid,
-    ) -> Result<(), sqlx::Error> {
+    pub async fn update_email_for_uuid(&self, email: &str, uuid: &Uuid) -> Result<(), sqlx::Error> {
         user::update::update_email_from_uuid(&self.pool, email, uuid).await
+    }
+
+    pub async fn update_name_for_uuid(&self, first_name: Option<&String>, last_name: Option<&String>, uuid: &Uuid) -> Result<(), sqlx::Error> {
+        user::update::update_name_from_uuid(&self.pool, first_name, last_name, uuid).await
     }
 
     pub async fn update_language_for_uuid(

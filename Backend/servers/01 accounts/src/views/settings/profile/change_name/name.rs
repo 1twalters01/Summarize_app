@@ -1,42 +1,26 @@
 use crate::{
-    datatypes::claims::UserClaims,
-    generated::protos::settings::profile::{
-        confirmation::{
-            response as confirmation_response, Error as PasswordError, Request as PasswordRequest,
-            Response as PasswordResponse, Success as PasswordSuccess,
-        },
-        name::{
-            request::{request::RequestField, BothNames, Request as MainRequest},
-            response::{response, Error as MainError, Response as MainResponse},
-        },
+    datatypes::{
+        claims::UserClaims,
+        response_types::{AppError, AppResponse},
+        settings_objects::NameTokenObject,
+    },
+    generated::protos::settings::profile::name::{
+        request::{request::RequestField, BothNames, Request},
+        response::{response, Error, Response},
     },
     models::user::User,
-    queries::redis::general::set_key_value_in_redis,
-    services::token_service::TokenService,
-    utils::{
-        database_connections::{create_pg_pool_connection, create_redis_client_connection},
-        validations::{validate_name, validate_password},
+    services::{
+        cache_service::CacheService, response_service::ResponseService, token_service::TokenService,
     },
+    utils::{database_connections::create_redis_client_connection, validations::validate_name},
 };
 
-use actix_protobuf::{ProtoBuf, ProtoBufResponseBuilder};
-use actix_web::{HttpMessage, HttpRequest, HttpResponse, Responder, Result};
-use serde::{Deserialize, Serialize};
-use sqlx::{Pool, Postgres};
+use actix_protobuf::ProtoBuf;
+use actix_web::{http::StatusCode, HttpMessage, HttpRequest, Responder, Result};
 
-#[derive(Serialize, Deserialize)]
-struct NameTokenObject {
-    user_uuid: String,
-    first_name: Option<String>,
-    last_name: Option<String>,
-}
-
-pub async fn post_name(
-    req_body: ProtoBuf<MainRequest>,
-    req: HttpRequest,
-) -> Result<impl Responder> {
-    let MainRequest { request_field } = req_body.0;
-
+pub async fn post_name(req_body: ProtoBuf<Request>, req: HttpRequest) -> Result<impl Responder> {
+    // Get first and last names
+    let Request { request_field } = req_body.0;
     let (first_name, last_name): (Option<String>, Option<String>) = match request_field.unwrap() {
         RequestField::FirstName(first_name) => (Some(first_name), None),
         RequestField::LastName(last_name) => (None, Some(last_name)),
@@ -50,14 +34,10 @@ pub async fn post_name(
     if let Some(ref name) = first_name {
         let validated_firstname = validate_name(&name);
         if validated_firstname.is_err() {
-            let response: MainResponse = MainResponse {
-                response_field: Some(response::ResponseField::Error(
-                    MainError::InvalidCredentials as i32,
-                )),
-            };
-            return Ok(HttpResponse::UnprocessableEntity()
-                .content_type("application/x-protobuf; charset=utf-8")
-                .protobuf(response));
+            return Ok(ResponseService::create_error_response(
+                AppError::ChangeName(Error::InvalidName),
+                StatusCode::UNPROCESSABLE_ENTITY,
+            ));
         }
     }
 
@@ -65,14 +45,10 @@ pub async fn post_name(
     if let Some(ref name) = last_name {
         let validated_lastname = validate_name(&name);
         if validated_lastname.is_err() {
-            let response: MainResponse = MainResponse {
-                response_field: Some(response::ResponseField::Error(
-                    MainError::InvalidCredentials as i32,
-                )),
-            };
-            return Ok(HttpResponse::UnprocessableEntity()
-                .content_type("application/x-protobuf; charset=utf-8")
-                .protobuf(response));
+            return Ok(ResponseService::create_error_response(
+                AppError::ChangeName(Error::InvalidName),
+                StatusCode::UNPROCESSABLE_ENTITY,
+            ));
         }
     }
 
@@ -80,39 +56,27 @@ pub async fn post_name(
     let user_uuid: String = match req.extensions().get::<UserClaims>() {
         Some(claims) => claims.sub.clone(),
         None => {
-            let response: MainResponse = MainResponse {
-                response_field: Some(response::ResponseField::Error(
-                    MainError::InvalidCredentials as i32,
-                )),
-            };
-            return Ok(HttpResponse::InternalServerError()
-                .content_type("application/x-protobuf; charset=utf-8")
-                .protobuf(response));
+            return Ok(ResponseService::create_error_response(
+                AppError::ChangeName(Error::InvalidCredentials),
+                StatusCode::INTERNAL_SERVER_ERROR,
+            ));
         }
     };
     let user_result: Result<Option<User>, sqlx::Error> = User::from_uuid_str(&user_uuid).await;
     _ = match user_result {
         Err(_) => {
-            let response: MainResponse = MainResponse {
-                response_field: Some(response::ResponseField::Error(
-                    MainError::ServerError as i32,
-                )),
-            };
-            return Ok(HttpResponse::InternalServerError()
-                .content_type("application/x-protobuf; charset=utf-8")
-                .protobuf(response));
+            return Ok(ResponseService::create_error_response(
+                AppError::ChangeName(Error::ServerError),
+                StatusCode::INTERNAL_SERVER_ERROR,
+            ));
         }
         Ok(user) => match user {
-            Some(user) => user,
+            Some(_) => (),
             None => {
-                let response: MainResponse = MainResponse {
-                    response_field: Some(response::ResponseField::Error(
-                        MainError::InvalidCredentials as i32,
-                    )),
-                };
-                return Ok(HttpResponse::InternalServerError()
-                    .content_type("application/x-protobuf; charset=utf-8")
-                    .protobuf(response));
+                return Ok(ResponseService::create_error_response(
+                    AppError::ChangeName(Error::InvalidCredentials),
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                ));
             }
         },
     };
@@ -129,244 +93,23 @@ pub async fn post_name(
 
     // Save key: token, value: {jwt, email} to redis
     let expiry_in_seconds: Option<i64> = Some(300);
-    let mut con = create_redis_client_connection();
+    let mut cache_service = CacheService::new(create_redis_client_connection());
     let set_redis_result =
-        set_key_value_in_redis(&mut con, &token, &token_object_json, expiry_in_seconds);
+        cache_service.store_key_value(&token, &token_object_json, expiry_in_seconds);
 
     // err handling
     if set_redis_result.is_err() {
-        let response: MainResponse = MainResponse {
-            response_field: Some(response::ResponseField::Error(
-                MainError::ServerError as i32,
-            )),
-        };
-        return Ok(HttpResponse::FailedDependency()
-            .content_type("application/x-protobuf; charset=utf-8")
-            .protobuf(response));
+        return Ok(ResponseService::create_error_response(
+            AppError::ChangeName(Error::ServerError),
+            StatusCode::FAILED_DEPENDENCY,
+        ));
     }
 
     // return token
-    let response: MainResponse = MainResponse {
-        response_field: Some(response::ResponseField::RequiresPassword(true)),
-    };
-    return Ok(HttpResponse::Ok()
-        .content_type("application/x-protobuf; charset=utf-8")
-        .protobuf(response));
-}
-
-pub async fn post_confirmation(
-    req_body: ProtoBuf<PasswordRequest>,
-    req: HttpRequest,
-) -> Result<impl Responder> {
-    let PasswordRequest { password } = req_body.0;
-    let login_name_token: String = req
-        .headers()
-        .get("Change-Name-Token")
-        .unwrap()
-        .to_str()
-        .unwrap()
-        .to_string();
-
-    // validate password
-    let validated_password = validate_password(&password);
-    if validated_password.is_err() {
-        let response: PasswordResponse = PasswordResponse {
-            response_field: Some(confirmation_response::ResponseField::Error(
-                PasswordError::InvalidCredentials as i32,
-            )),
-        };
-        return Ok(HttpResponse::UnprocessableEntity()
-            .content_type("application/x-protobuf; charset=utf-8")
-            .protobuf(response));
-    }
-
-    // Validate user
-    let user_uuid: String = match req.extensions().get::<UserClaims>() {
-        Some(claims) => claims.sub.clone(),
-        None => {
-            let response: PasswordResponse = PasswordResponse {
-                response_field: Some(confirmation_response::ResponseField::Error(
-                    PasswordError::InvalidCredentials as i32,
-                )),
-            };
-            return Ok(HttpResponse::InternalServerError()
-                .content_type("application/x-protobuf; charset=utf-8")
-                .protobuf(response));
-        }
-    };
-    let user_result: Result<Option<User>, sqlx::Error> = User::from_uuid_str(&user_uuid).await;
-    let user: User = match user_result {
-        Err(_) => {
-            let response: PasswordResponse = PasswordResponse {
-                response_field: Some(confirmation_response::ResponseField::Error(
-                    PasswordError::ServerError as i32,
-                )),
-            };
-            return Ok(HttpResponse::InternalServerError()
-                .content_type("application/x-protobuf; charset=utf-8")
-                .protobuf(response));
-        }
-        Ok(user) => match user {
-            Some(user) => user,
-            None => {
-                let response: PasswordResponse = PasswordResponse {
-                    response_field: Some(confirmation_response::ResponseField::Error(
-                        PasswordError::InvalidCredentials as i32,
-                    )),
-                };
-                return Ok(HttpResponse::InternalServerError()
-                    .content_type("application/x-protobuf; charset=utf-8")
-                    .protobuf(response));
-            }
-        },
-    };
-
-    // authenticate password
-    if user.check_password(&password).is_err() {
-        let response: PasswordResponse = PasswordResponse {
-            response_field: Some(confirmation_response::ResponseField::Error(
-                PasswordError::IncorrectPassword as i32,
-            )),
-        };
-        return Ok(HttpResponse::Unauthorized()
-            .content_type("application/x-protobuf; charset=utf-8")
-            .protobuf(response));
-    };
-
-    // Get name from redis
-    let con = create_redis_client_connection();
-    let (first_name, last_name): (Option<String>, Option<String>) =
-        match get_object_from_token_in_redis(con, &login_name_token) {
-            // if error return error
-            Err(err) => {
-                println!("err: {:#?}", err);
-                let response: PasswordResponse = PasswordResponse {
-                    response_field: Some(confirmation_response::ResponseField::Error(
-                        PasswordError::InvalidCredentials as i32,
-                    )),
-                };
-
-                return Ok(HttpResponse::UnprocessableEntity()
-                    .content_type("application/x-protobuf; charset=utf-8")
-                    .protobuf(response));
-            }
-            Ok(object) => match object.user_uuid == user_uuid {
-                true => (object.first_name, object.last_name),
-                false => {
-                    let response: PasswordResponse = PasswordResponse {
-                        response_field: Some(confirmation_response::ResponseField::Error(
-                            PasswordError::ServerError as i32,
-                        )),
-                    };
-
-                    return Ok(HttpResponse::UnprocessableEntity()
-                        .content_type("application/x-protobuf; charset=utf-8")
-                        .protobuf(response));
-                }
-            },
-        };
-
-    // change name
-    let pool = create_pg_pool_connection().await;
-    let update_result: Result<(), sqlx::Error> = update_name_for_user_in_pg_users_table(
-        &pool,
-        &user_uuid,
-        first_name.as_ref(),
-        last_name.as_ref(),
-    )
-    .await;
-
-    // if sql update error then return an error
-    if update_result.is_err() {
-        let response: PasswordResponse = PasswordResponse {
-            response_field: Some(confirmation_response::ResponseField::Error(
-                PasswordError::ServerError as i32,
-            )),
-        };
-        return Ok(HttpResponse::FailedDependency()
-            .content_type("application/x-protobuf; charset=utf-8")
-            .protobuf(response));
-    }
-
-    // return ok
-    let response: PasswordResponse = PasswordResponse {
-        response_field: Some(confirmation_response::ResponseField::Success(
-            PasswordSuccess {},
-        )),
-    };
-    return Ok(HttpResponse::Ok()
-        .content_type("application/x-protobuf; charset=utf-8")
-        .protobuf(response));
-}
-
-use redis::{Commands, Connection, RedisResult};
-fn get_object_from_token_in_redis(
-    mut con: Connection,
-    token: &str,
-) -> Result<NameTokenObject, String> {
-    let redis_result: RedisResult<String> = con.get(token);
-    let object_json: String = match redis_result {
-        Ok(object_json) => object_json,
-        Err(err) => return Err(err.to_string()),
-    };
-    let object: NameTokenObject = serde_json::from_str(&object_json).unwrap();
-    return Ok(object);
-}
-
-pub async fn update_name_for_user_in_pg_users_table(
-    pool: &Pool<Postgres>,
-    user_uuid: &str,
-    first_name: Option<&String>,
-    last_name: Option<&String>,
-) -> Result<(), sqlx::Error> {
-    match first_name {
-        Some(name) => {
-            let user_update_query =
-                sqlx::query("UPDATE users SET first_name=($1) WHERE uuid=($2);")
-                    .bind(name)
-                    .bind(user_uuid)
-                    .execute(pool)
-                    .await;
-
-            if let Err(err) = user_update_query {
-                return Err(err);
-            }
-        }
-        None => {
-            let user_update_query =
-                sqlx::query("UPDATE users SET first_name=NULL WHERE uuid=($1);")
-                    .bind(user_uuid)
-                    .execute(pool)
-                    .await;
-
-            if let Err(err) = user_update_query {
-                return Err(err);
-            }
-        }
-    }
-
-    match last_name {
-        Some(name) => {
-            let user_update_query = sqlx::query("UPDATE users SET last_name=($1) WHERE uuid=($2);")
-                .bind(name)
-                .bind(user_uuid)
-                .execute(pool)
-                .await;
-
-            if let Err(err) = user_update_query {
-                return Err(err);
-            }
-        }
-        None => {
-            let user_update_query = sqlx::query("UPDATE users SET last_name=NULL WHERE uuid=($1);")
-                .bind(user_uuid)
-                .execute(pool)
-                .await;
-
-            if let Err(err) = user_update_query {
-                return Err(err);
-            }
-        }
-    }
-    return Ok(());
+    return Ok(ResponseService::create_success_response(
+        AppResponse::ChangeName(Response {
+            response_field: Some(response::ResponseField::RequiresPassword(true)),
+        }),
+        StatusCode::OK,
+    ));
 }

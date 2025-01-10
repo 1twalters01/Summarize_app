@@ -4,12 +4,11 @@ use crate::{
         response_types::{AppError, AppResponse},
     },
     generated::protos::settings::profile::confirmation::{
-        response, Error, Request as PasswordRequest,
-        Response , Success,
+        response, Error, Request as PasswordRequest, Response, Success,
     },
     models::user::User,
     services::{
-        cache_service::CacheService, response_service::ResponseService, user_service::UserService
+        cache_service::CacheService, response_service::ResponseService, user_service::UserService,
     },
     utils::{
         database_connections::{create_pg_pool_connection, create_redis_client_connection},
@@ -25,9 +24,9 @@ pub async fn post_confirmation(
     req: HttpRequest,
 ) -> Result<impl Responder> {
     let PasswordRequest { password } = req_body.0;
-    let login_email_token: String = req
+    let login_name_token: String = req
         .headers()
-        .get("Change-Email-Token")
+        .get("Change-Name-Token")
         .unwrap()
         .to_str()
         .unwrap()
@@ -59,7 +58,7 @@ pub async fn post_confirmation(
                 AppError::Confirmation(Error::ServerError),
                 StatusCode::INTERNAL_SERVER_ERROR,
             ));
-        },
+        }
         Ok(user) => match user {
             Some(user) => user,
             None => {
@@ -79,10 +78,10 @@ pub async fn post_confirmation(
         ));
     };
 
-    // Get email from redis
+    // Get name from redis
     let cache_service = CacheService::new(create_redis_client_connection());
-    let token_object_result = cache_service.get_email_object_from_token(&login_email_token);
-    let email: String = match token_object_result {
+    let token_object_result = cache_service.get_name_object_from_token(&login_name_token);
+    let (first_name, last_name): (Option<String>, Option<String>) = match token_object_result {
         // if error return error
         Err(err) => {
             println!("err: {:#?}", err);
@@ -90,9 +89,9 @@ pub async fn post_confirmation(
                 AppError::Confirmation(Error::InvalidCredentials),
                 StatusCode::UNPROCESSABLE_ENTITY,
             ));
-        },
+        }
         Ok(object) => match object.user_uuid == user_uuid_str {
-            true => object.email,
+            true => (object.first_name, object.last_name),
             false => {
                 return Ok(ResponseService::create_error_response(
                     AppError::Confirmation(Error::ServerError),
@@ -102,9 +101,9 @@ pub async fn post_confirmation(
         },
     };
 
-    // change email
+    // change name
     let user_service = UserService::new(create_pg_pool_connection().await);
-    let update_result: Result<(), sqlx::Error> = user_service.update_email_for_uuid(&email, &user.get_uuid()).await;
+    let update_result: Result<(), sqlx::Error> = user_service.update_name_for_uuid(first_name.as_ref(), last_name.as_ref(), &user.get_uuid()).await;
 
     // if sql update error then return an error
     if update_result.is_err() {
@@ -122,4 +121,5 @@ pub async fn post_confirmation(
         StatusCode::OK,
     ));
 }
+
 

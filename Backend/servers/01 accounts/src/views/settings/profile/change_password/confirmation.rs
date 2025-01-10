@@ -4,12 +4,11 @@ use crate::{
         response_types::{AppError, AppResponse},
     },
     generated::protos::settings::profile::confirmation::{
-        response, Error, Request,
-        Response , Success,
+        response, Error, Request, Response, Success,
     },
     models::user::User,
     services::{
-        cache_service::CacheService, response_service::ResponseService, user_service::UserService
+        cache_service::CacheService, response_service::ResponseService, user_service::UserService,
     },
     utils::{
         database_connections::{create_pg_pool_connection, create_redis_client_connection},
@@ -59,7 +58,7 @@ pub async fn post_confirmation(
                 AppError::Confirmation(Error::ServerError),
                 StatusCode::INTERNAL_SERVER_ERROR,
             ));
-        },
+        }
         Ok(user) => match user {
             Some(user) => user,
             None => {
@@ -90,7 +89,7 @@ pub async fn post_confirmation(
                 AppError::Confirmation(Error::InvalidCredentials),
                 StatusCode::UNPROCESSABLE_ENTITY,
             ));
-        },
+        }
         Ok(object) => match object.user_uuid == user_uuid_str {
             true => object.password_hash,
             false => {
@@ -104,7 +103,9 @@ pub async fn post_confirmation(
 
     // change password
     let user_service = UserService::new(create_pg_pool_connection().await);
-    let update_result: Result<(), sqlx::Error> = user_service.update_password_hash_for_uuid(&password_hash, &user.get_uuid()).await;
+    let update_result: Result<(), sqlx::Error> = user_service
+        .update_password_hash_for_uuid(&password_hash, &user.get_uuid())
+        .await;
 
     // if sql update error then return an error
     if update_result.is_err() {
@@ -117,7 +118,7 @@ pub async fn post_confirmation(
     // return ok
     return Ok(ResponseService::create_success_response(
         AppResponse::Confirmation(Response {
-            response_field: Some(response::ResponseField::Success(Success{})),
+            response_field: Some(response::ResponseField::Success(Success {})),
         }),
         StatusCode::OK,
     ));

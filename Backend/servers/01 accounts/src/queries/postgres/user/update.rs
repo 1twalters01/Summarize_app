@@ -38,6 +38,27 @@ pub async fn update_email_from_uuid(
     }
 }
 
+pub async fn update_name_from_uuid(
+    pool: &Pool<Postgres>,
+    first_name: Option<&String>,
+    last_name: Option<&String>,
+    uuid: &Uuid,
+) -> Result<(), sqlx::Error> {
+    let user_update_query =
+        sqlx::query("UPDATE users SET first_name=($1), last_name=($2) WHERE uuid=($3);")
+        .bind(first_name)
+        .bind(last_name)
+        .bind(uuid)
+        .execute(pool)
+        .await;
+
+    if let Err(err) = user_update_query {
+        return Err(err);
+    } else {
+        return Ok(());
+    }
+}
+
 pub async fn update_language_from_uuid(
     pool: &Pool<Postgres>,
     language: &str,

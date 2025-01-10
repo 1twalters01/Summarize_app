@@ -1,2 +1,2 @@
-pub mod password;
 pub mod confirmation;
+pub mod password;

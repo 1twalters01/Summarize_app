@@ -1,2 +1,2 @@
-pub mod username;
 pub mod confirmation;
+pub mod username;

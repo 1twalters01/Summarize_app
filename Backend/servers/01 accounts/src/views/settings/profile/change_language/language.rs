@@ -8,9 +8,7 @@ use crate::{
         response::{response, Error, Response, Success},
     },
     models::user::User,
-    services::{
-        response_service::ResponseService, user_service::UserService,
-    },
+    services::{response_service::ResponseService, user_service::UserService},
     utils::{database_connections::create_pg_pool_connection, validations::validate_language},
 };
 
@@ -27,7 +25,7 @@ pub async fn post_language(
     let validated_language = validate_language(language);
     if validated_language.is_err() {
         return Ok(ResponseService::create_error_response(
-            AppError::ChangeLanguage(Error::InvalidCredentials),
+            AppError::ChangeLanguage(Error::InvalidLanguage),
             StatusCode::UNPROCESSABLE_ENTITY,
         ));
     }
@@ -49,7 +47,7 @@ pub async fn post_language(
                 AppError::ChangeLanguage(Error::ServerError),
                 StatusCode::INTERNAL_SERVER_ERROR,
             ));
-        },
+        }
         Ok(user) => match user {
             Some(user) => user,
             None => {
@@ -62,9 +60,14 @@ pub async fn post_language(
     };
 
     // change language
-    let language_str: &str = Language::try_from(language).ok().expect("invalid number").as_str_name();
+    let language_str: &str = Language::try_from(language)
+        .ok()
+        .expect("invalid number")
+        .as_str_name();
     let user_service = UserService::new(create_pg_pool_connection().await);
-    let update_result: Result<(), sqlx::Error> = user_service.update_language_for_uuid(language_str, &user.get_uuid()).await;
+    let update_result: Result<(), sqlx::Error> = user_service
+        .update_language_for_uuid(language_str, &user.get_uuid())
+        .await;
 
     // if sql update error then return an error
     if update_result.is_err() {
@@ -82,4 +85,3 @@ pub async fn post_language(
         StatusCode::OK,
     ));
 }
-
