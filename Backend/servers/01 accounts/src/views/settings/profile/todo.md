@@ -1,4 +1,3 @@
-* change_language
 * change_name
 * change_password
 * change_theme
