@@ -4,19 +4,17 @@ package settings.profile.totp.response;
 
 enum Error {
     INVALID_CREDENTIALS = 0;
-    INCORRECT_TOTP = 1;
+    INCORRECT_PASSWORD = 1;
     PASSWORDS_DO_NOT_MATCH = 2;
     TOO_MANY_REQUESTS = 3;
     INVALID_TOTP = 4;
     SERVER_ERROR = 5;
 }
 
-message Success {}
-
 message Response {
     oneof response_field {
         Error error = 1;
-        Success success = 2;
+        string token = 2;
     }
 }
 

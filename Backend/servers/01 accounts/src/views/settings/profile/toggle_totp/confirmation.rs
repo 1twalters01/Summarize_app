@@ -3,8 +3,8 @@ use crate::{
         claims::UserClaims,
         response_types::{AppError, AppResponse},
     },
-    generated::protos::settings::profile::totp::{
-        request::Request,
+    generated::protos::settings::profile::confirmation::{
+        request::TotpRequest as Request,
         response::{response, Error, Response, Success},
     },
     models::{totp::Totp, user::User},
@@ -45,7 +45,7 @@ pub async fn post_confirmation(
     let validated_totp = validate_totp(digit1, digit2, digit3, digit4, digit5, digit6);
     if validated_totp.is_err() {
         return Ok(ResponseService::create_error_response(
-            AppError::ChangeTotp(Error::InvalidCredentials),
+            AppError::Confirmation(Error::InvalidCredentials),
             StatusCode::UNPROCESSABLE_ENTITY,
         ));
     }
@@ -55,7 +55,7 @@ pub async fn post_confirmation(
         Some(claims) => claims.sub.clone(),
         None => {
             return Ok(ResponseService::create_error_response(
-                AppError::ChangeTotp(Error::InvalidCredentials),
+                AppError::Confirmation(Error::InvalidCredentials),
                 StatusCode::INTERNAL_SERVER_ERROR,
             ));
         }
@@ -64,15 +64,15 @@ pub async fn post_confirmation(
     let user: User = match user_result {
         Err(_) => {
             return Ok(ResponseService::create_error_response(
-                AppError::ChangeTotp(Error::ServerError),
+                AppError::Confirmation(Error::ServerError),
                 StatusCode::INTERNAL_SERVER_ERROR,
             ));
-        },
+        }
         Ok(user) => match user {
             Some(user) => user,
             None => {
                 return Ok(ResponseService::create_error_response(
-                    AppError::ChangeTotp(Error::InvalidCredentials),
+                    AppError::Confirmation(Error::InvalidCredentials),
                     StatusCode::INTERNAL_SERVER_ERROR,
                 ));
             }
@@ -87,17 +87,17 @@ pub async fn post_confirmation(
         Err(err) => {
             println!("err: {:#?}", err);
             return Ok(ResponseService::create_error_response(
-                AppError::ChangeTotp(Error::ServerError),
+                AppError::Confirmation(Error::ServerError),
                 StatusCode::INTERNAL_SERVER_ERROR,
             ));
         }
         Ok(uuid) => match uuid {
             None => {
                 return Ok(ResponseService::create_error_response(
-                    AppError::ChangeTotp(Error::ServerError),
+                    AppError::Confirmation(Error::ServerError),
                     StatusCode::INTERNAL_SERVER_ERROR,
                 ));
-            },
+            }
             Some(uuid) => uuid,
         },
     };
@@ -105,7 +105,7 @@ pub async fn post_confirmation(
     // if saved_uuid != uuid then error
     if user_uuid_str != saved_uuid.to_string() {
         return Ok(ResponseService::create_error_response(
-            AppError::ChangeTotp(Error::InvalidCredentials),
+            AppError::Confirmation(Error::InvalidCredentials),
             StatusCode::INTERNAL_SERVER_ERROR,
         ));
     }
@@ -113,17 +113,17 @@ pub async fn post_confirmation(
 
     // get current totp status
     let user_service = UserService::new(create_pg_pool_connection().await);
-    let get_result: Result<Option<String>, sqlx::Error> = user_service.get_totp_key_from_uuid(&user_uuid).await;
-    let totp_key: Option<String> =
-        match get_result {
-            Ok(result) => result,
-            Err(_) => {
-                return Ok(ResponseService::create_error_response(
-                    AppError::ChangeTotp(Error::ServerError),
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                ));
-            }
-        };
+    let get_result: Result<Option<String>, sqlx::Error> =
+        user_service.get_totp_key_from_uuid(&user_uuid).await;
+    let totp_key: Option<String> = match get_result {
+        Ok(result) => result,
+        Err(_) => {
+            return Ok(ResponseService::create_error_response(
+                AppError::Confirmation(Error::ServerError),
+                StatusCode::INTERNAL_SERVER_ERROR,
+            ));
+        }
+    };
 
     // if totp = there then delete
     if let Some(totp_key) = totp_key {
@@ -134,7 +134,7 @@ pub async fn post_confirmation(
             .is_err()
         {
             return Ok(ResponseService::create_error_response(
-                AppError::ChangeTotp(Error::IncorrectTotp),
+                AppError::Confirmation(Error::IncorrectTotp),
                 StatusCode::UNAUTHORIZED,
             ));
         };
@@ -143,7 +143,7 @@ pub async fn post_confirmation(
         match delete_result {
             Ok(_) => {
                 return Ok(ResponseService::create_success_response(
-                    AppResponse::ChangeTotp(Response {
+                    AppResponse::Confirmation(Response {
                         response_field: Some(response::ResponseField::Success(Success {})),
                     }),
                     StatusCode::OK,
@@ -151,7 +151,7 @@ pub async fn post_confirmation(
             }
             Err(_) => {
                 return Ok(ResponseService::create_error_response(
-                    AppError::ChangeTotp(Error::ServerError),
+                    AppError::Confirmation(Error::ServerError),
                     StatusCode::INTERNAL_SERVER_ERROR,
                 ));
             }
@@ -162,7 +162,7 @@ pub async fn post_confirmation(
         match set_result {
             Ok(_) => {
                 return Ok(ResponseService::create_success_response(
-                    AppResponse::ChangeTotp(Response {
+                    AppResponse::Confirmation(Response {
                         response_field: Some(response::ResponseField::Success(Success {})),
                     }),
                     StatusCode::OK,
@@ -170,11 +170,10 @@ pub async fn post_confirmation(
             }
             Err(_) => {
                 return Ok(ResponseService::create_error_response(
-                    AppError::ChangeTotp(Error::ServerError),
+                    AppError::Confirmation(Error::ServerError),
                     StatusCode::INTERNAL_SERVER_ERROR,
                 ));
             }
         }
     }
 }
-

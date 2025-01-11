@@ -4,7 +4,8 @@ use crate::{
         response_types::{AppError, AppResponse},
     },
     generated::protos::settings::profile::confirmation::{
-        response, Error, Request, Response, Success,
+        request::Request,
+        response::{response, Error, Response, Success},
     },
     models::user::User,
     services::{response_service::ResponseService, user_service::UserService},

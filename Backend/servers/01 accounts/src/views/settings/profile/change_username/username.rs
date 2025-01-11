@@ -111,7 +111,7 @@ pub async fn post_username(
     // return token
     return Ok(ResponseService::create_success_response(
         AppResponse::ChangeUsername(Response {
-            response_field: Some(response::ResponseField::RequiresPassword(true)),
+            response_field: Some(response::ResponseField::Token(token)),
         }),
         StatusCode::OK,
     ));

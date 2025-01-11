@@ -13,6 +13,6 @@ enum Error {
 message Response {
     oneof response_field {
         Error error = 1;
-        bool requires_password = 2;
+        string token = 2;
     }
 }

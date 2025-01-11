@@ -4,7 +4,8 @@ use crate::{
         response_types::{AppError, AppResponse},
     },
     generated::protos::settings::profile::confirmation::{
-        response, Error, Request as PasswordRequest, Response, Success,
+        request::Request,
+        response::{response, Error, Response, Success},
     },
     models::user::User,
     services::{
@@ -20,10 +21,10 @@ use actix_protobuf::ProtoBuf;
 use actix_web::{http::StatusCode, HttpMessage, HttpRequest, Responder, Result};
 
 pub async fn post_confirmation(
-    req_body: ProtoBuf<PasswordRequest>,
+    req_body: ProtoBuf<Request>,
     req: HttpRequest,
 ) -> Result<impl Responder> {
-    let PasswordRequest { password } = req_body.0;
+    let Request { password } = req_body.0;
     let login_username_token: String = req
         .headers()
         .get("Change-Username-Token")

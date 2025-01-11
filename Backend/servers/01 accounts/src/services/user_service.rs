@@ -61,10 +61,7 @@ impl UserService {
         }
     }
 
-    pub async fn get_totp_key_from_uuid(
-        &self,
-        uuid: &Uuid,
-    ) -> Result<Option<String>, sqlx::Error> {
+    pub async fn get_totp_key_from_uuid(&self, uuid: &Uuid) -> Result<Option<String>, sqlx::Error> {
         let totp_result = user::get::totp_from_uuid(&self.pool, uuid).await;
         match totp_result {
             Ok(Some(totp)) => match totp.get_url() {

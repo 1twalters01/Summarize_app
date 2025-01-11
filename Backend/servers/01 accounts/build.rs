@@ -45,7 +45,8 @@ fn main() {
     prost_config = prost_build::Config::new();
     prost_config.out_dir(out_dir);
     let protobuf_location_vec: &Vec<&str> = &Vec::from([
-        "/settings/profile/confirmation.proto",
+        "/settings/profile/confirmation/request.proto",
+        "/settings/profile/confirmation/response.proto",
         "/settings/profile/email/request.proto",
         "/settings/profile/email/response.proto",
         "/settings/profile/name/request.proto",

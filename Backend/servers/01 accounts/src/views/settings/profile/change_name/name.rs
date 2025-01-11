@@ -108,7 +108,7 @@ pub async fn post_name(req_body: ProtoBuf<Request>, req: HttpRequest) -> Result<
     // return token
     return Ok(ResponseService::create_success_response(
         AppResponse::ChangeName(Response {
-            response_field: Some(response::ResponseField::RequiresPassword(true)),
+            response_field: Some(response::ResponseField::Token(token)),
         }),
         StatusCode::OK,
     ));

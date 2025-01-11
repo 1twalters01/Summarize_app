@@ -131,7 +131,7 @@ pub async fn post_password(
     // return that you require a password
     return Ok(ResponseService::create_success_response(
         AppResponse::ChangePassword(Response {
-            response_field: Some(response::ResponseField::RequiresPassword(true)),
+            response_field: Some(response::ResponseField::Token(token)),
         }),
         StatusCode::OK,
     ));

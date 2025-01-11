@@ -105,7 +105,7 @@ pub async fn post_email(req_body: ProtoBuf<Request>, req: HttpRequest) -> Result
     // return token
     return Ok(ResponseService::create_success_response(
         AppResponse::ChangeEmail(Response {
-            response_field: Some(response::ResponseField::RequiresPassword(true)),
+            response_field: Some(response::ResponseField::Token(token)),
         }),
         StatusCode::OK,
     ));

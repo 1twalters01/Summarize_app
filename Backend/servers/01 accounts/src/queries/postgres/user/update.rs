@@ -96,4 +96,3 @@ pub async fn totp_from_uuid(
         return Ok(());
     }
 }
-

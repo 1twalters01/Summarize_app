@@ -14,10 +14,7 @@ pub async fn from_uuid(pool: &Pool<Postgres>, uuid: &Uuid) -> Result<(), sqlx::E
     }
 }
 
-pub async fn totp_from_uuid(
-    pool: &Pool<Postgres>,
-    user_uuid: &Uuid,
-) -> Result<(), sqlx::Error> {
+pub async fn totp_from_uuid(pool: &Pool<Postgres>, user_uuid: &Uuid) -> Result<(), sqlx::Error> {
     let user_select_query = sqlx::query("UPDATE users SET totp_key=NULL WHERE uuid=($1)")
         .bind(user_uuid)
         .execute(pool)
@@ -29,4 +26,3 @@ pub async fn totp_from_uuid(
         return Ok(());
     }
 }
-
