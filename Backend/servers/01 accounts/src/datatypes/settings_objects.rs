@@ -24,3 +24,4 @@ pub struct NameTokenObject {
     pub(crate) first_name: Option<String>,
     pub(crate) last_name: Option<String>,
 }
+

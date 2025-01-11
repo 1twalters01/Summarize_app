@@ -3,40 +3,49 @@ use crate::{
         claims::UserClaims,
         response_types::{AppError, AppResponse},
     },
-    generated::protos::settings::profile::confirmation::{
-        response, Error, Request as PasswordRequest, Response, Success,
+    generated::protos::settings::profile::totp::{
+        request::Request,
+        response::{response, Error, Response, Success},
     },
-    models::user::User,
+    models::{totp::Totp, user::User},
     services::{
         cache_service::CacheService, response_service::ResponseService, user_service::UserService,
     },
     utils::{
         database_connections::{create_pg_pool_connection, create_redis_client_connection},
-        validations::validate_password,
+        validations::validate_totp,
     },
 };
 
 use actix_protobuf::ProtoBuf;
 use actix_web::{http::StatusCode, HttpMessage, HttpRequest, Responder, Result};
+use uuid::Uuid;
 
 pub async fn post_confirmation(
-    req_body: ProtoBuf<PasswordRequest>,
+    req_body: ProtoBuf<Request>,
     req: HttpRequest,
 ) -> Result<impl Responder> {
-    let PasswordRequest { password } = req_body.0;
-    let login_email_token: String = req
+    let Request {
+        digit1,
+        digit2,
+        digit3,
+        digit4,
+        digit5,
+        digit6,
+    } = req_body.0;
+    let toggle_totp_token: String = req
         .headers()
-        .get("Change-Email-Token")
+        .get("Toggle-Totp-Token")
         .unwrap()
         .to_str()
         .unwrap()
         .to_string();
 
     // validate password
-    let validated_password = validate_password(&password);
-    if validated_password.is_err() {
+    let validated_totp = validate_totp(digit1, digit2, digit3, digit4, digit5, digit6);
+    if validated_totp.is_err() {
         return Ok(ResponseService::create_error_response(
-            AppError::Confirmation(Error::InvalidCredentials),
+            AppError::ChangeTotp(Error::InvalidCredentials),
             StatusCode::UNPROCESSABLE_ENTITY,
         ));
     }
@@ -46,7 +55,7 @@ pub async fn post_confirmation(
         Some(claims) => claims.sub.clone(),
         None => {
             return Ok(ResponseService::create_error_response(
-                AppError::Confirmation(Error::InvalidCredentials),
+                AppError::ChangeTotp(Error::InvalidCredentials),
                 StatusCode::INTERNAL_SERVER_ERROR,
             ));
         }
@@ -55,71 +64,117 @@ pub async fn post_confirmation(
     let user: User = match user_result {
         Err(_) => {
             return Ok(ResponseService::create_error_response(
-                AppError::Confirmation(Error::ServerError),
+                AppError::ChangeTotp(Error::ServerError),
                 StatusCode::INTERNAL_SERVER_ERROR,
             ));
-        }
+        },
         Ok(user) => match user {
             Some(user) => user,
             None => {
                 return Ok(ResponseService::create_error_response(
-                    AppError::Confirmation(Error::InvalidCredentials),
+                    AppError::ChangeTotp(Error::InvalidCredentials),
                     StatusCode::INTERNAL_SERVER_ERROR,
                 ));
             }
         },
     };
 
-    // authenticate password
-    if user.check_password(&password).is_err() {
-        return Ok(ResponseService::create_error_response(
-            AppError::Confirmation(Error::IncorrectPassword),
-            StatusCode::UNAUTHORIZED,
-        ));
-    };
-
-    // Get email from redis
-    let cache_service = CacheService::new(create_redis_client_connection());
-    let token_object_result = cache_service.get_email_object_from_token(&login_email_token);
-    let email: String = match token_object_result {
+    // get uuid from redis - make the jwt the token instead of uuid for safety?
+    let mut cache_service = CacheService::new(create_redis_client_connection());
+    let result = cache_service.get_user_uuid_from_token(&toggle_totp_token);
+    let saved_uuid: Uuid = match result {
         // if error return error
         Err(err) => {
             println!("err: {:#?}", err);
             return Ok(ResponseService::create_error_response(
-                AppError::Confirmation(Error::InvalidCredentials),
-                StatusCode::UNPROCESSABLE_ENTITY,
+                AppError::ChangeTotp(Error::ServerError),
+                StatusCode::INTERNAL_SERVER_ERROR,
             ));
         }
-        Ok(object) => match object.user_uuid == user_uuid_str {
-            true => object.email,
-            false => {
+        Ok(uuid) => match uuid {
+            None => {
                 return Ok(ResponseService::create_error_response(
-                    AppError::Confirmation(Error::ServerError),
-                    StatusCode::UNPROCESSABLE_ENTITY,
+                    AppError::ChangeTotp(Error::ServerError),
+                    StatusCode::INTERNAL_SERVER_ERROR,
                 ));
-            }
+            },
+            Some(uuid) => uuid,
         },
     };
 
-    // change email
-    let user_service = UserService::new(create_pg_pool_connection().await);
-    let update_result: Result<(), sqlx::Error> = user_service
-        .update_email_for_uuid(&email, &user.get_uuid())
-        .await;
-
-    // if sql update error then return an error
-    if update_result.is_err() {
+    // if saved_uuid != uuid then error
+    if user_uuid_str != saved_uuid.to_string() {
         return Ok(ResponseService::create_error_response(
-            AppError::Confirmation(Error::ServerError),
-            StatusCode::FAILED_DEPENDENCY,
+            AppError::ChangeTotp(Error::InvalidCredentials),
+            StatusCode::INTERNAL_SERVER_ERROR,
         ));
     }
+    let user_uuid = user.get_uuid();
 
-    // return ok
-    return Ok(ResponseService::create_success_response(
-        AppResponse::Confirmation(Response {
-            response_field: Some(response::ResponseField::Success(Success {})),
-        }),
-        StatusCode::OK,
-    ));
+    // get current totp status
+    let user_service = UserService::new(create_pg_pool_connection().await);
+    let get_result: Result<Option<String>, sqlx::Error> = user_service.get_totp_key_from_uuid(&user_uuid).await;
+    let totp_key: Option<String> =
+        match get_result {
+            Ok(result) => result,
+            Err(_) => {
+                return Ok(ResponseService::create_error_response(
+                    AppError::ChangeTotp(Error::ServerError),
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                ));
+            }
+        };
+
+    // if totp = there then delete
+    if let Some(totp_key) = totp_key {
+        let mut totp: Totp = Totp::from_key(totp_key);
+
+        if totp
+            .verify(digit1, digit2, digit3, digit4, digit5, digit6)
+            .is_err()
+        {
+            return Ok(ResponseService::create_error_response(
+                AppError::ChangeTotp(Error::IncorrectTotp),
+                StatusCode::UNAUTHORIZED,
+            ));
+        };
+
+        let delete_result = user_service.delete_totp_from_uuid(&user_uuid).await;
+        match delete_result {
+            Ok(_) => {
+                return Ok(ResponseService::create_success_response(
+                    AppResponse::ChangeTotp(Response {
+                        response_field: Some(response::ResponseField::Success(Success {})),
+                    }),
+                    StatusCode::OK,
+                ));
+            }
+            Err(_) => {
+                return Ok(ResponseService::create_error_response(
+                    AppError::ChangeTotp(Error::ServerError),
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                ));
+            }
+        }
+    } else {
+        let totp: Totp = Totp::new();
+        let set_result = user_service.set_totp_from_uuid(&totp, &user_uuid).await;
+        match set_result {
+            Ok(_) => {
+                return Ok(ResponseService::create_success_response(
+                    AppResponse::ChangeTotp(Response {
+                        response_field: Some(response::ResponseField::Success(Success {})),
+                    }),
+                    StatusCode::OK,
+                ));
+            }
+            Err(_) => {
+                return Ok(ResponseService::create_error_response(
+                    AppError::ChangeTotp(Error::ServerError),
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                ));
+            }
+        }
+    }
 }
+

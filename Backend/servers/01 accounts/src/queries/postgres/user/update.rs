@@ -2,6 +2,8 @@ use chrono::{DateTime, Utc};
 use sqlx::{Pool, Postgres};
 use uuid::Uuid;
 
+use crate::models::totp::Totp;
+
 pub async fn update_login_time_from_uuid(
     pool: &Pool<Postgres>,
     last_login: DateTime<Utc>,
@@ -76,3 +78,22 @@ pub async fn update_language_from_uuid(
         return Ok(());
     }
 }
+
+pub async fn totp_from_uuid(
+    pool: &Pool<Postgres>,
+    user_uuid: &Uuid,
+    totp: &Totp,
+) -> Result<(), sqlx::Error> {
+    let user_update_query = sqlx::query("UPDATE users SET totp_key=($1) WHERE uuid=($2)")
+        .bind(totp.get_url())
+        .bind(user_uuid)
+        .execute(pool)
+        .await;
+
+    if let Err(err) = user_update_query {
+        return Err(err);
+    } else {
+        return Ok(());
+    }
+}
+

@@ -61,6 +61,21 @@ impl UserService {
         }
     }
 
+    pub async fn get_totp_key_from_uuid(
+        &self,
+        uuid: &Uuid,
+    ) -> Result<Option<String>, sqlx::Error> {
+        let totp_result = user::get::totp_from_uuid(&self.pool, uuid).await;
+        match totp_result {
+            Ok(Some(totp)) => match totp.get_url() {
+                Some(key) => return Ok(Some(key)),
+                None => return Ok(None),
+            },
+            Ok(None) => return Ok(None),
+            Err(err) => return Err(err),
+        }
+    }
+
     pub async fn update_password_hash_for_uuid(
         &self,
         password: &str,
@@ -112,11 +127,19 @@ impl UserService {
         return totp;
     }
 
+    pub async fn set_totp_from_uuid(&self, totp: &Totp, uuid: &Uuid) -> Result<(), sqlx::Error> {
+        user::update::totp_from_uuid(&self.pool, uuid, totp).await
+    }
+
     pub async fn get_user_from_email(&self, email: &str) -> Result<Option<User>, sqlx::Error> {
         user::get::from_email(&self.pool, &email).await
     }
 
     pub async fn delete_user_from_uuid(&self, uuid: &Uuid) -> Result<(), sqlx::Error> {
         user::delete::from_uuid(&self.pool, uuid).await
+    }
+
+    pub async fn delete_totp_from_uuid(&self, uuid: &Uuid) -> Result<(), sqlx::Error> {
+        user::delete::totp_from_uuid(&self.pool, uuid).await
     }
 }
