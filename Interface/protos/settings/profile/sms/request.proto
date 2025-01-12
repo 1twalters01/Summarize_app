@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package settings.profile.totp.request;
+package settings.profile.sms.request;
 
 message Request {
     string password = 1;

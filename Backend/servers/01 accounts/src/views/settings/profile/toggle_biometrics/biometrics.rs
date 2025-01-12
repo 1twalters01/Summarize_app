@@ -1,11 +1,26 @@
+use crate::{
+    datatypes::{
+        claims::UserClaims,
+        response_types::{AppError, AppResponse},
+    },
+    generated::protos::settings::profile::biometrics::{
+        request::Request,
+        response::{response, Error, Response},
+    },
+    models::user::User,
+    services::{
+        cache_service::CacheService, response_service::ResponseService, token_service::TokenService,
+    },
+    utils::{database_connections::create_redis_client_connection, validations::validate_password},
+};
 use actix_protobuf::{ProtoBuf, ProtoBufResponseBuilder};
 use actix_web::{HttpMessage, HttpRequest, HttpResponse, Responder, Result};
 
 pub async fn post_biometrics(
-    req_body: ProtoBuf<PasswordRequest>,
+    req_body: ProtoBuf<Request>,
     req: HttpRequest,
 ) -> Result<impl Responder> {
-    let PasswordRequest { password } = req_body.0;
+    let Request { password } = req_body.0;
 
     // validate password
     let validated_password = validate_password(&password);

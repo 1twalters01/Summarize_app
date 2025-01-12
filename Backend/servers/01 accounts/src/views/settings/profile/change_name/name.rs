@@ -32,7 +32,7 @@ pub async fn post_name(req_body: ProtoBuf<Request>, req: HttpRequest) -> Result<
 
     // validate firstname
     if let Some(ref name) = first_name {
-        let validated_firstname = validate_name(&name);
+        let validated_firstname = validate_first_name(&name);
         if validated_firstname.is_err() {
             return Ok(ResponseService::create_error_response(
                 AppError::ChangeName(Error::InvalidName),
@@ -43,7 +43,7 @@ pub async fn post_name(req_body: ProtoBuf<Request>, req: HttpRequest) -> Result<
 
     // validate lastname
     if let Some(ref name) = last_name {
-        let validated_lastname = validate_name(&name);
+        let validated_lastname = validate_last_name(&name);
         if validated_lastname.is_err() {
             return Ok(ResponseService::create_error_response(
                 AppError::ChangeName(Error::InvalidName),

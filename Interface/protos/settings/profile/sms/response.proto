@@ -1,13 +1,13 @@
 syntax = "proto3";
 
-package settings.profile.totp.response;
+package settings.profile.sms.response;
 
 enum Error {
     INVALID_CREDENTIALS = 0;
     INCORRECT_PASSWORD = 1;
     PASSWORDS_DO_NOT_MATCH = 2;
     TOO_MANY_REQUESTS = 3;
-    INVALID_TOTP = 4;
+    INVALID_OTP = 4;
     SERVER_ERROR = 5;
 }
 

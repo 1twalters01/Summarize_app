@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package settings.profile.totp.request;
+package settings.profile.biometrics.request;
 
 message Request {
     string password = 1;

@@ -15,3 +15,10 @@ message TotpRequest {
     uint32 digit6 = 6;
 }
 
+message OtpRequest {
+    uint32 digit1 = 1;
+    uint32 digit2 = 2;
+    uint32 digit3 = 3;
+    uint32 digit4 = 4;
+    uint32 digit5 = 5;
+}

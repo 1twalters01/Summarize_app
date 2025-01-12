@@ -1,20 +1,7 @@
-pub fn validate_name(name: &str) -> Result<(), String> {
-    if name.len() >= 30 {
-        return Err("Name is too long".to_string());
-    }
-
-    if name
-        .as_bytes()
-        .iter()
-        .map(|b| b.is_ascii_alphabetic())
-        .collect::<Vec<bool>>()
-        .contains(&false)
-    {
-        return Err("Name is invalid".to_string());
-    }
-
-    return Ok(());
-}
+use crate::generated::protos::settings::profile::{
+    language::request::Language,
+    theme::request::{request::RequestField, Colour, Coulours, Custom, Presets},
+};
 
 pub fn validate_email(email: &str) -> Result<(), String> {
     if email.contains("@") | email.contains(".") != true {
@@ -66,23 +53,38 @@ pub fn validate_username(username: &str) -> Result<(), String> {
     return Ok(());
 }
 
-// pub fn validate_first_name(first_name: String) -> Result<(), String> {
-//     if first_name.len() >= 30 {
-//         return Err("First name is too long".to_string());
-//     }
-//
-//     if first_name
-//         .as_bytes()
-//         .iter()
-//         .map(|b| b.is_ascii_alphabetic())
-//         .collect::<Vec<bool>>()
-//         .contains(&false)
-//     {
-//         return Err("First name is invalid".to_string());
-//     }
-//
-//     return Ok(());
-// }
+pub fn validate_name(first_name: &str, last_name: &str) -> Result<(), String> {
+    if first_name.len() >= 30 {
+        return Err("First name is too long".to_string());
+    }
+
+    if last_name.len() >= 39 {
+        return Err("Last name is too long".to_string());
+    }
+
+    if first_name
+        .as_bytes()
+        .iter()
+        .map(|b| b.is_ascii_alphabetic())
+        .collect::<Vec<bool>>()
+        .contains(&false)
+    {
+        return Err("First name is invalid".to_string());
+    }
+
+    if last_name
+        .as_bytes()
+        .iter()
+        .map(|b| b.is_ascii_alphabetic())
+        .collect::<Vec<bool>>()
+        .contains(&false)
+    {
+        return Err("Last name is invalid".to_string());
+    }
+
+    return Ok(());
+}
+
 pub fn validate_first_name(first_name: &str) -> Result<(), String> {
     if first_name.len() >= 30 {
         return Err("First name is too long".to_string());
@@ -101,7 +103,7 @@ pub fn validate_first_name(first_name: &str) -> Result<(), String> {
     return Ok(());
 }
 
-pub fn validate_last_name(last_name: String) -> Result<(), String> {
+pub fn validate_last_name(last_name: &str) -> Result<(), String> {
     if last_name.len() >= 30 {
         return Err("Last name is too long".to_string());
     }
@@ -119,7 +121,6 @@ pub fn validate_last_name(last_name: String) -> Result<(), String> {
     return Ok(());
 }
 
-use crate::generated::protos::settings::profile::language::request::Language;
 pub fn validate_language(language: i32) -> Result<(), String> {
     match Language::try_from(language) {
         Ok(_) => return Ok(()),
@@ -127,9 +128,6 @@ pub fn validate_language(language: i32) -> Result<(), String> {
     }
 }
 
-use crate::generated::protos::settings::profile::theme::request::{
-    request::RequestField, Colour, Colours, Custom, Presets,
-};
 pub fn validate_theme(theme: Option<RequestField>) -> Result<(), String> {
     if theme.is_none() {
         return Err("Invalid theme".to_string());
