@@ -50,8 +50,7 @@ impl CacheService {
         }
     }
 
-    // Flip these name and parameters to store_user_uuid_for_token
-    pub fn store_token_for_user_uuid(
+    pub fn store_user_uuid_for_token(
         &mut self,
         token: &str,
         user_uuid: &Uuid,
@@ -60,8 +59,8 @@ impl CacheService {
         let user_json = serde_json::to_string(&user_uuid).unwrap();
         set_key_value_in_redis(&mut self.con, token, &user_json, expiry_in_seconds)
     }
-    // Flip to store_email_token
-    pub fn store_token_for_email(
+    
+    pub fn store_email_for_token(
         &mut self,
         token: &str,
         email: &str,
@@ -70,8 +69,7 @@ impl CacheService {
         set_key_value_in_redis(&mut self.con, token, &email, expiry_in_seconds)
     }
 
-    // store_user_for_token
-    pub fn store_token_for_user(
+    pub fn store_user_for_token(
         &mut self,
         token: &str,
         user: &User,
