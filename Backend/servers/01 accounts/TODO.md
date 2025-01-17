@@ -1,5 +1,20 @@
 # Todo
-* tomorrow - refactor settings
+* Guest login
+* Guest refresh
+* Register from guest
+* oauth2
+* remove email dir in utils
+* add other email types to email service and integrate
+* Write tests for:
+    * datatypes
+    * middleware
+    * models
+    * queries
+    * routes
+    * services
+    * utils
+    * views
+* Real world testing
 
 # CheckList
 1. [ ] User Management
