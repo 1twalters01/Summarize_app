@@ -71,9 +71,9 @@ async fn register_verification_functionality(
     let token_service = TokenService::new();
     let register_verification_token = token_service.generate_opaque_token_of_length(64);
     let expiry_in_seconds: Option<i64> = Some(1800);
-    let mut cache_result = cache_service.store_token_for_email(
-        &register_verification_token,
+    let mut cache_result = cache_service.store_email_for_token(
         &email,
+        &register_verification_token,
         expiry_in_seconds,
     );
     if cache_result.is_err() {

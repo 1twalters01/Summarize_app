@@ -1,6 +1,6 @@
 use crate::generated::protos::settings::profile::{
     language::request::Language,
-    theme::request::{request::RequestField, Colour, Coulours, Custom, Presets},
+    theme::request::{request::RequestField, Colour, Colours, Custom, Presets},
 };
 
 pub fn validate_email(email: &str) -> Result<(), String> {

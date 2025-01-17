@@ -12,7 +12,7 @@ use crate::{
     services::{
         cache_service::CacheService, response_service::ResponseService, token_service::TokenService,
     },
-    utils::{database_connections::create_redis_client_connection, validations::validate_name},
+    utils::{database_connections::create_redis_client_connection, validations::{validate_first_name, validate_last_name}},
 };
 
 use actix_protobuf::ProtoBuf;
@@ -31,8 +31,8 @@ pub async fn post_name(req_body: ProtoBuf<Request>, req: HttpRequest) -> Result<
     };
 
     // validate firstname
-    if let Some(ref name) = first_name {
-        let validated_firstname = validate_first_name(&name);
+    if let Some(ref fname) = first_name {
+        let validated_firstname = validate_first_name(&fname);
         if validated_firstname.is_err() {
             return Ok(ResponseService::create_error_response(
                 AppError::ChangeName(Error::InvalidName),
@@ -42,8 +42,8 @@ pub async fn post_name(req_body: ProtoBuf<Request>, req: HttpRequest) -> Result<
     }
 
     // validate lastname
-    if let Some(ref name) = last_name {
-        let validated_lastname = validate_last_name(&name);
+    if let Some(ref lname) = last_name {
+        let validated_lastname = validate_last_name(&lname);
         if validated_lastname.is_err() {
             return Ok(ResponseService::create_error_response(
                 AppError::ChangeName(Error::InvalidName),

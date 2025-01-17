@@ -74,7 +74,7 @@ pub async fn post_email(data: ProtoBuf<request::Request>) -> Result<impl Respond
 
     let mut cache_service = CacheService::new(create_redis_client_connection());
     let cache_result =
-        cache_service.store_token_for_user(&token_tuple_json, &user, expiry_in_seconds);
+        cache_service.store_user_for_token(&user, &token_tuple_json, expiry_in_seconds);
     if cache_result.is_err() {
         return Ok(ResponseService::create_error_response(
             AppError::PasswordResetEmail(Error::ServerError),

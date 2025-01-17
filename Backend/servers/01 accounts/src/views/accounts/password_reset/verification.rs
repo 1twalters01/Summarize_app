@@ -78,9 +78,9 @@ async fn password_reset_verification_functionality(
 
     // add {key: token, value: email} to redis
     let expiry_in_seconds: Option<i64> = Some(1800);
-    let mut cache_result = cache_service.store_token_for_user_uuid(
-        &password_reset_verification_token,
+    let mut cache_result = cache_service.store_user_uuid_for_token(
         &user_uuid,
+        &password_reset_verification_token,
         expiry_in_seconds,
     );
     if cache_result.is_err() {

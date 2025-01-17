@@ -52,8 +52,8 @@ impl CacheService {
 
     pub fn store_user_uuid_for_token(
         &mut self,
-        token: &str,
         user_uuid: &Uuid,
+        token: &str,
         expiry_in_seconds: Option<i64>,
     ) -> Result<(), RedisError> {
         let user_json = serde_json::to_string(&user_uuid).unwrap();
@@ -62,8 +62,8 @@ impl CacheService {
     
     pub fn store_email_for_token(
         &mut self,
-        token: &str,
         email: &str,
+        token: &str,
         expiry_in_seconds: Option<i64>,
     ) -> Result<(), RedisError> {
         set_key_value_in_redis(&mut self.con, token, &email, expiry_in_seconds)
@@ -71,8 +71,8 @@ impl CacheService {
 
     pub fn store_user_for_token(
         &mut self,
-        token: &str,
         user: &User,
+        token: &str,
         expiry_in_seconds: Option<i64>,
     ) -> Result<(), RedisError> {
         let user_json = serde_json::to_string(&user).unwrap();
