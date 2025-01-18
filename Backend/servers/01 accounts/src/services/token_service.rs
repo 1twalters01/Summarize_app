@@ -1,5 +1,5 @@
 use rand::{distributions::Alphanumeric, thread_rng, Rng};
-use std::env;
+use std::{env, net::SocketAddr};
 
 use chrono::{Duration, Utc};
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
@@ -30,6 +30,19 @@ impl<'a> TokenService<'a> {
         let mut rng = thread_rng();
         let bytes: Vec<u8> = (0..length).map(|_| rng.sample(Alphanumeric)).collect();
         return String::from_utf8(bytes).unwrap();
+    }
+
+    pub fn generate_captcha_token(&self, ip: SocketAddr) -> Result<String, String> {
+        let now = Utc::now();
+        let expiration = now
+            .checked_add_signed(Duration::minutes(30))
+            .unwrap()
+            .timestamp() as usize;
+
+        let claims = CaptchaClaims {
+            ip: ip,
+            exp: expiration,
+        }
     }
 
     pub fn generate_access_token(&self) -> Result<String, String> {

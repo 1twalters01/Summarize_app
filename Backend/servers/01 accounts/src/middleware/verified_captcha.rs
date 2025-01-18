@@ -99,3 +99,108 @@ where
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::services::token_service::TokenService;
+    use actix_http::{Request as HttpRequest, StatusCode};
+    use actix_web::{
+        dev::{Service, ServiceResponse},
+        test,
+        web::{self, get},
+        App, Error as ActixError,
+    };
+    use dotenv::dotenv;
+    use uuid::Uuid;
+
+    async fn initialise_service(
+    ) -> impl Service<HttpRequest, Response = ServiceResponse, Error = ActixError> {
+        dotenv().ok();
+        return test::init_service(
+            App::new()
+                .service(
+                    web::scope("/not-authenticated")
+                        .wrap(VerificationMiddleware)
+                        .route(
+                            "/",
+                            get().to(|| async {
+                                actix_web::HttpResponse::Ok().body("not authenticated API")
+                            }),
+                        ),
+                )
+                .service(
+                    web::scope("/authenticated")
+                        .wrap(VerificationMiddleware)
+                        .route(
+                            "/",
+                            get().to(|| async {
+                                actix_web::HttpResponse::Ok().body("authenticated API")
+                            }),
+                        ),
+                ),
+        )
+        .await;
+    }
+
+    #[actix_web::test]
+    async fn test_authenticated_while_not_authenticated() {
+        let mut app = initialise_service().await;
+        let request = test::TestRequest::get().uri("/authenticated/").to_request();
+        let response = test::call_service(&mut app, request).await;
+        assert!(response.status() == StatusCode::UNAUTHORIZED);
+
+        let body = test::read_body(response).await;
+        let text: serde_json::Value = serde_json::from_slice(&body).unwrap();
+        assert!(text.get("error").unwrap() == "No authentication header");
+    }
+
+
+    #[actix_web::test]
+    async fn test_not_authenticated_while_not_authenticated() {
+        let mut app = initialise_service().await;
+        let request = test::TestRequest::get()
+            .uri("/not-authenticated/")
+            .to_request();
+        let response = test::call_service(&mut app, request).await;
+        assert!(response.status() == StatusCode::OK);
+    }
+
+    #[actix_web::test]
+    async fn test_authenticated_while_authenticated() {
+        let mut app = initialise_service().await;
+        let uuid = Uuid::new_v4();
+        let ip = req.peer_addr();
+        let token_service = TokenService::from_uuid(&uuid);
+        let access_token = token_service.generate_captcha_token(ip).unwrap();
+
+        let request = test::TestRequest::get()
+            .uri("/authenticated/")
+            .append_header(("Authorization", format!("Bearer {}", access_token)))
+            .to_request();
+        let response = test::call_service(&mut app, request).await;
+        println!("http status: {}", response.status());
+        assert!(response.status() == StatusCode::OK);
+    }
+
+    #[actix_web::test]
+    async fn test_not_authenticated_while_authenticated() {
+        let mut app = initialise_service().await;
+        let uuid = Uuid::new_v4();
+        let ip = req.peer_addr();
+        let token_service = TokenService::from_uuid(&uuid);
+        let access_token = token_service.generate_captcha_token(ip).unwrap();
+
+        let request = test::TestRequest::get()
+            .uri("/not-authenticated/")
+            .append_header(("Authorization", format!("Bearer {}", access_token)))
+            .to_request();
+        let response = test::call_service(&mut app, request).await;
+        assert!(response.status() == StatusCode::UNAUTHORIZED);
+
+        let body = test::read_body(response).await;
+        let text: serde_json::Value = serde_json::from_slice(&body).unwrap();
+        println!("{:#?}", text);
+        assert!(text.get("error").unwrap() == "Authenticated");
+    }
+}
