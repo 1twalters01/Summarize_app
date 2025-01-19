@@ -1,13 +1,37 @@
-pub fn validate_totp(
-    digit1: u32,
-    digit2: u32,
-    digit3: u32,
-    digit4: u32,
-    digit5: u32,
-    digit6: u32,
-) -> Result<(), String> {
-    if digit1 > 9 || digit2 > 9 || digit3 > 9 || digit4 > 9 || digit5 > 9 || digit6 > 9 {
-        return Err("Invalid digits".to_string());
+pub fn validate_totp(digits: &[u32]) -> Result<(), String> {
+    // Ensure all digits are between 0 and 9
+    if digits.len() != 6 {
+        return Err("Totp must have 6 digits")
     }
-    return Ok(());
+    if digits.iter().any(|&digit| digit > 9) {
+        return Err("Digits must be between 0 and 9.".to_string());
+    }
+    Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_validate_totp() {
+        let tests = vec![
+            (vec![1, 2, 3, 4, 5, 6], true),
+            (vec![0, 0, 0, 0, 0, 0], true),
+            (vec![9, 9, 9, 9, 9, 9], true),
+            (vec![1, 2, 3, 4, 5], false),
+            (vec![1, 2, 3, 4, 5, 6, 7], false),
+            (vec![1, 2, 3, 4, 5, 10], false),
+            (vec![], false),
+        ];
+
+        for (digits, expected) in tests {
+            assert_eq!(
+                validate_totp(&digits).is_ok(),
+                expected,
+                "TOTP `{:?}` was not classified correctly",
+                digits
+            );
+        }
+    }
 }
