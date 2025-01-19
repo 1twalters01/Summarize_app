@@ -167,3 +167,130 @@ pub fn get_count_from_ip_in_redis(con: &mut Connection, ip: &str) -> Result<Opti
         }
     };
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    async fn initialise_service(
+    ) -> impl Service<HttpRequest, Response = ServiceResponse, Error = ActixError> {
+        dotenv().ok();
+        return test::init_service(
+            App::new()
+                .service(
+                    web::scope("/limited")
+                        .wrap(RateLimiterMiddleware)
+                        .route(
+                            "/",
+                            get().to(|| async {
+                                actix_web::HttpResponse::Ok().body("limited API")
+                            }),
+                        ),
+                )
+                .service(
+                    web::scope("/unlimited")
+                        .route(
+                            "/",
+                            get().to(|| async {
+                                actix_web::HttpResponse::Ok().body("unlimited API")
+                            }),
+                        ),
+                )
+        )
+        .await;
+    }
+
+    #[actix_web::test]
+    async fn test_limited_api_while_under_rate_limit() {
+        let mut app = initialise_service().await;
+        let request = test::TestRequest::get().uri("/limited/").to_request();
+        let response = test::call_service(&mut app, request).await;
+        assert!(response.status() == StatusCode::OK);
+
+        let body = test::read_body(response).await;
+        let text: serde_json::Value = serde_json::from_slice(&body).unwrap();
+        assert!(text.get("error").unwrap() == "limited API");
+    }
+
+    #[actix_web::test]
+    async fn test_unlimited_api_while_under_rate_limit() {
+        let mut app = initialise_service().await;
+        let request = test::TestRequest::get().uri("/unlimited/").to_request();
+        let response = test::call_service(&mut app, request).await;
+        assert!(response.status() == StatusCode::OK);
+
+        let body = test::read_body(response).await;
+        let text: serde_json::Value = serde_json::from_slice(&body).unwrap();
+        assert!(text.get("error").unwrap() == "unlimited API");
+    }
+
+    #[actix_web::test]
+    async fn test_limited_api_while_at_rate_limit() {
+        let mut app = initialise_service().await;
+        let request = test::TestRequest::get().uri("/limited/").to_request();
+        let response = test::call_service(&mut app, request).await;
+        let response = test::call_service(&mut app, request).await;
+        let response = test::call_service(&mut app, request).await;
+        assert!(response.status() == StatusCode::OK);
+
+        let body = test::read_body(response).await;
+        let text: serde_json::Value = serde_json::from_slice(&body).unwrap();
+        assert!(text.get("error").unwrap() == "limited API");
+    }
+
+    #[actix_web::test]
+    async fn test_unlimited_api_while_at_rate_limit() {
+        let mut app = initialise_service().await;
+        let request = test::TestRequest::get().uri("/unlimited/").to_request();
+        let response = test::call_service(&mut app, request).await;
+        let response = test::call_service(&mut app, request).await;
+        let response = test::call_service(&mut app, request).await;
+        assert!(response.status() == StatusCode::OK);
+
+        let body = test::read_body(response).await;
+        let text: serde_json::Value = serde_json::from_slice(&body).unwrap();
+        assert!(text.get("error").unwrap() == "unlimited API");
+    }
+
+    #[actix_web::test]
+    async fn test_limited_api_while_over_rate_limit() {
+        let mut app = initialise_service().await;
+        let request = test::TestRequest::get().uri("/limited/").to_request();
+        let response = test::call_service(&mut app, request).await;
+        let response = test::call_service(&mut app, request).await;
+        let response = test::call_service(&mut app, request).await;
+        let response = test::call_service(&mut app, request).await;
+        let response = test::call_service(&mut app, request).await;
+        assert!(response.status() == StatusCode::TOO_MANY_REQUESTS);
+
+        let body = test::read_body(response).await;
+        let text: serde_json::Value = serde_json::from_slice(&body).unwrap();
+        assert!(text.get("error").unwrap() == "No authentication header");
+    }
+
+    #[actix_web::test]
+    async fn test_unlimited_api_while_over_rate_limit() {
+        let mut app = initialise_service().await;
+        let request = test::TestRequest::get().uri("/unlimited/").to_request();
+        let response = test::call_service(&mut app, request).await;
+        let response = test::call_service(&mut app, request).await;
+        let response = test::call_service(&mut app, request).await;
+        let response = test::call_service(&mut app, request).await;
+        let response = test::call_service(&mut app, request).await;
+        assert!(response.status() == StatusCode::OK);
+
+        let body = test::read_body(response).await;
+        let text: serde_json::Value = serde_json::from_slice(&body).unwrap();
+        assert!(text.get("error").unwrap() == "unlimited api");
+    }
+
+    #[actix_web::test]
+    async fn test_limited_api_with_wait() {
+        let mut app = initialise_service().await;
+        let request = test::TestRequest::get().uri("/limited/").to_request();
+        let response = test::call_service(&mut app, request).await;
+        let response = test::call_service(&mut app, request).await;
+        let response = test::call_service(&mut app, request).await;
+        thread::sleep(time::Duration::from_secs(30));
+        let response = test::call_service(&mut app, request).await;
+    }
+}

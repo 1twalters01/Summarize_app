@@ -144,7 +144,7 @@ mod tests {
     }
 
     #[actix_web::test]
-    async fn test_authenticated_while_not_authenticated() {
+    async fn test_authenticated_api_while_not_authenticated() {
         let mut app = initialise_service().await;
         let request = test::TestRequest::get().uri("/authenticated/").to_request();
         let response = test::call_service(&mut app, request).await;
@@ -157,7 +157,7 @@ mod tests {
 
 
     #[actix_web::test]
-    async fn test_not_authenticated_while_not_authenticated() {
+    async fn test_not_authenticated_api_while_not_authenticated() {
         let mut app = initialise_service().await;
         let request = test::TestRequest::get()
             .uri("/not-authenticated/")
@@ -167,7 +167,7 @@ mod tests {
     }
 
     #[actix_web::test]
-    async fn test_authenticated_while_authenticated() {
+    async fn test_authenticated_api_while_authenticated() {
         let mut app = initialise_service().await;
         let uuid = Uuid::new_v4();
         let ip = req.peer_addr();
@@ -184,7 +184,7 @@ mod tests {
     }
 
     #[actix_web::test]
-    async fn test_not_authenticated_while_authenticated() {
+    async fn test_not_authenticated_api_while_authenticated() {
         let mut app = initialise_service().await;
         let uuid = Uuid::new_v4();
         let ip = req.peer_addr();
