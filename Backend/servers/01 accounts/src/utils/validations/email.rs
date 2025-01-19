@@ -123,17 +123,19 @@ mod tests {
     #[test]
     fn test_validate_email() {
         let tests = vec![
+            // Valid emails
             ("email@here.com", true),
             ("weirder-email@here.and.there.com", true),
+            ("abc@bar", true),
             (r#"!def!xyz%abc@example.com"#, true),
             ("email@[127.0.0.1]", true),
             ("email@[2001:dB8::1]", true),
             ("email@[2001:dB8:0:0:0:0:0:1]", true),
             ("email@[::fffF:127.0.0.1]", true),
+            ("email@127.0.0.1", true),
             ("example@valid-----hyphens.com", true),
             ("example@valid-with-hyphens.com", true),
             ("test@domain.with.idn.tld.उदाहरण.परीक्षा", true),
-            (r#""test@test"@example.com"#, false),
             // max length for domain name labels is 63 characters per RFC 1034
             ("a@atm.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", true),
             ("a@aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.atm", true),
@@ -141,16 +143,17 @@ mod tests {
                 "a@aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.bbbbbbbbbb.atm",
                 true,
             ),
-            // 64 * a
-            ("a@atm.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", false),
+
+            // Invalid emails
             ("", false),
             ("abc", false),
             ("abc@", false),
-            ("abc@bar", true),
+            (r#""test@test"@example.com"#, false),
+            // 64 * a
+            ("a@atm.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", false),
             ("a @x.cz", false),
             ("abc@.com", false),
             ("something@@somewhere.com", false),
-            ("email@127.0.0.1", true),
             ("email@[127.0.0.256]", false),
             ("email@[2001:db8::12345]", false),
             ("email@[2001:db8:0:0:0:0:1]", false),
