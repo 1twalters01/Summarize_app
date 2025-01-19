@@ -1,67 +1,78 @@
-pub fn validate_name(first_name: &str, last_name: &str) -> Result<(), String> {
-    if first_name.len() >= 30 {
-        return Err("First name is too long".to_string());
+pub fn validate_name(name: &str) -> Result<(), String> {
+    if name.len() < 1 {
+        return Err("Name must contain at least 1 character".to_string());
+    }
+    if name.len() > 100 {
+        return Err("Name must not exceed 100 characters".to_string());
     }
 
-    if last_name.len() >= 39 {
-        return Err("Last name is too long".to_string());
+    if local.starts_with('-') || local.ends_with('-') {
+        return false;
+    }
+    if local.starts_with('\'') || local.ends_with('\'') {
+        return false;
     }
 
-    if first_name
-        .as_bytes()
-        .iter()
-        .map(|b| b.is_ascii_alphabetic())
-        .collect::<Vec<bool>>()
-        .contains(&false)
-    {
-        return Err("First name is invalid".to_string());
-    }
-
-    if last_name
-        .as_bytes()
-        .iter()
-        .map(|b| b.is_ascii_alphabetic())
-        .collect::<Vec<bool>>()
-        .contains(&false)
-    {
-        return Err("Last name is invalid".to_string());
+    let mut prev_char = '\0';
+    for ch in name.chars() {
+        if !ch.is_alphabetic() || ch == '-' || is_special_character(ch) {
+            return Err("Name contains invalid characters")
+        }
+        if is_special_character(ch) && is_special_character(prev_char) {
+            return Err("Name cannot contain consecutive special characters")
+        }
     }
 
     return Ok(());
 }
 
-pub fn validate_first_name(first_name: &str) -> Result<(), String> {
-    if first_name.len() >= 30 {
-        return Err("First name is too long".to_string());
-    }
-
-    if first_name
-        .as_bytes()
-        .iter()
-        .map(|b| b.is_ascii_alphabetic())
-        .collect::<Vec<bool>>()
-        .contains(&false)
-    {
-        return Err("First name is invalid".to_string());
-    }
-
-    return Ok(());
+pub fn is_special_character(ch: char) {
+    ch == '-' || ch == '\''
 }
 
-pub fn validate_last_name(last_name: &str) -> Result<(), String> {
-    if last_name.len() >= 30 {
-        return Err("Last name is too long".to_string());
-    }
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-    if last_name
-        .as_bytes()
-        .iter()
-        .map(|b| b.is_ascii_alphabetic())
-        .collect::<Vec<bool>>()
-        .contains(&false)
-    {
-        return Err("Last name is invalid".to_string());
-    }
+    #[test]
+    fn test_validate_name() {
+        let tests = vec![
+            // Valid names
+            ("John", true),
+            ("John Doe", true),
+            ("O'Connor", true),
+            ("Jean-Luc", true),
+            ("Renée", true),
+            ("李小龍", true),
+            ("A", true),
+            ("Léo", true),
+            ("Mary Jane Watson", true),
 
-    return Ok(());
+            // Invalid names
+            ("", false),
+            (" ", false),
+            ("John--Doe", false),
+            ("O''Connor", false),
+            ("John  Doe", false),
+            ("-John", false),
+            ("John-", false),
+            ("'John", false),
+            ("John'", false),
+            (" John", false),
+            ("John ", false),
+            ("John@Doe", false),
+            ("John123", false),
+            ("John!", false),
+            ("ThisNameIsWayTooLongToBeValidBecauseItExceedsTheMaximumLengthOfOneHundredCharacters", false),
+        ];
+
+        for (name, expected) in tests {
+            assert_eq!(
+                validate_name(name),
+                if expected { Ok(()) } else { Err("".to_string()) },
+                "Name `{}` was not classified correctly",
+                name
+            );
+        }
+    }
 }
