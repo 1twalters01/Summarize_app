@@ -6,7 +6,6 @@
 * remove email dir in utils
 * add other email types to email service and integrate
 * Write tests for:
-    * middleware
     * models
     * queries
     * routes
