@@ -19,6 +19,7 @@ data-encoding = "2.6.0"
 dotenv = "0.15.0"
 futures-util = "0.3.30"
 hmac = "0.12.1"
+idna = "0.3"
 jsonwebtoken = "9.3.0"
 lettre = { version = "0.11.7", features = ["smtp-transport", "rustls-tls", "hostname", "builder"] }
 prost = { version = "0.12", features = ["prost-derive"] }
