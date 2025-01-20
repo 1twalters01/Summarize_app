@@ -4,20 +4,21 @@ use actix_web::{
     Error, HttpResponse,
 };
 use futures_util::future::{ok, LocalBoxFuture, Ready};
-use std::time::Duration;
 use std::{
     rc::Rc,
     task::{Context, Poll},
 };
-use tokio::time::sleep;
 
 use crate::{
     queries::redis::general::set_key_value_in_redis,
     utils::database_connections::create_redis_client_connection,
 };
-use redis::{Commands, Connection, ErrorKind, RedisResult};
+use redis::{Commands, Connection, RedisResult};
 
-struct RateLimiter;
+struct RateLimiter {
+    limit: i64,
+    expiry_in_seconds: Option<i64>,
+}
 
 impl<S, B> Transform<S, ServiceRequest> for RateLimiter
 where
@@ -34,12 +35,16 @@ where
     fn new_transform(&self, service: S) -> Self::Future {
         ok(RateLimiterMiddleware {
             service: Rc::new(service),
+            limit: self.limit,
+            expiry_in_seconds: self.expiry_in_seconds,
         })
     }
 }
 
 struct RateLimiterMiddleware<S> {
     service: Rc<S>,
+    limit: i64,
+    expiry_in_seconds: Option<i64>,
 }
 
 impl<S, B> Service<ServiceRequest> for RateLimiterMiddleware<S>
@@ -74,27 +79,30 @@ where
             return Box::pin(async {
                 return Ok(req.into_response(
                     HttpResponse::InternalServerError()
-                        .finish()
+                        .json(serde_json::json!({
+                            "error": "Internal Server Error"
+                        }))
                         .map_into_right_body(),
                 ));
             });
         }
 
-        let limit = 3;
-
+        let limit = self.limit;
+        let expiry_in_seconds = self.expiry_in_seconds;
         match ip_result.ok().unwrap() {
             // if ip not in cache then set count to 1 and save to redis for x seconds then continue
             None => {
                 let count = 1;
 
-                let expiry_in_seconds = Some(60);
                 match set_key_value_in_redis(&mut con, &ip, &count.to_string(), expiry_in_seconds) {
                     Ok(_) => {}
                     Err(_) => {
                         return Box::pin(async {
                             return Ok(req.into_response(
                                 HttpResponse::InternalServerError()
-                                    .finish()
+                                    .json(serde_json::json!({
+                                        "error": "Internal Server Error"
+                                    }))
                                     .map_into_right_body(),
                             ));
                         })
@@ -110,17 +118,19 @@ where
             }
 
             // if ip less than limit then increase count by 1, save and then continue
-            Some(mut count) if count < limit => {
+            Some(mut count) if count <= limit => {
+                println!("count: {}, limit: {}", count, limit);
                 count += 1;
 
-                let expiry_in_seconds = Some(60);
                 match set_key_value_in_redis(&mut con, &ip, &count.to_string(), expiry_in_seconds) {
                     Ok(_) => {}
                     Err(_) => {
                         return Box::pin(async {
                             return Ok(req.into_response(
                                 HttpResponse::InternalServerError()
-                                    .finish()
+                                   .json(serde_json::json!({
+                                        "error": "Internal Server Error"
+                                    }))
                                     .map_into_right_body(),
                             ));
                         })
@@ -139,10 +149,12 @@ where
 
             Some(_) => {
                 return Box::pin(async {
-                    sleep(Duration::from_secs(180)).await; // Optional delay before responding with error
+                    // sleep(Duration::from_secs(180)).await; // Optional delay before responding with error
                     return Ok(req.into_response(
                         HttpResponse::TooManyRequests()
-                            .finish()
+                            .json(serde_json::json!({
+                                "error": "Too many requests"
+                            }))
                             .map_into_right_body(),
                     ));
                 });
@@ -152,18 +164,13 @@ where
 }
 
 pub fn get_count_from_ip_in_redis(con: &mut Connection, ip: &str) -> Result<Option<i64>, String> {
-    let redis_result: RedisResult<String> = con.get(ip);
+    let redis_result: RedisResult<Option<i64>> = con.get(ip);
     match redis_result {
-        Ok(res) => match res.parse::<i64>() {
-            Ok(res) => return Ok(Some(res)),
-            Err(err) => return Err(err.to_string()),
-        },
+        Ok(Some(res)) => return Ok(Some(res)),
+        Ok(None) => return Ok(None),
         Err(err) => {
-            match err.kind() {
-                // Defo wrong, need to test what happens when trying to get a value that doesn't exist in the redis cache and change the error kind to that
-                ErrorKind::ResponseError => return Ok(None),
-                _ => return Err(err.to_string()),
-            }
+            println!("{:#?}", err);
+            return Err(err.to_string());
         }
     };
 }
@@ -173,7 +180,10 @@ mod tests {
     use super::*;
     use actix_http::{Request as HttpRequest, StatusCode};
     use actix_web::{
-        dev::{Service, ServiceResponse}, test, web::{self, get}, App, Error as ActixError
+        dev::{Service, ServiceResponse},
+        test,
+        web::{self, get},
+        App, Error as ActixError,
     };
     use dotenv::dotenv;
     use std::{thread, time};
@@ -184,24 +194,21 @@ mod tests {
         return test::init_service(
             App::new()
                 .service(
-                    web::scope("/unlimited")
+                    web::scope("/limited")
+                        .wrap(RateLimiter {
+                            limit: 3,
+                            expiry_in_seconds: Some(5),
+                        })
                         .route(
                             "/",
-                            get().to(|| async {
-                                actix_web::HttpResponse::Ok().body("unlimited API")
-                            }),
+                            get()
+                                .to(|| async { actix_web::HttpResponse::Ok().body("limited API") }),
                         ),
                 )
-                .service(
-                    web::scope("/limited")
-                    .wrap(RateLimiter)
-                    .route(
-                        "/",
-                        get().to(|| async {
-                            actix_web::HttpResponse::Ok().body("limited API")
-                        }),
-                        ),
-                        )
+                .service(web::scope("/unlimited").route(
+                    "/",
+                    get().to(|| async { actix_web::HttpResponse::Ok().body("unlimited API") }),
+                )),
         )
         .await;
     }
@@ -214,8 +221,8 @@ mod tests {
         assert!(response.status() == StatusCode::OK);
 
         let body = test::read_body(response).await;
-        let text: serde_json::Value = serde_json::from_slice(&body).unwrap();
-        assert!(text.get("error").unwrap() == "limited API");
+        let text = String::from_utf8(body.to_vec()).unwrap();
+        assert!(text == "limited API");
     }
 
     #[actix_web::test]
@@ -226,8 +233,8 @@ mod tests {
         assert!(response.status() == StatusCode::OK);
 
         let body = test::read_body(response).await;
-        let text: serde_json::Value = serde_json::from_slice(&body).unwrap();
-        assert!(text.get("error").unwrap() == "unlimited API");
+        let text = String::from_utf8(body.to_vec()).unwrap();
+        assert!(text == "unlimited API");
     }
 
     #[actix_web::test]
@@ -239,11 +246,12 @@ mod tests {
         let _response = test::call_service(&mut app, request).await;
         let request = test::TestRequest::get().uri("/limited/").to_request();
         let response = test::call_service(&mut app, request).await;
+        println!("{}", response.status());
         assert!(response.status() == StatusCode::OK);
 
         let body = test::read_body(response).await;
-        let text: serde_json::Value = serde_json::from_slice(&body).unwrap();
-        assert!(text.get("error").unwrap() == "limited API");
+        let text = String::from_utf8(body.to_vec()).unwrap();
+        assert!(text == "limited API");
     }
 
     #[actix_web::test]
@@ -258,8 +266,8 @@ mod tests {
         assert!(response.status() == StatusCode::OK);
 
         let body = test::read_body(response).await;
-        let text: serde_json::Value = serde_json::from_slice(&body).unwrap();
-        assert!(text.get("error").unwrap() == "unlimited API");
+        let text = String::from_utf8(body.to_vec()).unwrap();
+        assert!(text == "unlimited API");
     }
 
     #[actix_web::test]
@@ -279,7 +287,7 @@ mod tests {
 
         let body = test::read_body(response).await;
         let text: serde_json::Value = serde_json::from_slice(&body).unwrap();
-        assert!(text.get("error").unwrap() == "No authentication header");
+        assert!(text.get("error").unwrap() == "Too many requests");
     }
 
     #[actix_web::test]
@@ -298,8 +306,8 @@ mod tests {
         assert!(response.status() == StatusCode::OK);
 
         let body = test::read_body(response).await;
-        let text: serde_json::Value = serde_json::from_slice(&body).unwrap();
-        assert!(text.get("error").unwrap() == "unlimited api");
+        let text = String::from_utf8(body.to_vec()).unwrap();
+        assert!(text == "unlimited API");
     }
 
     #[actix_web::test]
@@ -311,14 +319,13 @@ mod tests {
         let _response = test::call_service(&mut app, request).await;
         let request = test::TestRequest::get().uri("/limited/").to_request();
         let _response = test::call_service(&mut app, request).await;
-        thread::sleep(time::Duration::from_secs(30));
+        thread::sleep(time::Duration::from_secs(8));
         let request = test::TestRequest::get().uri("/limited/").to_request();
         let response = test::call_service(&mut app, request).await;
         assert!(response.status() == StatusCode::OK);
 
         let body = test::read_body(response).await;
-        let text: serde_json::Value = serde_json::from_slice(&body).unwrap();
-        assert!(text.get("error").unwrap() == "limited api");
-
+        let text = String::from_utf8(body.to_vec()).unwrap();
+        assert!(text == "limited API");
     }
 }

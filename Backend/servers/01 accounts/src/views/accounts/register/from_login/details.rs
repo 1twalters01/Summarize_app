@@ -85,9 +85,9 @@ pub async fn post_details(data: ProtoBuf<Request>, req: HttpRequest) -> Result<i
     if let Some(ref lname) = last_name {
         if validate_last_name(&lname).is_err() {
             return Ok(ResponseService::create_error_response(
-                    AppError::RegisterDetails(Error::InvalidLastName),
-                    StatusCode::UNPROCESSABLE_ENTITY,
-                    ));
+                AppError::RegisterDetails(Error::InvalidLastName),
+                StatusCode::UNPROCESSABLE_ENTITY,
+            ));
         }
     }
 

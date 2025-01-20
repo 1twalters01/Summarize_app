@@ -59,7 +59,7 @@ impl CacheService {
         let user_json = serde_json::to_string(&user_uuid).unwrap();
         set_key_value_in_redis(&mut self.con, token, &user_json, expiry_in_seconds)
     }
-    
+
     pub fn store_email_for_token(
         &mut self,
         email: &str,

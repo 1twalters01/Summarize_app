@@ -20,14 +20,10 @@ use crate::generated::protos::{
         },
     },
     settings::profile::{
-        confirmation::response as confirmation_response,
-        email::response as change_email_response,
-        language::response as change_language_response,
-        name::response as change_name_response,
-        password::response as change_password_response,
-        theme::response as change_theme_response,
-        totp::response as change_totp_response,
-        username::response as change_username_response,
+        confirmation::response as confirmation_response, email::response as change_email_response,
+        language::response as change_language_response, name::response as change_name_response,
+        password::response as change_password_response, theme::response as change_theme_response,
+        totp::response as change_totp_response, username::response as change_username_response,
     },
 };
 

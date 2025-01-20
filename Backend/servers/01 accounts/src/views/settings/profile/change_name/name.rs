@@ -12,7 +12,10 @@ use crate::{
     services::{
         cache_service::CacheService, response_service::ResponseService, token_service::TokenService,
     },
-    utils::{database_connections::create_redis_client_connection, validations::{validate_first_name, validate_last_name}},
+    utils::{
+        database_connections::create_redis_client_connection,
+        validations::{validate_first_name, validate_last_name},
+    },
 };
 
 use actix_protobuf::ProtoBuf;
