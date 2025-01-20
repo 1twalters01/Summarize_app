@@ -40,9 +40,18 @@ impl<'a> TokenService<'a> {
             .timestamp() as usize;
 
         let claims = CaptchaClaims {
-            ip: ip,
+            ip,
             exp: expiration,
-        }
+        };
+        let secret = env::var("JWT_SECRET").unwrap();
+
+        let captcha_token = encode(
+            &Header::default(),
+            &claims,
+            &EncodingKey::from_secret(secret.as_ref()),
+        )
+        .unwrap();
+        return Ok(captcha_token);
     }
 
     pub fn generate_access_token(&self) -> Result<String, String> {

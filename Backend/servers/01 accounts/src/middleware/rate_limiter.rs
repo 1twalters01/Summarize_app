@@ -80,7 +80,7 @@ where
             });
         }
 
-        let limit = 5;
+        let limit = 3;
 
         match ip_result.ok().unwrap() {
             // if ip not in cache then set count to 1 and save to redis for x seconds then continue
@@ -171,21 +171,18 @@ pub fn get_count_from_ip_in_redis(con: &mut Connection, ip: &str) -> Result<Opti
 #[cfg(test)]
 mod tests {
     use super::*;
+    use actix_http::{Request as HttpRequest, StatusCode};
+    use actix_web::{
+        dev::{Service, ServiceResponse}, test, web::{self, get}, App, Error as ActixError
+    };
+    use dotenv::dotenv;
+    use std::{thread, time};
+
     async fn initialise_service(
     ) -> impl Service<HttpRequest, Response = ServiceResponse, Error = ActixError> {
         dotenv().ok();
         return test::init_service(
             App::new()
-                .service(
-                    web::scope("/limited")
-                        .wrap(RateLimiterMiddleware)
-                        .route(
-                            "/",
-                            get().to(|| async {
-                                actix_web::HttpResponse::Ok().body("limited API")
-                            }),
-                        ),
-                )
                 .service(
                     web::scope("/unlimited")
                         .route(
@@ -195,6 +192,16 @@ mod tests {
                             }),
                         ),
                 )
+                .service(
+                    web::scope("/limited")
+                    .wrap(RateLimiter)
+                    .route(
+                        "/",
+                        get().to(|| async {
+                            actix_web::HttpResponse::Ok().body("limited API")
+                        }),
+                        ),
+                        )
         )
         .await;
     }
@@ -227,8 +234,10 @@ mod tests {
     async fn test_limited_api_while_at_rate_limit() {
         let mut app = initialise_service().await;
         let request = test::TestRequest::get().uri("/limited/").to_request();
-        let response = test::call_service(&mut app, request).await;
-        let response = test::call_service(&mut app, request).await;
+        let _response = test::call_service(&mut app, request).await;
+        let request = test::TestRequest::get().uri("/limited/").to_request();
+        let _response = test::call_service(&mut app, request).await;
+        let request = test::TestRequest::get().uri("/limited/").to_request();
         let response = test::call_service(&mut app, request).await;
         assert!(response.status() == StatusCode::OK);
 
@@ -241,8 +250,10 @@ mod tests {
     async fn test_unlimited_api_while_at_rate_limit() {
         let mut app = initialise_service().await;
         let request = test::TestRequest::get().uri("/unlimited/").to_request();
-        let response = test::call_service(&mut app, request).await;
-        let response = test::call_service(&mut app, request).await;
+        let _response = test::call_service(&mut app, request).await;
+        let request = test::TestRequest::get().uri("/unlimited/").to_request();
+        let _response = test::call_service(&mut app, request).await;
+        let request = test::TestRequest::get().uri("/unlimited/").to_request();
         let response = test::call_service(&mut app, request).await;
         assert!(response.status() == StatusCode::OK);
 
@@ -255,10 +266,14 @@ mod tests {
     async fn test_limited_api_while_over_rate_limit() {
         let mut app = initialise_service().await;
         let request = test::TestRequest::get().uri("/limited/").to_request();
-        let response = test::call_service(&mut app, request).await;
-        let response = test::call_service(&mut app, request).await;
-        let response = test::call_service(&mut app, request).await;
-        let response = test::call_service(&mut app, request).await;
+        let _response = test::call_service(&mut app, request).await;
+        let request = test::TestRequest::get().uri("/limited/").to_request();
+        let _response = test::call_service(&mut app, request).await;
+        let request = test::TestRequest::get().uri("/limited/").to_request();
+        let _response = test::call_service(&mut app, request).await;
+        let request = test::TestRequest::get().uri("/limited/").to_request();
+        let _response = test::call_service(&mut app, request).await;
+        let request = test::TestRequest::get().uri("/limited/").to_request();
         let response = test::call_service(&mut app, request).await;
         assert!(response.status() == StatusCode::TOO_MANY_REQUESTS);
 
@@ -271,10 +286,14 @@ mod tests {
     async fn test_unlimited_api_while_over_rate_limit() {
         let mut app = initialise_service().await;
         let request = test::TestRequest::get().uri("/unlimited/").to_request();
-        let response = test::call_service(&mut app, request).await;
-        let response = test::call_service(&mut app, request).await;
-        let response = test::call_service(&mut app, request).await;
-        let response = test::call_service(&mut app, request).await;
+        let _response = test::call_service(&mut app, request).await;
+        let request = test::TestRequest::get().uri("/unlimited/").to_request();
+        let _response = test::call_service(&mut app, request).await;
+        let request = test::TestRequest::get().uri("/unlimited/").to_request();
+        let _response = test::call_service(&mut app, request).await;
+        let request = test::TestRequest::get().uri("/unlimited/").to_request();
+        let _response = test::call_service(&mut app, request).await;
+        let request = test::TestRequest::get().uri("/unlimited/").to_request();
         let response = test::call_service(&mut app, request).await;
         assert!(response.status() == StatusCode::OK);
 
@@ -287,10 +306,19 @@ mod tests {
     async fn test_limited_api_with_wait() {
         let mut app = initialise_service().await;
         let request = test::TestRequest::get().uri("/limited/").to_request();
-        let response = test::call_service(&mut app, request).await;
-        let response = test::call_service(&mut app, request).await;
-        let response = test::call_service(&mut app, request).await;
+        let _response = test::call_service(&mut app, request).await;
+        let request = test::TestRequest::get().uri("/limited/").to_request();
+        let _response = test::call_service(&mut app, request).await;
+        let request = test::TestRequest::get().uri("/limited/").to_request();
+        let _response = test::call_service(&mut app, request).await;
         thread::sleep(time::Duration::from_secs(30));
+        let request = test::TestRequest::get().uri("/limited/").to_request();
         let response = test::call_service(&mut app, request).await;
+        assert!(response.status() == StatusCode::OK);
+
+        let body = test::read_body(response).await;
+        let text: serde_json::Value = serde_json::from_slice(&body).unwrap();
+        assert!(text.get("error").unwrap() == "limited api");
+
     }
 }

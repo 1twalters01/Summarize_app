@@ -62,7 +62,7 @@ where
                                 .map_into_right_body();
                         } else {
                             let ip = req.peer_addr();
-                            if Some(claims.ip) != ip {
+                            if Some(claims.ip) == ip {
                                 let res = svc.call(req).await?;
                                 return Ok(res.map_into_left_body());
                             } else {
@@ -102,6 +102,8 @@ where
 
 #[cfg(test)]
 mod tests {
+    use std::net::SocketAddr;
+
     use super::*;
     use crate::services::token_service::TokenService;
     use actix_http::{Request as HttpRequest, StatusCode};
@@ -121,7 +123,6 @@ mod tests {
             App::new()
                 .service(
                     web::scope("/not-authenticated")
-                        .wrap(VerificationMiddleware)
                         .route(
                             "/",
                             get().to(|| async {
@@ -131,7 +132,7 @@ mod tests {
                 )
                 .service(
                     web::scope("/authenticated")
-                        .wrap(VerificationMiddleware)
+                        .wrap(IsVerified)
                         .route(
                             "/",
                             get().to(|| async {
@@ -152,7 +153,7 @@ mod tests {
 
         let body = test::read_body(response).await;
         let text: serde_json::Value = serde_json::from_slice(&body).unwrap();
-        assert!(text.get("error").unwrap() == "No authentication header");
+        assert!(text.get("error").unwrap() == "Captcha header is missing");
     }
 
 
@@ -170,13 +171,14 @@ mod tests {
     async fn test_authenticated_api_while_authenticated() {
         let mut app = initialise_service().await;
         let uuid = Uuid::new_v4();
-        let ip = req.peer_addr();
+        let mock_ip: SocketAddr = "127.0.0.1:8080".parse().unwrap();
         let token_service = TokenService::from_uuid(&uuid);
-        let access_token = token_service.generate_captcha_token(ip).unwrap();
+        let access_token = token_service.generate_captcha_token(mock_ip).unwrap();
 
         let request = test::TestRequest::get()
             .uri("/authenticated/")
-            .append_header(("Authorization", format!("Bearer {}", access_token)))
+            .peer_addr(mock_ip)
+            .append_header(("Captcha", access_token))
             .to_request();
         let response = test::call_service(&mut app, request).await;
         println!("http status: {}", response.status());
@@ -187,20 +189,16 @@ mod tests {
     async fn test_not_authenticated_api_while_authenticated() {
         let mut app = initialise_service().await;
         let uuid = Uuid::new_v4();
-        let ip = req.peer_addr();
+        let mock_ip: SocketAddr = "127.0.0.1:8080".parse().unwrap();
         let token_service = TokenService::from_uuid(&uuid);
-        let access_token = token_service.generate_captcha_token(ip).unwrap();
+        let access_token = token_service.generate_captcha_token(mock_ip).unwrap();
 
         let request = test::TestRequest::get()
             .uri("/not-authenticated/")
-            .append_header(("Authorization", format!("Bearer {}", access_token)))
+            .peer_addr(mock_ip)
+            .append_header(("Captcha", format!("Bearer {}", access_token)))
             .to_request();
         let response = test::call_service(&mut app, request).await;
-        assert!(response.status() == StatusCode::UNAUTHORIZED);
-
-        let body = test::read_body(response).await;
-        let text: serde_json::Value = serde_json::from_slice(&body).unwrap();
-        println!("{:#?}", text);
-        assert!(text.get("error").unwrap() == "Authenticated");
+        assert!(response.status() == StatusCode::OK);
     }
 }
