@@ -2,32 +2,33 @@ pub fn validate_name(name: &str) -> Result<(), String> {
     if name.len() < 1 {
         return Err("Name must contain at least 1 character".to_string());
     }
-    if name.len() > 100 {
-        return Err("Name must not exceed 100 characters".to_string());
+    if name.len() > 50 {
+        return Err("Name must not exceed 80 characters".to_string());
     }
 
-    if local.starts_with('-') || local.ends_with('-') {
-        return false;
+    if is_special_character(name.chars().next().unwrap()) || is_special_character(name.chars().last().unwrap()) {
+        return Err("Name must not start or end with a special character".to_string());
     }
-    if local.starts_with('\'') || local.ends_with('\'') {
-        return false;
+    if name.starts_with('\'') || name.ends_with('\'') {
+        return Err("Name must not start or end with a special character".to_string());
     }
 
     let mut prev_char = '\0';
     for ch in name.chars() {
-        if !ch.is_alphabetic() || ch == '-' || is_special_character(ch) {
-            return Err("Name contains invalid characters")
+        if !ch.is_alphabetic() && ch != '-' && !is_special_character(ch) {
+            return Err("Name contains invalid characters".to_string());
         }
         if is_special_character(ch) && is_special_character(prev_char) {
-            return Err("Name cannot contain consecutive special characters")
+            return Err("Name cannot contain consecutive special characters".to_string());
         }
+        prev_char = ch;
     }
 
     return Ok(());
 }
 
-pub fn is_special_character(ch: char) {
-    ch == '-' || ch == '\''
+pub fn is_special_character(ch: char) -> bool {
+    ch == '-' || ch == '\'' || ch == ' '
 }
 
 #[cfg(test)]
@@ -63,13 +64,13 @@ mod tests {
             ("John@Doe", false),
             ("John123", false),
             ("John!", false),
-            ("ThisNameIsWayTooLongToBeValidBecauseItExceedsTheMaximumLengthOfOneHundredCharacters", false),
+            ("ThisNameIsWayTooLongToBeValidBecauseItExceedsTheMaximumLengthOfFiftyCharacters", false),
         ];
 
         for (name, expected) in tests {
             assert_eq!(
-                validate_name(name),
-                if expected { Ok(()) } else { Err("".to_string()) },
+                validate_name(name).is_ok(),
+                expected,
                 "Name `{}` was not classified correctly",
                 name
             );

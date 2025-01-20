@@ -13,7 +13,7 @@ use crate::{
     utils::{
         database_connections::{create_pg_pool_connection, create_redis_client_connection},
         validations::{
-            validate_first_name, validate_last_name, validate_password, validate_username,
+            name::validate_name, password::validate_password, username::validate_username,
         },
     },
 };
@@ -74,7 +74,7 @@ pub async fn post_details(data: ProtoBuf<Request>, req: HttpRequest) -> Result<i
     }
 
     if let Some(ref fname) = first_name {
-        if validate_first_name(&fname).is_err() {
+        if validate_name(&fname).is_err() {
             return Ok(ResponseService::create_error_response(
                 AppError::RegisterDetails(Error::InvalidFirstName),
                 StatusCode::UNPROCESSABLE_ENTITY,
@@ -83,7 +83,7 @@ pub async fn post_details(data: ProtoBuf<Request>, req: HttpRequest) -> Result<i
     }
 
     if let Some(ref lname) = last_name {
-        if validate_last_name(&lname).is_err() {
+        if validate_name(&lname).is_err() {
             return Ok(ResponseService::create_error_response(
                 AppError::RegisterDetails(Error::InvalidLastName),
                 StatusCode::UNPROCESSABLE_ENTITY,

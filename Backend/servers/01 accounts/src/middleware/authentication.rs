@@ -244,7 +244,6 @@ mod tests {
         let body = test::read_body(response).await;
         let text = String::from_utf8(body.to_vec()).unwrap();
         assert!(text == "authenticated API");
-
     }
 
     #[actix_web::test]

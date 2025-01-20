@@ -9,7 +9,9 @@ use crate::{
     },
     models::user::User,
     services::{response_service::ResponseService, user_service::UserService},
-    utils::{database_connections::create_pg_pool_connection, validations::validate_password},
+    utils::{
+        database_connections::create_pg_pool_connection, validations::password::validate_password,
+    },
 };
 use actix_protobuf::ProtoBuf;
 use actix_web::{http::StatusCode, HttpMessage, HttpRequest, Responder, Result};

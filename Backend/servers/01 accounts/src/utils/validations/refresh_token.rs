@@ -25,8 +25,8 @@ mod tests {
 
         for (token, expected) in tests {
             assert_eq!(
-                validate_refresh_token(token),
-                if expected { Ok(()) } else { Err("".to_string()) },
+                validate_refresh_token(token).is_ok(),
+                expected,
                 "Token `{}` was not classified correctly",
                 token
             );

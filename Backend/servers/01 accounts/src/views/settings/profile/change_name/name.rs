@@ -14,7 +14,7 @@ use crate::{
     },
     utils::{
         database_connections::create_redis_client_connection,
-        validations::{validate_first_name, validate_last_name},
+        validations::name::validate_name,
     },
 };
 
@@ -35,7 +35,7 @@ pub async fn post_name(req_body: ProtoBuf<Request>, req: HttpRequest) -> Result<
 
     // validate firstname
     if let Some(ref fname) = first_name {
-        let validated_firstname = validate_first_name(&fname);
+        let validated_firstname = validate_name(&fname);
         if validated_firstname.is_err() {
             return Ok(ResponseService::create_error_response(
                 AppError::ChangeName(Error::InvalidName),
@@ -46,7 +46,7 @@ pub async fn post_name(req_body: ProtoBuf<Request>, req: HttpRequest) -> Result<
 
     // validate lastname
     if let Some(ref lname) = last_name {
-        let validated_lastname = validate_last_name(&lname);
+        let validated_lastname = validate_name(&lname);
         if validated_lastname.is_err() {
             return Ok(ResponseService::create_error_response(
                 AppError::ChangeName(Error::InvalidName),

@@ -1,5 +1,5 @@
-use crate::generated::protos::settings::profile::{
-    theme::request::{request::RequestField, Colour, Colours, Custom, Presets},
+use crate::generated::protos::settings::profile::theme::request::{
+    request::RequestField, Colour, Colours, Custom, Presets,
 };
 
 pub fn validate_theme(theme: Option<RequestField>) -> Result<(), String> {

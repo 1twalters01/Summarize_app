@@ -11,7 +11,10 @@ use crate::{
     services::{
         cache_service::CacheService, response_service::ResponseService, token_service::TokenService,
     },
-    utils::{database_connections::create_redis_client_connection, validations::validate_password},
+    utils::{
+        database_connections::create_redis_client_connection,
+        validations::password::validate_password,
+    },
 };
 use actix_protobuf::ProtoBuf;
 use actix_web::{http::StatusCode, HttpMessage, HttpRequest, Responder, Result};

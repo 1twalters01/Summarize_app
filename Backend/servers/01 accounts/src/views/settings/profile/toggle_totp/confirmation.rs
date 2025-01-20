@@ -13,7 +13,7 @@ use crate::{
     },
     utils::{
         database_connections::{create_pg_pool_connection, create_redis_client_connection},
-        validations::validate_totp,
+        validations::totp::validate_totp,
     },
 };
 
@@ -42,7 +42,8 @@ pub async fn post_confirmation(
         .to_string();
 
     // validate password
-    let validated_totp = validate_totp(digit1, digit2, digit3, digit4, digit5, digit6);
+    let digits = &[digit1, digit2, digit3, digit4, digit5, digit6];
+    let validated_totp = validate_totp(digits);
     if validated_totp.is_err() {
         return Ok(ResponseService::create_error_response(
             AppError::Confirmation(Error::InvalidCredentials),

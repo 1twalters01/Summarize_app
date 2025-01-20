@@ -128,7 +128,7 @@ where
                         return Box::pin(async {
                             return Ok(req.into_response(
                                 HttpResponse::InternalServerError()
-                                   .json(serde_json::json!({
+                                    .json(serde_json::json!({
                                         "error": "Internal Server Error"
                                     }))
                                     .map_into_right_body(),

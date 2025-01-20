@@ -15,7 +15,7 @@ use crate::{
     utils::{
         database_connections::{create_pg_pool_connection, create_redis_client_connection},
         email::{compose::compose_password_reset_email_message, handler::send_email},
-        validations::validate_email,
+        validations::email::validate_email,
     },
 };
 

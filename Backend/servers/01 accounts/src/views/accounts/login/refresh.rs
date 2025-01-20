@@ -7,7 +7,7 @@ use crate::{
         response::ResponseField, Error, Response,
     },
     services::{response_service::ResponseService, token_service::TokenService},
-    utils::validations::validate_refresh_token,
+    utils::validations::refresh_token::validate_refresh_token,
 };
 
 pub async fn post_refresh_token(req: HttpRequest) -> Result<impl Responder> {

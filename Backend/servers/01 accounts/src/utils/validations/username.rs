@@ -1,3 +1,5 @@
+use idna;
+
 pub fn validate_username(username: &str) -> Result<(), String> {
     if username.len() < 3 {
         return Err(format!("Username is too short"));
@@ -6,10 +8,14 @@ pub fn validate_username(username: &str) -> Result<(), String> {
         return Err(format!("Username is too long"));
     }
 
-    let mut prev_char = '\0';
-    for ch in username.chars() {
-        if !ch.is_ascii_alphanumeric() || ch != '-' || ch != '.' || ch != ',' {
-            return Err("Username characters must be alphanumeric, '-', '.' or ',' ")
+    let ascii_username = match idna::domain_to_ascii(username) {
+        Ok(username) => username,
+        Err(_) => return Err(format!("Invalid character(s) in username")), // Invalid Unicode domain
+    };
+
+    for ch in ascii_username.chars() {
+        if !ch.is_ascii_alphanumeric() && ch != '-' && ch != '_' && ch != '.' {
+            return Err("Username characters must be alphanumeric, '-', '.' or ',' ".to_string());
         }
     }
 
@@ -33,7 +39,6 @@ mod tests {
             ("Üser123", true),
             ("मेरा123", true),
             ("a.b_c-1", true),
-
             // Invalid usernames
             ("", false),
             ("ab", false),
@@ -44,8 +49,8 @@ mod tests {
 
         for (username, expected) in tests {
             assert_eq!(
-                validate_username(username),
-                if expected { Ok(()) } else { Err("".to_string()) },
+                validate_username(username).is_ok(),
+                expected,
                 "Username `{}` was not classified correctly",
                 username
             );

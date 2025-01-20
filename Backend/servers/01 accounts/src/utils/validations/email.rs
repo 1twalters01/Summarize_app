@@ -5,24 +5,24 @@ use idna;
 pub fn validate_email(email: &str) -> Result<(), String> {
     // Length constraint
     if email.is_empty() {
-        return Err("Email is empty")
+        return Err("Email is empty".to_string());
     }
     if email.len() > 254 {
-        return Err("Email is too long");
+        return Err("Email is too long".to_string());
     }
 
     let parts: Vec<&str> = email.split('@').collect();
     if parts.len() != 2 {
-        return Err("Email must contain exactly one '@'");
+        return Err("Email must contain exactly one '@'".to_string());
     }
     let (local, domain) = (parts[0], parts[1]);
 
     if !is_valid_local_part(local) {
-        return Err("Invalid local".to_string());
+        return Err("Invalid local".to_string().to_string());
     }
 
     if !is_valid_domain_part(domain) {
-        return Err("Invalid domain".to_string());
+        return Err("Invalid domain".to_string().to_string());
     }
 
     return Ok(());
@@ -56,15 +56,19 @@ fn is_atext(ch: char) -> bool {
     ch.is_ascii_alphanumeric() || "!#$%&'*+/=?^_`{|}~-".contains(ch)
 }
 
-
 fn is_valid_domain_part(domain: &str) -> bool {
     if domain.is_empty() || domain.len() > 253 {
         return false;
     }
-    
+
     // Convert the domain to ASCII/Punycode
+    if domain.starts_with('[') && domain.ends_with(']') {
+        let ip = &domain[1..domain.len() - 1];
+        return is_valid_ip_address(ip);
+    }
+
     let ascii_domain = match idna::domain_to_ascii(domain) {
-        Ok(d) => domain,
+        Ok(domain) => domain,
         Err(_) => return false, // Invalid Unicode domain
     };
 
@@ -82,8 +86,16 @@ fn is_valid_domain_part(domain: &str) -> bool {
     true
 }
 
+fn is_valid_ip_address(ip: &str) -> bool {
+    if ip.parse::<std::net::IpAddr>().is_ok() {
+        return true;
+    }
+
+    false
+}
+
 /// Validates a label in the domain part.
-fn is_valid_label(label: &str) -> bool {=
+fn is_valid_label(label: &str) -> bool {
     if label.is_empty() || label.len() > 63 {
         return false;
     }
@@ -94,15 +106,10 @@ fn is_valid_label(label: &str) -> bool {=
     }
 
     // Check for valid ldh-str and no consecutive hyphens
-    let mut prev_char = '\0';
     for ch in label.chars() {
-        if ch == '-' && prev_char == '-' {
-            return false; // Consecutive hyphens are not allowed
-        }
         if !is_ldh_str(ch) {
             return false;
         }
-        prev_char = ch;
     }
 
     true
@@ -120,9 +127,11 @@ fn is_ldh_str(ch: char) -> bool {
 
 #[cfg(test)]
 mod tests {
+    use crate::utils::validations::email::validate_email;
     #[test]
     fn test_validate_email() {
-        let tests = vec![
+        let tests =
+            vec![
             // Valid emails
             ("email@here.com", true),
             ("weirder-email@here.and.there.com", true),
@@ -179,7 +188,7 @@ mod tests {
         for (input, expected) in tests {
             // println!("{} - {}", input, expected);
             assert_eq!(
-                validate_email(input),
+                validate_email(input).is_ok(),
                 expected,
                 "Email `{}` was not classified correctly",
                 input

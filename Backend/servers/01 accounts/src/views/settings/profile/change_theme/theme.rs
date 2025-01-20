@@ -11,7 +11,7 @@ use crate::{
     },
     models::user::User,
     services::{response_service::ResponseService, user_service::UserService},
-    utils::{database_connections::create_pg_pool_connection, validations::validate_theme},
+    utils::{database_connections::create_pg_pool_connection, validations::theme::validate_theme},
 };
 
 use actix_protobuf::ProtoBuf;

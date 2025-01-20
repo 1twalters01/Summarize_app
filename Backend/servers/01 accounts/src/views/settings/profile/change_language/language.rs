@@ -9,7 +9,9 @@ use crate::{
     },
     models::user::User,
     services::{response_service::ResponseService, user_service::UserService},
-    utils::{database_connections::create_pg_pool_connection, validations::validate_language},
+    utils::{
+        database_connections::create_pg_pool_connection, validations::language::validate_language,
+    },
 };
 
 use actix_protobuf::ProtoBuf;

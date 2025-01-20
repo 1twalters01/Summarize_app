@@ -1,9 +1,9 @@
 pub fn validate_password(password: &str) -> Result<(), String> {
     if password.len() < 8 {
-        return Err(format!("Password is too short"));
+        return Err("Password is too short".to_string());
     }
     if password.len() > 64 {
-        return Err(format!("Password is too long"));
+        return Err("Password is too long".to_string());
     }
 
     let mut has_uppercase = false;
@@ -63,7 +63,7 @@ fn is_common_password(password: &str) -> bool {
         "letmein",
         "welcome",
     ];
-    common_passwords.contains(password)
+    common_passwords.contains(&password)
 }
 
 #[cfg(test)]
@@ -98,8 +98,8 @@ mod tests {
 
         for (password, expected) in tests {
             assert_eq!(
-                validate_password(password),
-                if expected { Ok(()) } else { Err("".to_string()) },
+                validate_password(password).is_ok(),
+                expected,
                 "Password `{}` was not classified correctly",
                 password
             );

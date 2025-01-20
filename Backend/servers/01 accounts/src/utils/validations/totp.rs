@@ -1,7 +1,7 @@
 pub fn validate_totp(digits: &[u32]) -> Result<(), String> {
     // Ensure all digits are between 0 and 9
     if digits.len() != 6 {
-        return Err("Totp must have 6 digits")
+        return Err("Totp must have 6 digits".to_string());
     }
     if digits.iter().any(|&digit| digit > 9) {
         return Err("Digits must be between 0 and 9.".to_string());

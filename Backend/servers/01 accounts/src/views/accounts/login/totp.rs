@@ -19,7 +19,7 @@ use crate::{
     },
     utils::{
         database_connections::{create_pg_pool_connection, create_redis_client_connection},
-        validations::validate_totp,
+        validations::totp::validate_totp,
     },
 };
 
@@ -87,7 +87,8 @@ pub async fn post_totp(data: ProtoBuf<Request>, req: HttpRequest) -> Result<impl
     } = data.0;
 
     // check if the entered totp is a valid totp
-    if validate_totp(digit1, digit2, digit3, digit4, digit5, digit6).is_err()
+    let digits = &[digit1, digit2, digit3, digit4, digit5, digit6];
+    if validate_totp(digits).is_err()
         || totp_activation_status == false
     {
         return Ok(ResponseService::create_error_response(
