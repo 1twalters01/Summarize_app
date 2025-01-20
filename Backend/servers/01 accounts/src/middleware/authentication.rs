@@ -220,6 +220,10 @@ mod tests {
             .to_request();
         let response = test::call_service(&mut app, request).await;
         assert!(response.status() == StatusCode::OK);
+
+        let body = test::read_body(response).await;
+        let text = String::from_utf8(body.to_vec()).unwrap();
+        assert!(text == "not authenticated API");
     }
 
     #[actix_web::test]
@@ -236,6 +240,11 @@ mod tests {
         let response = test::call_service(&mut app, request).await;
         println!("http status: {}", response.status());
         assert!(response.status() == StatusCode::OK);
+
+        let body = test::read_body(response).await;
+        let text = String::from_utf8(body.to_vec()).unwrap();
+        assert!(text == "authenticated API");
+
     }
 
     #[actix_web::test]
