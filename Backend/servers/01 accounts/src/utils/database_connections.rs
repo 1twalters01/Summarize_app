@@ -20,3 +20,25 @@ pub fn create_redis_client_connection() -> Connection {
     let con = client.get_connection().unwrap();
     return con;
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use dotenv::dotenv;
+
+    #[tokio::test]
+    async fn test_create_pg_pool_connection() {
+        dotenv().ok();
+
+        let pool = create_pg_pool_connection().await;
+        assert!(pool.acquire().await.is_ok());
+    }
+
+    #[test]
+    fn test_create_redis_client_connection() {
+        dotenv().ok();
+
+        let mut con = create_redis_client_connection();
+        let _: () = redis::cmd("PING").query(&mut con).unwrap(); // Should return "PONG"
+    }
+}

@@ -10,7 +10,6 @@
     * queries
     * routes
     * services
-    * utils
     * views
 * Real world testing
 
