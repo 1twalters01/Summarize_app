@@ -45,6 +45,12 @@ impl<'a> EmailService<'a> {
                 );
                 (Some(subject), Some(body))
             }
+            MessageType::RegisterConfirmation(_) => {
+                let subject = String::from("Summarize Registration has been Completed");
+                let body =
+                    format!("<h1>Summarize</h1><p>Thank you for registering to summarize.</p>");
+                (Some(subject), Some(body))
+            }
             MessageType::PasswordResetEmail(PasswordResetEmailParams {
                 verification_token,
                 password_reset_email_token,
@@ -54,6 +60,12 @@ impl<'a> EmailService<'a> {
                     "<h1>Summarize</h1><p>Verification Token: {}</p><p>Password Reset Email Token: {}</p>",
                     verification_token, password_reset_email_token
                 );
+                (Some(subject), Some(body))
+            }
+            MessageType::PasswordResetConfirmation(_) => {
+                let subject = String::from("Summarize Password Reset has been Completed");
+                let body =
+                    format!("<h1>Summarize</h1><p>Thank you for registering to summarize.</p>");
                 (Some(subject), Some(body))
             }
         };

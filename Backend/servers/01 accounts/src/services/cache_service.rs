@@ -60,6 +60,25 @@ impl CacheService {
         set_key_value_in_redis(&mut self.con, token, &user_json, expiry_in_seconds)
     }
 
+    pub fn get_email_from_user_uuid(&mut self, user_uuid: &Uuid) -> Result<String, String> {
+        let user_json = serde_json::to_string(&user_uuid).unwrap();
+        let redis_result: RedisResult<String> =
+            get_key_from_value_in_redis(&mut self.con, &user_json);
+        match redis_result {
+            Ok(email) => return Ok(email),
+            Err(err) => return Err(err.to_string()),
+        }
+    }
+    pub fn store_email_for_user_uuid(
+        &mut self,
+        email: &str,
+        user_uuid: &Uuid,
+        expiry_in_seconds: Option<i64>,
+    ) -> Result<(), RedisError> {
+        let user_json = serde_json::to_string(&user_uuid).unwrap();
+        set_key_value_in_redis(&mut self.con, &user_json, &email, expiry_in_seconds)
+    }
+
     pub fn store_email_for_token(
         &mut self,
         email: &str,

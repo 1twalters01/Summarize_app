@@ -76,13 +76,24 @@ pub async fn post_email(data: ProtoBuf<request::Request>) -> Result<impl Respond
     }
 
     // add {key: token, value: UUID} to redis
-    let expiry_in_seconds: Option<i64> = Some(300);
+    let mut expiry_in_seconds: Option<i64> = Some(300);
     let token_tuple: (&str, &str) = (&header_token, &verification_token);
     let token_tuple_json: String = serde_json::to_string(&token_tuple).unwrap();
 
     let mut cache_service = CacheService::new(create_redis_client_connection());
     let cache_result =
         cache_service.store_user_for_token(&user, &token_tuple_json, expiry_in_seconds);
+    if cache_result.is_err() {
+        return Ok(ResponseService::create_error_response(
+            AppError::PasswordResetEmail(Error::ServerError),
+            StatusCode::INTERNAL_SERVER_ERROR,
+        ));
+    }
+
+    // Store key: uuid, value: email
+    expiry_in_seconds = Some(600);
+    let cache_result =
+        cache_service.store_email_for_user_uuid(&email, &user.get_uuid(), expiry_in_seconds);
     if cache_result.is_err() {
         return Ok(ResponseService::create_error_response(
             AppError::PasswordResetEmail(Error::ServerError),

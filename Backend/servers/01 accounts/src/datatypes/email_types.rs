@@ -1,8 +1,8 @@
 pub enum MessageType<'a> {
     RegisterEmail(RegisterEmailParams<'a>),
-    // RegisterConfirmation(RegisterConfirmationParams),
+    RegisterConfirmation(RegisterConfirmationParams),
     PasswordResetEmail(PasswordResetEmailParams<'a>),
-    // PasswordResetConfirmation(PasswordResetConfirmationParamas),
+    PasswordResetConfirmation(PasswordResetConfirmationParams),
     // NewLoginNotification(NewLoginNotificationParams),
 }
 
@@ -15,3 +15,6 @@ pub struct PasswordResetEmailParams<'a> {
     pub(crate) verification_token: &'a str,
     pub(crate) password_reset_email_token: &'a str,
 }
+
+pub struct RegisterConfirmationParams;
+pub struct PasswordResetConfirmationParams;

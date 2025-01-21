@@ -2,13 +2,17 @@ use actix_protobuf::ProtoBuf;
 use actix_web::{http::StatusCode, HttpRequest, Responder, Result};
 
 use crate::{
-    datatypes::response_types::{AppError, AppResponse},
+    datatypes::{
+        email_types::{MessageType::RegisterConfirmation, RegisterConfirmationParams},
+        response_types::{AppError, AppResponse},
+    },
     generated::protos::accounts::register::details::{
         request::Request,
         response::{response::ResponseField, Error, Response, Success},
     },
     services::{
-        cache_service::CacheService, response_service::ResponseService, user_service::UserService,
+        cache_service::CacheService, email_service::EmailService,
+        response_service::ResponseService, user_service::UserService,
     },
     utils::{
         database_connections::{create_pg_pool_connection, create_redis_client_connection},
@@ -104,6 +108,19 @@ pub async fn post_details(data: ProtoBuf<Request>, req: HttpRequest) -> Result<i
     if user_result.is_err() {
         return Ok(ResponseService::create_error_response(
             AppError::RegisterDetails(Error::ServerError),
+            StatusCode::INTERNAL_SERVER_ERROR,
+        ));
+    }
+
+    let mut email_service = EmailService::new(&email);
+    let message_type = RegisterConfirmation(RegisterConfirmationParams {});
+    email_service.compose_preformatted_message(message_type);
+    let message_result = email_service.send_email();
+
+    // if unable to email then return an error
+    if message_result.is_err() {
+        return Ok(ResponseService::create_error_response(
+            AppError::RegisterDetails(Error::EmailFailedToSend),
             StatusCode::INTERNAL_SERVER_ERROR,
         ));
     }
