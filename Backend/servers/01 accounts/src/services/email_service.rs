@@ -3,11 +3,12 @@ use lettre::{
     transport::smtp::authentication::{Credentials, Mechanism},
     Message, SmtpTransport, Transport,
 };
+use std::env;
 
 use crate::datatypes::email_types::{
     MessageType,
     RegisterEmailParams, PasswordResetEmailParams
-}
+};
 
 pub struct EmailService{
     smtp_username: String,
@@ -16,7 +17,7 @@ pub struct EmailService{
     recipient: String,
     subject: Option<String>,
     body: Option<String>,
-};
+}
 
 impl EmailService {
     pub fn new(recipient: String) -> Self {
@@ -35,32 +36,34 @@ impl EmailService {
     }
 
     pub fn compose_message(&mut self, message_type: MessageType) {
-        (subject, body) = match message_type {
-            RegisterEmailParams(verification_token, register_email_token) => {
-                subject = String::from("Sign up to Summarize");
-                body = format!(
+        (self.subject, self.body) = match message_type {
+            MessageType::RegisterEmail(RegisterEmailParams { verification_token, register_email_token }) => {
+                let subject = String::from("Sign up to Summarize");
+                let body = format!(
                     "<h1>Summarize</h1><p>Verification Token: {}</p><p>Register Email Token: {}</p>",
                     verification_token, register_email_token
                 );
+                (Some(subject), Some(body))
             },
-            PasswordResetEmailParams(verification_token, password_reset_email_token) => {
-                subject = String::from("Summarize Password Reset");
-                body = format!(
+            MessageType::PasswordResetEmail(PasswordResetEmailParams { verification_token, password_reset_email_token }) => {
+                let subject = String::from("Summarize Password Reset");
+                let body = format!(
                     "<h1>Summarize</h1><p>Verification Token: {}</p><p>Password Reset Email Token: {}</p>",
                     verification_token, password_reset_email_token
                 );
+                (Some(subject), Some(body))
             }
         };
 
-        self.subject = subject;
-        self.body = body;
+        // self.subject = subject;
+        // self.body = body;
     } 
 
-    pub fn send_email(&self) -> Result<(), &str> {
-        if let Some(subject, body) = (self.subject, self.body) {
-            let mailer = SmtpTransport::relay(&smtp_server)
+    pub fn send_email(&self) -> Result<(), String> {
+        if let (Some(subject), Some(body)) = (self.subject.clone(), self.body.clone()) {
+            let mailer = SmtpTransport::relay(&self.smtp_server)
                 .unwrap()
-                .credentials(Credentials::new(self.smtp_username.clone, self.smtp_password))
+                .credentials(Credentials::new(self.smtp_username.clone(), self.smtp_password.clone()))
                 .authentication(vec![Mechanism::Plain])
                 .build();
 
@@ -74,10 +77,10 @@ impl EmailService {
 
             match mailer.send(&email) {
                 Ok(_) => return Ok(()),
-                Err(err) => return Err(&err.to_string()),
+                Err(err) => return Err(err.to_string()),
             }
         } else {
-            return Err("None")
+            return Err("Nothing to send".to_string())
         }
     }
 }
