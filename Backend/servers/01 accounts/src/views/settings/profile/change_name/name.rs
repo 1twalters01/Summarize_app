@@ -13,8 +13,7 @@ use crate::{
         cache_service::CacheService, response_service::ResponseService, token_service::TokenService,
     },
     utils::{
-        database_connections::create_redis_client_connection,
-        validations::name::validate_name,
+        database_connections::create_redis_client_connection, validations::name::validate_name,
     },
 };
 

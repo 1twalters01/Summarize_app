@@ -2,18 +2,21 @@ use actix_protobuf::ProtoBuf;
 use actix_web::{http::StatusCode, Responder, Result};
 
 use crate::{
-    datatypes::response_types::{AppError, AppResponse},
+    datatypes::{
+        email_types::{MessageType::RegisterEmail, RegisterEmailParams},
+        response_types::{AppError, AppResponse},
+    },
     generated::protos::accounts::register::email::{
         request::Request,
         response::{response::ResponseField, Error, Response},
     },
     services::{
-        cache_service::CacheService, response_service::ResponseService,
-        token_service::TokenService, user_service::UserService,
+        cache_service::CacheService, email_service::EmailService,
+        response_service::ResponseService, token_service::TokenService, user_service::UserService,
     },
     utils::{
         database_connections::{create_pg_pool_connection, create_redis_client_connection},
-        email::{compose::compose_register_email_message, handler::send_email},
+        // email::{compose::compose_register_email_message, handler::send_email},
         validations::email::validate_email,
     },
 };
@@ -54,8 +57,13 @@ pub async fn post_email(data: ProtoBuf<Request>) -> Result<impl Responder> {
     let token_tuple: (&str, &str) = (&header_token, &verification_token);
 
     // try to email the account a message containing the token
-    let message = compose_register_email_message(&verification_token, &header_token);
-    let message_result = send_email(message, &email);
+    let mut email_service = EmailService::new(&email);
+    let message_type = RegisterEmail(RegisterEmailParams {
+        verification_token: &verification_token,
+        register_email_token: &header_token,
+    });
+    email_service.compose_preformatted_message(message_type);
+    let message_result = email_service.send_email();
 
     // if unable to email then return an error
     if message_result.is_err() {

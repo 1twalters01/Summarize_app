@@ -88,9 +88,7 @@ pub async fn post_totp(data: ProtoBuf<Request>, req: HttpRequest) -> Result<impl
 
     // check if the entered totp is a valid totp
     let digits = &[digit1, digit2, digit3, digit4, digit5, digit6];
-    if validate_totp(digits).is_err()
-        || totp_activation_status == false
-    {
+    if validate_totp(digits).is_err() || totp_activation_status == false {
         return Ok(ResponseService::create_error_response(
             AppError::LoginTotp(Error::InvalidTotp),
             StatusCode::UNAUTHORIZED,

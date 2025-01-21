@@ -6,7 +6,9 @@ pub fn validate_name(name: &str) -> Result<(), String> {
         return Err("Name must not exceed 80 characters".to_string());
     }
 
-    if is_special_character(name.chars().next().unwrap()) || is_special_character(name.chars().last().unwrap()) {
+    if is_special_character(name.chars().next().unwrap())
+        || is_special_character(name.chars().last().unwrap())
+    {
         return Err("Name must not start or end with a special character".to_string());
     }
     if name.starts_with('\'') || name.ends_with('\'') {
@@ -48,7 +50,6 @@ mod tests {
             ("A", true),
             ("Léo", true),
             ("Mary Jane Watson", true),
-
             // Invalid names
             ("", false),
             (" ", false),
@@ -64,7 +65,10 @@ mod tests {
             ("John@Doe", false),
             ("John123", false),
             ("John!", false),
-            ("ThisNameIsWayTooLongToBeValidBecauseItExceedsTheMaximumLengthOfFiftyCharacters", false),
+            (
+                "ThisNameIsWayTooLongToBeValidBecauseItExceedsTheMaximumLengthOfFiftyCharacters",
+                false,
+            ),
         ];
 
         for (name, expected) in tests {
