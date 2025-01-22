@@ -48,6 +48,23 @@ CREATE TABLE IF NOT EXISTS registered_user_data(
 );
 ```
 
+## Oauth Providers
+google, apple
+
+## Oauth
+| Field              | Type         | Description                 | UNIQUE | NOT NULL | INDEX |
+|--------------------|--------------|-----------------------------|--------|----------|-------|
+| user_id            | INT          | Foreign key to user id      | True   | True     | False |
+| email              | VARCHAR(100) | The user’s email            | True   | True     | True  |
+| oauth_provider_id  | INT          | Foreign key to oauth provider | 
+| oauth_provider_user_id
+| oauth_access_token
+| oauth_refresh_token
+| oauth_token_expires
+
+Have a separate id for user_id and email?
+
+
 ## Roles
 | Field              | Type         | Description                 | UNIQUE | NOT NULL | INDEX |
 |--------------------|--------------|-----------------------------|--------|----------|-------|

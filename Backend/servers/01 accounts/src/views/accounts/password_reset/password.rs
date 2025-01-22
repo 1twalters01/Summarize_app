@@ -3,17 +3,13 @@ use actix_web::{http::StatusCode, HttpRequest, Responder, Result};
 use uuid::Uuid;
 
 use crate::{
-    datatypes::{
-        email_types::{MessageType::PasswordResetConfirmation, PasswordResetConfirmationParams},
-        response_types::{AppError, AppResponse},
-    },
+    datatypes::{email_types::{MessageType::PasswordResetConfirmation, PasswordResetConfirmationParams}, response_types::{AppError, AppResponse}},
     generated::protos::accounts::password_reset::password::{
         request::Request,
         response::{response::ResponseField, Error, Response, Success},
     },
     services::{
-        cache_service::CacheService, email_service::EmailService,
-        response_service::ResponseService, user_service::UserService,
+        cache_service::CacheService, email_service::EmailService, response_service::ResponseService, user_service::UserService
     },
     utils::{
         database_connections::{create_pg_pool_connection, create_redis_client_connection},
@@ -91,9 +87,9 @@ pub async fn post_password_reset(
         Ok(email) => email,
         Err(_) => {
             return Ok(ResponseService::create_error_response(
-                AppError::PasswordResetPassword(Error::ServerError),
-                StatusCode::INTERNAL_SERVER_ERROR,
-            ));
+                    AppError::PasswordResetPassword(Error::ServerError),
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    ));
         }
     };
     let mut email_service = EmailService::new(&email);
@@ -113,9 +109,9 @@ pub async fn post_password_reset(
     let cache_result = cache_service.delete_key(&verification_confirmation_token);
     if cache_result.is_err() {
         return Ok(ResponseService::create_error_response(
-            AppError::PasswordResetPassword(Error::ServerError),
-            StatusCode::INTERNAL_SERVER_ERROR,
-        ));
+                AppError::PasswordResetPassword(Error::ServerError),
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ));
     }
 
     // return ok
