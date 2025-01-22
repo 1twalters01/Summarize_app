@@ -52,19 +52,19 @@ pub fn config(cfg: &mut ServiceConfig) {
     .service(
         scope("/login")
             .wrap(AuthenticationMiddlewareFactory::<NotAuthenticated>::new())
+            // .route("/guest", get().to(views::accounts::login::guest::get_guest))
             .route(
                 "/email",
-                post().to(views::accounts::login::email::post_email),
+                post().to(views::accounts::login::is_authenticated::email::post_email),
             )
             .wrap(VerificationMiddleware)
             .route(
                 "/password",
-                post().to(views::accounts::login::password::post_password),
+                post().to(views::accounts::login::is_authenticated::password::post_password),
             )
-            .route("/totp", post().to(views::accounts::login::totp::post_totp)),
-        // .route("/sms", post().to(views::accounts::login::totp::post_sms))
-        // .route("/biometrics", post().to(views::accounts::login::totp::post_biometrics)),
-        // .route("/guest", get().to(views::accounts::login::guest::get_guest))
+            .route("/totp", post().to(views::accounts::login::is_authenticated::totp::post_totp)),
+            // .route("/sms", post().to(views::accounts::login::is_authenticated::totp::post_sms))
+            // .route("/biometrics", post().to(views::accounts::login::is_authenticated::totp::post_biometrics)),
     )
     .service(
         scope("/login")

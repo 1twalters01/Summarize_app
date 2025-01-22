@@ -1,4 +1,5 @@
 # Todo
+* Change to match new structure for accounts
 * Guest login
 * Guest refresh
 * Register from guest

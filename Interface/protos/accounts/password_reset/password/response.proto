@@ -8,6 +8,7 @@ enum Error {
     INVALID_PASSWORD = 2;
     TOO_MANY_REQUESTS = 3;
     SERVER_ERROR = 4;
+    EMAIL_FAILED_TO_SEND = 5;
 }
 
 message Success {}

@@ -13,6 +13,7 @@ enum Error {
     INCORRECT_PASSWORD_CONFIRMATION = 7;
     TOO_MANY_REQUESTS = 8;
     SERVER_ERROR = 9;
+    EMAIL_FAILED_TO_SEND = 10;
 }
 
 message Success {
