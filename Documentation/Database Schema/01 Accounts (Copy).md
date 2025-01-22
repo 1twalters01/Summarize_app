@@ -21,9 +21,7 @@ CREATE TABLE IF NOT EXISTS users(
     
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     last_login TIMESTAMP,
-    is_author BOOLEAN NOT NULL DEFAULT FALSE,
-    is_staff BOOLEAN NOT NULL DEFAULT FALSE,
-    is_superuser BOOLEAN NOT NULL DEFAULT FALSE
+    is_guest BOOLEAN,
 );
 CREATE INDEX IF NOT EXISTS idx_users_email ON users (email);
 CREATE INDEX IF NOT EXISTS idx_users_username ON users (username);

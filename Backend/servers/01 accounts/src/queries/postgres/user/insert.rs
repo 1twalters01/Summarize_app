@@ -1,4 +1,21 @@
+use chrono::Utc;
 use sqlx::{Pool, Postgres, Row};
+use uuid::Uuid;
+
+pub async fn new_guest(pool: &Pool<Postgres>) -> Result<Uuid, sqlx::Error> {
+    let user_create_query = sqlx::query("INSERT INTO users (last_login) VALUES (($1)) RETURNING uuid;")
+        .bind(Utc::now())
+        .fetch_one(pool)
+        .await;
+
+    match user_create_query {
+        Err(err) => return Err(err),
+        Ok(res) => {
+            let user_uuid: Uuid = res.get("uuid");
+            return Ok(user_uuid);
+        }
+    }
+}
 
 pub async fn from_all(
     pool: &Pool<Postgres>,

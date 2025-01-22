@@ -19,6 +19,7 @@ fn main() {
         "/accounts/login/password/response.proto",
         "/accounts/login/totp/request.proto",
         "/accounts/login/totp/response.proto",
+        "/accounts/login/guest/response.proto",
         "/accounts/login/refresh/response.proto",
         "/accounts/register/email/request.proto",
         "/accounts/register/email/response.proto",

@@ -15,6 +15,10 @@ impl UserService {
         Self { pool }
     }
 
+    pub async fn save_new_guest(&self) -> Result<Uuid, sqlx::Error> {
+        user::insert::new_guest(&self.pool).await
+    }
+
     pub async fn save_new_user(
         &self,
         username: &str,

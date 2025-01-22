@@ -107,9 +107,8 @@ pub async fn post_totp(data: ProtoBuf<Request>, req: HttpRequest) -> Result<impl
     }
 
     // create auth tokens
-    let token_service = TokenService::new();
-    let refresh_token = token_service.generate_refresh_token();
     let token_service = TokenService::from_uuid(&user_uuid);
+    let refresh_token = token_service.generate_refresh_token();
     let access_token = token_service.generate_access_token().unwrap();
 
     // If remember_me then save the refresh token

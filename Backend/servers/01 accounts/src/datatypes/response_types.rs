@@ -5,7 +5,8 @@ use crate::generated::protos::{
             verification::response as captcha_verification_response,
         },
         login::{
-            email::response as login_email_response, password::response as login_password_response,
+            email::response as login_email_response, guest::response as login_guest_response,
+            password::response as login_password_response,
             refresh::response as login_refresh_response, totp::response as login_totp_response,
         },
         password_reset::{
@@ -33,6 +34,7 @@ pub enum AppError {
     LoginEmail(login_email_response::Error),
     LoginPassword(login_password_response::Error),
     LoginTotp(login_totp_response::Error),
+    LoginGuest(login_guest_response::Error),
     LoginRefresh(login_refresh_response::Error),
 
     // Register
@@ -66,6 +68,7 @@ pub enum AppResponse {
     LoginEmail(login_email_response::Response),
     LoginPassword(login_password_response::Response),
     LoginTotp(login_totp_response::Response),
+    LoginGuest(login_guest_response::Response),
     LoginRefresh(login_refresh_response::Response),
 
     // Register

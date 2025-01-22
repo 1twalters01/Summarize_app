@@ -29,30 +29,30 @@ pub fn config(cfg: &mut ServiceConfig) {
                 post().to(views::accounts::register::from_login::details::post_details),
             ),
     )
-    // .service(
-    //     scope("/register/from-guest")
-    //     .route(
-    //         "/email",
-    //         post().to(views::accounts::register::from_guest::post_email),
-    //     )
-    //     .wrap(VerificationMiddleware)
-    //     .route(
-    //         "/verify",
-    //         post().to(views::accounts::register::from_guest::post_verify),
-    //     )
-    //     .route(
-    //         "/verify/{header_token}/{verification_code}",
-    //         post().to(views::accounts::register::from_guest::link_verify),
-    //     )
-    //     .route(
-    //         "/details",
-    //         post().to(views::accounts::register::::from_guest::details::post_details),
-    //     ),
-    // )
+    .service(
+        scope("/register/from-guest")
+        .route(
+            "/email",
+            post().to(views::accounts::register::from_guest::email::post_email),
+        )
+        // .wrap(VerificationMiddleware)
+        // .route(
+        //     "/verify",
+        //     post().to(views::accounts::register::from_guest::verification::post_verify),
+        // )
+        // .route(
+        //     "/verify/{header_token}/{verification_code}",
+        //     post().to(views::accounts::register::from_guest::verification::link_verify),
+        // )
+        // .route(
+        //     "/details",
+        //     post().to(views::accounts::register::from_guest::details::post_details),
+        // ),
+    )
     .service(
         scope("/login")
             .wrap(AuthenticationMiddlewareFactory::<NotAuthenticated>::new())
-            // .route("/guest", get().to(views::accounts::login::guest::get_guest))
+            .route("/guest", get().to(views::accounts::login::is_guest::guest::get_guest))
             .route(
                 "/email",
                 post().to(views::accounts::login::is_authenticated::email::post_email),
@@ -62,9 +62,12 @@ pub fn config(cfg: &mut ServiceConfig) {
                 "/password",
                 post().to(views::accounts::login::is_authenticated::password::post_password),
             )
-            .route("/totp", post().to(views::accounts::login::is_authenticated::totp::post_totp)),
-            // .route("/sms", post().to(views::accounts::login::is_authenticated::totp::post_sms))
-            // .route("/biometrics", post().to(views::accounts::login::is_authenticated::totp::post_biometrics)),
+            .route(
+                "/totp",
+                post().to(views::accounts::login::is_authenticated::totp::post_totp),
+            ),
+        // .route("/sms", post().to(views::accounts::login::is_authenticated::totp::post_sms))
+        // .route("/biometrics", post().to(views::accounts::login::is_authenticated::totp::post_biometrics)),
     )
     .service(
         scope("/login")

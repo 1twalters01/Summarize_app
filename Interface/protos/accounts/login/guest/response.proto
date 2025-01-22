@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package accounts.login.guest.response;
+
+import "accounts/auth_tokens.proto";
+
+enum Error {
+    TOO_MANY_REQUESTS = 0;
+    SERVER_ERROR = 1;
+}
+
+message Response {
+  oneof response_field {
+    Error error = 1;
+    accounts.auth_tokens.AuthTokens tokens = 2;
+  }
+}
+

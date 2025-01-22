@@ -12,6 +12,7 @@ use crate::{
             login::{
                 email::response as login_email_response,
                 password::response as login_password_response,
+                guest::response as login_guest_response,
                 refresh::response as login_refresh_response, totp::response as login_totp_response,
             },
             password_reset::{
@@ -58,6 +59,13 @@ impl ResponseService {
             AppError::LoginTotp(err) => {
                 login_totp_response::Response {
                     response_field: Some(login_totp_response::response::ResponseField::Error(
+                        err as i32,
+                    )),
+                };
+            }
+            AppError::LoginGuest(err) => {
+                login_guest_response::Response {
+                    response_field: Some(login_guest_response::response::ResponseField::Error(
                         err as i32,
                     )),
                 };
@@ -204,6 +212,9 @@ impl ResponseService {
                 .content_type("application/x-protobuf; charset=utf-8")
                 .protobuf(res),
             AppResponse::LoginTotp(res) => HttpResponse::build(status)
+                .content_type("application/x-protobuf; charset=utf-8")
+                .protobuf(res),
+            AppResponse::LoginGuest(res) => HttpResponse::build(status)
                 .content_type("application/x-protobuf; charset=utf-8")
                 .protobuf(res),
             AppResponse::LoginRefresh(res) => HttpResponse::build(status)
