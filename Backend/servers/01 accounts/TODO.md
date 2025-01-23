@@ -1,6 +1,6 @@
 # Todo
-* Change to match new structure for accounts
-* Register from guest
+* Add a tag when saving things to redis for the route that saved it to differentiate them?
+* Change queries to match new structure for accounts
 * oauth2
 * Write tests for:
     * models

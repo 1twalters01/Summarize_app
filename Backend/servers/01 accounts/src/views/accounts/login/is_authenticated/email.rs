@@ -1,5 +1,6 @@
 use actix_protobuf::ProtoBuf;
 use actix_web::{http::StatusCode, Responder, Result};
+use uuid::Uuid;
 
 use crate::{
     datatypes::response_types::{AppError, AppResponse},
@@ -27,7 +28,7 @@ pub async fn post_email(data: ProtoBuf<Request>) -> Result<impl Responder> {
     }
 
     let user_service = UserService::new(create_pg_pool_connection().await);
-    let user_uuid: uuid::Uuid = match user_service.get_user_uuid_from_email(&email).await {
+    let user_uuid: Uuid = match user_service.get_user_uuid_from_email(&email).await {
         Ok(Some(user)) => user,
         Ok(None) => {
             return Ok(ResponseService::create_error_response(

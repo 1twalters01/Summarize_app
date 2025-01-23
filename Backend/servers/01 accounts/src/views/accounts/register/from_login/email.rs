@@ -16,7 +16,6 @@ use crate::{
     },
     utils::{
         database_connections::{create_pg_pool_connection, create_redis_client_connection},
-        // email::{compose::compose_register_email_message, handler::send_email},
         validations::email::validate_email,
     },
 };
@@ -50,7 +49,7 @@ pub async fn post_email(data: ProtoBuf<Request>) -> Result<impl Responder> {
         Ok(None) => (),
     };
 
-    // create a verify token, a register email token, and a register_email_token_tuple
+    // create a verification token and a register email token
     let token_service = TokenService::new();
     let verification_token = token_service.generate_opaque_token_of_length(8);
     let header_token = token_service.generate_opaque_token_of_length(64);

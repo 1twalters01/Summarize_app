@@ -31,6 +31,7 @@ pub fn config(cfg: &mut ServiceConfig) {
     )
     .service(
         scope("/register/from-guest")
+        .wrap(AuthenticationMiddlewareFactory::<Authenticated>::new())
         .route(
             "/email",
             post().to(views::accounts::register::from_guest::email::post_email),
