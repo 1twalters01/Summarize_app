@@ -18,47 +18,72 @@ CREATE EXTENSION IF NOT EXISTS "pg_cron";
 CREATE TABLE IF NOT EXISTS users(
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     uuid UUID UNIQUE NOT NULL DEFAULT gen_random_uuid(),
-    
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     last_login TIMESTAMP,
-    is_guest BOOLEAN,
+    is_guest BOOLEAN DEFAULT TRUE,
 );
 CREATE INDEX IF NOT EXISTS idx_users_email ON users (email);
 CREATE INDEX IF NOT EXISTS idx_users_username ON users (username);
 CREATE INDEX IF NOT EXISTS idx_users_uuid ON users (uuid);
 ```
 
+## Email Table
+| Field              | Type         | Description                 | UNIQUE | NOT NULL | INDEX |
+|--------------------|--------------|-----------------------------|--------|----------|-------|
+| id                 | INT          | Primary key                 | True   | True     | True  |
+| user_id            | INT          | Foreign key to user id      | True   | True     | False |
+| email              | VARCHAR(100) | The user’s email            | True   | True     | True  |
+
+This table is to allow a user to login to their account even if they are using oauth by getting the oauth email address and getting their user_id from it.
+
 ## Registered User Data
 | Field              | Type         | Description                 | UNIQUE | NOT NULL | INDEX |
 |--------------------|--------------|-----------------------------|--------|----------|-------|
+| id                 | INT          | Primary key                 | True   | True     | True  |
 | user_id            | INT          | Foreign key to user id      | True   | True     | False |
 | username           | VARCHAR(50)  | The user’s username         | True   | True     | True  |
-| email              | VARCHAR(100) | The user’s email            | True   | True     | True  |
 | first_name         | VARCHAR(50)  | The user's first name       | False  | False    | False |
 | last_name          | VARCHAR(50)  | The user's last name        | False  | False    | False |
 
 ```sql
 CREATE TABLE IF NOT EXISTS registered_user_data(
+    id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    user_id INT,
     username VARCHAR(50) UNIQUE NOT NULL,
-    email VARCHAR(100) UNIQUE NOT NULL,
     first_name VARCHAR(50),
     last_name VARCHAR(50),
+    CONSTRAINT fk_users FOREIGN KEY (user_id)
+        REFERENCES users (id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
 );
 ```
 
 ## Oauth Providers
-google, apple
+| Field              | Type         | Description                 | UNIQUE | NOT NULL | INDEX |
+|--------------------|--------------|-----------------------------|--------|----------|-------|
+| id                 | INT          | Primary key for provider    | True   | True     | True  |
+| provider           | VARCHAR(20)  | Name of oauth provider      | True   | True     | True  |
+
+e.g. Google or Apple
+
+```sql
+CREATE TABLE IF NOT EXISTS oauth_providers (
+    id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    provider VARCHAR(20) UNIQUE NOT NULL
+);
+```
 
 ## Oauth
 | Field              | Type         | Description                 | UNIQUE | NOT NULL | INDEX |
 |--------------------|--------------|-----------------------------|--------|----------|-------|
+| id                 | INT          | Primary key for provider    | True   | True     | True  |
 | user_id            | INT          | Foreign key to user id      | True   | True     | False |
-| email              | VARCHAR(100) | The user’s email            | True   | True     | True  |
 | oauth_provider_id  | INT          | Foreign key to oauth provider | 
 | oauth_provider_user_id
-| oauth_access_token
-| oauth_refresh_token
-| oauth_token_expires
+| oauth_access_token | TEXT
+| oauth_refresh_token | TEXT
+| oauth_token_expires | TIMESTAMP
 
 Have a separate id for user_id and email?
 
@@ -71,7 +96,7 @@ Have a separate id for user_id and email?
 
 ```sql
 CREATE TABLE IF NOT EXISTS roles(
-    id INT PRIMARY KEY,
+    id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     name VARCHAR(20) UNIQUE NOT NULL
 );
 ```
@@ -151,6 +176,87 @@ CREATE TABLE IF NOT EXISTS totp_secrets(
         ON UPDATE CASCADE
 );
 ```
+
+Can turn on and off totp without regenerating it - need verified at to log when verified in this case.
+
+## SMS
+| Field              | Type         | Description                 | UNIQUE | NOT NULL | INDEX |
+|--------------------|--------------|-----------------------------|--------|----------|-------|
+| user_id            | INT          | Foreign key to user id      | True   | True     | False |
+
+```sql
+CREATE TABLE IF NOT EXISTS sms_verifications (
+    user_id INT UNIQUE NOT NULL,
+    encrypted_phone_number VARCHAR(100) NOT NULL,
+    last_updated TIMESTAMP NOT NULL DEFAULT NOW(),
+    is_activated BOOLEAN NOT NULL,
+    last_sent TIMESTAMP NOT NULL DEFAULT NOW(),
+    is_verified BOOLEAN NOT NULL DEFAULT FALSE,
+    verified_at TIMESTAMP,
+    CONSTRAINT fk_users FOREIGN KEY (user_id)
+        REFERENCES users (id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+```
+
+## Biometrics Platform
+| Field              | Type         | Description                 | UNIQUE | NOT NULL | INDEX |
+|--------------------|--------------|-----------------------------|--------|----------|-------|
+| id                 | INT          | Primary key for provider    | True   | True     | True  |
+| platform           | VARCHAR(20)  | Name of biometrics platform | True   | True     | True  |
+
+e.g. Apple Face ID, Android Biometric API, Windows Hello
+
+```sql
+CREATE TABLE IF NOT EXISTS biometrics_platforms (
+    id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    platform VARCHAR(20) UNIQUE NOT NULL
+);
+```
+
+## Biometrics
+| Field              | Type         | Description                 | UNIQUE | NOT NULL | INDEX |
+|--------------------|--------------|-----------------------------|--------|----------|-------|
+| user_id            | INT          | Foreign key to user id      | True   | True     | False |
+
+```sql
+CREATE TABLE IF NOT EXISTS biometric_data (
+    user_id INT UNIQUE NOT NULL,
+    public_key TEXT NOT NULL,
+    platform_id INT NOT NULL,
+    last_updated TIMESTAMP NOT NULL DEFAULT NOW(),
+    is_activated BOOLEAN NOT NULL,
+    is_verified BOOLEAN NOT NULL DEFAULT FALSE,
+    verified_at TIMESTAMP,
+    CONSTRAINT fk_users FOREIGN KEY (user_id)
+        REFERENCES users (id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+    CONSTRAINT fk_platform FOREIGN KEY (platform_id)
+        REFERENCES biometrics_platforms (id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+```
+
+Authentication Workflow with Platform Biometrics
+Registration
+
+    User registers on the app and enables biometric authentication.
+    Platform generates a key pair (public/private).
+    Public key is sent to my server and stored in the biometric_data table.
+
+Login
+    Server generates and stores a challenge (random data e.g. a random string) in redis
+    Server sends the challenge to the user's device.
+    Platform verifies the biometric data locally.
+    If the biometric match succeeds:
+        The private key signs the challenge.
+        The signed challenge and user identifier are sent back to your server.
+    Server validates the signature using the stored public key.
+    If valid, the user is authenticated.
+    
 
 ## Refresh Tokens
 | Field              | Type         | Description                 | UNIQUE | NOT NULL | INDEX |

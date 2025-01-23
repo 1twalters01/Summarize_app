@@ -1,5 +1,6 @@
 # Todo
 * Add a tag when saving things to redis for the route that saved it to differentiate them?
+* Think through flow for adding regular user to an oauth account
 * Change queries to match new structure for accounts
 * oauth2
 * Write tests for:
