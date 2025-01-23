@@ -6,13 +6,13 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 CREATE EXTENSION IF NOT EXISTS "pg_cron";
 
 ## Users
-| Field              | Type         | Description                 | UNIQUE | NOT NULL | INDEX |
-|--------------------|--------------|-----------------------------|--------|----------|-------|
-| id                 | INT          | Primary key (internal)      | True   | True     | True  |
-| uuid               | UUID         | External identifier         | True   | True     | True  |
-| created_at         | TIMESTAMP    | The user's creation time    | False  | True     | False |
-| last_login         | TIMESTAMP    | The user's last login       | False  | False    | False |
-| is_guest           | BOOLEAN      | Is the user a guest         | False  | True     | False |
+| Field                  | Type         | Description                   | UNIQUE | NOT NULL | INDEX |
+|------------------------|--------------|-------------------------------|--------|----------|-------|
+| id                     | INT          | Primary key (internal)        | True   | True     | True  |
+| uuid                   | UUID         | External identifier           | True   | True     | True  |
+| created_at             | TIMESTAMP    | The user's creation time      | False  | True     | False |
+| last_login             | TIMESTAMP    | The user's last login         | False  | False    | False |
+| is_guest               | BOOLEAN      | Is the user a guest           | False  | True     | False |
 
 ```sql
 CREATE TABLE IF NOT EXISTS users(
@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS users(
     uuid UUID UNIQUE NOT NULL DEFAULT gen_random_uuid(),
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     last_login TIMESTAMP,
-    is_guest BOOLEAN DEFAULT TRUE,
+    is_guest BOOLEAN NOT NULL DEFAULT TRUE,
 );
 CREATE INDEX IF NOT EXISTS idx_users_email ON users (email);
 CREATE INDEX IF NOT EXISTS idx_users_username ON users (username);
@@ -28,27 +28,35 @@ CREATE INDEX IF NOT EXISTS idx_users_uuid ON users (uuid);
 ```
 
 ## Email Table
-| Field              | Type         | Description                 | UNIQUE | NOT NULL | INDEX |
-|--------------------|--------------|-----------------------------|--------|----------|-------|
-| id                 | INT          | Primary key                 | True   | True     | True  |
-| user_id            | INT          | Foreign key to user id      | True   | True     | False |
-| email              | VARCHAR(100) | The user’s email            | True   | True     | True  |
-
-This table is to allow a user to login to their account even if they are using oauth by getting the oauth email address and getting their user_id from it.
-
-## Registered User Data
-| Field              | Type         | Description                 | UNIQUE | NOT NULL | INDEX |
-|--------------------|--------------|-----------------------------|--------|----------|-------|
-| id                 | INT          | Primary key                 | True   | True     | True  |
-| user_id            | INT          | Foreign key to user id      | True   | True     | False |
-| username           | VARCHAR(50)  | The user’s username         | True   | True     | True  |
-| first_name         | VARCHAR(50)  | The user's first name       | False  | False    | False |
-| last_name          | VARCHAR(50)  | The user's last name        | False  | False    | False |
+| Field                  | Type         | Description                   | UNIQUE | NOT NULL | INDEX |
+|------------------------|--------------|-------------------------------|--------|----------|-------|
+| id                     | INT          | Primary key (internal)        | True   | True     | True  |
+| user_id                | INT          | Foreign key to user id        | False   | True     | False |
+| email                  | VARCHAR(255) | The user’s email              | True   | True     | True  |
 
 ```sql
-CREATE TABLE IF NOT EXISTS registered_user_data(
+CREATE TABLE IF NOT EXISTS emails(
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    user_id INT,
+    user_id INT NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    CONSTRAINT fk_users FOREIGN KEY (user_id)
+        REFERENCES users (id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+```
+
+## User Data
+| Field                  | Type         | Description                   | UNIQUE | NOT NULL | INDEX |
+|------------------------|--------------|-------------------------------|--------|----------|-------|
+| user_id                | INT          | Foreign key to user id        | True   | True     | False |
+| username               | VARCHAR(50)  | The user’s username           | True   | True     | True  |
+| first_name             | VARCHAR(50)  | The user's first name         | False  | False    | False |
+| last_name              | VARCHAR(50)  | The user's last name          | False  | False    | False |
+
+```sql
+CREATE TABLE IF NOT EXISTS user_data(
+    user_id INT PRIMARY KEY,
     username VARCHAR(50) UNIQUE NOT NULL,
     first_name VARCHAR(50),
     last_name VARCHAR(50),
@@ -59,40 +67,65 @@ CREATE TABLE IF NOT EXISTS registered_user_data(
 );
 ```
 
-## Oauth Providers
-| Field              | Type         | Description                 | UNIQUE | NOT NULL | INDEX |
-|--------------------|--------------|-----------------------------|--------|----------|-------|
-| id                 | INT          | Primary key for provider    | True   | True     | True  |
-| provider           | VARCHAR(20)  | Name of oauth provider      | True   | True     | True  |
+User_id can only have set of details so it was made as the primary key
 
-e.g. Google or Apple
+## Account Providers
+| Field                  | Type         | Description                   | UNIQUE | NOT NULL | INDEX |
+|------------------------|--------------|-------------------------------|--------|----------|-------|
+| id                     | INT          | Primary key (internal)        | True   | True     | True  |
+| account_provider       | VARCHAR(20)  | What created the account      | True   | True     | True  |
 
 ```sql
-CREATE TABLE IF NOT EXISTS oauth_providers (
+CREATE TABLE IF NOT EXISTS account_providers (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     provider VARCHAR(20) UNIQUE NOT NULL
 );
 ```
 
+summarize, oauth-google, oauth-apple
+
 ## Oauth
-| Field              | Type         | Description                 | UNIQUE | NOT NULL | INDEX |
-|--------------------|--------------|-----------------------------|--------|----------|-------|
-| id                 | INT          | Primary key for provider    | True   | True     | True  |
-| user_id            | INT          | Foreign key to user id      | True   | True     | False |
-| oauth_provider_id  | INT          | Foreign key to oauth provider | 
-| oauth_provider_user_id
-| oauth_access_token | TEXT
-| oauth_refresh_token | TEXT
-| oauth_token_expires | TIMESTAMP
+| Field                  | Type         | Description                   | UNIQUE | NOT NULL | INDEX |
+|------------------------|--------------|-------------------------------|--------|----------|-------|
+| id                     | INT          | Primary key for provider      | True   | True     | True  |
+| user_id                | INT          | Foreign key to user id        | False  | True     | False |
+| oauth_provider_id      | INT          | Foreign key to oauth provider | False  | True     | False |
+| oauth_provider_user_id | VARCHAR(255) | 
 
-Have a separate id for user_id and email?
+```sql
+CREATE TABLE IF NOT EXISTS oauth (
+    id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    user_id INT NOT NULL,
+    provider VARCHAR(20) UNIQUE NOT NULL
+);
+```
 
+## Oauth Refresh Tokens
+| Field                  | Type         | Description                   | UNIQUE | NOT NULL | INDEX |
+|------------------------|--------------|-------------------------------|--------|----------|-------|
+| oauth_id               | INT          | Foreign key to oauth table    | True   | True     | True  |
+| oauth_refresh_token    | VARCHAR(150) | Oauth refresh token           | True   | True     | True  |
+| oauth_access_token     | VARCHAR(150) | Oauth access token            | True   | True     | False |
+| oauth_token_expires    | TIMESTAMP    | 
+
+```sql
+CREATE TABLE IF NOT EXISTS oauth_refresh_tokens(
+    oauth_id int UNIQUE NOT NULL,
+    oauth_refresh_token VARCHAR(100) UNIQUE NOT NULL,
+    oauth_access_token VARCHAR(100) UNIQUE NOT NULL,
+    oauth_token_expires VARCHAR(100) UNIQUE NOT NULL,
+    CONSTRAINT fk_oauth FOREIGN KEY (oauth_id)
+        REFERENCES oauth (id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+```
 
 ## Roles
-| Field              | Type         | Description                 | UNIQUE | NOT NULL | INDEX |
-|--------------------|--------------|-----------------------------|--------|----------|-------|
-| id                 | INT          | Primary key for role        | True   | True     | True  |
-| role               | Varchar(20)  | Name of the role            | True   | True     | True  |
+| Field                  | Type         | Description                   | UNIQUE | NOT NULL | INDEX |
+|------------------------|--------------|-------------------------------|--------|----------|-------|
+| id                     | INT          | Primary key for role          | True   | True     | True  |
+| role                   | Varchar(20)  | Name of the role              | True   | True     | True  |
 
 ```sql
 CREATE TABLE IF NOT EXISTS roles(
@@ -104,10 +137,10 @@ CREATE TABLE IF NOT EXISTS roles(
 Current roles: Admin, Superuser, Author
 
 ## User Roles
-| Field              | Type         | Description                 | UNIQUE | NOT NULL | INDEX |
-|--------------------|--------------|-----------------------------|--------|----------|-------|
-| user_id            | INT          | Foreign key to user id      | True   | True     | True |
-| role_id            | INT          | Foreign key to role         | False  | True     | False |
+| Field                  | Type         | Description                   | UNIQUE | NOT NULL | INDEX |
+|------------------------|--------------|-------------------------------|--------|----------|-------|
+| user_id                | INT          | Foreign key to user id        | True   | True     | True  |
+| role_id                | INT          | Foreign key to role           | False  | True     | False |
 
 ```sql
 CREATE TABLE IF NOT EXISTS user_roles(
@@ -120,15 +153,16 @@ CREATE TABLE IF NOT EXISTS user_roles(
         ON UPDATE CASCADE
     CONSTRAINT fk_role FOREIGN KEY (user_id)
     	REFERENCES roles(id)
+)
 ```
 
 ## Password History
-| Field              | Type         | Description                 | UNIQUE | NOT NULL | INDEX |
-|--------------------|--------------|-----------------------------|--------|----------|-------|
-| id                 | INT          | Primary key                 | True   | True     | True  |
-| user_id            | INT          | Foreign key to user id      | True   | True     | False |
-| password_hash      | VARCHAR(255) | The user's password hash    | False  | True     | False |
-| created_at         | TIMESTAMP    | The password creation time  | False  | True     | False |
+| Field                  | Type         | Description                   | UNIQUE | NOT NULL | INDEX |
+|------------------------|--------------|-------------------------------|--------|----------|-------|
+| id                     | INT          | Primary key                   | True   | True     | True  |
+| user_id                | INT          | Foreign key to user id        | True   | True     | False |
+| password_hash          | VARCHAR(255) | The user's password hash      | False  | True     | False |
+| created_at             | TIMESTAMP    | The password creation time    | False  | True     | False |
 
 ```sql
 CREATE TABLE IF NOT EXISTS password_history(
@@ -153,14 +187,14 @@ LIMIT 1;
 ```
 
 ## Totp Secrets
-| Field              | Type         | Description                 | UNIQUE | NOT NULL | INDEX |
-|--------------------|--------------|-----------------------------|--------|----------|-------|
-| user_id            | INT          | Foreign key to user id      | True   | True     | False |
-| encrypted_totp_key | VARCHAR(100) | The encrypted totp key      | False  | True     | False |
-| last_updated       | TIMESTAMP    | Time of last totp update    | False  | True     | False |
-| is_activated       | BOOLEAN      | Is the totp activated?      | False  | True     | False |
-| is_verified        | BOOLEAN      | Is the totp verified?       | False  | True     | False |
-| verified_at        | TIMESTAMP    | Totp key verification time  | False  | False    | False |
+| Field                  | Type         | Description                   | UNIQUE | NOT NULL | INDEX |
+|------------------------|--------------|-------------------------------|--------|----------|-------|
+| user_id                | INT          | Foreign key to user id        | True   | True     | False |
+| encrypted_totp_key     | VARCHAR(100) | The encrypted totp key        | False  | True     | False |
+| last_updated           | TIMESTAMP    | Time of last totp update      | False  | True     | False |
+| is_activated           | BOOLEAN      | Is the totp activated?        | False  | True     | False |
+| is_verified            | BOOLEAN      | Is the totp verified?         | False  | True     | False |
+| verified_at            | TIMESTAMP    | Totp key verification time    | False  | False    | False |
 
 ```sql
 CREATE TABLE IF NOT EXISTS totp_secrets(
@@ -180,9 +214,9 @@ CREATE TABLE IF NOT EXISTS totp_secrets(
 Can turn on and off totp without regenerating it - need verified at to log when verified in this case.
 
 ## SMS
-| Field              | Type         | Description                 | UNIQUE | NOT NULL | INDEX |
-|--------------------|--------------|-----------------------------|--------|----------|-------|
-| user_id            | INT          | Foreign key to user id      | True   | True     | False |
+| Field                  | Type         | Description                   | UNIQUE | NOT NULL | INDEX |
+|------------------------|--------------|-------------------------------|--------|----------|-------|
+| user_id                | INT          | Foreign key to user id        | True   | True     | False |
 
 ```sql
 CREATE TABLE IF NOT EXISTS sms_verifications (
@@ -201,10 +235,10 @@ CREATE TABLE IF NOT EXISTS sms_verifications (
 ```
 
 ## Biometrics Platform
-| Field              | Type         | Description                 | UNIQUE | NOT NULL | INDEX |
-|--------------------|--------------|-----------------------------|--------|----------|-------|
-| id                 | INT          | Primary key for provider    | True   | True     | True  |
-| platform           | VARCHAR(20)  | Name of biometrics platform | True   | True     | True  |
+| Field                  | Type         | Description                   | UNIQUE | NOT NULL | INDEX |
+|------------------------|--------------|-------------------------------|--------|----------|-------|
+| id                     | INT          | Primary key for provider      | True   | True     | True  |
+| platform               | VARCHAR(20)  | Name of biometrics platform   | True   | True     | True  |
 
 e.g. Apple Face ID, Android Biometric API, Windows Hello
 
@@ -216,15 +250,20 @@ CREATE TABLE IF NOT EXISTS biometrics_platforms (
 ```
 
 ## Biometrics
-| Field              | Type         | Description                 | UNIQUE | NOT NULL | INDEX |
-|--------------------|--------------|-----------------------------|--------|----------|-------|
-| user_id            | INT          | Foreign key to user id      | True   | True     | False |
+| Field                  | Type         | Description                   | UNIQUE | NOT NULL | INDEX |
+|------------------------|--------------|-------------------------------|--------|----------|-------|
+| user_id                | INT          | Foreign key to user id        | True   | True     | True  |
+| platform_id            | INT          | Public key given by platform  | True   | True     | True  |
+| public_key             | VARCHAR(100) | Private key from platform     | True   | True     | True  |
+| is_activated           | BOOLEAN      | Is biometric activated        | False  | True     | False |
+| is_verified            | BOOLEAN      | Is biometric verified         | False  | True     | False |
+| verified_at            | TIMESTAMP    | Verification Time             | False  | True     | False |
 
 ```sql
 CREATE TABLE IF NOT EXISTS biometric_data (
     user_id INT UNIQUE NOT NULL,
-    public_key TEXT NOT NULL,
     platform_id INT NOT NULL,
+    public_key TEXT NOT NULL,
     last_updated TIMESTAMP NOT NULL DEFAULT NOW(),
     is_activated BOOLEAN NOT NULL,
     is_verified BOOLEAN NOT NULL DEFAULT FALSE,
@@ -259,12 +298,12 @@ Login
     
 
 ## Refresh Tokens
-| Field              | Type         | Description                 | UNIQUE | NOT NULL | INDEX |
-|--------------------|--------------|-----------------------------|--------|----------|-------|
-| user_id            | INT          | Foreign key to user id      | False  | True     | False |
-| refresh_token      | VARCHAR(50)  | The refresh token           | True   | True     | False |
-| created_at         | TIMESTAMP    | The token's creation time   | False  | True     | False |
-| expires_at         | TIMESTAMP    | The token's expiration time | False  | True     | False |
+| Field                  | Type         | Description                   | UNIQUE | NOT NULL | INDEX |
+|------------------------|--------------|-------------------------------|--------|----------|-------|
+| user_id                | INT          | Foreign key to user id        | False  | True     | False |
+| refresh_token          | VARCHAR(50)  | The refresh token             | True   | True     | False |
+| created_at             | TIMESTAMP    | The token's creation time     | False  | True     | False |
+| expires_at             | TIMESTAMP    | The token's expiration time   | False  | True     | False |
 
 ```sql
 CREATE TABLE IF NOT EXISTS refresh_tokens(
@@ -287,11 +326,11 @@ SELECT cron.schedule(
 ```
 
 ## Token Blacklist
-| Field              | Type         | Description                 | UNIQUE | NOT NULL | INDEX |
-|--------------------|--------------|-----------------------------|--------|----------|-------|
-| user_id            | INT          | Foreign key to user id      | False  | True     | False |
-| token              | VARCHAR(150) | The token to be blacklist   | True   | True     | True  |
-| expires_at         | TIMESTAMP    | The token's expiration time | False  | True     | False |
+| Field                  | Type         | Description                   | UNIQUE | NOT NULL | INDEX |
+|------------------------|--------------|-------------------------------|--------|----------|-------|
+| user_id                | INT          | Foreign key to user id        | False  | True     | False |
+| token                  | VARCHAR(150) | The token to be blacklist     | True   | True     | True  |
+| expires_at             | TIMESTAMP    | The token's expiration time   | False  | True     | False |
 
 ```sql
 CREATE TABLE IF NOT EXISTS token_blacklist(

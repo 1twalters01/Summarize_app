@@ -21,11 +21,10 @@
         * [ ] phone number confirmation
     * [ ] User Login - Mechanisms for users to log in using:
         * [x] email and password
+        * [x] - guest login
         * [ ] OAuth/social logins
             * [ ] Google
-            * [ ] Facebook
             * [ ] Apple
-            * [ ] Twitter
     * [x] Password Recovery - This includes secure token generation
 
 2. [ ] Authentication
@@ -45,13 +44,13 @@
     * [x] Token-Based Authentication - Support for JWTs for stateless authentication
     * [ ] Single Sign-On (SSO) integration
 
-3. [ ] Authorization
-    * [ ] Role-Based Access Control (RBAC) - Implementation of roles and permissions to manage access control
-    * [ ] Attribute-Based Access Control (ABAC) - More granular access control based on user attributes and context
-    * [ ] Access Control Lists (ACLs) - Management of permissions for different resources
+3. [x] Authorization
+    * [x] Role-Based Access Control (RBAC) - Implementation of roles and permissions to manage access control
+    * [x] Attribute-Based Access Control (ABAC) - More granular access control based on user attributes and context
+    * [x] Access Control Lists (ACLs) - Management of permissions for different resources
 
 4. [ ] Security
-    * [ ] Rate Limiting - To protect against brute force attacks
+    * [x] Rate Limiting - To protect against brute force attacks
     * [x] CAPTCHA - To prevent automated abuse during:
         * [x] login
         * [x] registration
@@ -73,13 +72,13 @@
         * [ ] managing users
         * [ ] managing roles
         * [ ] managing permissions
-    * [ ] Security APIs
-        * [ ] Token issuance
+    * [x] Security APIs
+        * [x] Token issuance
 
 8. [ ] Notifications
     * [ ] Email/SMS Notifications - For account-related activities such as:
-        * [ ] registration confirmation
-        * [ ] password reset
+        * [x] registration confirmation
+        * [x] password reset
         * [ ] login alerts
 
 9. [ ] Documentation and Support

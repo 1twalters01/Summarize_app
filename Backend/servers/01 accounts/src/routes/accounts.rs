@@ -31,24 +31,36 @@ pub fn config(cfg: &mut ServiceConfig) {
     )
     .service(
         scope("/register/from-guest")
-        .wrap(AuthenticationMiddlewareFactory::<Authenticated>::new())
-        .route(
-            "/email",
-            post().to(views::accounts::register::from_guest::email::post_email),
-        )
-        // .wrap(VerificationMiddleware)
-        // .route(
-        //     "/verify",
-        //     post().to(views::accounts::register::from_guest::verification::post_verify),
-        // )
-        // .route(
-        //     "/verify/{header_token}/{verification_code}",
-        //     post().to(views::accounts::register::from_guest::verification::link_verify),
-        // )
-        // .route(
-        //     "/details",
-        //     post().to(views::accounts::register::from_guest::details::post_details),
-        // ),
+            .wrap(AuthenticationMiddlewareFactory::<Authenticated>::new())
+            .route(
+                "/email",
+                post().to(views::accounts::register::from_guest::email::post_email),
+            )
+            .wrap(VerificationMiddleware)
+            .route(
+                "/verify",
+                post().to(views::accounts::register::from_guest::verification::post_verify),
+            )
+            .route(
+                "/verify/{header_token}/{verification_code}",
+                post().to(views::accounts::register::from_guest::verification::link_verify),
+            )
+            .route(
+                "/details",
+                post().to(views::accounts::register::from_guest::details::post_details),
+            ),
+    )
+    .service(
+        scope("/register/from-oauth")
+            .wrap(AuthenticationMiddlewareFactory::<Authenticated>::new())
+            .route(
+                "/confirmation",
+                post().to(views::accounts::register::from_oauth::confirmation::post_confirmation)
+            )
+            .route(
+                "/password",
+                post().to(views::accounts::register::from_oauth::password::post_password)
+            )
     )
     .service(
         scope("/login")
