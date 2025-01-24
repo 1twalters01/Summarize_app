@@ -120,12 +120,11 @@ pub fn config(cfg: &mut ServiceConfig) {
                 post().to(views::accounts::captcha::verification::verify_captcha),
             ),
     );
-    // .service(
-    //     scope("/oauth2")
-    //         .wrap(middleware::authentication::not_authenticated::NotAuthenticated)
-    //         // make google oauth account be the same as logging in regularly if using a gmail
-    //         .route("/authorise", post().to(views::accounts::oauth2::authorise))
-    //         .route("/callback", post().to(views::accounts::oauth2::callback))
-    //         .route("/refresh-token", post().to(views::accounts::oauth2::refresh_token)),
-    // );
+    .service(
+        scope("/oauth2")
+            .wrap(AuthenticationMiddlewareFactory::<NotAuthenticated>::new())
+            .route("/authorise", post().to(views::accounts::oauth2::authorise))
+            .route("/callback", post().to(views::accounts::oauth2::callback))
+            .route("/refresh-token", post().to(views::accounts::oauth2::refresh_token)),
+    );
 }
