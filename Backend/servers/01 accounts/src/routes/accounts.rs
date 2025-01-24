@@ -83,6 +83,16 @@ pub fn config(cfg: &mut ServiceConfig) {
         // .route("/biometrics", post().to(views::accounts::login::is_authenticated::totp::post_biometrics)),
     )
     .service(
+        scope("/login/oauth2/google")
+            .wrap(AuthenticationMiddlewareFactory::<NotAuthenticated>::new())
+            .route("/google/authorise", post().to(views::accounts::login::oauth2::google::authorise))
+            .route("/google/callback", post().to(views::accounts::login::oauth2::google::callback))
+            .route("/goole/refresh-token", post().to(views::accounts::login::oauth2::google::refresh_token)),
+            .route("/google/authorise", post().to(views::accounts::login::oauth2::apple::authorise))
+            .route("/google/callback", post().to(views::accounts::login::oauth2::apple::callback))
+            .route("/goole/refresh-token", post().to(views::accounts::login::oauth2::apple::refresh_token)),
+    );
+    .service(
         scope("/login")
             .wrap(AuthenticationMiddlewareFactory::<Authenticated>::new())
             .wrap(VerificationMiddleware)
@@ -119,12 +129,5 @@ pub fn config(cfg: &mut ServiceConfig) {
                 "/verify",
                 post().to(views::accounts::captcha::verification::verify_captcha),
             ),
-    );
-    .service(
-        scope("/oauth2")
-            .wrap(AuthenticationMiddlewareFactory::<NotAuthenticated>::new())
-            .route("/authorise", post().to(views::accounts::oauth2::authorise))
-            .route("/callback", post().to(views::accounts::oauth2::callback))
-            .route("/refresh-token", post().to(views::accounts::oauth2::refresh_token)),
     );
 }

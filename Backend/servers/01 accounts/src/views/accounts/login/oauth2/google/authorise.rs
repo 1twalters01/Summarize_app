@@ -1,7 +1,3 @@
-use crate::{
-    accounts::schema::oauth2::{CallbackQuery, OAuth2Client, RefreshTokenQuery},
-    utils::tokens::generate_opaque_token_of_length,
-};
 use actix_web::{web, HttpResponse, Responder, Result};
 use oauth2::{
     ClientID, ClientSecret, AuthUrl, TokenUrl,
@@ -12,7 +8,7 @@ use dotenv::dotenv;
 
 // redirect the user to the authorization server
 pub async fn authorise() -> Result<impl Responder> {
-    dotenv::ok();
+    dotenv()::ok();
 
     let google_client_id = ClientId::new(
         env::var("GOOGLE_CLIENT_ID").expect("Missing the GOOGLE_CLIENT_ID environment variable."),
@@ -28,19 +24,17 @@ pub async fn authorise() -> Result<impl Responder> {
         env::var("TOKEN_URL").expect("Missing the token url")
     )
         .expect("Invalid token endpoint URL");
-
-    let (pkce_code_challenge, pkce_code_verifier) = PkceCodeChallenge::new_random_sha256();
-
-    // save pkce code verifier to redis
-
     let client = BasicClient::new(google_client_id)
         .set_client_secret(google_client_secret)
         .set_auth_uri(auth_url)
         .set_token_uri(token_url)
         .set_redirect_uri(
             RedirectUrl::new("redirect url".to_string()).expect("Invalid redirect URL"),
-        )
+        );
 
+
+    let (pkce_code_challenge, pkce_code_verifier) = PkceCodeChallenge::new_random_sha256();
+    // save pkce code verifier to redis
 
     let (authorize_url, csrf_state) = client
         .authorize_url(CsrfToken::new_random)
