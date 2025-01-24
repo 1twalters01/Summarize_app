@@ -54,6 +54,10 @@ pub fn config(cfg: &mut ServiceConfig) {
         scope("/register/from-oauth")
             .wrap(AuthenticationMiddlewareFactory::<Authenticated>::new())
             .route(
+                "email",
+                post().to(views::accounts::register::from_oauth::initiate::post_email)
+            )
+            .route(
                 "/verification",
                 post().to(views::accounts::register::from_oauth::verification::post_verification)
             )
