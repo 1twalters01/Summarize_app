@@ -27,25 +27,6 @@ CREATE INDEX IF NOT EXISTS idx_users_username ON users (username);
 CREATE INDEX IF NOT EXISTS idx_users_uuid ON users (uuid);
 ```
 
-## Email Table
-| Field                  | Type         | Description                   | UNIQUE | NOT NULL | INDEX |
-|------------------------|--------------|-------------------------------|--------|----------|-------|
-| id                     | INT          | Primary key (internal)        | True   | True     | True  |
-| user_id                | INT          | Foreign key to user id        | False   | True     | False |
-| email                  | VARCHAR(255) | The user’s email              | True   | True     | True  |
-
-```sql
-CREATE TABLE IF NOT EXISTS emails(
-    id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    user_id INT NOT NULL,
-    email VARCHAR(255) UNIQUE NOT NULL,
-    CONSTRAINT fk_users FOREIGN KEY (user_id)
-        REFERENCES users (id)
-        ON DELETE CASCADE
-        ON UPDATE CASCADE
-);
-```
-
 ## User Data
 | Field                  | Type         | Description                   | UNIQUE | NOT NULL | INDEX |
 |------------------------|--------------|-------------------------------|--------|----------|-------|
@@ -69,14 +50,33 @@ CREATE TABLE IF NOT EXISTS user_data(
 
 User_id can only have set of details so it was made as the primary key
 
-## Account Providers
+## Email Table
+| Field                  | Type         | Description                   | UNIQUE | NOT NULL | INDEX |
+|------------------------|--------------|-------------------------------|--------|----------|-------|
+| user_id                | INT          | Foreign key to user id        | False  | True     | False |
+| email                  | VARCHAR(255) | The user’s email              | True   | True     | True  |
+
+```sql
+CREATE TABLE IF NOT EXISTS emails(
+    user_id INT PRIMARY KEY,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    CONSTRAINT fk_users FOREIGN KEY (user_id)
+        REFERENCES users (id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+```
+
+For normal sign in.
+
+## Oauth Providers
 | Field                  | Type         | Description                   | UNIQUE | NOT NULL | INDEX |
 |------------------------|--------------|-------------------------------|--------|----------|-------|
 | id                     | INT          | Primary key (internal)        | True   | True     | True  |
-| account_provider       | VARCHAR(20)  | What created the account      | True   | True     | True  |
+| oauth_provider       | VARCHAR(20)  | What created the account      | True   | True     | True  |
 
 ```sql
-CREATE TABLE IF NOT EXISTS account_providers (
+CREATE TABLE IF NOT EXISTS oauth_providers (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     provider VARCHAR(20) UNIQUE NOT NULL
 );
@@ -89,31 +89,33 @@ summarize, oauth-google, oauth-apple
 |------------------------|--------------|-------------------------------|--------|----------|-------|
 | id                     | INT          | Primary key for provider      | True   | True     | True  |
 | user_id                | INT          | Foreign key to user id        | False  | True     | False |
-| oauth_provider_id      | INT          | Foreign key to oauth provider | False  | True     | False |
-| oauth_provider_user_id | VARCHAR(255) | 
+| oauth_email            | VARCHAR(255) | The user’s email              | False  | True     | True  |
+| oauth_provider_id    | INT          | FK to account provider        | False  | True     | False |
+| oauth_provider_user_id | VARCHAR(255) | oauth provider user id        | True   | True     | True  |
 
 ```sql
 CREATE TABLE IF NOT EXISTS oauth (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     user_id INT NOT NULL,
-    provider VARCHAR(20) UNIQUE NOT NULL
+    oauth_email VARCHAR(255) UNIQUE NOT NULL,
+    oauth_provider_id INT UNIQUE NOT NULL,
+    oauth_provider_user_id VARCHAR(255) UNIQUE NOT NULL
+    UNIQUE (oauth_email, oauth_provider_id)
 );
 ```
 
 ## Oauth Refresh Tokens
 | Field                  | Type         | Description                   | UNIQUE | NOT NULL | INDEX |
 |------------------------|--------------|-------------------------------|--------|----------|-------|
+| id                     | INT          | Primary key                   | True   | True     | True  |
 | oauth_id               | INT          | Foreign key to oauth table    | True   | True     | True  |
 | oauth_refresh_token    | VARCHAR(150) | Oauth refresh token           | True   | True     | True  |
-| oauth_access_token     | VARCHAR(150) | Oauth access token            | True   | True     | False |
-| oauth_token_expires    | TIMESTAMP    | 
 
 ```sql
 CREATE TABLE IF NOT EXISTS oauth_refresh_tokens(
+    id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     oauth_id int UNIQUE NOT NULL,
     oauth_refresh_token VARCHAR(100) UNIQUE NOT NULL,
-    oauth_access_token VARCHAR(100) UNIQUE NOT NULL,
-    oauth_token_expires VARCHAR(100) UNIQUE NOT NULL,
     CONSTRAINT fk_oauth FOREIGN KEY (oauth_id)
         REFERENCES oauth (id)
         ON DELETE CASCADE
@@ -253,8 +255,8 @@ CREATE TABLE IF NOT EXISTS biometrics_platforms (
 | Field                  | Type         | Description                   | UNIQUE | NOT NULL | INDEX |
 |------------------------|--------------|-------------------------------|--------|----------|-------|
 | user_id                | INT          | Foreign key to user id        | True   | True     | True  |
-| platform_id            | INT          | Public key given by platform  | True   | True     | True  |
-| public_key             | VARCHAR(100) | Private key from platform     | True   | True     | True  |
+| biometrics_platform_id | INT          | Public key given by platform  | True   | True     | True  |
+| public_key             | VARCHAR(100) | Public key from platform      | True   | True     | True  |
 | is_activated           | BOOLEAN      | Is biometric activated        | False  | True     | False |
 | is_verified            | BOOLEAN      | Is biometric verified         | False  | True     | False |
 | verified_at            | TIMESTAMP    | Verification Time             | False  | True     | False |
@@ -262,7 +264,7 @@ CREATE TABLE IF NOT EXISTS biometrics_platforms (
 ```sql
 CREATE TABLE IF NOT EXISTS biometric_data (
     user_id INT UNIQUE NOT NULL,
-    platform_id INT NOT NULL,
+    biometrics_platform_id INT NOT NULL,
     public_key TEXT NOT NULL,
     last_updated TIMESTAMP NOT NULL DEFAULT NOW(),
     is_activated BOOLEAN NOT NULL,
@@ -272,7 +274,7 @@ CREATE TABLE IF NOT EXISTS biometric_data (
         REFERENCES users (id)
         ON DELETE CASCADE
         ON UPDATE CASCADE
-    CONSTRAINT fk_platform FOREIGN KEY (platform_id)
+    CONSTRAINT fk_biometrics_platform FOREIGN KEY (biometrics_platform_id)
         REFERENCES biometrics_platforms (id)
         ON DELETE CASCADE
         ON UPDATE CASCADE

@@ -54,8 +54,8 @@ pub fn config(cfg: &mut ServiceConfig) {
         scope("/register/from-oauth")
             .wrap(AuthenticationMiddlewareFactory::<Authenticated>::new())
             .route(
-                "/confirmation",
-                post().to(views::accounts::register::from_oauth::confirmation::post_confirmation)
+                "/verification",
+                post().to(views::accounts::register::from_oauth::verification::post_verification)
             )
             .route(
                 "/password",
@@ -87,10 +87,8 @@ pub fn config(cfg: &mut ServiceConfig) {
             .wrap(AuthenticationMiddlewareFactory::<NotAuthenticated>::new())
             .route("/google/authorise", post().to(views::accounts::login::oauth2::google::authorise))
             .route("/google/callback", post().to(views::accounts::login::oauth2::google::callback))
-            .route("/goole/refresh-token", post().to(views::accounts::login::oauth2::google::refresh_token)),
             .route("/google/authorise", post().to(views::accounts::login::oauth2::apple::authorise))
             .route("/google/callback", post().to(views::accounts::login::oauth2::apple::callback))
-            .route("/goole/refresh-token", post().to(views::accounts::login::oauth2::apple::refresh_token)),
     );
     .service(
         scope("/login")
@@ -98,7 +96,7 @@ pub fn config(cfg: &mut ServiceConfig) {
             .wrap(VerificationMiddleware)
             .route(
                 "/refresh-token",
-                post().to(views::accounts::login::refresh::post_refresh_token),
+                post().to(views::accounts::login::refresh_token::post_refresh_token),
             ),
     )
     .service(

@@ -17,12 +17,7 @@ pub struct NotAuthenticated;
 impl AuthenticationBehaviour for NotAuthenticated {
     fn is_request_allowed(auth_header: Option<&str>) -> Result<(), &str> {
         if let Some(auth_str) = auth_header {
-            // change to getting claims from bearer token
-            if TokenService::get_claims_from_access_token(auth_str).is_ok() {
-                return Err("Authenticated");
-            } else {
-                return Err("Invalid token claims");
-            }
+            return Err("Has auth header");
         } else {
             return Ok(());
         }
@@ -33,6 +28,7 @@ pub struct Authenticated;
 impl AuthenticationBehaviour for Authenticated {
     fn is_request_allowed(auth_header: Option<&str>) -> Result<(), &str> {
         if let Some(auth_str) = auth_header {
+            // if token starts with SITE_:
             if let Ok(claims) = TokenService::get_claims_from_bearer_token(auth_str) {
                 let now = Utc::now().timestamp() as usize;
                 if claims.exp >= now {
@@ -43,6 +39,8 @@ impl AuthenticationBehaviour for Authenticated {
             } else {
                 return Err("Invalid token claims");
             }
+            // else if token starts with GOOGLE_
+            // else if token starts with APPLE_
         }
         return Err("No authentication header");
     }
@@ -50,11 +48,13 @@ impl AuthenticationBehaviour for Authenticated {
 impl Authenticated {
     fn get_claims(auth_header: Option<&str>) -> Result<UserClaims, String> {
         if let Some(auth_str) = auth_header {
-            // change to getting claims from bearer token
+            // if token starts with SITE_:
             match TokenService::get_claims_from_bearer_token(auth_str) {
                 Ok(claims) => return Ok(claims),
                 Err(_) => return Err(String::from("Invalid token")),
             }
+            // else if token starts with GOOGLE_
+            // else if token starts with APPLE_
         }
 
         return Err(String::from("No token"));
