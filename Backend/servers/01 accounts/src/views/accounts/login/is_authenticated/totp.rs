@@ -122,12 +122,6 @@ pub async fn post_totp(data: ProtoBuf<Request>, req: HttpRequest) -> Result<impl
         ));
     }
 
-    let auth_tokens = AuthTokens {
-        refresh: refresh_token,
-        access: access_token,
-    };
-    println!("auth tokens: {:#?}", auth_tokens);
-
     // update last login time
     let pool = create_pg_pool_connection().await;
     if update_login_time_from_uuid(&pool, chrono::Utc::now(), &user_uuid)
@@ -140,6 +134,10 @@ pub async fn post_totp(data: ProtoBuf<Request>, req: HttpRequest) -> Result<impl
         ));
     };
 
+
+    // generate opaque token with prefix SITE_
+    // save: con.set_ex(format!("session:{}", opaque_token), access_token, expiration as usize)
+
     // delete old token
     let mut cache_service = CacheService::new(create_redis_client_connection());
     let cache_result = cache_service.delete_key(&login_password_token);
@@ -150,7 +148,12 @@ pub async fn post_totp(data: ProtoBuf<Request>, req: HttpRequest) -> Result<impl
         ));
     }
 
-    // return success
+    // return opaque token to user
+    let auth_tokens = AuthTokens {
+        refresh: refresh_token,
+        access: access_token,
+    };
+    println!("auth tokens: {:#?}", auth_tokens);
     return Ok(ResponseService::create_success_response(
         AppResponse::LoginTotp(Response {
             response_field: Some(ResponseField::Tokens(auth_tokens)),

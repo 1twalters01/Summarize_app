@@ -1,4 +1,5 @@
 use actix_web::{web, HttpResponse, Responder, Result};
+use chrono::Utc;
 use dotenv::dotenv;
 
 async fn handle_oauth2_callback(query: web::Query<OAuthCallbackQuery>) -> impl Responder {
@@ -43,8 +44,11 @@ async fn handle_oauth2_callback(query: web::Query<OAuthCallbackQuery>) -> impl R
         Err(err) => HttpResponse::InternalServerError().body(format!("Error: {:?}", err)),
     }
 
-    // Save refresh token
+    // save refresh token to postgres oauth_refresh_token table
 
-    // generate opaque token and save key: opaque, value: access
+    // generate opaque token with prefix APPLE_
+    let now = Utc::now();
+    // save: con.set_ex(format!("session:{}", (opaque_token, now)), access_token, expiration as usize)
+
     // return opaque token to user
 }

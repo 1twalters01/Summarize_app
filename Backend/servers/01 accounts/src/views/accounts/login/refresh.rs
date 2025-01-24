@@ -62,7 +62,10 @@ pub async fn post_refresh_token(req: HttpRequest) -> Result<impl Responder> {
     let token_service = TokenService::from_uuid(&user_uuid);
     let access_token: String = token_service.generate_access_token().unwrap();
 
-    // Return token
+    // generate opaque token with prefix SITE_
+    // save: con.set_ex(format!("session:{}", opaque_token), access_token, expiration as usize)
+
+    // Return opaque token
     return Ok(ResponseService::create_success_response(
         AppResponse::LoginRefresh(Response {
             response_field: Some(ResponseField::Token(access_token)),

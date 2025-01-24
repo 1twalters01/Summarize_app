@@ -17,6 +17,7 @@ pub struct NotAuthenticated;
 impl AuthenticationBehaviour for NotAuthenticated {
     fn is_request_allowed(auth_header: Option<&str>) -> Result<(), &str> {
         if let Some(auth_str) = auth_header {
+            // change to getting claims from bearer token
             if TokenService::get_claims_from_access_token(auth_str).is_ok() {
                 return Err("Authenticated");
             } else {
@@ -32,7 +33,7 @@ pub struct Authenticated;
 impl AuthenticationBehaviour for Authenticated {
     fn is_request_allowed(auth_header: Option<&str>) -> Result<(), &str> {
         if let Some(auth_str) = auth_header {
-            if let Ok(claims) = TokenService::get_claims_from_access_token(auth_str) {
+            if let Ok(claims) = TokenService::get_claims_from_bearer_token(auth_str) {
                 let now = Utc::now().timestamp() as usize;
                 if claims.exp >= now {
                     return Ok(());
@@ -49,7 +50,8 @@ impl AuthenticationBehaviour for Authenticated {
 impl Authenticated {
     fn get_claims(auth_header: Option<&str>) -> Result<UserClaims, String> {
         if let Some(auth_str) = auth_header {
-            match TokenService::get_claims_from_access_token(auth_str) {
+            // change to getting claims from bearer token
+            match TokenService::get_claims_from_bearer_token(auth_str) {
                 Ok(claims) => return Ok(claims),
                 Err(_) => return Err(String::from("Invalid token")),
             }
@@ -232,9 +234,12 @@ mod tests {
         let uuid = Uuid::new_v4();
         let token_service = TokenService::from_uuid(&uuid);
         let access_token = token_service.generate_access_token().unwrap();
+        // generate opaque token with prefix SITE_
+        // save opaque token and access_token
 
         let request = test::TestRequest::get()
             .uri("/authenticated/")
+            // opaque token, not access token
             .append_header(("Authorization", format!("Bearer {}", access_token)))
             .to_request();
         let response = test::call_service(&mut app, request).await;
@@ -252,9 +257,12 @@ mod tests {
         let uuid = Uuid::new_v4();
         let token_service = TokenService::from_uuid(&uuid);
         let access_token = token_service.generate_access_token().unwrap();
+        // generate opaque token with prefix SITE_
+        // save opaque token and access_token
 
         let request = test::TestRequest::get()
             .uri("/not-authenticated/")
+            // opaque token, not access token
             .append_header(("Authorization", format!("Bearer {}", access_token)))
             .to_request();
         let response = test::call_service(&mut app, request).await;

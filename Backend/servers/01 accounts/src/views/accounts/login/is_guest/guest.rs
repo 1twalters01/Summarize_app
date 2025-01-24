@@ -42,12 +42,16 @@ pub async fn get_guest() -> Result<impl Responder> {
         ));
     }
 
+
+    // generate opaque token with prefix SITE_
+    // save: con.set_ex(format!("session:{}", opaque_token), access_token, expiration as usize)
+    
+    // return opaque token to user
     let auth_tokens = AuthTokens {
         refresh: refresh_token,
         access: access_token,
     };
     println!("auth tokens: {:#?}", auth_tokens);
-
     return Ok(ResponseService::create_success_response(
         AppResponse::LoginGuest(Response {
             response_field: Some(ResponseField::Tokens(auth_tokens)),

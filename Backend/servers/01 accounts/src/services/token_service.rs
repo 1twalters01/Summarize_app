@@ -134,6 +134,18 @@ impl<'a> TokenService<'a> {
         return Err("Invalid access token".to_string());
     }
 
+    pub fn get_claims_from_bearer_token(bearer_token: &str) -> Result<UserClaims, String> {
+        // remove "bearer " from token
+            // If does not have then return error
+
+        // if bearer token starts with SITE_
+        // else if bearer token starts with GOOGLE_
+        // else if bearer token starts with APPLE_
+        // else return Err("Invalid bearer token".to_string)
+
+        // Need to get user_id as a string and token creation time
+    }
+
     pub async fn get_user_uuid_from_refresh_token(
         refresh_token: &str,
     ) -> Result<Option<Uuid>, String> {

@@ -136,12 +136,14 @@ pub async fn post_password(data: ProtoBuf<Request>, req: HttpRequest) -> Result<
             ));
         }
 
+        // generate opaque token with prefix SITE_
+        // save: con.set_ex(format!("session:{}", opaque_token), access_token, expiration as usize)
         let auth_tokens = AuthTokens {
             refresh: refresh_token,
             access: access_token,
         };
 
-        // create app response
+        // create app response containg opaque token instead of auth tokens
         app_response = AppResponse::LoginPassword(Response {
             response_field: Some(ResponseField::Success(Success {
                 token: Some(Token {

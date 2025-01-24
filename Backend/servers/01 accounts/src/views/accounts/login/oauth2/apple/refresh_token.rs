@@ -1,4 +1,5 @@
 use actix_web::{web, HttpResponse, Responder, Result};
+use chrono::Utc;
 
 pub async fn refresh_token(data: web::Json<RefreshTokenQuery>) -> Result<impl Responder> {
     dotenv()::ok();
@@ -40,8 +41,11 @@ pub async fn refresh_token(data: web::Json<RefreshTokenQuery>) -> Result<impl Re
         Err(err) => HttpResponse::InternalServerError().body(format!("Error: {:?}", err)),
     }
     
-    // Save refresh token
-    
-    // generate opaque token and save key: opaque, value: access
+    // save refresh token to postgres oauth_refresh_token table
+
+    // generate opaque token with prefix APPLE_
+    let now = Utc::now();
+    // save: con.set_ex(format!("session:{}", (opaque_token, now)), access_token, expiration as usize)
+
     // return opaque token to user
 }
