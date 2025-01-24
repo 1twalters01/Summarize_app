@@ -10,20 +10,10 @@ use dotenv::dotenv;
 pub async fn authorise() -> Result<impl Responder> {
     dotenv()::ok();
 
-    let google_client_id = ClientId::new(
-        env::var("GOOGLE_CLIENT_ID").expect("Missing the GOOGLE_CLIENT_ID environment variable."),
-    );
-    let google_client_secret = ClientSecret::new(
-        env::var("GOOGLE_CLIENT_SECRET").expect("Missing the GOOGLE_CLIENT_SECRET environment variable."),
-    );
-    let auth_url = AuthUrl::new(
-        env::var("AUTH_URL").expect("Missing the auth url")
-    )
-        .expect("Invalid authorization endpoint URL");
-    let token_url = TokenUrl::new(
-        env::var("TOKEN_URL").expect("Missing the token url")
-    )
-        .expect("Invalid token endpoint URL");
+    let google_client_id = ClientId::new(env::var("GOOGLE_CLIENT_ID").unwrap());
+    let google_client_secret = ClientSecret::new(env::var("GOOGLE_CLIENT_SECRET").unwrap());
+    let auth_url = AuthUrl::new(env::var("AUTH_URL").unwrap()).unwrap();
+    let token_url = TokenUrl::new(env::var("TOKEN_URL").unwrap()).unwrap();
     let client = BasicClient::new(google_client_id)
         .set_client_secret(google_client_secret)
         .set_auth_uri(auth_url)
@@ -45,6 +35,7 @@ pub async fn authorise() -> Result<impl Responder> {
         .url();
 
     // Redirect the user to Google's authorization URL
+    // Add a token header for key: token, value: pkce_code_verification
     HttpResponse::Found()
         .header("Location", auth_url.to_string())
         .finish()
