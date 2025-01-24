@@ -111,7 +111,6 @@ pub async fn post_totp(data: ProtoBuf<Request>, req: HttpRequest) -> Result<impl
     let refresh_token = token_service.generate_refresh_token();
     let access_token = token_service.generate_access_token().unwrap();
 
-    // If remember_me then save the refresh token
     let save_result = token_service
         .save_refresh_token_to_postgres(&refresh_token, remember_me)
         .await;

@@ -1,5 +1,5 @@
 use actix_protobuf::ProtoBuf;
-use actix_web::{http::StatusCode, Responder, Result};
+use actix_web::{http::StatusCode, HttpRequest, Responder, Result};
 use uuid::Uuid;
 
 use crate::{
@@ -18,7 +18,7 @@ use crate::{
     },
 };
 
-pub async fn post_email(data: ProtoBuf<Request>) -> Result<impl Responder> {
+pub async fn post_email(data: ProtoBuf<Request>, req: HttpRequest) -> Result<impl Responder> {
     let Request { email } = data.0;
     if validate_email(&email).is_err() {
         return Ok(ResponseService::create_error_response(
@@ -26,6 +26,15 @@ pub async fn post_email(data: ProtoBuf<Request>) -> Result<impl Responder> {
             StatusCode::UNPROCESSABLE_ENTITY,
         ));
     }
+
+    // get device_id
+    if validate_device_id(&device_id).is_err() {
+        return Ok(ResponseService::create_error_response(
+            AppError::LoginEmail(Error::InvalidEmail),
+            StatusCode::UNPROCESSABLE_ENTITY,
+        ));
+    }
+    // check that device_id is linked to user_uuid else error
 
     let user_service = UserService::new(create_pg_pool_connection().await);
     let user_uuid: Uuid = match user_service.get_user_uuid_from_email(&email).await {
@@ -46,17 +55,38 @@ pub async fn post_email(data: ProtoBuf<Request>) -> Result<impl Responder> {
     };
 
     let token_service = TokenService::new();
-    let token: String = token_service.generate_opaque_token_of_length(25);
-    let expiry_in_seconds: Option<i64> = Some(300);
+    let header_token: String = token_service.generate_opaque_token_of_length(25);
     let mut cache_service = CacheService::new(create_redis_client_connection());
+    let expiry_in_seconds: Option<i64> = Some(300);
     let cache_result =
-        cache_service.store_user_uuid_for_token(&user_uuid, &token, expiry_in_seconds);
+        cache_service.store_user_uuid_for_token(&user_uuid, &header_token, expiry_in_seconds);
+    if cache_result.is_err() {
+        return Ok(ResponseService::create_error_response(
+            AppError::LoginEmail(Error::ServerError),
+            StatusCode::INTERNAL_SERVER_ERROR,
+        ));
+    }
 
+    let attempt_biometrics: bool = req
+        .headers()
+        .get("Biometrics").is_some();
+    if attempt_biometrics {
+        let challenge_token: String = token_service.generate_opaque_token_of_length(25);
+        let challenge = token_service.generate_opaque_token_of_length(25);
+        let challenge_and_device_id_json =
+            serde_json::to_string(&(user_uuid, remember_me)).unwrap();
+        let expiry_in_seconds: Option<i64> = Some(120);
+        let cache_result =
+            cache_service.store_key_value(&challenge_token, &challenge_and_device_id_json, &device_id, expiry_in_seconds);
+        let response_field = ResponseField::Challenge(challenge_token, header_token);
+    } else {
+        let response_field = responsefield::Token(header_token);
+    }
     match cache_result {
         Ok(_) => {
             return Ok(ResponseService::create_success_response(
                 AppResponse::LoginEmail(Response {
-                    response_field: Some(ResponseField::Token(token)),
+                    response_field: Some(response_field),
                 }),
                 StatusCode::OK,
             ));
@@ -69,6 +99,7 @@ pub async fn post_email(data: ProtoBuf<Request>) -> Result<impl Responder> {
             ));
         }
     }
+    
 }
 
 #[cfg(test)]

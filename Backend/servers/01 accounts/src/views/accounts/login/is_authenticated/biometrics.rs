@@ -21,47 +21,128 @@ pub async fn post_biometrics(
     data: ProtoBuf<Request>,
     req: HttpRequest,
 ) -> Result<impl Responder> {
-    let login_password_token: String = req
+    let login_biometrics_token: String = req
         .headers()
-        .get("Login-Password-Token")
+        .get("Login-Biometrics-Token")
         .unwrap()
         .to_str()
         .unwrap()
         .to_string();
-    
-    // Try to get user and remember_me status from redis
+
+    let challenge_token: String = req
+    .headers()
+    .get("Challenge-Token")
+    .unwrap()
+    .to_str()
+    .unwrap()
+    .to_string();
+
+    // get user uuid
     let mut cache_service = CacheService::new(create_redis_client_connection());
-    let cache_result = cache_service.get_user_and_remember_me_from_token(&login_password_token);
-    let (mut user, remember_me): (User, bool) = match cache_result {
-        Ok(Some((user, remember_me))) => {
-            (user, remember_me)
-        },
+    let cache_result = cache_service.get_user_uuid_from_token(&token_tuple_json);
+    let user_uuid: Uuid = match cache_result {
+        Ok(Some(uuid)) => uuid,
         Ok(None) => {
             return Ok(ResponseService::create_error_response(
-                AppError::LoginTotp(Error::UserNotFound),
+                AppError::LoginBiometrics(Error::ServerError),
                 StatusCode::NOT_FOUND,
             ));
-        },
+        }
         Err(err) => {
             println!("Error, {:?}", err);
             return Ok(ResponseService::create_error_response(
-                AppError::LoginTotp(Error::InvalidCredentials),
+                AppError::PasswordResetVerification(Error::InvalidCredentials),
                 StatusCode::UNPROCESSABLE_ENTITY,
             ));
-        },
+        }
+    };
+    
+    // Get challenge and device_id from token
+    let cache_result = cache_service.get_challenge_from_token(&login_biometrics_token);
+    let (challenge, device_id) = match cache_result {
+        Ok(Some((challenge, device_id))) => (challenge, device_id),
+        Ok(None) => {
+            return Ok(ResponseService::create_error_response(
+                AppError::LoginBiometrics(Error::ServerError),
+                StatusCode::NOT_FOUND,
+            ));
+        }
+        Err(err) => {
+            println!("Error, {:?}", err);
+            return Ok(ResponseService::create_error_response(
+                AppError::PasswordResetVerification(Error::InvalidCredentials),
+                StatusCode::UNPROCESSABLE_ENTITY,
+            ));
+        }
     };
 
-    // Get biometrics response from request
+    let Request {
+        device_id
+        encoded_signed_challenge
+    } = data.0;
 
-    // check if the entered sms response is valid
+    let signed_challenge = match base64::decode(&data.signed_challenge) {
+        Ok(bytes) => bytes,
+        Err(_) => {
+            return Ok(ResponseService::create_error_response(
+                AppError::PasswordResetVerification(Error::InvalidCredentials),
+                StatusCode::UNPROCESSABLE_ENTITY,
+            ));
+        }
+    };
 
-    // check if biometrics response is correct
+    // get public key for the device id and the user uuid else error
+    let user_service  = UserService::new(create_pg_pool_connection().await);
+    let public_key_pem = user_service.get_public_key_from_uuid_and_device_id(&user_uuid, &device_id)
     
-    // update last login time
+    let public_key = ring::signature::UnparsedPublicKey::new(
+        &ring::signature::ECDSA_P256_SHA256_ASN1,
+        public_key_pem.as_bytes(),
+    );
+    if public_key.verify(challenge.as_bytes(), &signed_challenge).is_err() {
+        return HttpResponse::Unauthorized().body("Invalid signature");
+    }
+    
+    // create auth tokens
+    let token_service = TokenService::from_uuid(&user_uuid);
+    let refresh_token = token_service.generate_refresh_token();
+    let access_token = token_service.generate_access_token().unwrap();
 
-    // delete old token
+    let save_result = token_service
+        .save_refresh_token_to_postgres(&refresh_token, remember_me)
+        .await;
+    if save_result.is_err() {
+        return Ok(ResponseService::create_error_response(
+            AppError::LoginTotp(Error::ServerError),
+            StatusCode::INTERNAL_SERVER_ERROR,
+        ));
+    }
+
+    // update last login time
+    let pool = create_pg_pool_connection().await;
+    if update_login_time_from_uuid(&pool, chrono::Utc::now(), &user_uuid)
+        .await
+        .is_err()
+    {
+        return Ok(ResponseService::create_error_response(
+            AppError::LoginTotp(Error::ServerError),
+            StatusCode::INTERNAL_SERVER_ERROR,
+        ));
+    };
+
+    // generate opaque token with prefix SITE_
+    // save: con.set_ex(format!("session:{}", opaque_token), access_token, expiration as usize)
+
+    // delete old tokens
     let mut cache_service = CacheService::new(create_redis_client_connection());
-    let cache_result = cache_service.delete_key(&login_password_token);
+    let cache_result = cache_service.delete_key(&login_biometrics_token);
+    if cache_result.is_err() {
+        return Ok(ResponseService::create_error_response(
+            AppError::LoginSms(Error::ServerError),
+            StatusCode::FAILED_DEPENDENCY,
+        ));
+    }
+    let cache_result = cache_service.delete_key(&challenge_token);
     if cache_result.is_err() {
         return Ok(ResponseService::create_error_response(
             AppError::LoginSms(Error::ServerError),
@@ -69,9 +150,14 @@ pub async fn post_biometrics(
         ));
     }
 
-    // return success
+    // return opaque token to user
+    let auth_tokens = AuthTokens {
+        refresh: refresh_token,
+        access: access_token,
+    };
+    println!("auth tokens: {:#?}", auth_tokens);
     return Ok(ResponseService::create_success_response(
-        AppResponse::LoginSms(Response {
+        AppResponse::LoginBiometrics(Response {
             response_field: Some(ResponseField::Tokens(auth_tokens)),
         }),
         StatusCode::OK,

@@ -1,3 +1,4 @@
 # Order
-* email -> password -> totp/sms/biometrics -> refresh
+* email -> password -> totp/sms -> refresh
+* email -> biometrics -> refresh
 * guest -> refresh

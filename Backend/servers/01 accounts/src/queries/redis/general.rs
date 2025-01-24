@@ -14,7 +14,8 @@ pub fn set_key_value_in_redis(
 
     Ok(())
 }
-pub fn get_key_from_value_in_redis(con: &mut Connection, key: &str) -> RedisResult<String> {
+
+pub fn get_value_from_key_in_redis(con: &mut Connection, key: &str) -> RedisResult<String> {
     con.get(key)
 }
 

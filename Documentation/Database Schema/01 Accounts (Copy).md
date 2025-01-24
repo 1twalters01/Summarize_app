@@ -254,8 +254,9 @@ CREATE TABLE IF NOT EXISTS biometrics_platforms (
 ## Biometrics
 | Field                  | Type         | Description                   | UNIQUE | NOT NULL | INDEX |
 |------------------------|--------------|-------------------------------|--------|----------|-------|
-| user_id                | INT          | Foreign key to user id        | True   | True     | True  |
-| biometrics_platform_id | INT          | Public key given by platform  | True   | True     | True  |
+| id                     | INT          | Primary key                   | True   | True     | True  |
+| user_id                | INT          | Foreign key to user id        | False  | True     | True  |
+| biometrics_platform_id | INT          | Id for platform name          | True   | True     | True  |
 | public_key             | VARCHAR(100) | Public key from platform      | True   | True     | True  |
 | is_activated           | BOOLEAN      | Is biometric activated        | False  | True     | False |
 | is_verified            | BOOLEAN      | Is biometric verified         | False  | True     | False |
@@ -263,7 +264,8 @@ CREATE TABLE IF NOT EXISTS biometrics_platforms (
 
 ```sql
 CREATE TABLE IF NOT EXISTS biometric_data (
-    user_id INT UNIQUE NOT NULL,
+    id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    user_id INT NOT NULL,
     biometrics_platform_id INT NOT NULL,
     public_key TEXT NOT NULL,
     last_updated TIMESTAMP NOT NULL DEFAULT NOW(),
