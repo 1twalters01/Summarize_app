@@ -7,4 +7,4 @@ pub mod change_username;
 pub mod delete_account;
 // toggle_biometrics;
 // pub mod toggle_sms;
-pub mod toggle_totp;
+// pub mod toggle_totp;

@@ -28,6 +28,7 @@ prost-types = "0.12"
 rand = "0.8.5"
 redis = { version = "0.25.2", features = ["tokio-comp"] }
 reqwest = { version = "0.12.4", features = ["json"] }
+ring = "0.17.8"
 serde = { version = "1.0.197", features = ["derive"] }
 serde_json = "1.0.114"
 sha1 = "0.10.6"

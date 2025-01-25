@@ -1,5 +1,6 @@
 use actix_protobuf::ProtoBuf;
 use actix_web::{http::StatusCode, HttpRequest, Responder, Result};
+use ring::signature;
 
 use crate::{
     datatypes::response_types::{AppError, AppResponse},
@@ -77,11 +78,11 @@ pub async fn post_biometrics(
     };
 
     let Request {
-        device_id
-        encoded_signed_challenge
+        device_id,
+        encoded_signed_challenge,
     } = data.0;
 
-    let signed_challenge = match base64::decode(&data.signed_challenge) {
+    let signed_challenge = match base64::decode(&encoded_signed_challenge) {
         Ok(bytes) => bytes,
         Err(_) => {
             return Ok(ResponseService::create_error_response(
@@ -93,7 +94,7 @@ pub async fn post_biometrics(
 
     // get public key for the device id and the user uuid else error
     let user_service  = UserService::new(create_pg_pool_connection().await);
-    let public_key_pem = user_service.get_public_key_from_uuid_and_device_id(&user_uuid, &device_id)
+    let public_key_pem = user_service.get_biometrics_public_key_from_uuid_and_device_id(&user_uuid, &device_id)
     
     let public_key = ring::signature::UnparsedPublicKey::new(
         &ring::signature::ECDSA_P256_SHA256_ASN1,

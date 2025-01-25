@@ -76,8 +76,6 @@ pub async fn post_totp(req_body: ProtoBuf<Request>, req: HttpRequest) -> Result<
     let expiry_in_seconds: Option<i64> = Some(300);
     let mut cache_service = CacheService::new(create_redis_client_connection());
     let set_redis_result = cache_service.store_key_value(&token, &user_uuid_str, expiry_in_seconds);
-
-    // err handling
     if set_redis_result.is_err() {
         return Ok(ResponseService::create_error_response(
             AppError::ChangeTotp(Error::ServerError),
@@ -85,10 +83,18 @@ pub async fn post_totp(req_body: ProtoBuf<Request>, req: HttpRequest) -> Result<
         ));
     }
 
+    // If totp is inactive for user
+        // generate qr_string
+        // save qr_string
+        // response_field = response::ResponseField::DualResponse(token, qr_string) // Need better name
+    else {
+        response_field = response::ResponseField::Token(token)
+    }
+
     // return ok
     return Ok(ResponseService::create_success_response(
         AppResponse::ChangeTotp(Response {
-            response_field: Some(response::ResponseField::Token(token)),
+            response_field: Some(response_field),
         }),
         StatusCode::OK,
     ));

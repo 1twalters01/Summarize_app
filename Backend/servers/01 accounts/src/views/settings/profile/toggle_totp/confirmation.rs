@@ -41,7 +41,7 @@ pub async fn post_confirmation(
         .unwrap()
         .to_string();
 
-    // validate password
+    // validate totp digits
     let digits = &[digit1, digit2, digit3, digit4, digit5, digit6];
     let validated_totp = validate_totp(digits);
     if validated_totp.is_err() {

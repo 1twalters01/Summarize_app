@@ -1,9 +1,8 @@
 # Todo
+* Think through toggle totp and toggle biometrics
 * Don't allow access tokens to go to users - Store them as a key: opaque_token, value: access_token and handle in authentication middleware to put the uuid in the req
 * Add a tag when saving things to redis for the route that saved it to differentiate them?
-* Think through flow for adding regular user to an oauth account
 * Change queries to match new structure for accounts
-* oauth2
 * Write tests for:
     * models
     * queries
@@ -36,13 +35,11 @@
             * [ ] biometrics
         * [ ] login via email link
     * [ ] OAuth Connect
-    * [ ] OpenID Connect
-    * [ x] Session Management - Secure handling of user sessions, including:
+    * [ ] Session Management - Secure handling of user sessions, including:
         * [x] session expiration
         * [x] session renewal
         * [ ] session invalidation
     * [x] Token-Based Authentication - Support for JWTs for stateless authentication
-    * [ ] Single Sign-On (SSO) integration
 
 3. [x] Authorization
     * [x] Role-Based Access Control (RBAC) - Implementation of roles and permissions to manage access control

@@ -90,35 +90,33 @@ pub async fn post_biometrics(
 
     // Generate token
     let token: String = generate_opaque_token_of_length(25);
-    let token_object: String = user_uuid;
 
     // Save key: token, value: {token, uuid/jwt} to redis
     let expiry_in_seconds: Option<i64> = Some(300);
-    let mut con = create_redis_client_connection();
-    let set_redis_result =
-        set_key_value_in_redis(&mut con, &token, &token_object, expiry_in_seconds);
-
-    // err handling
+    let mut cache_service = CacheService::new(create_redis_client_connection());
+    let set_redis_result = cache_service.store_key_value(&token, &user_uuid_str, expiry_in_seconds);
     if set_redis_result.is_err() {
-        let response: PasswordResponse = PasswordResponse {
-            response_field: Some(password_response::ResponseField::Error(
-                PasswordError::ServerError as i32,
-            )),
-        };
-        return Ok(HttpResponse::FailedDependency()
-            .content_type("application/x-protobuf; charset=utf-8")
-            .protobuf(response));
+        return Ok(ResponseService::create_error_response(
+            AppError::ChangeBiometrics(Error::ServerError),
+            StatusCode::FAILED_DEPENDENCY,
+        ));
     }
 
+    // If biometrics is active for user
+        // generate challenge
+        // save challenge to a challenge_token
+        // response_field = response::ResponseField::DualResponse(token, challenge_token) // Need better name
+        else {
+            response_field = response::ResponseField::Token(token)
+        }
+
     // return ok
-    let response: PasswordResponse = PasswordResponse {
-        response_field: Some(password_response::ResponseField::Success(
-            PasswordSuccess {},
-        )),
-    };
-    return Ok(HttpResponse::Ok()
-        .content_type("application/x-protobuf; charset=utf-8")
-        .protobuf(response));
+    return Ok(ResponseService::create_success_response(
+        AppResponse::ChangeBiometrics(Response {
+            response_field: Some(response_field),
+        }),
+        StatusCode::OK,
+    ));
 }
 
 pub async fn post_confirmation(

@@ -53,7 +53,7 @@ User_id can only have set of details so it was made as the primary key
 ## Email Table
 | Field                  | Type         | Description                   | UNIQUE | NOT NULL | INDEX |
 |------------------------|--------------|-------------------------------|--------|----------|-------|
-| user_id                | INT          | Foreign key to user id        | False  | True     | False |
+| user_id                | INT          | Foreign key to user id        | True   | True     | False |
 | email                  | VARCHAR(255) | The user’s email              | True   | True     | True  |
 
 ```sql
@@ -73,12 +73,12 @@ For normal sign in.
 | Field                  | Type         | Description                   | UNIQUE | NOT NULL | INDEX |
 |------------------------|--------------|-------------------------------|--------|----------|-------|
 | id                     | INT          | Primary key (internal)        | True   | True     | True  |
-| oauth_provider       | VARCHAR(20)  | What created the account      | True   | True     | True  |
+| oauth_provider         | VARCHAR(20)  | What created the account      | True   | True     | True  |
 
 ```sql
 CREATE TABLE IF NOT EXISTS oauth_providers (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    provider VARCHAR(20) UNIQUE NOT NULL
+    oauth_provider VARCHAR(20) UNIQUE NOT NULL
 );
 ```
 
@@ -89,17 +89,15 @@ summarize, oauth-google, oauth-apple
 |------------------------|--------------|-------------------------------|--------|----------|-------|
 | id                     | INT          | Primary key for provider      | True   | True     | True  |
 | user_id                | INT          | Foreign key to user id        | False  | True     | False |
-| oauth_email            | VARCHAR(255) | The user’s email              | False  | True     | True  |
-| oauth_provider_id    | INT          | FK to account provider        | False  | True     | False |
+| oauth_provider_id      | INT          | FK to account provider        | False  | True     | False |
 | oauth_provider_user_id | VARCHAR(255) | oauth provider user id        | True   | True     | True  |
 
 ```sql
 CREATE TABLE IF NOT EXISTS oauth (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     user_id INT NOT NULL,
-    oauth_email VARCHAR(255) UNIQUE NOT NULL,
     oauth_provider_id INT UNIQUE NOT NULL,
-    oauth_provider_user_id VARCHAR(255) UNIQUE NOT NULL
+    oauth_provider_user_id VARCHAR(255) UNIQUE NOT NULL,
     UNIQUE (oauth_email, oauth_provider_id)
 );
 ```
@@ -257,7 +255,7 @@ CREATE TABLE IF NOT EXISTS biometrics_platforms (
 | id                     | INT          | Primary key                   | True   | True     | True  |
 | user_id                | INT          | Foreign key to user id        | False  | True     | True  |
 | biometrics_platform_id | INT          | Id for platform name          | True   | True     | True  |
-| public_key             | VARCHAR(100) | Public key from platform      | True   | True     | True  |
+| encrypted_public_key   | VARCHAR(100) | Public key from platform      | True   | True     | True  |
 | is_activated           | BOOLEAN      | Is biometric activated        | False  | True     | False |
 | is_verified            | BOOLEAN      | Is biometric verified         | False  | True     | False |
 | verified_at            | TIMESTAMP    | Verification Time             | False  | True     | False |

@@ -22,9 +22,10 @@ pub async fn authorise() -> Result<impl Responder> {
 
     let (authorize_url, csrf_state) = client
         .authorize_url(CsrfToken::new_random)
-        // This example is requesting access to the "calendar" features and the user's profile.
-        .add_scope("https://www.googleapis.com/auth/userinfo.name".to_string()) // name not legit
+        .add_scope("openid".to_string())
+        .add_scope("https://www.googleapis.com/auth/userinfo.profile".to_string())
         .add_scope("https://www.googleapis.com/auth/userinfo.email".to_string())
+        
         .add_extra_param("access_type", "offline") // Request a refresh token
         .set_pkce_challenge(pkce_code_challenge)
         .url();
