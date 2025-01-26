@@ -98,7 +98,7 @@ CREATE TABLE IF NOT EXISTS oauth (
     user_id INT NOT NULL,
     oauth_provider_id INT UNIQUE NOT NULL,
     oauth_provider_user_id VARCHAR(255) UNIQUE NOT NULL,
-    UNIQUE (oauth_email, oauth_provider_id)
+    CONSTRAINT unique_email_provider UNIQUE (oauth_email, oauth_provider_id)
 );
 ```
 
@@ -297,7 +297,43 @@ Login
         The signed challenge and user identifier are sent back to your server.
     Server validates the signature using the stored public key.
     If valid, the user is authenticated.
-    
+
+
+## Mfa Options
+| Field                  | Type         | Description                   | UNIQUE | NOT NULL | INDEX |
+|------------------------|--------------|-------------------------------|--------|----------|-------|
+| id                     | INT          | Primary key (internal)        | True   | True     | True  |
+| mfa_option             | VARCHAR(10)  | The mfa option e.g. sms       | True   | True     | True  |
+
+```sql
+CREATE TABLE IF NOT EXISTS mfa_options (
+    id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    mfa_option VARCHAR(10) UNIQUE NOT NULL
+);
+```
+
+sms or totp
+
+## Default Mfa
+| Field                  | Type         | Description                   | UNIQUE | NOT NULL | INDEX |
+|------------------------|--------------|-------------------------------|--------|----------|-------|
+| user_id                | INT          | Foreign key to user id        | True   | True     | True  |
+| mfa_option_id          | INT          | mfa default option            | False  | True     | False |
+
+```sql
+CREATE TABLE IF NOT EXISTS user_languages (
+    user_id INT PRIMARY KEY,
+    mfa_option_id INT NOT NULL,
+    CONSTRAINT fk_users FOREIGN KEY (user_id)
+        REFERENCES users (id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+    CONSTRAINT fk_mfa_options FOREIGN KEY (mfa_option_id)
+        REFERENCES mfa_options (id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+```
 
 ## Refresh Tokens
 | Field                  | Type         | Description                   | UNIQUE | NOT NULL | INDEX |

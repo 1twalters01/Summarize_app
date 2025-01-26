@@ -102,9 +102,14 @@ pub async fn post_password(data: ProtoBuf<Request>, req: HttpRequest) -> Result<
         }
     };
 
-    // if both activation statuses are true get the 
+    // if both activation statuses are true get the default mfa and set the other to false else set totp to false
     if totp_activation_status == true && sms_activation_status == true {
-        totp_activation = false
+        let default_mfa_method: Option<String> = user_service.get_default_mfa_method();
+        if let Some(default_mfa_method) == totp {
+            sms_activation_status = false
+        } else {
+            totp_activation_status = false
+        }
     }
 
     let Request {
@@ -133,7 +138,7 @@ pub async fn post_password(data: ProtoBuf<Request>, req: HttpRequest) -> Result<
             serde_json::to_string(&(user_uuid, remember_me)).unwrap();
         let expiry_in_seconds: Option<i64> = Some(300);
         let cache_result = cache_service.store_key_value(
-            &token,
+            &token, // change to user_state:{}, token
             &user_uuid_and_remember_me_json,
             expiry_in_seconds,
         );
@@ -142,6 +147,12 @@ pub async fn post_password(data: ProtoBuf<Request>, req: HttpRequest) -> Result<
                 AppError::LoginPassword(Error::ServerError),
                 StatusCode::FAILED_DEPENDENCY,
             ));
+        }
+
+        if sms_activation_status == true {
+            // generate otp
+            // send text containing otp
+            // save otp with same token under key sms:{}, token
         }
 
         app_response = AppResponse::LoginPassword(Response {

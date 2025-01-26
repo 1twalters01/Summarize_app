@@ -18,12 +18,12 @@
         * [x] captcha verfication
         * [x] email confirmation
         * [ ] phone number confirmation
-    * [ ] User Login - Mechanisms for users to log in using:
+    * [x] User Login - Mechanisms for users to log in using:
         * [x] email and password
         * [x] - guest login
-        * [ ] OAuth/social logins
-            * [ ] Google
-            * [ ] Apple
+        * [x] OAuth/social logins
+            * [x] Google
+            * [x] Apple
     * [x] Password Recovery - This includes secure token generation
 
 2. [ ] Authentication
