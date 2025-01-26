@@ -1,26 +1,29 @@
 use actix_protobuf::ProtoBuf;
 use actix_web::{http::StatusCode, HttpRequest, Responder, Result};
+use uuid::Uuid;
 
 use crate::{
     datatypes::response_types::{AppError, AppResponse},
-    models::user::User,
     generated::protos::accounts::{
         auth_tokens::AuthTokens,
         login::sms::{
-            request,
+            request::Request,
             response::{response::ResponseField, Error, Response},
         },
     },
+    models::sms::Sms,
+    queries::postgres::user::update::update_login_time_from_uuid,
     services::{
-        cache_service::CacheService, response_service::ResponseService, token_service::TokenService,
+        cache_service::CacheService, response_service::ResponseService,
+        token_service::TokenService, user_service::UserService,
     },
-    utils::{database_connections::create_redis_client_connection, validations::validate_totp},
+    utils::{
+        database_connections::{create_pg_pool_connection, create_redis_client_connection},
+        validations::otp::validate_otp,
+    },
 };
 
-pub async fn post_sms(
-    data: ProtoBuf<Request>,
-    req: HttpRequest,
-) -> Result<impl Responder> {
+pub async fn post_sms(data: ProtoBuf<Request>, req: HttpRequest) -> Result<impl Responder> {
     let login_password_token: String = req
         .headers()
         .get("Login-Password-Token")
@@ -30,34 +33,121 @@ pub async fn post_sms(
         .to_string();
     
     // Try to get user and remember_me status from redis
+    let user_uuid: Uuid;
     let mut cache_service = CacheService::new(create_redis_client_connection());
-    let cache_result = cache_service.get_user_and_remember_me_from_token(&login_password_token);
-    let (mut user, remember_me): (User, bool) = match cache_result {
-        Ok(Some((user, remember_me))) => {
-            (user, remember_me)
-        },
+    let cache_result =
+        cache_service.get_user_uuid_and_remember_me_from_token(&login_password_token);
+    let (mut otp_status, sms_activation_status, remember_me): (Totp, bool, bool) = match cache_result {
+        Ok(Some((uuid, remember_me))) => {
+            user_uuid = uuid;
+            let user_service = UserService::new(create_pg_pool_connection().await);
+            let sms_activation_status = match user_service
+                .get_totp_activation_status_from_uuid(&user_uuid)
+                .await {
+                    Ok(sms_activation_status) =>  sms_activation_status,
+                    Err(_) => {
+                        return Ok(ResponseService::create_error_response(
+                            AppError::LoginSms(Error::ServerError),
+                            StatusCode::NOT_FOUND,
+                        ));
+                    },
+                };
+            let otp_status_option = user_service
+                .get_otp_from_uuid(&user_uuid)
+                .await {
+                    Ok(otp_status_option) =>  otp_status_option,
+                    Err(_) => {
+                        return Ok(ResponseService::create_error_response(
+                            AppError::LoginSms(Error::ServerError),
+                            StatusCode::NOT_FOUND,
+                        ));
+                    },
+                };
+            match otp_status_option {
+                Some(otp_status) => (otp_status, totp_activation_status, remember_me),
+                None => {
+                    return Ok(ResponseService::create_error_response(
+                        AppError::LoginSms(Error::ServerError),
+                        StatusCode::NOT_FOUND,
+                    ));
+                }
+            }
+        }
         Ok(None) => {
             return Ok(ResponseService::create_error_response(
-                AppError::LoginTotp(Error::UserNotFound),
+                AppError::LoginSms(Error::UserNotFound),
                 StatusCode::NOT_FOUND,
             ));
-        },
+        }
         Err(err) => {
             println!("Error, {:?}", err);
             return Ok(ResponseService::create_error_response(
-                AppError::LoginTotp(Error::InvalidCredentials),
+                AppError::LoginSms(Error::InvalidCredentials),
                 StatusCode::UNPROCESSABLE_ENTITY,
             ));
-        },
+        }
     };
 
-    // Get sms response from request
+    // Get otp from request
+    let Request {
+        digit1,
+        digit2,
+        digit3,
+        digit4,
+        digit5,
+        digit6,
+    } = data.0;
 
-    // check if the entered sms response is valid
+    // check if the entered otp is a valid totp
+    let digits = &[digit1, digit2, digit3, digit4, digit5, digit6];
+    if validate_otp(digits).is_err() || sms_activation_status == false {
+        return Ok(ResponseService::create_error_response(
+            AppError::LoginSms(Error::InvalidTotp),
+            StatusCode::UNAUTHORIZED,
+        ));
+    }
 
-    // check if sms response is correct
-    
+    // check if otp is correct
+    if otp_struct
+        .verify(digit1, digit2, digit3, digit4, digit5, digit6)
+        .is_err()
+    {
+        return Ok(ResponseService::create_error_response(
+            AppError::LoginSms(Error::IncorrectTotp),
+            StatusCode::UNAUTHORIZED,
+        ));
+    }
+
+    // create auth tokens
+    let token_service = TokenService::from_uuid(&user_uuid);
+    let refresh_token = token_service.generate_refresh_token();
+    let access_token = token_service.generate_access_token().unwrap();
+
+    let save_result = token_service
+        .save_refresh_token_to_postgres(&refresh_token, remember_me)
+        .await;
+    if save_result.is_err() {
+        return Ok(ResponseService::create_error_response(
+            AppError::LoginSms(Error::ServerError),
+            StatusCode::INTERNAL_SERVER_ERROR,
+        ));
+    }
+
     // update last login time
+    let pool = create_pg_pool_connection().await;
+    if update_login_time_from_uuid(&pool, chrono::Utc::now(), &user_uuid)
+        .await
+        .is_err()
+    {
+        return Ok(ResponseService::create_error_response(
+            AppError::LoginSms(Error::ServerError),
+            StatusCode::INTERNAL_SERVER_ERROR,
+        ));
+    };
+
+
+    // generate opaque token with prefix SITE_
+    // save: con.set_ex(format!("session:{}", opaque_token), access_token, expiration as usize)
 
     // delete old token
     let mut cache_service = CacheService::new(create_redis_client_connection());
@@ -69,7 +159,12 @@ pub async fn post_sms(
         ));
     }
 
-    // return success
+    // return opaque token to user
+    let auth_tokens = AuthTokens {
+        refresh: refresh_token,
+        access: access_token,
+    };
+    println!("auth tokens: {:#?}", auth_tokens);
     return Ok(ResponseService::create_success_response(
         AppResponse::LoginSms(Response {
             response_field: Some(ResponseField::Tokens(auth_tokens)),

@@ -57,6 +57,7 @@ pub fn config(cfg: &mut ServiceConfig) {
                 "email",
                 post().to(views::accounts::register::from_oauth::initiate::post_email)
             )
+            .wrap(VerificationMiddleware)
             .route(
                 "/verification",
                 post().to(views::accounts::register::from_oauth::verification::post_verification)
@@ -83,16 +84,34 @@ pub fn config(cfg: &mut ServiceConfig) {
                 "/totp",
                 post().to(views::accounts::login::is_authenticated::totp::post_totp),
             ),
-        // .route("/sms", post().to(views::accounts::login::is_authenticated::totp::post_sms))
-        // .route("/biometrics", post().to(views::accounts::login::is_authenticated::totp::post_biometrics)),
+        .route(
+            "/sms",
+            post().to(views::accounts::login::is_authenticated::totp::post_sms)
+        )
+        .route(
+            "/biometrics",
+            post().to(views::accounts::login::is_authenticated::totp::post_biometrics)
+        ),
     )
     .service(
         scope("/login/oauth2/google")
             .wrap(AuthenticationMiddlewareFactory::<NotAuthenticated>::new())
-            .route("/google/authorise", post().to(views::accounts::login::oauth2::google::authorise))
-            .route("/google/callback", post().to(views::accounts::login::oauth2::google::callback))
-            .route("/google/authorise", post().to(views::accounts::login::oauth2::apple::authorise))
-            .route("/google/callback", post().to(views::accounts::login::oauth2::apple::callback))
+            .route(
+                "/google/authorise",
+                post().to(views::accounts::login::oauth2::google::authorise)
+            )
+            .route(
+                "/google/callback",
+                post().to(views::accounts::login::oauth2::google::callback)
+            )
+            .route(
+                "/google/authorise",
+                post().to(views::accounts::login::oauth2::apple::authorise)
+            )
+            .route(
+                "/google/callback",
+                post().to(views::accounts::login::oauth2::apple::callback)
+            )
     );
     .service(
         scope("/login")
@@ -126,7 +145,10 @@ pub fn config(cfg: &mut ServiceConfig) {
     )
     .service(
         scope("/captcha")
-            .route("/get", get().to(views::accounts::captcha::get::get_captcha))
+            .route(
+                "/get",
+                get().to(views::accounts::captcha::get::get_captcha)
+            )
             .route(
                 "/verify",
                 post().to(views::accounts::captcha::verification::verify_captcha),

@@ -18,7 +18,7 @@ use actix_protobuf::ProtoBuf;
 use actix_web::{http::StatusCode, HttpMessage, HttpRequest, Responder, Result};
 use uuid::Uuid;
 
-pub async fn post_language(
+pub async fn post_theme(
     req_body: ProtoBuf<Request>,
     req: HttpRequest,
 ) -> Result<impl Responder> {

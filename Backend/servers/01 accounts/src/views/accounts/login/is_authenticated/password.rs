@@ -39,18 +39,44 @@ pub async fn post_password(data: ProtoBuf<Request>, req: HttpRequest) -> Result<
     let user_uuid: Uuid;
     let mut cache_service = CacheService::new(create_redis_client_connection());
     let cache_result = cache_service.get_user_uuid_from_token(&login_email_token);
-    let (stored_password, totp_activation_status): (Password, bool) = match cache_result {
+    let (stored_password, totp_activation_status, sms_activation_status): (Password, bool, bool) = match cache_result {
         Ok(Some(uuid)) => {
             user_uuid = uuid;
             let user_service = UserService::new(create_pg_pool_connection().await);
-            let totp_activation_status = user_service
+            let totp_activation_status = match user_service
                 .get_totp_activation_status_from_uuid(&user_uuid)
-                .await
-                .expect("invalid uuid");
+                .await {
+                    Ok(totp_activation_status) =>  totp_activation_status,
+                    Err(_) => {
+                        return Ok(ResponseService::create_error_response(
+                            AppError::LoginPassword(Error::ServerError),
+                            StatusCode::NOT_FOUND,
+                        ));
+                    },
+                };
+            let sms_activation_status = match user_service
+                    .get_totp_activation_status_from_uuid(&user_uuid)
+                    .await {
+                        Ok(sms_activation_status) =>  sms_activation_status,
+                        Err(_) => {
+                            return Ok(ResponseService::create_error_response(
+                                AppError::LoginSms(Error::ServerError),
+                                StatusCode::NOT_FOUND,
+                            ));
+                        },
+                    };
+                
             let password_option = user_service
                 .get_password_from_uuid(&user_uuid)
-                .await
-                .expect("invalid uuid");
+                .await {
+                    Ok(password_option) =>  password_option,
+                    Err(_) => {
+                        return Ok(ResponseService::create_error_response(
+                            AppError::LoginPassword(Error::ServerError),
+                            StatusCode::NOT_FOUND,
+                        ));
+                    },
+                };
             match password_option {
                 Some(password) => (password, totp_activation_status),
                 None => {
@@ -76,6 +102,11 @@ pub async fn post_password(data: ProtoBuf<Request>, req: HttpRequest) -> Result<
         }
     };
 
+    // if both activation statuses are true get the 
+    if totp_activation_status == true && sms_activation_status == true {
+        totp_activation = false
+    }
+
     let Request {
         password,
         remember_me,
@@ -96,7 +127,7 @@ pub async fn post_password(data: ProtoBuf<Request>, req: HttpRequest) -> Result<
     let token_service = TokenService::from_uuid(&user_uuid);
     let app_response: AppResponse;
 
-    if totp_activation_status == true {
+    if totp_activation_status == true || sms_activation_status == true {
         let token: String = token_service.generate_opaque_token_of_length(25);
         let user_uuid_and_remember_me_json =
             serde_json::to_string(&(user_uuid, remember_me)).unwrap();

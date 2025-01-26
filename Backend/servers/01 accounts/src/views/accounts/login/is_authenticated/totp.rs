@@ -24,8 +24,6 @@ use crate::{
 };
 
 pub async fn post_totp(data: ProtoBuf<Request>, req: HttpRequest) -> Result<impl Responder> {
-    // Check if ip has verified captcha
-
     let login_password_token: String = req
         .headers()
         .get("Login-Password-Token")
@@ -39,23 +37,37 @@ pub async fn post_totp(data: ProtoBuf<Request>, req: HttpRequest) -> Result<impl
     let mut cache_service = CacheService::new(create_redis_client_connection());
     let cache_result =
         cache_service.get_user_uuid_and_remember_me_from_token(&login_password_token);
-    let (mut totp, totp_activation_status, remember_me): (Totp, bool, bool) = match cache_result {
+    let (mut totp_struct, totp_activation_status, remember_me): (Totp, bool, bool) = match cache_result {
         Ok(Some((uuid, remember_me))) => {
             user_uuid = uuid;
             let user_service = UserService::new(create_pg_pool_connection().await);
-            let totp_activation_status = user_service
+            let totp_activation_status = match user_service
                 .get_totp_activation_status_from_uuid(&user_uuid)
-                .await
-                .expect("invalid uuid");
-            let totp_option = user_service
-                .get_totp_from_uuid(&user_uuid)
-                .await
-                .expect("invalid uuid");
-            match totp_option {
-                Some(totp) => (totp, totp_activation_status, remember_me),
+                .await {
+                    Ok(totp_activation_status) =>  totp_activation_status,
+                    Err(_) => {
+                        return Ok(ResponseService::create_error_response(
+                            AppError::LoginSms(Error::ServerError),
+                            StatusCode::NOT_FOUND,
+                        ));
+                    },
+                };
+            let totp_struct_option = user_service
+                .get_totp_status_from_uuid(&user_uuid)
+                .await {
+                    Ok(totp_struct_option) =>  totp_struct_option,
+                    Err(_) => {
+                        return Ok(ResponseService::create_error_response(
+                            AppError::LoginSms(Error::ServerError),
+                            StatusCode::NOT_FOUND,
+                        ));
+                    },
+                };
+            match totp_struct_option {
+                Some(totp_struct) => (totp_struct, totp_activation_status, remember_me),
                 None => {
                     return Ok(ResponseService::create_error_response(
-                        AppError::LoginTotp(Error::ServerError),
+                        AppError::LoginSms(Error::ServerError),
                         StatusCode::NOT_FOUND,
                     ));
                 }
@@ -63,14 +75,14 @@ pub async fn post_totp(data: ProtoBuf<Request>, req: HttpRequest) -> Result<impl
         }
         Ok(None) => {
             return Ok(ResponseService::create_error_response(
-                AppError::LoginTotp(Error::UserNotFound),
+                AppError::LoginSms(Error::UserNotFound),
                 StatusCode::NOT_FOUND,
             ));
         }
         Err(err) => {
             println!("Error, {:?}", err);
             return Ok(ResponseService::create_error_response(
-                AppError::LoginTotp(Error::InvalidCredentials),
+                AppError::LoginSms(Error::InvalidCredentials),
                 StatusCode::UNPROCESSABLE_ENTITY,
             ));
         }
@@ -96,7 +108,7 @@ pub async fn post_totp(data: ProtoBuf<Request>, req: HttpRequest) -> Result<impl
     }
 
     // check if totp is correct
-    if totp
+    if totp_struct
         .verify(digit1, digit2, digit3, digit4, digit5, digit6)
         .is_err()
     {

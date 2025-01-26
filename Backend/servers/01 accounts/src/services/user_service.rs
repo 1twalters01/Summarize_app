@@ -146,9 +146,14 @@ impl UserService {
         user::get::totp_activation_status_from_uuid(&self.pool, uuid).await
     }
 
-    pub async fn get_totp_from_uuid(&self, uuid: &Uuid) -> Result<Option<Totp>, sqlx::Error> {
-        let totp = user::get::totp_from_uuid(&self.pool, uuid).await;
-        return totp;
+    pub async fn get_totp_struct_from_uuid(&self, uuid: &Uuid) -> Result<Option<Totp>, sqlx::Error> {
+        let totp_struct = user::get::totp_struct_from_uuid(&self.pool, uuid).await;
+        return totp_struct;
+    }
+
+    pub async fn get_otp_struct_from_uuid(&self, uuid: &Uuid) -> Result<Option<Otp>, sqlx::Error> {
+        let otp_struct = user::get::otp_struct_from_uuid(&self.pool, uuid).await;
+        return otp_struct;
     }
 
     pub async fn set_totp_from_uuid(&self, totp: &Totp, uuid: &Uuid) -> Result<(), sqlx::Error> {

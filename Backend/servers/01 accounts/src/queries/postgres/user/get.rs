@@ -112,7 +112,7 @@ pub async fn totp_activation_status_from_uuid(
     }
 }
 
-pub async fn totp_from_uuid(
+pub async fn totp_struct_from_uuid(
     pool: &Pool<Postgres>,
     uuid: &Uuid,
 ) -> Result<Option<Totp>, sqlx::Error> {
