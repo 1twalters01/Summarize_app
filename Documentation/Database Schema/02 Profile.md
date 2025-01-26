@@ -36,14 +36,19 @@ CREATE TABLE IF NOT EXISTS user_languages (
 );
 ```
 
-## Theme
+## Colour
+
+
+## Default Themes
 | Field              | Type         | Description                 | UNIQUE | NOT NULL | INDEX |
 |--------------------|--------------|-----------------------------|--------|----------|-------|
+| id                 | INT          | Primary key (internal)      | True   | True     | True  |
+| theme              | VARCHAR(10)  | Name of the theme           | True   | True     | True  |
 
 ```sql
 ```
 
-## Default Themes
+## Theme
 | Field              | Type         | Description                 | UNIQUE | NOT NULL | INDEX |
 |--------------------|--------------|-----------------------------|--------|----------|-------|
 
