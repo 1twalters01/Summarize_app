@@ -36,6 +36,27 @@ CREATE TABLE IF NOT EXISTS user_languages (
 );
 ```
 
+Languages the user can use
+
+## System Language
+| Field                 | Type         | Description                  | UNIQUE | NOT NULL | INDEX |
+|-----------------------|--------------|------------------------------|--------|----------|-------|
+| user_id               | INT          | Foreign key to user id       | True   | True     | False |
+| language_id           | INT          | The preferred language       | False  | True     | True  |
+
+```sql
+CREATE TABLE IF NOT EXISTS system_languages (
+    user_id INT Primary KEY,
+    language_id INT,
+    CONSTRAINT fk_languages FOREIGN KEY (language_id)
+        REFERENCES languages (id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+)
+```
+
+The language the app is in
+
 ## Preferred Language
 | Field                 | Type         | Description                  | UNIQUE | NOT NULL | INDEX |
 |-----------------------|--------------|------------------------------|--------|----------|-------|
@@ -52,6 +73,8 @@ CREATE TABLE IF NOT EXISTS preferred_languages (
         ON UPDATE CASCADE
 )
 ```
+
+The preferred language for summaries
 
 ## Default Themes
 | Field                 | Type         | Description                  | UNIQUE | NOT NULL | INDEX |
@@ -143,6 +166,23 @@ CREATE TABLE IF NOT EXISTS default_themes (
 )
 ```
 
+## Device Type Themes
+| Field                 | Type         | Description                  | UNIQUE | NOT NULL | INDEX |
+|-----------------------|--------------|------------------------------|--------|----------|-------|
+| device_type_id        | INT          | FK to device type            | True   | True     | False |
+| last_default_theme_id | INT          | ID of the last default theme | False  | False    | False |
+| use_default_theme     | BOOLEAN      | Use the default theme?       | False  | True     | False |
+
+```sql
+CREATE TABLE IF NOT EXISTS device_themes (
+    device_type_id INT PRIMARY KEY,
+    last_default_theme_id INT,
+    use_default_theme BOOLEAN,
+)
+```
+
+Overides default theme if there
+
 ## Device Themes
 | Field                 | Type         | Description                  | UNIQUE | NOT NULL | INDEX |
 |-----------------------|--------------|------------------------------|--------|----------|-------|
@@ -158,4 +198,5 @@ CREATE TABLE IF NOT EXISTS device_themes (
 )
 ```
 
-Overides default theme if here
+Overides device type theme if there
+User may want x theme for all PCs but on a specific one they might want a different theme due to it using OLED.

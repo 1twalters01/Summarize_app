@@ -72,11 +72,10 @@
     * [x] Security APIs
         * [x] Token issuance
 
-8. [ ] Notifications
-    * [ ] Email/SMS Notifications - For account-related activities such as:
+8. [x] Notifications
+    * [x] Email Notifications - For account-related activities such as:
         * [x] registration confirmation
         * [x] password reset
-        * [ ] login alerts
 
 9. [ ] Documentation and Support
     * [ ] User Guides - Instructions for end-users on managing their accounts

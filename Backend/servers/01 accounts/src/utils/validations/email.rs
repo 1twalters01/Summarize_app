@@ -145,7 +145,6 @@ mod tests {
             ("example@valid-----hyphens.com", true),
             ("example@valid-with-hyphens.com", true),
             ("test@domain.with.idn.tld.उदाहरण.परीक्षा", true),
-            // max length for domain name labels is 63 characters per RFC 1034
             ("a@atm.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", true),
             ("a@aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.atm", true),
             (
