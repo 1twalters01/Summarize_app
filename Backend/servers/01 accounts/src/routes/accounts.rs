@@ -80,18 +80,26 @@ pub fn config(cfg: &mut ServiceConfig) {
                 "/password",
                 post().to(views::accounts::login::is_authenticated::password::post_password),
             )
+            // .route(
+            //     "/switch-authentication-method",
+            //     get().to(views::accounts::login::is_authenticated::authentication_options::get_authentication_options)
+            // )
+            // .route(
+            //     "/switch-authentication-method",
+            //     post().to(views::accounts::login::is_authenticated::switch_authentication::post_authentication_method)
+            // )
             .route(
                 "/totp",
                 post().to(views::accounts::login::is_authenticated::totp::post_totp),
             ),
-        .route(
-            "/sms",
-            post().to(views::accounts::login::is_authenticated::totp::post_sms)
-        )
-        .route(
-            "/biometrics",
-            post().to(views::accounts::login::is_authenticated::totp::post_biometrics)
-        ),
+            .route(
+                "/sms",
+                post().to(views::accounts::login::is_authenticated::totp::post_sms)
+            )
+            .route(
+                "/biometrics",
+                post().to(views::accounts::login::is_authenticated::totp::post_biometrics)
+            ),
     )
     .service(
         scope("/login/oauth2/google")

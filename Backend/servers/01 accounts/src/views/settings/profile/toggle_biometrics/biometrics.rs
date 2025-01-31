@@ -150,9 +150,3 @@ pub async fn post_biometrics(
         StatusCode::OK,
     ));
 }
-
-pub async fn post_confirmation(
-    req_body: ProtoBuf<TotpRequest>,
-    req: HttpRequest,
-) -> Result<impl Responder> {
-}

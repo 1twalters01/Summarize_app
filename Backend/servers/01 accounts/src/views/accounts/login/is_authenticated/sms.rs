@@ -37,7 +37,7 @@ pub async fn post_sms(data: ProtoBuf<Request>, req: HttpRequest) -> Result<impl 
     let mut cache_service = CacheService::new(create_redis_client_connection());
     let cache_result =
         cache_service.get_user_uuid_and_remember_me_from_token(&login_password_token);
-    let (mut otp_status, sms_activation_status, remember_me): (Totp, bool, bool) = match cache_result {
+    let (mut otp_struct, sms_activation_status, remember_me): (Totp, bool, bool) = match cache_result {
         Ok(Some((uuid, remember_me))) => {
             user_uuid = uuid;
             let user_service = UserService::new(create_pg_pool_connection().await);
@@ -52,10 +52,10 @@ pub async fn post_sms(data: ProtoBuf<Request>, req: HttpRequest) -> Result<impl 
                         ));
                     },
                 };
-            let otp_status_option = user_service
+            let otp_struct_option = user_service
                 .get_otp_from_uuid(&user_uuid)
                 .await {
-                    Ok(otp_status_option) =>  otp_status_option,
+                    Ok(otp_struct_option) =>  otp_struct_option,
                     Err(_) => {
                         return Ok(ResponseService::create_error_response(
                             AppError::LoginSms(Error::ServerError),
@@ -63,8 +63,8 @@ pub async fn post_sms(data: ProtoBuf<Request>, req: HttpRequest) -> Result<impl 
                         ));
                     },
                 };
-            match otp_status_option {
-                Some(otp_status) => (otp_status, totp_activation_status, remember_me),
+            match otp_struct_option {
+                Some(otp_struct) => (otp_struct, totp_activation_status, remember_me),
                 None => {
                     return Ok(ResponseService::create_error_response(
                         AppError::LoginSms(Error::ServerError),
