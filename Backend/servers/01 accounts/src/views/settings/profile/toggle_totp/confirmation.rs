@@ -114,9 +114,8 @@ pub async fn post_confirmation(
 
     // get current totp status
     let user_service = UserService::new(create_pg_pool_connection().await);
-    let get_result: Result<Option<String>, sqlx::Error> =
-        user_service.get_totp_key_from_uuid(&user_uuid).await;
-    let totp_key: Option<String> = match get_result {
+    let get_result = user_service.get_totp_activation_status_from_uuid(&user_uuid).await;
+    let totp_activation_status = match get_result {
         Ok(result) => result,
         Err(_) => {
             return Ok(ResponseService::create_error_response(
@@ -125,9 +124,20 @@ pub async fn post_confirmation(
             ));
         }
     };
-
-    // if totp = there then delete
-    if let Some(totp_key) = totp_key {
+    
+    // if totp = activated then validate then delete delete
+    if totp_activation_status {
+        let get_result: Result<Option<String>, sqlx::Error> =
+            user_service.get_totp_key_from_uuid(&user_uuid).await;
+        let totp_key: Option<String> = match get_result {
+            Ok(result) => result,
+            Err(_) => {
+                return Ok(ResponseService::create_error_response(
+                    AppError::Confirmation(Error::ServerError),
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                ));
+            }
+        };
         let mut totp: Totp = Totp::from_key(totp_key);
 
         if totp
@@ -158,7 +168,32 @@ pub async fn post_confirmation(
             }
         }
     } else {
-        let totp: Totp = Totp::new();
+        let cache_result = cache_service.get_totp_key_from_uuid(user_uuid);
+        let totp_key: Option<String> = match cache_result {
+            Ok(Some(result)) => result,
+            Ok(None) => {
+                return Ok(ResponseService::create_error_response(
+                    AppError::Confirmation(Error::ServerError),
+                    StatusCode::NOT_FOUND,
+                ));
+            }
+            Err(_) => {
+                return Ok(ResponseService::create_error_response(
+                    AppError::Confirmation(Error::ServerError),
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                ));
+            }
+        };
+        let totp: Totp = Totp::from_key(totp_key);
+        if totp
+            .verify(digit1, digit2, digit3, digit4, digit5, digit6)
+            .is_err()
+        {
+            return Ok(ResponseService::create_error_response(
+                AppError::Confirmation(Error::IncorrectTotp),
+                StatusCode::UNAUTHORIZED,
+            ));
+        };
         let set_result = user_service.set_totp_from_uuid(&totp, &user_uuid).await;
         match set_result {
             Ok(_) => {

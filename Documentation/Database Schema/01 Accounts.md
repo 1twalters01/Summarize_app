@@ -287,7 +287,7 @@ A device may have multiple accounts
 |------------------------|--------------|-------------------------------|--------|----------|-------|
 | id                     | INT          | Primary key                   | True   | True     | True  |
 | device_user_links_id   | INT          | Device User link ID           | True   | True     | True  |
-| biometrics_platform_id | INT          | Id for platform name          | True   | True     | True  |
+| platform_id            | INT          | Id for platform name          | True   | True     | True  |
 | encrypted_public_key   | VARCHAR(100) | Public key from platform      | True   | True     | True  |
 | is_activated           | BOOLEAN      | Is biometric activated        | False  | True     | False |
 | is_verified            | BOOLEAN      | Is biometric verified         | False  | True     | False |

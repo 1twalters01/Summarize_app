@@ -96,7 +96,7 @@ pub async fn post_biometrics(
     let user_service  = UserService::new(create_pg_pool_connection().await);
     let public_key_pem = user_service.get_biometrics_public_key_from_uuid_and_device_id(&user_uuid, &device_id)
     
-    let public_key = ring::signature::UnparsedPublicKey::new(
+    let public_key = signature::UnparsedPublicKey::new(
         &ring::signature::ECDSA_P256_SHA256_ASN1,
         public_key_pem.as_bytes(),
     );

@@ -115,7 +115,11 @@ impl Totp {
         totp[totp.len() - length_of_otp..].to_string()
     }
 
-    pub fn generate_qr_string(&mut self, email: &str) -> String {
+    pub fn generate_qr_string(
+        &mut self,
+        // email: &str,
+    ) -> String {
+        let email = env::var("SUMMARIZE_EMAIL".to_string())
         let length_of_otp = 6;
         let step_in_seconds = 30;
         let site = "Summarize";

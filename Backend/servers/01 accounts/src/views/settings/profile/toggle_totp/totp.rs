@@ -83,12 +83,37 @@ pub async fn post_totp(req_body: ProtoBuf<Request>, req: HttpRequest) -> Result<
         ));
     }
 
-    // If totp is inactive for user
-        // generate qr_string
-        // save qr_string
-        // response_field = response::ResponseField::DualResponse(token, qr_string) // Need better name
+    let user_service = UserService::new(create_pg_pool_connection().await);
+    let get_result: Result<Option<String>, sqlx::Error> =
+        user_service.get_totp_activation_status_from_uuid(&user_uuid).await;
+    let totp_activation_status = match get_result {
+        Ok(result) => result,
+        Err(_) => {
+            return Ok(ResponseService::create_error_response(
+                AppError::Confirmation(Error::ServerError),
+                StatusCode::INTERNAL_SERVER_ERROR,
+            ));
+        }
+    };
+    if totp_activation_status == false {
+        let totp_key = token_service.generate_opaque_token_of_length(25);
+
+        let set_redis_result = cache_service.store_totp_key_for_user_uuid(
+            &format("totp_key for:{}", user.get_uuid()),
+            &totp_key,
+            expiry_in_seconds,
+        );
+        if set_redis_result.is_err() {
+            return Ok(ResponseService::create_error_response(
+                AppError::ChangeTotp(Error::ServerError),
+                StatusCode::FAILED_DEPENDENCY,
+            ));
+        }
+        let totp = Totp::from_key(totp_key);
+        let qr_string = totp.generate_qr_string();
+        response_field = response::ResponseField::CreateResponse(token, qr_string)
     else {
-        response_field = response::ResponseField::Token(token)
+        response_field = response::ResponseField::DeleteResponse(token)
     }
 
     // return ok

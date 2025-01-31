@@ -26,6 +26,7 @@ pub async fn post_confirmation(
 ) -> Result<impl Responder> {
     let Request {
         device_id,
+        platform_type,
         enum {
             encoded_signed_challenge,
             public_key,
@@ -130,11 +131,10 @@ pub async fn post_confirmation(
     }
     let user_uuid = user.get_uuid();
 
-    // get current buometrics status
+    // get current biometrics status
     let user_service = UserService::new(create_pg_pool_connection().await);
-    let get_result: Result<Option<String>, sqlx::Error> =
-        user_service.get_biometrics_public_key_from_uuid(&user_uuid).await;
-    let public_key: Option<String> = match get_result {
+    let get_result = user_service.get_biometrics_activation_status_from_uuid(&user_uuid).await;
+    let biometrics_activation_status = match get_result {
         Ok(result) => result,
         Err(_) => {
             return Ok(ResponseService::create_error_response(
@@ -145,20 +145,28 @@ pub async fn post_confirmation(
     };
 
     // if public key = there then delete
-    if let Some(public_key) = public_key {
-        let mut totp: Totp = Totp::from_key(totp_key);
-
-        if totp
-            .verify(digit1, digit2, digit3, digit4, digit5, digit6)
-            .is_err()
-        {
-            return Ok(ResponseService::create_error_response(
-                AppError::Confirmation(Error::IncorrectTotp),
-                StatusCode::UNAUTHORIZED,
-            ));
+    if biometrics_activation_status == true {
+        let get_result: Result<Option<String>, sqlx::Error> =
+            user_service.get_biometrics_public_key_from_uuid(&user_uuid).await;
+        let public_key_pem: Option<String> = match get_result {
+            Ok(result) => result,
+            Err(_) => {
+                return Ok(ResponseService::create_error_response(
+                    AppError::Confirmation(Error::ServerError),
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                ));
+            }
         };
 
-        let delete_result = user_service.delete_totp_from_uuid(&user_uuid).await;
+        let public_key = ring::signature::UnparsedPublicKey::new(
+            &ring::signature::ECDSA_P256_SHA256_ASN1,
+            public_key_pem.as_bytes(),
+        );
+        if public_key.verify(challenge.as_bytes(), &signed_challenge).is_err() {
+            return HttpResponse::Unauthorized().body("Invalid signature");
+        }
+
+        let delete_result = user_service.delete_biometrics_from_uuid(&user_uuid).await;
         match delete_result {
             Ok(_) => {
                 return Ok(ResponseService::create_success_response(
@@ -176,8 +184,17 @@ pub async fn post_confirmation(
             }
         }
     } else {
-        let totp: Totp = Totp::new();
-        let set_result = user_service.set_totp_from_uuid(&totp, &user_uuid).await;
+        let public_key_pem = cache_service.get_biometrics_key_from_user_uuid_and_device_id(&user_uuid, &device_id)
+    
+        let public_key = signature::UnparsedPublicKey::new(
+            &ring::signature::ECDSA_P256_SHA256_ASN1,
+            public_key_pem.as_bytes(),
+        );
+        if public_key.verify(challenge.as_bytes(), &signed_challenge).is_err() {
+            return HttpResponse::Unauthorized().body("Invalid signature");
+        }
+
+        let set_result = user_service.set_biometrics_from_uuid(&public_key_pem, device_id, platform_type, &user_uuid).await;
         match set_result {
             Ok(_) => {
                 return Ok(ResponseService::create_success_response(

@@ -20,7 +20,10 @@ pub async fn post_biometrics(
     req_body: ProtoBuf<Request>,
     req: HttpRequest,
 ) -> Result<impl Responder> {
-    let Request { password } = req_body.0;
+    let Request {
+        device_id,
+        password,
+    } = req_body.0;
 
     // validate password
     let validated_password = validate_password(&password);
@@ -102,10 +105,39 @@ pub async fn post_biometrics(
         ));
     }
 
-    // If biometrics is active for user
+    let user_service = UserService::new(create_pg_pool_connection().await);
+    let get_result: Result<Option<String>, sqlx::Error> =
+        user_service.get_totp_activation_status_from_uuid(&user_uuid).await;
+    let totp_activation_status = match get_result {
+        Ok(result) => result,
+        Err(_) => {
+            return Ok(ResponseService::create_error_response(
+                AppError::Confirmation(Error::ServerError),
+                StatusCode::INTERNAL_SERVER_ERROR,
+            ));
+        }
+    };
+    if totp_activation_status == false {
         // generate challenge
-        // save challenge to a challenge_token
-        // response_field = response::ResponseField::DualResponse(token, challenge_token) // Need better name
+        let challenge = token_service.generate_opaque_token_of_length(25)
+        let set_redis_result = cache_service.store_totp_key_for_user_uuid(
+            &format("challenge for:{}{}", user.get_uuid(), device_id),
+            &challenge,
+            expiry_in_seconds,
+        );
+        let set_redis_result = cache_service.store_biometrics_key_for_user_uuid_and_device_id(
+            user.get_uuid(),
+            device_id,
+            &totp_key,
+            expiry_in_seconds,
+        );
+        if set_redis_result.is_err() {
+            return Ok(ResponseService::create_error_response(
+                AppError::ChangeTotp(Error::ServerError),
+                StatusCode::FAILED_DEPENDENCY,
+            ));
+        }
+        response_field = response::ResponseField::DualResponse(token, challenge_token)
         else {
             response_field = response::ResponseField::Token(token)
         }
