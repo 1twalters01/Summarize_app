@@ -79,6 +79,7 @@ pub async fn post_biometrics(
 
     let Request {
         device_id,
+        platform_id,
         encoded_signed_challenge,
     } = data.0;
 
