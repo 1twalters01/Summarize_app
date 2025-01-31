@@ -20,6 +20,12 @@ struct RateLimiter {
     expiry_in_seconds: Option<i64>,
 }
 
+struct RateLimiterMiddleware<S> {
+    service: Rc<S>,
+    limit: i64,
+    expiry_in_seconds: Option<i64>,
+}
+
 impl<S, B> Transform<S, ServiceRequest> for RateLimiter
 where
     S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error> + 'static,
@@ -39,12 +45,6 @@ where
             expiry_in_seconds: self.expiry_in_seconds,
         })
     }
-}
-
-struct RateLimiterMiddleware<S> {
-    service: Rc<S>,
-    limit: i64,
-    expiry_in_seconds: Option<i64>,
 }
 
 impl<S, B> Service<ServiceRequest> for RateLimiterMiddleware<S>

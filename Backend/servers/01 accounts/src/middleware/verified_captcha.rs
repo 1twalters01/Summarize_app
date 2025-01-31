@@ -9,12 +9,12 @@ use std::{future::Future, pin::Pin, rc::Rc};
 
 use crate::services::token_service::TokenService;
 
-pub struct IsVerified;
-pub struct IsVerifiedMiddleware<S> {
+pub struct VerificationMiddleware;
+pub struct VerificationMiddlewareService<S> {
     service: Rc<S>,
 }
 
-impl<S, B> Transform<S, ServiceRequest> for IsVerified
+impl<S, B> Transform<S, ServiceRequest> for VerificationMiddleware
 where
     S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error> + 'static,
     S::Future: 'static,
@@ -23,17 +23,17 @@ where
     type Response = ServiceResponse<EitherBody<B, BoxBody>>;
     type Error = Error;
     type InitError = ();
-    type Transform = IsVerifiedMiddleware<S>;
+    type Transform = VerificationMiddlewareService<S>;
     type Future = Ready<Result<Self::Transform, Self::InitError>>;
 
     fn new_transform(&self, service: S) -> Self::Future {
-        ok(IsVerifiedMiddleware {
+        ok(VerificationMiddlewareService {
             service: Rc::new(service),
         })
     }
 }
 
-impl<S, B> Service<ServiceRequest> for IsVerifiedMiddleware<S>
+impl<S, B> Service<ServiceRequest> for VerificationMiddlewareService<S>
 where
     S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error> + 'static,
     S::Future: 'static,
@@ -127,7 +127,7 @@ mod tests {
                         actix_web::HttpResponse::Ok().body("not authenticated API")
                     }),
                 ))
-                .service(web::scope("/authenticated").wrap(IsVerified).route(
+                .service(web::scope("/authenticated").wrap(VerificationMiddleware).route(
                     "/",
                     get().to(|| async { actix_web::HttpResponse::Ok().body("authenticated API") }),
                 )),

@@ -1,4 +1,5 @@
 # Todo
+* Add real code for authentication_options and switch_authentication and then add to accounts
 * Don't allow access tokens to go to users - Store them as a key: opaque_token, value: access_token and handle in authentication middleware to put the uuid in the req
 * Add a tag when saving things to redis for the route that saved it to differentiate them?
 * Change queries to match new structure for accounts

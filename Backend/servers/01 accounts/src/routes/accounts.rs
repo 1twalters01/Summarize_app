@@ -1,16 +1,21 @@
 use crate::{
     middleware::{
         authentication::{Authenticated, AuthenticationMiddlewareFactory, NotAuthenticated},
-        verified_captcha::IsVerified as VerificationMiddleware,
+        verified_captcha::VerificationMiddleware,
+        logger::LoggerMiddleware,
     },
     views,
 };
 use actix_web::web::{get, post, scope, ServiceConfig};
 
 pub fn config(cfg: &mut ServiceConfig) {
+    let logger_enabled = true;
+
     cfg.service(
         scope("/register")
+            .wrap(LoggerMiddleware { logger_enabled })
             .wrap(AuthenticationMiddlewareFactory::<NotAuthenticated>::new())
+            // .wrap(RateLimiter { limit: 3, expiry_in_seconds: Some(5) })
             .route(
                 "/email",
                 post().to(views::accounts::register::from_login::email::post_email),
@@ -31,6 +36,7 @@ pub fn config(cfg: &mut ServiceConfig) {
     )
     .service(
         scope("/register/from-guest")
+            .wrap(LoggerMiddleware { logger_enabled })
             .wrap(AuthenticationMiddlewareFactory::<Authenticated>::new())
             .route(
                 "/email",
@@ -52,6 +58,7 @@ pub fn config(cfg: &mut ServiceConfig) {
     )
     .service(
         scope("/register/from-oauth")
+            .wrap(LoggerMiddleware { logger_enabled })
             .wrap(AuthenticationMiddlewareFactory::<Authenticated>::new())
             .route(
                 "email",
@@ -69,6 +76,7 @@ pub fn config(cfg: &mut ServiceConfig) {
     )
     .service(
         scope("/login")
+            .wrap(LoggerMiddleware { logger_enabled })
             .wrap(AuthenticationMiddlewareFactory::<NotAuthenticated>::new())
             .route("/guest", get().to(views::accounts::login::is_guest::guest::get_guest))
             .route(
@@ -103,6 +111,7 @@ pub fn config(cfg: &mut ServiceConfig) {
     )
     .service(
         scope("/login/oauth2/google")
+            .wrap(LoggerMiddleware { logger_enabled })
             .wrap(AuthenticationMiddlewareFactory::<NotAuthenticated>::new())
             .route(
                 "/google/authorise",
@@ -123,6 +132,7 @@ pub fn config(cfg: &mut ServiceConfig) {
     );
     .service(
         scope("/login")
+            .wrap(LoggerMiddleware { logger_enabled })
             .wrap(AuthenticationMiddlewareFactory::<Authenticated>::new())
             .wrap(VerificationMiddleware)
             .route(
@@ -132,6 +142,7 @@ pub fn config(cfg: &mut ServiceConfig) {
     )
     .service(
         scope("/password-reset")
+            .wrap(LoggerMiddleware { logger_enabled })
             .wrap(AuthenticationMiddlewareFactory::<NotAuthenticated>::new())
             .route(
                 "/email",
@@ -153,6 +164,7 @@ pub fn config(cfg: &mut ServiceConfig) {
     )
     .service(
         scope("/captcha")
+            .wrap(LoggerMiddleware { logger_enabled })
             .route(
                 "/get",
                 get().to(views::accounts::captcha::get::get_captcha)

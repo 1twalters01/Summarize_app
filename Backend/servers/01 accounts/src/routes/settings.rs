@@ -1,15 +1,19 @@
 use crate::{
     middleware::{
         authentication::{Authenticated, AuthenticationMiddlewareFactory},
-        verified_captcha::IsVerified as VerificationMiddleware,
+        verified_captcha::VerificationMiddleware,
+        logger::LoggerMiddleware,
     }
     views::settings,
 };
 use actix_web::web::{post, scope, ServiceConfig};
 
 pub fn config(cfg: &mut ServiceConfig) {
+    let logger_enabled = true;
+
     cfg.service(
         scope("/settings/profile")
+            .wrap(LoggerMiddleware { logger_enabled })
             .wrap(AuthenticationMiddlewareFactory::<Authenticated>::new())
             .wrap(VerificationMiddleware)
             .route(
