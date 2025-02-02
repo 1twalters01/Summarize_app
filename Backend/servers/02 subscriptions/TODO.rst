@@ -47,7 +47,8 @@ Checklist
         - [ ] Discount codes & promotions
     - [ ] Subscription Cancellation - Users can:
         - [ ] Cancel anytime
-        - [ ] Pause and resume subscriptions
+        - [ ] Pause subscriptions
+        - [ ] Resume subscriptions
         - [ ] Request refunds
             (within 1 week?)
 
