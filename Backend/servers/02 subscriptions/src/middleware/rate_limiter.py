@@ -1,6 +1,6 @@
 from datetime import datetime
 from dotenv import load_dotenv
-from fastapi import Request, HTTPException
+from fastapi import Request, HTTPException, status
 import os
 
 load_dotenv()

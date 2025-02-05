@@ -13,7 +13,7 @@ async def get_invoices_view(request: Request):
 
     if not invoices:
         raise HTTPException(
-            status_code=HTTP_404_NOT_FOUND,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail="No invoices found",
         )
 
