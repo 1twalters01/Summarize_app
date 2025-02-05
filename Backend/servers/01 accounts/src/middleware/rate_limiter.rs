@@ -54,7 +54,6 @@ where
     B: 'static,
 {
     type Response = ServiceResponse<EitherBody<B, BoxBody>>;
-    // type Response = ServiceResponse<B>;
     type Error = Error;
     type Future = LocalBoxFuture<'static, Result<Self::Response, Self::Error>>;
 
