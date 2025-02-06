@@ -20,9 +20,9 @@ def get_stripe_invoice(invoice_id: str):
     except stripe.error.StripeError as e:
         return None
 
-def get_stripe_invoice_data(customer_id: str, limit=10):
+def get_stripe_invoices_data(customer_id: str, limit=10):
     try:
-        invoices = stripe.Invoice.list(customer=customer_id, limit)
+        invoices = stripe.Invoice.list(customer=customer_id, limit=limit)
 
         if not invoices.data:
             return []
@@ -38,8 +38,9 @@ def get_stripe_invoice_data(customer_id: str, limit=10):
             }
             invoice_list.append(invoice_element)
 
+            pdf_url = invoice.hosted_invoice_url
             redis_key = f"invoice_id:{invoice_id}"
-            redis_client.set(redis_key, (invoice.hosted_invoice_url, invoice_element), ex=expiry_in_seconds)
+            redis_client.set(redis_key, (pdf_url, invoice_element), ex=expiry_in_seconds)
         return invoice_list
 
     except stripe.error.StripeError as e:
