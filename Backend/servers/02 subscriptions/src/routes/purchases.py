@@ -23,3 +23,10 @@ router.add_api_route(
     methods=["POST"],
     dependencies=[Depends(is_authenticated)],
 )
+
+router.add_api_route(
+    "/purchases/retry-payment",
+    retry_failed_payment_view,
+    methods=["POST"],
+    dependencies=[Depends(is_authenticated)],
+)

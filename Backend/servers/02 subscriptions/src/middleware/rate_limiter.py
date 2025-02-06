@@ -7,7 +7,7 @@ load_dotenv()
 
 SECRET_KEY = str(os.getenv("JWT_SECRET"))
 
-def rate_limiter(request: Request):
+def rate_limiter(request: Request, expiry_in_seconds=30):
     ip = request.client.host
     redis_key = f"{client_ip}"
 
