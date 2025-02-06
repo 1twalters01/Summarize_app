@@ -6,7 +6,7 @@ router = APIRouter()
 
 # Change it from price to an enum
 async def stripe_one_time_payment(request: Request, price: float):
-    """Initiate a PayPal one-time payment."""
+    """Initiate a Stripe one-time payment."""
 
     user_uuid = request.state.user_uuid
     response = create_stripe_purchase_checkout_session(user_uuid, price)

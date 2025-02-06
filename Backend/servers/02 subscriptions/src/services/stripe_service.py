@@ -48,19 +48,17 @@ class StripeService:
         except stripe.error.StripeError as e:
             return {"error": str(e)}
 
-    def create_stripe_purchase_checkout_session(user_id: str, price: int, currency: str = "usd"):
-        """
-        Create a Stripe Checkout Session for a one-time payment.
-        """
+    def create_stripe_purchase_checkout_session(user_uuid: str, price: int, currency: str = "usd"):
+        """Create a Stripe Checkout Session for a one-time payment."""
         try:
             session = stripe.checkout.Session.create(
                 payment_method_types=["card", "apple_pay", "google_pay"],
-                customer_email=f"user_{user_id}@example.com",
+                customer_email={GET_EMAIL_FROM_USER_UUID},
                 line_items=[{
                     "price_data": {
                         "currency": currency,
                         "product_data": {"name": f"{Description}"},
-                        "unit_amount": price * 100,  # Convert to cents
+                        "unit_amount": price,
                     },
                     "quantity": 1,
                 }],
@@ -71,4 +69,39 @@ class StripeService:
             return {"checkout_url": session.url}
         
         except stripe.error.StripeError as e:
+            return {"error": str(e)}
+
+    def create_stripe_subscription_checkout_session(user_uuid, customer_email, price_id, payment_method_id=None):
+        """Creates a Stripe subscription for a user and saves customer details."""
+        try:
+            customer = stripe.Customer.create(
+                email={GET_EMAIL_FROM_USER_UUID},
+                payment_method=payment_method_id,
+                invoice_settings={"default_payment_method": payment_method_id} if payment_method_id else {}
+            )
+            customer_id = customer["id"]
+
+            subscription = stripe.Subscription.create(
+                customer=customer_id,
+                items=[{"price": price_id}],
+                expand=["latest_invoice.payment_intent"],
+            )
+
+            subscription_id = subscription["id"]
+            status = subscription["status"]
+
+            # Save subscription details in the database
+            save_stripe_subscription(user_id, subscription_id, customer_id)
+
+            return {
+                "subscription_id": subscription_id,
+                "customer_id": customer_id,
+                "status": status,
+                "client_secret": subscription["latest_invoice"]["payment_intent"]["client_secret"]
+                if subscription.get("latest_invoice") and subscription["latest_invoice"].get("payment_intent")
+                else None
+            }
+
+        except stripe.error.StripeError as e:
+            print(f"Stripe Error: {str(e)}")
             return {"error": str(e)}
