@@ -13,15 +13,17 @@ class PayPalSubscriptionService:
 
     def __init__(self):
         client_id = os.getenv("PAYPAL_CLIENT_ID")
-        secret_id = os.getenv("PAYPAL_SECRET_KEY")
+        if client_id == None:
+            raise Error("No paypal client id found")
 
-        if client_id == None or secret_id == None:
-            return None
-            # raise TypeError
+        secret_id = os.getenv("PAYPAL_SECRET_KEY")
+        if secret_id == None:
+            raise Error("No paypal secret id found")
 
         self.client_id = client_id
         self.secret_id = secret_id
-        self.access_token = self._get_access_token()
+        if not self.access_token:
+            self.access_token = self._get_access_token()
 
     def _get_access_token(self) -> str | None:
         """Fetch and store the PayPal access token."""
@@ -40,12 +42,6 @@ class PayPalSubscriptionService:
             "Content-Type": "application/json",
             "Authorization": f"Bearer {self.access_token}",
         }
-
-    def show_sub_details(self, subscription_id):
-        url = f"v1/billing/subscriptions/{subscription_id}"
-        response = requests.get(url, headers=self._get_headers())
-        response.raise_for_status()
-        return response.json()
 
     def get_paypal_invoice(invoice_id: str):
         url = f"{PAYPAL_API_BASE}/v2/invoicing/invoices/{invoice_id}"
@@ -90,3 +86,54 @@ class PayPalSubscriptionService:
             return invoices
 
         return None
+
+
+    def show_sub_details(self, subscription_id):
+        url = f"v1/billing/subscriptions/{subscription_id}"
+        response = requests.get(url, headers=self._get_headers())
+        response.raise_for_status()
+        return response.json()
+        
+    def cancel_sub(self, subscription_id, reason="Not satisfied with the service"):
+        url = f"{PAYPAL_API_BASE}/v1/billing/subscriptions/{subscription_id}/cancel"
+        data = {"reason": reason}
+        response = requests.post(url, headers=self._get_headers(), json=data)
+        response.raise_for_status()
+        return response.json()
+
+    def suspend_sub(self, subscription_id, reason="Not satisfied with the service"):
+        url = f"{PAYPAL_API_BASE}/v1/billing/subscriptions/{subscription_id}/suspend"
+        data = {"reason": reason}
+        response = requests.post(url, headers=self._get_headers(), json=data)
+        response.raise_for_status()
+        print(response.json())  # Remove line after checking what this actually is
+        return {"success": True}
+
+    def activate_sub(self, subscription_id, reason="Not satisfied with the service"):
+        url = f"{PAYPAL_API_BASE}/v1/billing/subscriptions/{subscription_id}/activate"
+        data = {"reason": reason}
+        response = requests.post(url, headers=self._get_headers(), json=data)
+        response.raise_for_status()
+        return {"success": True}
+
+    def create_paypal_purchase_order(user_id: str, price: float, currency: str = "GBP"):
+        """Create a PayPal order for a one-time payment."""
+        url = f"{PAYPAL_API_BASE}/v2/checkout/orders"
+        data = {
+            "intent": "CAPTURE",
+            "purchase_units": [{
+                "amount": {"currency_code": currency, "value": str(price)},
+                "description": f"{Description}",
+            }],
+            "redirect_urls": {
+                "return_url": f"{SUCCESS_URL}",
+                "cancel_url": f"{CANCEL_URL}"
+            }
+        }
+
+        response = requests.post(url, json=data, headers=self._get_headers())
+        if response.status_code == 201:
+            order = response.json()
+            return {"checkout_url": order["links"][1]["href"]}
+        
+        return {"error": response.json()}
