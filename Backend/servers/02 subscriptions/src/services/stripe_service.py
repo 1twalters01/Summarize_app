@@ -105,3 +105,36 @@ class StripeService:
         except stripe.error.StripeError as e:
             print(f"Stripe Error: {str(e)}")
             return {"error": str(e)}
+
+    def old_create_stripe_subscription_checkout_session(
+        self,
+        subscriber: Subscriber,
+        customer: stripe.Customer,
+        success_url: str,
+        cancel_url: str,
+    ):
+        prices = stripe.Price.list(
+            lookup_keys=["Summarize Premium"], expand=["data.product"]
+        )
+        if not prices.data:
+            raise Exception("No price data found for lookup key")
+
+        line_items = [
+            {
+                "price": prices.data[0].id,
+                "quantity": 1,
+            },
+        ]
+
+        checkout_kwargs = {
+            "line_items": line_items,
+            "customer": customer,
+            "mode": "subscription",
+            "success_url": success_url,
+            "cancel_url": cancel_url,
+        }
+
+        if subscriber.has_trial == True:
+            checkout_kwargs["subscription_data"] = {"trial_period_days": 7}
+
+        checkout_session = stripe.checkout.Session.create(**checkout_kwargs)

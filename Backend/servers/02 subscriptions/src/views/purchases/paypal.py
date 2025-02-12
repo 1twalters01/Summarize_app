@@ -1,8 +1,6 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import HTTPException, status
 from src.middleware.authentication import is_authenticated
 from src.services.paypal_service import create_paypal_order
-
-router = APIRouter()
 
 # Change it from price to an enum
 async def paypal_one_time_payment(request: Request, price: float):
