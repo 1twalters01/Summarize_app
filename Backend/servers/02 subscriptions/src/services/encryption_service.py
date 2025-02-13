@@ -4,8 +4,6 @@ import os
 
 load_dotenv()
 
-
-
 class EncryptionService:
     key: str = str(os.getenv("ENCRYPTION_KEY"))
 

@@ -4,6 +4,7 @@ from src.views.subscriptions.status import retrieve_status_view
 from src.views.subscriptions.plans import retrieve_plans_view
 from src.views.subscriptions.cancellation import cancel_subscription_view
 from src.views.subscriptions.create import create_subscription_view
+from src.views.subscriptions.retry import retry_failed_payment_view
 
 router.add_api_route(
     "/subscription/plans",
@@ -26,14 +27,7 @@ router.add_api_route(
 )
 
 router.add_api_route(
-    "/subscription/create/stripe",
-    create_subscription_view,
-    methods=["POST"],
-    dependencies=[Depends(is_authenticated)],
-)
-
-router.add_api_route(
-    "/subscription/create/paypal",
+    "/subscription/create",
     create_subscription_view,
     methods=["POST"],
     dependencies=[Depends(is_authenticated)],

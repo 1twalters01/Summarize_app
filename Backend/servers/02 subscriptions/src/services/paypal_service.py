@@ -137,3 +137,9 @@ class PayPalSubscriptionService:
             return {"checkout_url": order["links"][1]["href"]}
         
         return {"error": response.json()}
+
+# subscription_id = 'I-W0F4P2H7MDNJ' # faks subscription id
+# print(show_sub_details(subscription_id))
+# suspend_sub(get_access_token(), subscription_id)
+# cancel_sub(subscription_id)
+# activate_sub(get_access_token(), subscription_id)
