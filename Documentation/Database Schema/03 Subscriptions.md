@@ -167,14 +167,14 @@ CREATE TABLE applied_discounts (
 | refund_date             | TIMESTAMP    | Date of refund                 | False  | False    | False |
 
 ```sql
-CREATE TYPE refund_status AS ENUM ('pending', 'approved', 'rejected');
+CREATE TYPE refund_status_enum AS ENUM ('pending', 'approved', 'rejected');
 CREATE TABLE refund_requests (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     user_id INT NOT NULL,
     payment_history_id INT,
     subscription_history_id INT,
     refund_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    status ENUM('pending', 'approved', 'rejected') NOT NULL DEFAULT 'pending',
+    refund_status REFUND_STATUS_ENUM NOT NULL DEFAULT 'pending',
     CONSTRAINT fk_users FOREIGN KEY (user_id)
         REFERENCES users (id)
         ON DELETE CASCADE
