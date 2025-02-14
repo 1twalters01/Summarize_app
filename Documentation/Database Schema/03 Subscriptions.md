@@ -38,7 +38,7 @@ CREATE TYPE payment_method_enum AS ENUM ('stripe', 'paypal', 'crypto', 'none');
 ```sql
 CREATE TABLE subscribers (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    user_id INT,
+    user_id INT NOT NULL,
     customer_id VARCHAR(255) UNIQUE,
     payment_method PAYMENT_METHOD_ENUM NOT NULL,
     CONSTRAINT fk_users FOREIGN KEY (user_id)
@@ -87,7 +87,7 @@ CREATE TABLE subscriber_history (
 ```sql
 CREATE TABLE payment_history (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    user_id INT,
+    user_id INT NOT NULL,
     payment_method PAYMENT_METHOD_ENUM NOT NULL,
     payment_date TIMESTAMP NOT NULL,
     duration INTERVAL NOT NULL,
@@ -96,5 +96,100 @@ CREATE TABLE payment_history (
         REFERENCES users (id)
         ON DELETE CASCADE
         ON UPDATE CASCADE
+)
+```
+
+## Discount Codes
+| Field                   | Type         | Description                    | UNIQUE | NOT NULL | INDEX |
+|-------------------------|--------------|--------------------------------|--------|----------|-------|
+| id                      | INT          | Primary key (internal)         | True   | True     | True  |
+| code                    | VARCHAR(20)  | The code in question           | True   | True     | True  |
+| max_uses                | INT          | Maximum number of code usages  | False  | False    | False |
+| current_uses            | INT          | Current number of code usages  | False  | True     | False |
+| created_at              | TIMESTAMP    | Time the code was created      | False  | True     | False |
+| expires_at              | TIMESTAMP    | Time the code expires          | False  | False    | False |
+
+```sql
+CREATE TABLE discount_codes (
+    id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    code VARCHAR(20) UNIQUE NOT NULL,
+    max_uses INT DEFAULT NULL,
+    current_uses INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT NOW(),
+    expires_at TIMESTAMP DEFAULT NULL
+)
+```
+
+## Applied Discounts
+| Field                   | Type         | Description                    | UNIQUE | NOT NULL | INDEX |
+|-------------------------|--------------|--------------------------------|--------|----------|-------|
+| id                      | INT          | Primary key (internal)         | True   | True     | True  |
+| user_id                 | INT          | Foreign key to user id         | False  | True     | False |
+| discount_code_id        | INT          | Discount code foreign key      | False  | True     | False |
+| applied_at              | TIMESTAMP    | Discount code application date | False  | True     | False |
+| payment_history_id      | INT          | Payment history id             | True   | False    | False |
+| subscription_history_id | INT          | Subscription history id        | True   | False    | False |
+
+```sql
+CREATE TABLE applied_discounts (
+    id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    user_id INT NOT NULL,
+    discount_code_id INT NOT NULL,
+    applied_at TIMESTAMP NOT NULL,
+    payment_history_id INT,
+    subscription_history_id INT,
+    CONSTRAINT fk_users FOREIGN KEY (user_id)
+        REFERENCES users (id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+    CONSTRAINT fk_payment_history FOREIGN KEY (payment_history_id)
+        REFERENCES payment_history (id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+    CONSTRAINT fk_subscription_history FOREIGN KEY (subscription_history_id)
+        REFERENCES subscription_history (id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+    CONSTRAINT check_only_one_refund CHECK (
+        (subscription_history_id IS NOT NULL AND payment_history_id IS NULL) OR
+        (subscription_history_id IS NULL AND payment_history_id IS NOT NULL)
+    )
+)
+```
+
+## Refund Requests
+| Field                   | Type         | Description                    | UNIQUE | NOT NULL | INDEX |
+|-------------------------|--------------|--------------------------------|--------|----------|-------|
+| id                      | INT          | Primary key (internal)         | True   | True     | True  |
+| user_id                 | INT          | Foreign key to user id         | False  | True     | False |
+| payment_history_id      | INT          | Payment history id             | True   | False    | False |
+| subscription_history_id | INT          | Subscription history id        | True   | False    | False |
+| refund_date             | TIMESTAMP    | Date of refund                 | False  | False    | False |
+
+```sql
+CREATE TYPE refund_status AS ENUM ('pending', 'approved', 'rejected');
+CREATE TABLE refund_requests (
+    id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    user_id INT NOT NULL,
+    payment_history_id INT,
+    subscription_history_id INT,
+    refund_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    status ENUM('pending', 'approved', 'rejected') NOT NULL DEFAULT 'pending',
+    CONSTRAINT fk_users FOREIGN KEY (user_id)
+        REFERENCES users (id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+    CONSTRAINT fk_payment_history FOREIGN KEY (payment_history_id)
+        REFERENCES payment_history (id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+    CONSTRAINT fk_subscription_history FOREIGN KEY (subscription_history_id)
+        REFERENCES subscription_history (id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+    CONSTRAINT check_only_one_refund CHECK (
+        (subscription_history_id IS NOT NULL AND payment_history_id IS NULL) OR
+        (subscription_history_id IS NULL AND payment_history_id IS NOT NULL)
+    )
 )
 ```
