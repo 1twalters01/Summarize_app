@@ -10,7 +10,6 @@ from src.services.stripe_service import StripeService
 
 load_dotenv()
 
-
 async def retrieve_status(request: Request, subscription: StripeUrls | None):
     user_uuid = request.state.user_uuid
 
