@@ -119,15 +119,44 @@ CREATE TABLE payment_history (
 | current_uses            | INT          | Current number of code usages  | False  | True     | False |
 | created_at              | TIMESTAMP    | Time the code was created      | False  | True     | False |
 | expires_at              | TIMESTAMP    | Time the code expires          | False  | False    | False |
+| discount_value          | DECIMAL      | Value of the discount          | False  | True     | True  |
+| discount_type           | ENUM         | Type of discount (% or fixed)  | False  | True     | False |
 
 ```sql
+CREATE TYPE discount_type_enum AS ENUM('percentage', 'fixed');
 CREATE TABLE discount_codes (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     code VARCHAR(20) UNIQUE NOT NULL,
     max_uses INT DEFAULT NULL,
     current_uses INT DEFAULT 0,
     created_at TIMESTAMP DEFAULT NOW(),
-    expires_at TIMESTAMP DEFAULT NULL
+    expires_at TIMESTAMP DEFAULT NULL,
+    discount_value DECIMAL(10,2) NOT NULL,
+    discount_type DISCOUNT_TYPE_ENUM NOT NULL,
+)
+```
+
+## Discount Payment Types
+| Field                   | Type         | Description                    | UNIQUE | NOT NULL | INDEX |
+|-------------------------|--------------|--------------------------------|--------|----------|-------|
+| id                      | INT          | Primary key (internal)         | True   | True     | True  |
+| discount_code_id        | INT          | Discount code foreign key      | False  | True     | True  |
+| payment_type            | ENUM         | Allowed Payment type           | False  | True     | True  |
+
+Allowed payment types for each code
+
+```sql
+CREATE TYPE payment_type_enum AS ENUM(
+    'Subscription_Monthly',
+    'Subscription_Yearly',
+    'Payment_1_Month',
+    'Payment_3_Months',
+    'Payment_1_Year'
+);
+CREATE TABLE discount_payment_types (
+    id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    discount_code_id INT NOT NULL,
+    payment_type PAYMENT_TYPE_ENUM NOT NULL,
 )
 ```
 
