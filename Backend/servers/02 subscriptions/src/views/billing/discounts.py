@@ -36,6 +36,7 @@ async def apply_discount_view(request: Request, discount_code: str, payment_type
     if discount_service.validate_code_and_payment_type(discount_code, payment_type) == False:
         raise HTTPException(status_code=400, detail="Discount code is not valid for the given payment type")
 
+    user_uuid = request.state.user_uuid
     # cache key: f"discount for {user_uuid}", value: code
 
     return {
