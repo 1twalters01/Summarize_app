@@ -11,11 +11,14 @@ class retry_class():
     customer_id_token: str|None
 
 async def retry_failed_payment_view(request: Request, data: retry_class):
+    user_uuid = request.state.user_uuid
+
     if data.customer_id_token == None:
-        user_uuid = request.state.user_uuid
         customer_id = user_service.get_customer_id_from_uuid_and_payment_provider(user_uuid, data.payment_provider)
     else:
-        customer_id = cache_service.get_customer_id_from_token(data.customer_id)
+        customer_id = cache_service.get_customer_id_from_token(data.customer_id_token)
+        if validate_uuid_and_customer_id(user_uuid, customer_id) == false:
+            raise HTTPException(status_code=400, detail="Invalid customer id tokke")
 
     payment_provider = data.payment_provider
     if payment_provider == "stripe":
