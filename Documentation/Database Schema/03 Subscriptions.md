@@ -6,6 +6,33 @@ CREATE TYPE payment_tier_enum AS ENUM('none', 'premium');
 
 none = unsubscribed
 
+## Payment Type Enum
+```sql
+CREATE TYPE payment_type_enum AS ENUM(
+    'Subscription_Monthly',
+    'Subscription_Yearly',
+    'Payment_1_Month',
+    'Payment_3_Months',
+    'Payment_1_Year'
+);
+```
+## Prices
+| Field                   | Type         | Description                    | UNIQUE | NOT NULL | INDEX |
+|-------------------------|--------------|--------------------------------|--------|----------|-------|
+| id                      | INT          | Primary key (internal)         | True   | True     | True  |
+| payment_tier_enum       | ENUM         | Account payment tiers          | False  | True     | True  |
+| payment_type_enum       | ENUM         | Allowed Payment type           | False  | True     | True  |
+| price_gbp               | DECIMAL      | base price in gbp              | False  | True     | True  |
+
+```sql
+CREATE TYPE prices (
+    id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    payment_tier_enum PAYMENT_TIER_ENUM NOT NULL,
+    payment_type_enum PAYMENT_TYPE_ENUM NOT NULL,
+    price_gbp DECIMAL NOT NULL
+)
+```
+
 ## Subscription Metadata
 | Field                   | Type         | Description                    | UNIQUE | NOT NULL | INDEX |
 |-------------------------|--------------|--------------------------------|--------|----------|-------|
@@ -141,18 +168,11 @@ CREATE TABLE discount_codes (
 |-------------------------|--------------|--------------------------------|--------|----------|-------|
 | id                      | INT          | Primary key (internal)         | True   | True     | True  |
 | discount_code_id        | INT          | Discount code foreign key      | False  | True     | True  |
-| payment_type            | ENUM         | Allowed Payment type           | False  | True     | True  |
+| payment_type_enum       | ENUM         | Allowed Payment type           | False  | True     | True  |
 
 Allowed payment types for each code
 
 ```sql
-CREATE TYPE payment_type_enum AS ENUM(
-    'Subscription_Monthly',
-    'Subscription_Yearly',
-    'Payment_1_Month',
-    'Payment_3_Months',
-    'Payment_1_Year'
-);
 CREATE TABLE discount_payment_types (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     discount_code_id INT NOT NULL,
