@@ -17,6 +17,6 @@ class Price():
     payment_type_enum: PaymentTypesEnum
     price_gbp: float
 
-def get_plans_view():
+async def get_plans_view():
     prices: Price = discount_service.get_base_prices()
     return prices
