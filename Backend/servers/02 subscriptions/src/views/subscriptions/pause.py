@@ -34,8 +34,6 @@ async def pause_subscription_view(request: Request, reason: str = None):
     last_subscription: Subscription|None = get_last_subscription_from_subscription_history_for_user_uuid(user_uuid)
     if not last_subscription:
         return JSONResponse(content=response, status_code=status.HTTP_400_BAD_REQUEST)
-    
-    pause_subscription(last_subscription)
 
     payment_method: PaymentMethodEnum = get_payment_method_from_subscription(last_subscription)
     if payment_method == PaymentMethodEnum.Stripe:
@@ -43,9 +41,11 @@ async def pause_subscription_view(request: Request, reason: str = None):
     if payment_method == PaymentMethodEnum.Paypal:
         paypal_service.suspend_sub(last_subscription.subscriber_id, reason)
     if payment_method == PaymentMethodEnum.Crypto:
-        pause_subscription(last_subscription)
+        crypto_service.pause_subscription(last_subscription)
         pass
     
+    pause_subscription(last_subscription)
+
     response = {
         "success": True
     }

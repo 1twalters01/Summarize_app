@@ -43,10 +43,13 @@ async def change_subscription_view(request: Request, reason: str = None):
         }
         return response
 
+    if payment_method == PaymentMethodEnum.Crypto:
+        pass
+
     if payment_method == PaymentMethodEnum.Paypal:
         # Cancel current plan
-        cancel_subscription(last_subscription)
         paypal_service.cancel_sub(last_subscription.subscriber_id, reason)
+        cancel_subscription(last_subscription)
 
         # Create new plan
         paypal_url = None
