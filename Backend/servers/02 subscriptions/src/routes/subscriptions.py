@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 from src.middleware.authentication import is_authenticated_middleware
-from src.views.subscriptions.create import create_subscription_view
+from src.views.subscriptions.create_urls import create_subscription_view
 from src.views.subscriptions.cancellation import cancel_subscription_view
 from src.views.subscriptions.pause import pause_subscription_view
 from src.views.subscriptions.resume import resume_subscription_view

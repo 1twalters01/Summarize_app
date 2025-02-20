@@ -17,12 +17,12 @@ CREATE TYPE payment_type_enum AS ENUM(
 );
 ```
 ## Prices
-| Field                   | Type         | Description                    | UNIQUE | NOT NULL | INDEX |
-|-------------------------|--------------|--------------------------------|--------|----------|-------|
-| id                      | INT          | Primary key (internal)         | True   | True     | True  |
-| payment_tier_enum       | ENUM         | Account payment tiers          | False  | True     | True  |
-| payment_type_enum       | ENUM         | Allowed Payment type           | False  | True     | True  |
-| price_gbp               | DECIMAL      | base price in gbp              | False  | True     | True  |
+| Field                     | Type         | Description                    | UNIQUE | NOT NULL | INDEX |
+|---------------------------|--------------|--------------------------------|--------|----------|-------|
+| id                        | INT          | Primary key (internal)         | True   | True     | True  |
+| payment_tier_enum         | ENUM         | Account payment tiers          | False  | True     | True  |
+| payment_type_enum         | ENUM         | Allowed Payment type           | False  | True     | True  |
+| price_gbp                 | DECIMAL      | base price in gbp              | False  | True     | True  |
 
 ```sql
 CREATE TYPE prices (
@@ -34,13 +34,13 @@ CREATE TYPE prices (
 ```
 
 ## Subscription Metadata
-| Field                   | Type         | Description                    | UNIQUE | NOT NULL | INDEX |
-|-------------------------|--------------|--------------------------------|--------|----------|-------|
-| user_id                 | INT          | Foreign key to user id         | True   | True     | False |
-| payment_tier_enum       | ENUM         | The user's payment tier        | False  | True     | False |
-| has_trial               | BOOLEAN      | Does user have a trial or not  | False  | True     | False |
-| trial_start_date        | TIMESTAMP    | When did the trial start       | False  | False    | False |
-| trial_end_date          | TIMESTAMP    | When did the trial end         | False  | False    | False |
+| Field                     | Type         | Description                    | UNIQUE | NOT NULL | INDEX |
+|---------------------------|--------------|--------------------------------|--------|----------|-------|
+| user_id                   | INT          | Foreign key to user id         | True   | True     | False |
+| payment_tier_enum         | ENUM         | The user's payment tier        | False  | True     | False |
+| has_trial                 | BOOLEAN      | Does user have a trial or not  | False  | True     | False |
+| trial_start_date          | TIMESTAMP    | When did the trial start       | False  | False    | False |
+| trial_end_date            | TIMESTAMP    | When did the trial end         | False  | False    | False |
 
 ```sql
 CREATE TABLE subscription_metadata (
@@ -62,12 +62,12 @@ CREATE TYPE payment_method_enum AS ENUM ('stripe', 'paypal', 'crypto', 'none');
 ```
 
 ## Subscribers
-| Field                   | Type         | Description                    | UNIQUE | NOT NULL | INDEX |
-|-------------------------|--------------|--------------------------------|--------|----------|-------|
-| id                      | INT          | Primary key (internal)         | True   | True     | True  |
-| user_id                 | INT          | Foreign key to user id         | False  | True     | False |
-| customer_id             | VARCHAR(255) | The customer id of the payee   | True   | False    | True  |
-| payment_method          | Enum         | Foreign key to payment methods | False  | True     | False |
+| Field                     | Type         | Description                    | UNIQUE | NOT NULL | INDEX |
+|---------------------------|--------------|--------------------------------|--------|----------|-------|
+| id                        | INT          | Primary key (internal)         | True   | True     | True  |
+| user_id                   | INT          | Foreign key to user id         | False  | True     | False |
+| encrypted_customer_id     | VARCHAR(255) | The customer id of the payee   | True   | False    | True  |
+| payment_method            | Enum         | Foreign key to payment methods | False  | True     | False |
 
 ```sql
 CREATE TABLE subscribers (
@@ -83,20 +83,20 @@ CREATE TABLE subscribers (
 ```
 
 ## Subscription History
-| Field                   | Type         | Description                    | UNIQUE | NOT NULL | INDEX |
-|-------------------------|--------------|--------------------------------|--------|----------|-------|
-| id                      | INT          | Primary key (internal)         | True   | True     | True  |
-| subscriber_id           | INT          | Foreign key to the subscriber  | True   | True     | True  |
-| subscription_id         | VARCHAR(255) | The id of the subscription     | True   | True     | True  |
-| payment_tier_enum       | ENUM         | The user's payment tier        | False  | True     | False |
-| subscription_start_date | TIMESTAMP    | Subscription start date        | False  | True     | False |
-| subscription_end_date   | TIMESTAMP    | Subscription end date          | False  | False    | False |
-| cancellation_date       | TIMESTAMP    | Subscription cancellation date | False  | False    | False |
+| Field                     | Type         | Description                    | UNIQUE | NOT NULL | INDEX |
+|---------------------------|--------------|--------------------------------|--------|----------|-------|
+| id                        | INT          | Primary key (internal)         | True   | True     | True  |
+| subscriber_id             | INT          | Foreign key to the subscriber  | True   | True     | True  |
+| encrypted_subscription_id | VARCHAR(255) | The id of the subscription     | True   | True     | True  |
+| payment_tier_enum         | ENUM         | The user's payment tier        | False  | True     | False |
+| subscription_start_date   | TIMESTAMP    | Subscription start date        | False  | True     | False |
+| subscription_end_date     | TIMESTAMP    | Subscription end date          | False  | False    | False |
+| cancellation_date         | TIMESTAMP    | Subscription cancellation date | False  | False    | False |
 
 ```sql
-CREATE TABLE subscriber_history (
+CREATE TABLE subscription_history (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    subscriber_id INT,
+    subscriber_id INT NOT NULL,
     subscription_id VARCHAR(255) UNIQUE NOT NULL,
     payment_tier_enum PAYMENT_TIER_ENUM NOT NULL DEFAULT 'premium',
     subscription_start_date TIMESTAMP NOT NULL,
@@ -110,16 +110,16 @@ CREATE TABLE subscriber_history (
 ```
 
 ## Payment History
-| Field                   | Type         | Description                    | UNIQUE | NOT NULL | INDEX |
-|-------------------------|--------------|--------------------------------|--------|----------|-------|
-| id                      | INT          | Primary key (internal)         | True   | True     | True  |
-| user_id                 | INT          | Foreign key to user id         | False  | True     | False |
-| payment_method          | Enum         | Foreign key to payment methods | False  | True     | False |
-| payment_tier_enum       | ENUM         | The user's payment tier        | False  | True     | False |
-| payment_date            | TIMESTAMP    | Subscription cancellation date | False  | True     | False |
-| duration                | INTERVAL     | Premium duration               | False  | True     | False |
-| payment_start_date      | TIMESTAMP    | Time premium was started       | False  | False    | False |
-| payment_end_date        | TIMESTAMP    | Time premium was ended         | False  | False    | False |
+| Field                     | Type         | Description                    | UNIQUE | NOT NULL | INDEX |
+|---------------------------|--------------|--------------------------------|--------|----------|-------|
+| id                        | INT          | Primary key (internal)         | True   | True     | True  |
+| user_id                   | INT          | Foreign key to user id         | False  | True     | False |
+| payment_method            | Enum         | Foreign key to payment methods | False  | True     | False |
+| payment_tier_enum         | ENUM         | The user's payment tier        | False  | True     | False |
+| payment_date              | TIMESTAMP    | Subscription cancellation date | False  | True     | False |
+| duration                  | INTERVAL     | Premium duration               | False  | True     | False |
+| payment_start_date        | TIMESTAMP    | Time premium was started       | False  | False    | False |
+| payment_end_date          | TIMESTAMP    | Time premium was ended         | False  | False    | False |
 
 ```sql
 CREATE TABLE payment_history (
@@ -138,16 +138,16 @@ CREATE TABLE payment_history (
 ```
 
 ## Discount Codes
-| Field                   | Type         | Description                    | UNIQUE | NOT NULL | INDEX |
-|-------------------------|--------------|--------------------------------|--------|----------|-------|
-| id                      | INT          | Primary key (internal)         | True   | True     | True  |
-| code                    | VARCHAR(20)  | The code in question           | True   | True     | True  |
-| max_uses                | INT          | Maximum number of code usages  | False  | False    | False |
-| current_uses            | INT          | Current number of code usages  | False  | True     | False |
-| created_at              | TIMESTAMP    | Time the code was created      | False  | True     | False |
-| expires_at              | TIMESTAMP    | Time the code expires          | False  | False    | False |
-| discount_value          | DECIMAL      | Value of the discount          | False  | True     | True  |
-| discount_type           | ENUM         | Type of discount (% or fixed)  | False  | True     | False |
+| Field                     | Type         | Description                    | UNIQUE | NOT NULL | INDEX |
+|---------------------------|--------------|--------------------------------|--------|----------|-------|
+| id                        | INT          | Primary key (internal)         | True   | True     | True  |
+| code                      | VARCHAR(20)  | The code in question           | True   | True     | True  |
+| max_uses                  | INT          | Maximum number of code usages  | False  | False    | False |
+| current_uses              | INT          | Current number of code usages  | False  | True     | False |
+| created_at                | TIMESTAMP    | Time the code was created      | False  | True     | False |
+| expires_at                | TIMESTAMP    | Time the code expires          | False  | False    | False |
+| discount_value            | DECIMAL      | Value of the discount          | False  | True     | True  |
+| discount_type             | ENUM         | Type of discount (% or fixed)  | False  | True     | False |
 
 ```sql
 CREATE TYPE discount_type_enum AS ENUM('percentage', 'fixed');
@@ -164,11 +164,11 @@ CREATE TABLE discount_codes (
 ```
 
 ## Discount Payment Types
-| Field                   | Type         | Description                    | UNIQUE | NOT NULL | INDEX |
-|-------------------------|--------------|--------------------------------|--------|----------|-------|
-| id                      | INT          | Primary key (internal)         | True   | True     | True  |
-| discount_code_id        | INT          | Discount code foreign key      | False  | True     | True  |
-| payment_type_enum       | ENUM         | Allowed Payment type           | False  | True     | True  |
+| Field                     | Type         | Description                    | UNIQUE | NOT NULL | INDEX |
+|---------------------------|--------------|--------------------------------|--------|----------|-------|
+| id                        | INT          | Primary key (internal)         | True   | True     | True  |
+| discount_code_id          | INT          | Discount code foreign key      | False  | True     | True  |
+| payment_type_enum         | ENUM         | Allowed Payment type           | False  | True     | True  |
 
 Allowed payment types for each code
 
@@ -181,14 +181,14 @@ CREATE TABLE discount_payment_types (
 ```
 
 ## Applied Discounts
-| Field                   | Type         | Description                    | UNIQUE | NOT NULL | INDEX |
-|-------------------------|--------------|--------------------------------|--------|----------|-------|
-| id                      | INT          | Primary key (internal)         | True   | True     | True  |
-| user_id                 | INT          | Foreign key to user id         | False  | True     | False |
-| discount_code_id        | INT          | Discount code foreign key      | False  | True     | False |
-| applied_at              | TIMESTAMP    | Discount code application date | False  | True     | False |
-| payment_history_id      | INT          | Payment history id             | True   | False    | False |
-| subscription_history_id | INT          | Subscription history id        | True   | False    | False |
+| Field                     | Type         | Description                    | UNIQUE | NOT NULL | INDEX |
+|---------------------------|--------------|--------------------------------|--------|----------|-------|
+| id                        | INT          | Primary key (internal)         | True   | True     | True  |
+| user_id                   | INT          | Foreign key to user id         | False  | True     | False |
+| discount_code_id          | INT          | Discount code foreign key      | False  | True     | False |
+| applied_at                | TIMESTAMP    | Discount code application date | False  | True     | False |
+| payment_history_id        | INT          | Payment history id             | True   | False    | False |
+| subscription_history_id   | INT          | Subscription history id        | True   | False    | False |
 
 ```sql
 CREATE TABLE applied_discounts (
@@ -218,13 +218,13 @@ CREATE TABLE applied_discounts (
 ```
 
 ## Refund Requests
-| Field                   | Type         | Description                    | UNIQUE | NOT NULL | INDEX |
-|-------------------------|--------------|--------------------------------|--------|----------|-------|
-| id                      | INT          | Primary key (internal)         | True   | True     | True  |
-| user_id                 | INT          | Foreign key to user id         | False  | True     | False |
-| payment_history_id      | INT          | Payment history id             | True   | False    | False |
-| subscription_history_id | INT          | Subscription history id        | True   | False    | False |
-| refund_date             | TIMESTAMP    | Date of refund                 | False  | False    | False |
+| Field                     | Type         | Description                    | UNIQUE | NOT NULL | INDEX |
+|---------------------------|--------------|--------------------------------|--------|----------|-------|
+| id                        | INT          | Primary key (internal)         | True   | True     | True  |
+| user_id                   | INT          | Foreign key to user id         | False  | True     | False |
+| payment_history_id        | INT          | Payment history id             | True   | False    | False |
+| subscription_history_id   | INT          | Subscription history id        | True   | False    | False |
+| refund_date               | TIMESTAMP    | Date of refund                 | False  | False    | False |
 
 ```sql
 CREATE TYPE refund_status_enum AS ENUM ('pending', 'approved', 'rejected');
