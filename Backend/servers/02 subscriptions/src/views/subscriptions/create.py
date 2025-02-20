@@ -94,6 +94,6 @@ async def create_subscription_urls_view(request: Request):
     # Send response
     response = {
         "stripe_url": stripe_url,
-        "paypal_url": paypal_url
+        "paypal_url": paypal_url,
     }
     return response
