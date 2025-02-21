@@ -1,27 +1,14 @@
 from enum import Enum
 from datetime import datetime
+from src.datatypes.payment_type import PaymentTypeEnum
+from src.datatypes.payment_method import PaymentMethodEnum
+from src.datatypes.subscriber import subscriber
+from src.datatypes.subscription import Subscription
+from src.datatypes.subscription_metadata import SubscriptionMetadata
 
 class Error():
     reason: str
 
-class PaymentMethodEnum(Enum):
-    Stripe = 1
-    Paypal = 2
-    Crypto = 3
-
-class PaymentTierEnum():
-    Subscription_Monthly = 1
-    Subscription_Yearly = 2
-    Payment_1_Month = 3
-    Payment_3_Months = 4
-    Payment_1_Yea = 5
-
-class SubscriptionMetadata():
-    user_id: int
-    payment_tier_enum: PaymentTierEnum|None
-    has_trial: bool
-    trial_start_date: datetime|None
-    trial_end_date: datetime|None
 
 class Subscriber():
     id: int

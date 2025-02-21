@@ -1,32 +1,7 @@
 from datetime import datetime
-
-class PaymentTierEnum():
-    Subscription_Monthly = 1
-    Subscription_Yearly = 2
-    Payment_1_Month = 3
-    Payment_3_Months = 4
-    Payment_1_Yea = 5
-
-class SubscriptionMetadata():
-    user_id: int
-    payment_tier_enum: PaymentTierEnum|None
-    has_trial: bool
-    trial_start_date: datetime|None
-    trial_end_date: datetime|None
-
-class Subscription():
-    id: int
-    subscriber_id: int
-    subscription_id: str
-    payment_tier_enum: PaymentTierEnum
-    subscription_start_date: datetime
-    subscription_end_date: datetime|None
-    cancellation_date: datetime|None
-
-class PaymentMethodEnum(Enum):
-    Stripe = 1
-    Paypal = 2
-    Crypto = 3
+from src.datatypes.payment_type import PaymentTypeEnum
+from src.datatypes.payment_method import PaymentMethodEnum
+from src.datatypes.subscription import Subscription
 
 async def cancel_subscription_view(request: Request, reason: str = None):
     user_uuid = request.state.user_uuid

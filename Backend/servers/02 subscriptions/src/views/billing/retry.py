@@ -1,16 +1,8 @@
 from fastapi import Request, status
 from enum import Enum
+from src.datatypes.retry import Retry
 
-class payment_providers(Enum):
-    Stripe = 1
-    Paypal = 2
-    Crypto = 3
-
-class retry_class():
-    payment_provider: payment_providers
-    customer_id_token: str|None
-
-async def retry_failed_payment_view(request: Request, data: retry_class):
+async def retry_failed_payment_view(request: Request, data: Retry):
     user_uuid = request.state.user_uuid
 
     if data.customer_id_token == None:

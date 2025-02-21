@@ -1,28 +1,11 @@
 from fastapi import Request, status
 from datetime import datetime
-from enum import Enum
+from src.datatypes.payment_type import PaymentTypeEnum
+from src.datatypes.discount_class import DiscountClass
+from src.datatypes.payment_tier import PaymentTierEnum
 
-class discount_class():
-    id: int
-    code: str
-    max_uses: int|None
-    current_uses: int|None
-    created_at: datetime
-    expires_at: datetime|None
-
-
-class payment_type(Enum):
-    Subscription_Monthly = 1
-    Subscription_Yearly = 2
-    Payment_1_Month = 3
-    Payment_3_Months = 3
-    Payment_1_Year = 3
-
-class tier(Enum):
-    Premium = 1
-
-async def apply_discount_view(request: Request, discount_code: str, payment_type: payment_type, tier: tier):
-    discount: discount_class = discount_service.get_discount_from_code(discount_code)
+async def apply_discount_view(request: Request, discount_code: str, payment_type: PaymentTypeEnum, tier: PaymentTierEnum):
+    discount: DiscountClass = discount_service.get_discount_from_code(discount_code)
     
     if not discount:
         raise HTTPException(status_code=400, detail="Invalid discount code")
