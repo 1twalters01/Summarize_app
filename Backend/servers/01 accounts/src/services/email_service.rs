@@ -69,9 +69,6 @@ impl<'a> EmailService<'a> {
                 (Some(subject), Some(body))
             }
         };
-
-        // self.subject = subject;
-        // self.body = body;
     }
 
     pub fn send_email(&self) -> Result<(), String> {
