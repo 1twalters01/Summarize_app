@@ -9,14 +9,14 @@
 CREATE TYPE entity_types_enum AS ENUM ('book', 'author', 'publisher', 'format');
 ```
 
-## Status
+## Change Request Status
 | Field             | Type        | Description                | UNIQUE | NOT NULL | INDEX |
 |-------------------|-------------|----------------------------|--------|----------|-------|
 | id                | INT         | Primary key                | True   | True     | True  |
 | status            | VARCHAR(20) | The status of the request  | True   | True     | True  |
 
 ```sql
-CREATE TYPE status_enum AS ENUM ('pending', 'approved', 'rejected');
+CREATE TYPE change_request_status_enum AS ENUM ('pending', 'approved', 'rejected');
 ```
 
 ## Change Requests

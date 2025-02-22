@@ -83,6 +83,7 @@ CREATE INDEX IF NOT EXISTS idx_library_viewers ON library_viewers (library_id, u
 | id               | INT          | Primary key of shelf             | True   | True     | True  |
 | library_id       | INT          | Library foreign key              | False  | True     | True  |
 | name             | VARCHAR(20)  | Name of shelf                    | False  | True     | False |
+| place            | INT
 
 ```sql
 CREATE TABLE IF NOT EXISTS shelves (
@@ -102,15 +103,19 @@ CREATE TABLE IF NOT EXISTS shelves (
 | ID               | INT          | Primary key of entry             | True   | True     | True  |
 | summary_id       | INT          | Foreign key to summaries         | False  | False    | False |
 | shelf_id         | INT          | Foreign key to shelves           | False  | False    | False |
+| library_id       | INT          | Foreign key to library           | False  | True     | False |
 | added_by_id      | INT          | User that added the summary      | False  | False    | False |
 | date_added       | DATETIME     | Last summary added time          | False  | False    | False |
+| place            | INT          | Use place or entry id for place  | False  | True     | False |
+| prev_entry_id    | INT          | Use place or entry id for place  | True   | False  | False |
+| next_entry_id    | INT          | Use place or entry id for place  | True   | False  | False |
 
 ```sql
 CREATE TABLE IF NOT EXISTS entries (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     summary_id INT NOT NULL,
     shelf_id INT,
-    library_id INT NOT NULL, -- Redundant but helpful for direct queries
+    library_id INT NOT NULL,
     added_by_id INT NOT NULL,
     date_added TIMESTAMP DEFAULT NOW(),
     CONSTRAINT fk_summary FOREIGN KEY (summary_id)

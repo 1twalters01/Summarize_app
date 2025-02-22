@@ -33,29 +33,6 @@ CREATE TYPE prices (
 )
 ```
 
-## Subscription Metadata
-| Field                     | Type         | Description                    | UNIQUE | NOT NULL | INDEX |
-|---------------------------|--------------|--------------------------------|--------|----------|-------|
-| user_id                   | INT          | Foreign key to user id         | True   | True     | False |
-| payment_tier_enum         | ENUM         | The user's payment tier        | False  | True     | False |
-| has_trial                 | BOOLEAN      | Does user have a trial or not  | False  | True     | False |
-| trial_start_date          | TIMESTAMP    | When did the trial start       | False  | False    | False |
-| trial_end_date            | TIMESTAMP    | When did the trial end         | False  | False    | False |
-
-```sql
-CREATE TABLE subscription_metadata (
-    user_id INT PRIMARY KEY,
-    payment_tier_enum PAYMENT_TIER_ENUM NOT NULL DEFAULT 'none',
-    has_trial BOOLEAN NOT NULL DEFAULT TRUE,
-    trial_start_date TIMESTAMP,
-    trial_end_date TIMESTAMP,
-    CONSTRAINT fk_users FOREIGN KEY (user_id)
-        REFERENCES users (id)
-        ON DELETE CASCADE
-        ON UPDATE CASCADE
-);
-```
-
 ## Payment Method Enum
 ```sql
 CREATE TYPE payment_method_enum AS ENUM ('stripe', 'paypal', 'crypto', 'none');
@@ -135,6 +112,38 @@ CREATE TABLE payment_history (
         ON DELETE CASCADE
         ON UPDATE CASCADE
 )
+```
+
+## Subscription Metadata
+| Field                     | Type         | Description                    | UNIQUE | NOT NULL | INDEX |
+|---------------------------|--------------|--------------------------------|--------|----------|-------|
+| user_id                   | INT          | Foreign key to user id         | True   | True     | False |
+| payment_tier_enum         | ENUM         | The user's payment tier        | False  | True     | False |
+| subscription_history_id   | INT          | ID of last used history item   | True   | False    | True  |
+| payment_history_id        | INT          | ID of last used history item   | True   | False    | True  |
+| has_trial                 | BOOLEAN      | Does user have a trial or not  | False  | True     | False |
+| trial_start_date          | TIMESTAMP    | When did the trial start       | False  | False    | False |
+| trial_end_date            | TIMESTAMP    | When did the trial end         | False  | False    | False |
+
+```sql
+CREATE TABLE subscription_metadata (
+    user_id INT PRIMARY KEY,
+    payment_tier_enum PAYMENT_TIER_ENUM NOT NULL DEFAULT 'none',
+    subscription_history_id INT,
+    payment_history_id INT,
+    has_trial BOOLEAN NOT NULL DEFAULT TRUE,
+    trial_start_date TIMESTAMP,
+    trial_end_date TIMESTAMP,
+    CONSTRAINT fk_users FOREIGN KEY (user_id)
+        REFERENCES users (id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+    CONSTRAINT check_only_one_refund CHECK (
+        (subscription_history_id IS NOT NULL AND payment_history_id IS NULL) OR
+        (subscription_history_id IS NULL AND payment_history_id IS NOT NULL) OR
+        (subscription_history_id IS NULL AND payment_history_id IS NULL)
+    )
+);
 ```
 
 ## Discount Codes
