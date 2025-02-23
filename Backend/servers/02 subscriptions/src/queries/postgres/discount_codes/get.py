@@ -13,7 +13,7 @@ def from_code_and_payment_type_enum(discount_code: str, payment_type_enum: Payme
             query,
             {
                 "discount_code": discount_code,
-                "payment_type_enum": payment_type_enum
+                "payment_type_enum": payment_type_enum,
             },
         ).fetchone()
         db.close()
@@ -22,7 +22,26 @@ def from_code_and_payment_type_enum(discount_code: str, payment_type_enum: Payme
     except SQLAlchemyError as e:
         raise Exception(f"Failed to query db with error: {e}")
 
-def get_discounts_by_code(discount_code: str) -> list[DiscountClass]|None:
+def from_code(discount_code: str) -> list[DiscountClass]|None:
+    query = text("""
+        SELECT * FROM discount_codes
+        WHERE payment_type_enum = :payment_type_enum
+    """)
+
+    try:
+        results = db.execute(
+            query,
+            {
+                "payment_type_enum": payment_type_enum,
+            }
+        ).fetchall()
+        db.close()
+
+        return [DiscountClass(*result) for result in results] if results else None
+    except SQLAlchemyError as e:
+        raise Exception(f"Failed to query db with error: {e}")
+
+def from_payment_type_enum(payment_type_enum: PaymentTypeEnum) -> list[DiscountClass]|None:
     query = text("""
         SELECT * FROM discount_codes
         WHERE discount_code = :discount_code
@@ -32,7 +51,7 @@ def get_discounts_by_code(discount_code: str) -> list[DiscountClass]|None:
         results = db.execute(
             query,
             {
-                "discount_code": discount_code
+                "discount_code": discount_code,
             }
         ).fetchall()
         db.close()
