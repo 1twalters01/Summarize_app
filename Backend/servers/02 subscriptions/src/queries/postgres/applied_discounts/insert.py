@@ -32,8 +32,7 @@ def from_user_uuid(
         )
         db.commit()
         db.close()
+        return True
 
     except SQLAlchemyError as e:
         raise Exception(f"Failed to add to db with error: {e}")
-
-    return True
