@@ -1,3 +1,5 @@
+from src.datatypes.payment_type import PaymentTypeEnum
+
 class DiscountClass():
     id: int
     code: str
@@ -13,3 +15,13 @@ class DiscountClass():
         self.current_uses = current_uses
         self.created_at = created_at
         self.expires_at = expires_at
+
+class DiscountPayment():
+    id: int
+    discount_code_id: int
+    payment_type: PaymentTypeEnum
+
+    def __init__(self, id, discount_code_id: int, payment_type: PaymentTypeEnum):
+        self.id = id
+        self.discount_code_id = discount_code_id
+        self.payment_type = payment_type

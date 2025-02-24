@@ -150,7 +150,7 @@ CREATE TABLE subscription_metadata (
 | Field                     | Type         | Description                    | UNIQUE | NOT NULL | INDEX |
 |---------------------------|--------------|--------------------------------|--------|----------|-------|
 | id                        | INT          | Primary key (internal)         | True   | True     | True  |
-| code                      | VARCHAR(20)  | The code in question           | True   | True     | True  |
+| discount_code             | VARCHAR(20)  | The discount code in question  | True   | True     | True  |
 | max_uses                  | INT          | Maximum number of code usages  | False  | False    | False |
 | current_uses              | INT          | Current number of code usages  | False  | True     | False |
 | created_at                | TIMESTAMP    | Time the code was created      | False  | True     | False |
@@ -162,7 +162,7 @@ CREATE TABLE subscription_metadata (
 CREATE TYPE discount_type_enum AS ENUM('percentage', 'fixed');
 CREATE TABLE discount_codes (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    code VARCHAR(20) UNIQUE NOT NULL,
+    discount_code VARCHAR(20) UNIQUE NOT NULL,
     max_uses INT DEFAULT NULL,
     current_uses INT DEFAULT 0,
     created_at TIMESTAMP DEFAULT NOW(),

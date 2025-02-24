@@ -1,5 +1,6 @@
 Todo
 #####
+#. Choose either _enum or not in field names in database schema
 #. Finish refactoring the views
 #. Write tests for:
     #. datatypes
