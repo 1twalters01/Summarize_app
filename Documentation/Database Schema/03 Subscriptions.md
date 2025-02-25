@@ -91,6 +91,7 @@ CREATE TABLE subscription_history (
 |---------------------------|--------------|--------------------------------|--------|----------|-------|
 | id                        | INT          | Primary key (internal)         | True   | True     | True  |
 | user_id                   | INT          | Foreign key to user id         | False  | True     | False |
+| payment_id                | VARCHAR(255) | The id of the payment          | True   | True     | True  |
 | payment_method            | Enum         | Foreign key to payment methods | False  | True     | False |
 | payment_tier_enum         | ENUM         | The user's payment tier        | False  | True     | False |
 | payment_date              | TIMESTAMP    | Subscription cancellation date | False  | True     | False |
@@ -102,6 +103,7 @@ CREATE TABLE subscription_history (
 CREATE TABLE payment_history (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     user_id INT NOT NULL,
+    payment_id VARCHAR(255) UNIQUE NOT NULL,
     payment_method PAYMENT_METHOD_ENUM NOT NULL,
     payment_tier_enum PAYMENT_TIER_ENUM NOT NULL DEFAULT 'premium',
     payment_date TIMESTAMP NOT NULL,
