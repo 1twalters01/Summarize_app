@@ -1,3 +1,5 @@
+from sqlalchemy import text
+
 def from_history_item(
     payment_history_id: int|None = None,
     subscription_history_id: int|None = None

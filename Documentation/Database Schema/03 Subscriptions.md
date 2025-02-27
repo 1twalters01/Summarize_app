@@ -50,7 +50,7 @@ CREATE TYPE payment_method_enum AS ENUM ('stripe', 'paypal', 'crypto', 'none');
 CREATE TABLE subscribers (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     user_id INT NOT NULL,
-    customer_id VARCHAR(255) UNIQUE,
+    customer_id VARCHAR(255) UNIQUE DEFAULT NULL,
     payment_method PAYMENT_METHOD_ENUM NOT NULL,
     CONSTRAINT fk_users FOREIGN KEY (user_id)
         REFERENCES users (id)
@@ -74,7 +74,7 @@ CREATE TABLE subscribers (
 CREATE TABLE subscription_history (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     subscriber_id INT NOT NULL,
-    subscription_id VARCHAR(255) UNIQUE NOT NULL,
+    encrypted_subscription_id VARCHAR(255) UNIQUE NOT NULL,
     payment_tier_enum PAYMENT_TIER_ENUM NOT NULL DEFAULT 'premium',
     subscription_start_date TIMESTAMP NOT NULL,
     subscription_end_date TIMESTAMP,

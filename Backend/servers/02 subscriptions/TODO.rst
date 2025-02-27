@@ -54,7 +54,7 @@ Checklist
             - [ ] Monthly
             - [ ] Yearly
         - [ ] Discount codes & promotions
-        - [ ] Multiple tiers (Basic, Premium)
+        - [ ] Multiple tiers (None, Premium)
     - [ ] Subscription Cancellation - Users can:
         - [ ] Cancel anytime
         - [ ] Pause the subscriptions
