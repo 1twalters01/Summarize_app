@@ -33,9 +33,10 @@ CREATE TYPE prices (
 )
 ```
 
-## Payment Method Enum
+## Payment Method Enum and Subscription Method Enum
 ```sql
 CREATE TYPE payment_method_enum AS ENUM ('stripe', 'paypal', 'crypto', 'none');
+CREATE TYPE subscription_method_enum AS ENUM ('stripe', 'paypal', 'none');
 ```
 
 ## Subscribers
@@ -44,14 +45,14 @@ CREATE TYPE payment_method_enum AS ENUM ('stripe', 'paypal', 'crypto', 'none');
 | id                        | INT          | Primary key (internal)         | True   | True     | True  |
 | user_id                   | INT          | Foreign key to user id         | False  | True     | False |
 | encrypted_customer_id     | VARCHAR(255) | The customer id of the payee   | True   | False    | True  |
-| payment_method_enum       | ENUM         | Foreign key to payment methods | False  | True     | False |
+| subscription_method_enum  | ENUM         | Foreign key to payment methods | False  | True     | False |
 
 ```sql
 CREATE TABLE subscribers (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     user_id INT NOT NULL,
     customer_id VARCHAR(255) UNIQUE DEFAULT NULL,
-    payment_method_enum PAYMENT_METHOD_ENUM NOT NULL,
+    subscription_method_enum SUBSCRIPTION_METHOD_ENUM NOT NULL,
     CONSTRAINT fk_users FOREIGN KEY (user_id)
         REFERENCES users (id)
         ON DELETE CASCADE
@@ -94,7 +95,6 @@ CREATE TABLE subscription_history (
 | encrypted_payment_id      | VARCHAR(255) | The id of the payment          | True   | True     | True  |
 | payment_method_enum       | ENUM         | Foreign key to payment methods | False  | True     | False |
 | payment_tier_enum         | ENUM         | The user's payment tier        | False  | True     | False |
-| payment_date              | TIMESTAMP    | Subscription cancellation date | False  | True     | False |
 | duration                  | INTERVAL     | Premium duration               | False  | True     | False |
 | payment_start_date        | TIMESTAMP    | Time premium was started       | False  | False    | False |
 | payment_end_date          | TIMESTAMP    | Time premium was ended         | False  | False    | False |
@@ -106,9 +106,9 @@ CREATE TABLE payment_history (
     encrypted_payment_id VARCHAR(255) UNIQUE NOT NULL,
     payment_method_enum PAYMENT_METHOD_ENUM NOT NULL,
     payment_tier_enum PAYMENT_TIER_ENUM NOT NULL DEFAULT 'premium',
-    payment_date TIMESTAMP NOT NULL,
     duration INTERVAL NOT NULL,
     payment_start_date TIMESTAMP,
+    payment_end_date TIMESTAMP,
     CONSTRAINT fk_users FOREIGN KEY (user_id)
         REFERENCES users (id)
         ON DELETE CASCADE

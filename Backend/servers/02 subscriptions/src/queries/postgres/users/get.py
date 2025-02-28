@@ -1,11 +1,9 @@
 from sqlalchemy import text
-from src.datatypes.subscription_metadata import SubscriptionMetadata
 
-def from_user_uuid(user_uuid: str):
+def uuid_from_user_id(user_uuid:str):
     query = text("""
-    SELECT ()
-    FROM subscription_metadata sm
-    JOIN users u on sm.user_id = u.id
+    SELECT (uuid)
+    FROM users u
     WHERE u.uuid = user_uuid
     """)
 

@@ -6,9 +6,9 @@ async def generate_invoice_view(request: Request, invoice_id: str):
     payment_provider = subscription_service.get_payment_provider_for_invoice_id_and_uuid(invoice_id, user_uuid)
 
     if payment_provider == "stripe":
-        invoice = stripe_service.get_stripe_invoice(user_uuid, invoice_id)
+        invoice = stripe_service.get_stripe_invoice(invoice_id)
     elif payment_provider == "paypal":
-        invoice = paypal_service.get_paypal_invoice(user_uuid, invoice_id)
+        invoice = paypal_service.get_paypal_invoice(invoice_id)
     else:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

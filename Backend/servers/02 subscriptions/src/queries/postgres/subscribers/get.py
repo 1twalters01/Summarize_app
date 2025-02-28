@@ -1,14 +1,15 @@
 from sqlalchemy import text
-from src.datatypes.subscription_metadata import SubscriptionMetadata
 
-def from_user_uuid(user_uuid: str):
+def subscription_method_and_user_id_from_subscriber_id(subscriber_id):
     query = text("""
-    SELECT ()
-    FROM subscription_metadata sm
-    JOIN users u on sm.user_id = u.id
-    WHERE u.uuid = user_uuid
+    SELECT (
+        user_id,
+        subscription_method_enum,
+    )
+    FROM subscribers
+    WHERE id = subscriber_id
     """)
-
+    
     try:
         result = db.execute(
             query,
@@ -18,6 +19,6 @@ def from_user_uuid(user_uuid: str):
         ).fetchone()
         db.close()
 
-        return SubscriptionMetadata(*result) if result else None
+        return DiscountClass(*result) if result else None
     except SQLAlchemyError as e:
         raise Exception(f"Failed to query db with error: {e}")
