@@ -58,3 +58,36 @@ class PayPalSubscriptionService:
                 "pdf": data.get("links", [])[0]["href"]
             }
         return None
+
+    def get_paypal_invoices_data(encrypted_customer_id: str, limit=10):
+        """
+        Fetch all PayPal invoices associated with a given customer.
+        """
+        if encrypted_customer_id == None:
+            return None
+
+        encryption_service = EncryptionService()
+        customer_id = encryption_service.decrypt(encrypted_customer_id)
+        url = f"{PAYPAL_API_BASE}/v2/invoicing/invoices?recipient_email={customer_id}"
+        response = requests.get(url, headers=self._get_headers())
+
+        if response.status_code == 200:
+            data = response.json()
+            invoice_list = []
+        
+            for invoice in data.get("invoices", []):
+                invoice_element = {
+                    "id": invoice.get("id"),
+                    "status": invoice.get("status"),
+                    "amount_due": invoice.get("amount", {}).get("value"),
+                    "currency": invoice.get("amount", {}).get("currency_code"),
+                    "created": invoice.get("create_time"),
+                }
+                invoice_list.append(invoice_element)
+
+                pdf_url = next((link["href"] for link in invoice.get("links", []) if link["rel"] == "self"), None)
+                redis_key = f"invoice_id:{invoice_id}"
+                redis_client.set(redis_key, (pdf_url, invoice_element), ex=expiry_in_seconds)
+            return invoices
+
+        return None

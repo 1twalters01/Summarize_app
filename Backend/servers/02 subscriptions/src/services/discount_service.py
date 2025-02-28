@@ -1,6 +1,8 @@
+from src.query.discount_codes import get
+
 # Change to real sql
 def get_discount_from_code(discount_code):
-    discount = db.query(DiscountCode).filter(DiscountCode.code == code).first()
+    discount = get.from_discount_code(discount_code)
 
 # Change to join
 def validate_code_and_payment_type(discount_code, payment_type):

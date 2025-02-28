@@ -1,4 +1,4 @@
-from src.queries import subscriber, subscription_history, payment_history, users
+from src.queries import subscribers, subscription_history, payment_history, users
 from src.services.encryption_service import EncryptionService
 
 def create_subscription():
@@ -30,3 +30,6 @@ def get_payment_provider_for_invoice_id_and_uuid(invoice_id, user_uuid):
             return subscriber.subscription_method_enum
         except:
             raise LookupError
+
+def subscribers(user_uuid):
+    return subscribers.get.subscribers_from_user_uuid(user_uuid)
