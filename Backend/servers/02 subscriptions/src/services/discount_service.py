@@ -1,6 +1,5 @@
 from src.query.discount_codes import get
 
-# Change to real sql
 def get_discount_from_code(discount_code):
     discount = get.from_discount_code(discount_code)
 
