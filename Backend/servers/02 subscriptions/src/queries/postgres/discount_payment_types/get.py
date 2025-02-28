@@ -4,10 +4,12 @@ from sqlalchemy import text
 
 def from_discount_code_and_payment_type(discount_code: str, payment_type_enum: PaymentTypeEnum) -> DiscountClass|None:
     query = text("""
-        SELECT dpt.id, dpt.discount_code_id, dpt.payment_type_enum
+        SELECT (id, discount_code_id, payment_type_enum)
         FROM discount_payment_types dpt
-        JOIN discount_codes dc ON dpt.discount_code_id = dc.id
-        WHERE dpt.payment_type_enum = :payment_type_enum AND dc.discount_code = :discount_code
+        JOIN discount_codes dc
+            ON dpt.discount_code_id = dc.id
+        WHERE dpt.payment_type_enum = :payment_type_enum
+            AND dc.discount_code = :discount_code
     """)
 
     try:
@@ -26,7 +28,8 @@ def from_discount_code_and_payment_type(discount_code: str, payment_type_enum: P
 
 def from_payment_type_enum(payment_type_enum: PaymentTypeEnum) -> list[DiscountClass]|None:
     query = text("""
-        SELECT * FROM discount_payment_types
+        SELECT (id, discount_code_id, payment_type_enum)
+        FROM discount_payment_types
         WHERE payment_type_enum = :payment_type_enum
     """)
 
@@ -42,10 +45,10 @@ def from_payment_type_enum(payment_type_enum: PaymentTypeEnum) -> list[DiscountC
         return [DiscountPayment(*result) for result in results] if results else None
     except SQLAlchemyError as e:
         raise Exception(f"Failed to query db with error: {e}")
-        
+
 def from_discount_code(discount_code) -> list[DiscountClass]|None:
     query = text("""
-        SELECT dpt.id, dpt.discount_code_id, dpt.payment_type_enum
+        SELECT (id, discount_code_id, payment_type_enum)
         FROM discount_payment_types dpt
         JOIN discount_codes dc ON dpt.discount_code_id = dc.id
         WHERE dpt.payment_type_enum = :payment_type_enum

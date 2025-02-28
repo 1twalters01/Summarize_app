@@ -44,14 +44,14 @@ CREATE TYPE payment_method_enum AS ENUM ('stripe', 'paypal', 'crypto', 'none');
 | id                        | INT          | Primary key (internal)         | True   | True     | True  |
 | user_id                   | INT          | Foreign key to user id         | False  | True     | False |
 | encrypted_customer_id     | VARCHAR(255) | The customer id of the payee   | True   | False    | True  |
-| payment_method            | Enum         | Foreign key to payment methods | False  | True     | False |
+| payment_method_enum       | ENUM         | Foreign key to payment methods | False  | True     | False |
 
 ```sql
 CREATE TABLE subscribers (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     user_id INT NOT NULL,
     customer_id VARCHAR(255) UNIQUE DEFAULT NULL,
-    payment_method PAYMENT_METHOD_ENUM NOT NULL,
+    payment_method_enum PAYMENT_METHOD_ENUM NOT NULL,
     CONSTRAINT fk_users FOREIGN KEY (user_id)
         REFERENCES users (id)
         ON DELETE CASCADE
@@ -91,8 +91,8 @@ CREATE TABLE subscription_history (
 |---------------------------|--------------|--------------------------------|--------|----------|-------|
 | id                        | INT          | Primary key (internal)         | True   | True     | True  |
 | user_id                   | INT          | Foreign key to user id         | False  | True     | False |
-| payment_id                | VARCHAR(255) | The id of the payment          | True   | True     | True  |
-| payment_method            | Enum         | Foreign key to payment methods | False  | True     | False |
+| encrypted_payment_id      | VARCHAR(255) | The id of the payment          | True   | True     | True  |
+| payment_method_enum       | ENUM         | Foreign key to payment methods | False  | True     | False |
 | payment_tier_enum         | ENUM         | The user's payment tier        | False  | True     | False |
 | payment_date              | TIMESTAMP    | Subscription cancellation date | False  | True     | False |
 | duration                  | INTERVAL     | Premium duration               | False  | True     | False |
@@ -103,8 +103,8 @@ CREATE TABLE subscription_history (
 CREATE TABLE payment_history (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     user_id INT NOT NULL,
-    payment_id VARCHAR(255) UNIQUE NOT NULL,
-    payment_method PAYMENT_METHOD_ENUM NOT NULL,
+    encrypted_payment_id VARCHAR(255) UNIQUE NOT NULL,
+    payment_method_enum PAYMENT_METHOD_ENUM NOT NULL,
     payment_tier_enum PAYMENT_TIER_ENUM NOT NULL DEFAULT 'premium',
     payment_date TIMESTAMP NOT NULL,
     duration INTERVAL NOT NULL,
@@ -158,7 +158,7 @@ CREATE TABLE subscription_metadata (
 | created_at                | TIMESTAMP    | Time the code was created      | False  | True     | False |
 | expires_at                | TIMESTAMP    | Time the code expires          | False  | False    | False |
 | discount_value            | DECIMAL      | Value of the discount          | False  | True     | True  |
-| discount_type             | ENUM         | Type of discount (% or fixed)  | False  | True     | False |
+| discount_type_enum        | ENUM         | Type of discount (% or fixed)  | False  | True     | False |
 
 ```sql
 CREATE TYPE discount_type_enum AS ENUM('percentage', 'fixed');
@@ -170,7 +170,7 @@ CREATE TABLE discount_codes (
     created_at TIMESTAMP DEFAULT NOW(),
     expires_at TIMESTAMP DEFAULT NULL,
     discount_value DECIMAL(10,2) NOT NULL,
-    discount_type DISCOUNT_TYPE_ENUM NOT NULL,
+    discount_type_enum DISCOUNT_TYPE_ENUM NOT NULL,
 )
 ```
 
@@ -236,6 +236,7 @@ CREATE TABLE applied_discounts (
 | payment_history_id        | INT          | Payment history id             | True   | False    | False |
 | subscription_history_id   | INT          | Subscription history id        | True   | False    | False |
 | refund_date               | TIMESTAMP    | Date of refund                 | False  | False    | False |
+| refund_status_enum        | ENUM         | Refund status                  | False  | True     | False |
 
 ```sql
 CREATE TYPE refund_status_enum AS ENUM ('pending', 'approved', 'rejected');

@@ -5,7 +5,7 @@ def from_customer_id_and_encrypted_subscription_id(customer_id_str, encrypted_su
     subscription_start_date = now()
     query = text("""
         INSERT INTO subscription_history (subscriber_id, encrypted_subscription_id, subscription_start_date)
-        SELECT s.id, :encrypted_subscription_id, subscription_start_date
+        SELECT s.id, :encrypted_subscription_id, :subscription_start_date
         FROM subscribers s
         where s.customer_id = :customer_id_str
     """)
