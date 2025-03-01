@@ -91,3 +91,26 @@ class PayPalSubscriptionService:
             return invoices
 
         return None
+
+    def retry_paypal_subscription_payment(customer_id: str, payment_id: str):
+        url = f"{PAYPAL_API_BASE}/v1/billing/subscriptions/{customer_id}/revise"
+        
+        response = requests.post(url, headers=self._get_headers())
+        
+        if response.status_code == 200:
+            return True
+        else:
+            print(f"Error: {response.json()}")
+            return False
+
+
+    def retry_paypal_payment(payment_id: str):
+        retry_url = f"{PAYPAL_BASE_URL}/v2/checkout/orders/{payment_id}/capture"
+
+        response = requests.post(retry_url, headers=self._get_headers())
+
+        if response.status_code == 201:
+            return True
+        else:
+            print(f"Error: {response.json()}")
+            return False

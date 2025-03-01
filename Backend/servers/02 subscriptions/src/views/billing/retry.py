@@ -1,25 +1,40 @@
 from fastapi import Request, status
-from enum import Enum
-from src.datatypes.retry import Retry
+from src.services import stripe_service, paypal_service
+from src.datatypes.payment_method import PaymentMethodEnum
+from src.datatypes.subscription_method import SubscriptionMethodEnum
 
-async def retry_failed_payment_view(request: Request, data: Retry):
+async def retry_failed_payment_view(
+    request: Request,
+    payment_type: PaymentTypeEnum,
+    payment_method: PaymentMethodEnum|SubscriptionMethodEnum,
+    payment_id: str,
+    customer_id_token: str | None,
+):
     user_uuid = request.state.user_uuid
 
-    if data.customer_id_token == None:
-        customer_id: str|None = user_service.get_customer_id_from_uuid_and_payment_provider(user_uuid, data.payment_provider)
-    else:
-        customer_id = cache_service.get_customer_id_from_token(data.customer_id_token)
-        if validate_uuid_and_customer_id(user_uuid, customer_id) == false:
-            raise HTTPException(status_code=400, detail="Invalid customer id tokke")
+    if type(payment_method) == PaymentMethodEnum:
+        if type(payment_method) == PaymentMethodEnum.Stripe:
+            success, message = stripe_service.retry_stripe_payment(payment_id)
+        if type(payment_method) == PaymentMethodEnum.Paypal:
+            success, message = paypal_service.retry_paypal_payment(payment_id)
+        if type(payment_method) == PaymentMethodEnum.Crypto:
+            pass
 
-    # customer id may be equal to None if it is a one time payment
-    payment_provider = data.payment_provider
-    if payment_provider == "stripe":
-        success, message = retry_stripe_payment(customer_id)
-    elif payment_provider == "paypal":
-        success, message = retry_paypal_payment(customer_id)
+    elif type(payment_method) == SubscriptionMethodEnum:
+        if customer_id_token == None:
+            raise HTTPException(status_code=400, detail="customer id token is required")
+
+        customer_id = cache_service.get_customer_id_from_token(customer_id_token)
+        if validate_uuid_and_customer_id(user_uuid, customer_id) == false:
+            raise HTTPException(status_code=400, detail="Invalid customer id")
+
+        if type(payment_method) == SubscriptionMethodEnum.Stripe:
+            success, message = stripe_service.retry_stripe_subscription_payment(customer_id, payment_id)
+        if type(payment_method) == SubscriptionMethodEnum.Paypal:
+            success, message = paypal_service.retry_paypal_subscription_payment(customer_id, payment_id)
+
     else:
-        raise HTTPException(status_code=400, detail="Invalid payment provider")
+        raise HTTPException(status_code=400, detail="Invalid provider")
 
     if not success:
         raise HTTPException(status_code=400, detail=message)

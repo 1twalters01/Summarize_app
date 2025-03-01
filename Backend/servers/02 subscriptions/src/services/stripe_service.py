@@ -54,3 +54,49 @@ class StripeService:
 
         except stripe.error.StripeError as e:
             return {"error": str(e)}
+
+    def retry_stripe_subscription_payment(customer_id: str, payment_id: str):
+        try:
+            # Find the failed invoice (payment_id is the invoice ID)
+            invoice = stripe.Invoice.retrieve(payment_id)
+            
+            if invoice.status != "open":
+                print(f"Invoice {payment_id} is not open for retry.")
+                return False
+
+            # Attempt to pay the invoice again
+            retried_invoice = stripe.Invoice.pay(payment_id)
+
+            if retried_invoice.status == "paid":
+                return True
+            else:
+                print(f"Status: {retried_invoice.status}")
+                return False
+
+        except stripe.error.StripeError as e:
+            print(f"Error retrying subscription payment: {e}")
+            return False
+
+
+    def retry_stripe_payment(payment_id: str):
+        try:
+            # Retrieve the failed PaymentIntent
+            payment_intent = stripe.PaymentIntent.retrieve(payment_id)
+
+            if payment_intent.status != "requires_payment_method":
+                print(f"Payment {payment_id} is not retryable.")
+                return False
+
+            # Attempt to confirm the payment again
+            retried_payment = stripe.PaymentIntent.confirm(payment_id)
+
+            if retried_payment.status == "succeeded":
+                print(f"Successfully retried one-time payment {payment_id}.")
+                return True
+            else:
+                print(f"Status: {retried_payment.status}")
+                return False
+
+        except stripe.error.StripeError as e:
+            print(f"Error retrying one-time payment: {e}")
+            return False
