@@ -1,6 +1,9 @@
 from fastapi import APIRouter, Depends
 from src.middleware.authentication import is_admin, is_authenticated
-from src.views.change_requests.get import get_change_requests, get_single_change_request
+from src.views.change_requests.get import (
+    get_change_requests,
+    get_single_change_request,
+)
 from src.views.change_requests.modify import post_change_request_modification
 from src.views.change_requests.delete import (
     post_change_request_deletion,
