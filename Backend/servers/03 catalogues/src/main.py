@@ -1,17 +1,13 @@
 import uvicorn
 from fastapi import FastAPI
 from src.routes.ping import router as ping_router
-from src.routes.authors import router as authors_router
-from src.routes.publishers import router as publishers_router
-from src.routes.genres import router as genres_router
-from src.routes.books import router as books_router
+from src.routes.manual_input import router as manual_input_router
+from src.routes.scraped_input import router as scraped_input_router
 
 app = FastAPI()
 app.include_router(ping_router)
-app.include_router(authors_router)
-app.include_router(publishers_router)
-app.include_router(genres_router)
-app.include_router(books_router)
+app.include_router(manual_input_router)
+app.include_router(scraped_input_router)
 
 
 def application():

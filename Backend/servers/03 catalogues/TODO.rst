@@ -9,7 +9,7 @@ Todo
 
 MVP Requirements
 #################
-#. Manual book adition
+#. Manual forced book adition
 #. Get change requests
 #. Accept change request by id
 #. Delete change request by id and delete change request confirmation
